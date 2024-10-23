@@ -37,7 +37,7 @@ Clone the repo first :)
 
 ### R studio
 
-Open either [server/server.R](./server/server.R) or (ui/ui.R)[./ui.R] from R Studio and then R the app.
+Open either [server.R](./server.R) or [ui.R](./ui.R) from R Studio and then R the app.
 
 ### Makefile 
 
