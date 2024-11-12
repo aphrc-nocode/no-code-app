@@ -722,8 +722,8 @@ transform_data_identify_outliers_server = function() {
 				}
 			}
 		} else {
-			NULL
-##			outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_choices)
+			## HERE
+			outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_choices)
 		}
 		
 		rv_current$handle_outlier_values_log = c(rv_current$handle_outlier_values_log

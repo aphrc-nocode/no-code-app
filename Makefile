@@ -24,6 +24,9 @@ Sources += LICENSE
 
 ######################################################################
 
+ui.Rout: ui.R
+server.Rout: server.R
+
 ## All make rules goes here 
 
 runapp:
