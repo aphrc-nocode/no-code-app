@@ -30,7 +30,7 @@ server.Rout: server.R
 ## All make rules goes here 
 
 runapp:
-	echo "shiny::runApp()" | R --slave
+	echo "shiny::runApp(\".\")" | R --slave
 
 ######################################################################
 

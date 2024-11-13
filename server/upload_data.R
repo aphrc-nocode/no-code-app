@@ -42,9 +42,7 @@ upload_data_server = function(){
 		  }
 		  
 		  file_path = get_data_class(file_path)
-		  print(file_path)
 		  df = try(upload_data(file_path), silent = TRUE)
-		  print(df)
 		  
 		  if (!is.data.frame(df) | is.null(df) | any(class(df) %in% "try-error")) {
 			 if (file.exists(file_path)) {
