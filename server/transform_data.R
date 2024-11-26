@@ -110,7 +110,7 @@ transform_data_change_type_server = function() {
 	#### FIXME: ADD ALL CONDITIONS WHICH DEPENDS ON APPLY
 	observe({
 		if (isTRUE(!is.null(rv_current$selected_var))) {
-			if ((isTRUE(input$transform_data_change_type_check) & isTRUE(!grepl("---", input$transform_data_change_type_choices)))| (isTRUE(!is.null(input$transform_data_rename_variable_input)) & isTRUE(input$transform_data_rename_variable_check)  & isTRUE(input$transform_data_rename_variable_input!="")) | (isTRUE(input$transform_data_recode_variable_check) & isTRUE(!is.null(input$transform_data_recode_variable_input)) & isTRUE(input$transform_data_recode_variable_input!="")) | (isTRUE(input$transform_data_handle_missing_values_choices!="") & (isTRUE(!is.null(input$transform_data_handle_missing_values_choices))) & (isTRUE(input$transform_data_handle_missing_values_check))) | (isTRUE(input$transform_data_create_missing_values_check) & (isTRUE(!is.null(input$transform_data_create_missing_values_input))) & (isTRUE(input$transform_data_create_missing_values_choices!="")) & (isTRUE(length(input$transform_data_create_missing_values_options)>0))) | ((isTRUE(any(input$transform_data_handle_outliers_choices %in% c("drop", "nothing"))) | (isTRUE(any(input$transform_data_handle_outliers_correct_options %in% c("mean", "median")))) | (isTRUE(!is.na(input$transform_data_handle_outliers_correct_options_input)))) & (isTRUE(length(rv_current$outlier_values)>0)) )  ) {
+			if ((isTRUE(input$transform_data_change_type_check) & isTRUE(!grepl("---", input$transform_data_change_type_choices)))| (isTRUE(!is.null(input$transform_data_rename_variable_input)) & isTRUE(input$transform_data_rename_variable_check)  & isTRUE(input$transform_data_rename_variable_input!="")) | (isTRUE(input$transform_data_recode_variable_check) & isTRUE(!is.null(input$transform_data_recode_variable_input)) & isTRUE(input$transform_data_recode_variable_input!="")) | (isTRUE(input$transform_data_create_missing_values_check) & (isTRUE(!is.null(input$transform_data_create_missing_values_input))) & (isTRUE(input$transform_data_create_missing_values_choices!="")) & (isTRUE(length(input$transform_data_create_missing_values_options)>0))) | ((isTRUE(any(input$transform_data_handle_outliers_choices %in% c("drop", "nothing"))) | (isTRUE(any(input$transform_data_handle_outliers_correct_options %in% c("mean", "median")))) | (isTRUE(!is.na(input$transform_data_handle_outliers_correct_options_input)))) & (isTRUE(length(rv_current$outlier_values)>0)) ) | (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category)) & isTRUE(input$transform_data_handle_missing_values_new_category!="") & isTRUE(rv_current$has_missing_data_check))   ) {
 				output$transform_data_apply = renderUI({
 				p(
 						actionBttn("transform_data_apply"
@@ -755,6 +755,8 @@ transform_data_identify_outliers_server = function() {
 #### ---- Handle missing values -----------------------------------------
 
 transform_data_handle_missing_values_server = function() {
+	
+	## Generate missing data summary
 	observe({
 		if (isTRUE(!is.null(rv_current$selected_var)) & (!is.null(rv_current$working_df))) {
 			
@@ -769,81 +771,41 @@ transform_data_handle_missing_values_server = function() {
 						, var=rv_current$selected_var
 					)
 				)
-				if (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))) {
-					output$transform_data_handle_missing_values = renderUI({
-						materialSwitch(
-								inputId = "transform_data_handle_missing_values_check",
-								label = get_rv_labels("handle_missing_values"),
-								status = "success",
-								right = TRUE
-						 )
-					})
-					output$transform_data_handle_missing_values_ui = renderUI({
-					 HTML(paste0("<b>", get_rv_labels("handle_missing_values_ui"), "</b>"))
-					})
-					output$transform_data_handle_missing_values_out = renderPrint({
-						print(rv_current$missing_prop_df)
-					})
-				} else {
-					updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-					output$transform_data_handle_missing_values = NULL
-					output$transform_data_handle_missing_values_ui = NULL
-					output$transform_data_handle_missing_values_out = NULL
-			
-					updateSelectInput(session = session,  "transform_data_handle_missing_values_choices", selected = "")
-					output$transform_data_handle_missing_values_choices = NULL
-			
-					output$transform_data_handle_missing_values_options = NULL
-					updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
-					
-					output$transform_data_handle_missing_values_new_numeric = NULL
-					updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
-
-					output$transform_data_handle_missing_values_new_category = NULL
-					updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
-				}
-			} else {
-					updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-					output$transform_data_handle_missing_values = NULL
-					output$transform_data_handle_missing_values_ui = NULL
-					output$transform_data_handle_missing_values_out = NULL
-			
-					updateSelectInput(session = session,  "transform_data_handle_missing_values_choices", selected = "")
-					output$transform_data_handle_missing_values_choices = NULL
-			
-					output$transform_data_handle_missing_values_options = NULL
-					updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
-				
-					output$transform_data_handle_missing_values_new_numeric = NULL
-					updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
-
-					output$transform_data_handle_missing_values_new_category = NULL
-					updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
 			}
-
-		} else {
-				updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-				output$transform_data_handle_missing_values = NULL
-				output$transform_data_handle_missing_values_ui = NULL
-				output$transform_data_handle_missing_values_out = NULL
-			
-				updateSelectInput(session = session,  "transform_data_handle_missing_values_choices", selected = "")
-				output$transform_data_handle_missing_values_choices = NULL
-			
-				output$transform_data_handle_missing_values_options = NULL
-				updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
-			
-				output$transform_data_handle_missing_values_new_numeric = NULL
-				updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
-
-				output$transform_data_handle_missing_values_new_category = NULL
-				updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
 		}
 	})
 
-	
+	## Create a conditional switch for missing data
 	observe({
-		if (isTRUE(input$transform_data_handle_missing_values_check)) {
+		if (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))) {
+				output$transform_data_handle_missing_values = renderUI({
+					materialSwitch(
+							inputId = "transform_data_handle_missing_values_check",
+							label = get_rv_labels("handle_missing_values"),
+							status = "success",
+							right = TRUE
+					 )
+				})
+				rv_current$has_missing_data_check = TRUE
+				output$transform_data_handle_missing_values_ui = renderUI({
+				 HTML(paste0("<b>", get_rv_labels("handle_missing_values_ui"), "</b>"))
+				})
+				output$transform_data_handle_missing_values_out = renderPrint({
+					print(rv_current$missing_prop_df)
+				})	
+		} 
+		else {
+			rv_current$has_missing_data_check = FALSE
+			updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
+			output$transform_data_handle_missing_values = NULL
+			output$transform_data_handle_missing_values_ui = NULL
+			output$transform_data_handle_missing_values_out = NULL
+		}
+	})
+	
+	## Options to handle missing data
+	observe({
+		if (isTRUE(input$transform_data_handle_missing_values_check) & isTRUE(rv_current$has_missing_data_check)) {
 			empty_lab = ""
 			names(empty_lab) = get_rv_labels("transform_data_handle_missing_values_choices_ph")
 			output$transform_data_handle_missing_values_choices = renderUI({
@@ -860,520 +822,130 @@ transform_data_handle_missing_values_server = function() {
 		}
 	})
 
-	
+	## Options to identify missing values
 	observe({
-		if (isTRUE(input$transform_data_handle_missing_values_check)) {
- 			if (isTRUE(any(input$transform_data_handle_missing_values_choices %in% c("Create new category (for all)",  "Create new category (for this)")))) {
- 				missing_indicators = get_named_choices(input_choices_file, input$change_language, "transform_data_handle_missing_values_options")
- 				output$transform_data_handle_missing_values_options = renderUI({
- 					checkboxGroupInput(
- 						"transform_data_handle_missing_values_options"
- 						, label = get_rv_labels("transform_data_handle_missing_values_options")
- 						, choices = missing_indicators
- 						, selected = character(0)
- 						, inline = TRUE
- 					)
- 				})
-			} else {
-				output$transform_data_handle_missing_values_options = NULL
-				updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
-			}
+		if (isTRUE(input$transform_data_handle_missing_values_check) & isTRUE(any(input$transform_data_handle_missing_values_choices %in% c("Create new category (for all)",  "Create new category (for this)"))) & isTRUE(rv_current$has_missing_data_check)) {
+			missing_indicators = get_named_choices(input_choices_file, input$change_language, "transform_data_handle_missing_values_options")
+			output$transform_data_handle_missing_values_options = renderUI({
+				checkboxGroupInput(
+					"transform_data_handle_missing_values_options"
+					, label = get_rv_labels("transform_data_handle_missing_values_options")
+					, choices = missing_indicators
+					, selected = character(0)
+					, inline = TRUE
+				)
+			})
 		} else {
 			output$transform_data_handle_missing_values_options = NULL
 			updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
 		}
 	})
 
-
+	## Handle categorical variables
 	observe({
-		if (isTRUE(input$transform_data_handle_missing_values_check)) {
-			if (isTRUE(length(input$transform_data_handle_missing_values_options)>0)) {
-
+		if (isTRUE(rv_current$has_missing_data_check) & isTRUE(input$transform_data_handle_missing_values_check) & isTRUE(length(input$transform_data_handle_missing_values_options)>0)) {
+			
+			if (isTRUE(any(input$transform_data_handle_missing_values_choices %in% c("Create new category (for this)")))) {
 				
-				transform_data_handle_missing_values_new_numeric = renderUI({
-					 numericInput("transform_data_handle_missing_values_new_numeric"
-						, label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
-						, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
-						, width = "100%"
-					 )
-				})
-				
-				transform_data_handle_missing_values_new_category = renderUI({
-					 textInput("transform_data_handle_missing_values_new_category"
-						, label = get_rv_labels("transform_data_handle_missing_values_new_category")
+				if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
+					output$transform_data_handle_missing_values_new_category = transform_data_handle_missing_values_categoricalUI(label = get_rv_labels("transform_data_handle_missing_values_new_category")
 						, value=""
 						, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
-						, width = "100%"
-					 )
-				})
-					
-				if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
-					if (isTRUE(rv_current$vartype=="numeric")) {
-						output$transform_data_handle_missing_values_new_numeric = transform_data_handle_missing_values_new_numeric
-						output$transform_data_handle_missing_values_new_category = NULL
-						updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
-					} else {
-						output$transform_data_handle_missing_values_new_category = transform_data_handle_missing_values_new_category
-						output$transform_data_handle_missing_values_new_numeric = NULL
-						updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
-					}
+					)
 				} else {
-					output$transform_data_handle_missing_values_new_numeric = transform_data_handle_missing_values_new_numeric
-					output$transform_data_handle_missing_values_new_category = transform_data_handle_missing_values_new_category		
+					output$transform_data_handle_missing_values_new_category = NULL
+					updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
 				}
+
+				if (isTRUE(any(rv_current$vartype %in% "numeric"))) {
+					output$transform_data_handle_missing_values_new_numeric = transform_data_handle_missing_values_numericUI(label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
+						, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
+					)
+				} else {
+					output$transform_data_handle_missing_values_new_numeric = NULL
+					updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
+				}
+				
+			} else if (isTRUE(any(input$transform_data_handle_missing_values_choices %in% c("Create new category (for all)")))) {
+					output$transform_data_handle_missing_values_new_category = transform_data_handle_missing_values_categoricalUI(label = get_rv_labels("transform_data_handle_missing_values_new_category")
+						, value=""
+						, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
+					)
+					
+					output$transform_data_handle_missing_values_new_numeric = transform_data_handle_missing_values_numericUI(label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
+						, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
+					)
+				
 			} else {
-				output$transform_data_handle_missing_values_new_numeric = NULL
-				updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
 				output$transform_data_handle_missing_values_new_category = NULL
 				updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
+					
+				output$transform_data_handle_missing_values_new_numeric = NULL
+				updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
 			}
-		} else {
-			output$transform_data_handle_missing_values_new_numeric = NULL
-			updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
 
+		} else {
 			output$transform_data_handle_missing_values_new_category = NULL
 			updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
+				
+			output$transform_data_handle_missing_values_new_numeric = NULL
+			updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
 		}
 	})
 
-	
+
+	## Apply handling missing data changes
 	observeEvent(input$transform_data_apply, {
-		if (isTRUE(input$transform_data_handle_missing_values_check) & (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))))
-		if (isTRUE(input$transform_data_handle_missing_values_choices=="Drop missing (for all)")) {
-			rv_current$working_df = (rv_current$working_df
-				|> tidyr::drop_na()
-			)
-		} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Drop missing (for this)")) {
-			rv_current$working_df = (rv_current$working_df
-				|> tidyr::drop_na(all_of(rv_current$selected_var))
-			)
-		} else {
-			NULL
+		if (isTRUE(rv_current$has_missing_data_check)) {
+			if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
+			
+				if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category)) & isTRUE(input$transform_data_handle_missing_values_new_category!="")) {
+					rv_current$working_df = (rv_current$working_df
+						|> Rautoml::na_to_values(var=rv_current$selected_var
+							, na_pattern = input$transform_data_handle_missing_values_options
+							, new_category = input$transform_data_handle_missing_values_new_category
+							, apply_all = FALSE
+						)
+					)
+				}
+
+				if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_numeric)) & isTRUE(input$transform_data_handle_missing_values_new_numeric!="")) {
+					rv_current$working_df = (rv_current$working_df
+						|> Rautoml::na_to_values(var=rv_current$selected_var
+							, na_pattern = input$transform_data_handle_missing_values_options
+							, new_category = input$transform_data_handle_missing_values_new_numeric
+							, apply_all = FALSE
+						)
+					)
+				}
+				
+			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for all)")) {
+				rv_current$working_df = (rv_current$working_df
+					|> Rautoml::na_to_values(var=rv_current$selected_var
+						, na_pattern = input$transform_data_handle_missing_values_options
+						, new_category = input$transform_data_handle_missing_values_new_category
+						, new_numeric = input$transform_data_handle_missing_values_new_numeric
+						, apply_all = TRUE
+					)
+				)
+			}
 		}
-		
-		updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-		output$transform_data_handle_missing_values = NULL
-		output$transform_data_handle_missing_values_ui = NULL
-		output$transform_data_handle_missing_values_out = NULL
-
-		updateSelectInput(session = session,  "transform_data_handle_missing_values_choices", selected = "")
-		output$transform_data_handle_missing_values_choices = NULL
-
-		output$transform_data_handle_missing_values_options = NULL
-		updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
-		
-		output$transform_data_handle_missing_values_new_numeric = NULL
-		updateNumericInput(session = session, inputId = "transform_data_handle_missing_values_new_numeric", value = NULL)
-
-		output$transform_data_handle_missing_values_new_category = NULL
-		updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
 	})
+	
+	rv_current$has_missing_data_check = FALSE
+	updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
+	
+	updateSelectInput(session = session,  "transform_data_handle_missing_values_choices", selected = "")
+	output$transform_data_handle_missing_values_choices = NULL
 
+	updateCheckboxGroupInput(session = session, "transform_data_handle_missing_values_options", selected=character(0))
+	output$transform_data_handle_missing_values_options = NULL
+			
+	updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = "")
+	updateTextInput(session = session, inputId = "transform_data_handle_missing_values_new_category", value = NULL)
+	output$transform_data_handle_missing_values_new_category = NULL
 }
 
-## 		if (isTRUE(input$transform_data_handle_missing_values_choices == "Drop missing (for all)")) {
-## 			rv_current$working_df = (rv_current$working_df
-## 				|> tidyr::drop_na()
-## 			)
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices == "Drop missing (for this)")) {
-## 			rv_current$working_df = (rv_current$working_df
-## 				|> tidyr::drop_na(all_of(rv_current$selected_var))
-## 			)
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices == "Create new category (for all)")) {
-## 			apply_all = TRUE
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
-## 			apply_all = FALSE			
-## 		}
-## 
-## 		if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category))) {
-## 			rv_current$working_df = na_to_values(rv_current$working_df
-## 				, rv_current$selected_var
-## 				, na_pattern = input$transform_data_handle_missing_values_options
-## 				, new_category = input$transform_data_handle_missing_values_new_category
-## 				, apply_all = apply_all
-## 			)
-## 	##		updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-## 		}
-
-## 	observe({
-##  		if (isTRUE(length(input$transform_data_handle_missing_values_options)>0) & isTRUE(input$transform_data_handle_missing_values_check)) {
-## 			if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
-## 				if (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))) {
-## 					if (isTRUE(rv_current$vartype=="numeric")) {
-## 						output$transform_data_handle_missing_values_new_category = NULL
-## 						output$transform_data_handle_missing_values_new_numeric = renderUI({
-## 							 numericInput("transform_data_handle_missing_values_new_numeric"
-## 								, label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
-## 								, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
-## 								, width = "100%"
-## 							 )
-## 						})
-## 					} else if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
-## 						output$transform_data_handle_missing_values_new_numeric = NULL
-## 						output$transform_data_handle_missing_values_new_category = renderUI({
-## 							 textInput("transform_data_handle_missing_values_new_category"
-## 								, label = get_rv_labels("transform_data_handle_missing_values_new_category")
-## 								, value=""
-## 								, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
-## 								, width = "100%"
-## 							 )
-## 						})
-## 					}
-## 				}
-## 			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for all)")) {
-##  				output$transform_data_handle_missing_values_new_category = renderUI({
-##  					 textInput("transform_data_handle_missing_values_new_category"
-##  						, label = get_rv_labels("transform_data_handle_missing_values_new_category")
-##  						, value=""
-##  						, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
-##  						, width = "100%"
-##  					 )
-##  				})
-##  				
-##  				output$transform_data_handle_missing_values_new_numeric = renderUI({
-##  					 numericInput("transform_data_handle_missing_values_new_numeric"
-##  						, label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
-##  						, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
-##  						, width = "100%"
-##  					 )
-##  				})
-## 			} else {
-## 				output$transform_data_handle_missing_values_new_category = NULL
-## 				output$transform_data_handle_missing_values_new_numeric = NULL
-## 			}
-## 		} else {
-## 			output$transform_data_handle_missing_values_new_category = NULL
-## 			output$transform_data_handle_missing_values_new_numeric = NULL
-## 		}
-## 	})
-
-
-## transform_data_handle_missing_values_server = function() {
-## 	observe({
-## 		if (isTRUE(!is.null(rv_current$selected_var)) & isTRUE(!is.null(rv_current$working_df))) {
-## 
-## 			output$transform_data_create_missing_values = renderUI({
-## 				materialSwitch(
-## 						inputId = "transform_data_create_missing_values_check",
-## 						label = get_rv_labels("create_missing_values"),
-## 						status = "success",
-## 						right = TRUE
-## 				 )
-## 			})
-## 			
-## 
-## 			if (!isTRUE(input$explore_data_missingness_check)) {
-## 				rv_current$missing_prop = missing_prop(rv_current$working_df)
-## 			}
-## 			if (NROW(rv_current$missing_prop)) {
-## 				rv_current$missing_prop_df = (rv_current$missing_prop
-## 					|> mutate(missing = readr::parse_number(missing))
-## 					|> filter(missing > 0 & variable %in% rv_current$selected_var)
-## 				)
-## 				if (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))) {
-## 					output$transform_data_handle_missing_values = renderUI({
-## 						materialSwitch(
-## 								inputId = "transform_data_handle_missing_values_check",
-## 								label = get_rv_labels("handle_missing_values"),
-## 								status = "success",
-## 								right = TRUE
-## 						 )
-## 					})
-## 					output$transform_data_handle_missing_values_ui = renderUI({
-## 					 HTML(paste0("<b>", get_rv_labels("handle_missing_values_ui"), "</b>"))
-## 					})
-## 					output$transform_data_handle_missing_values_out = renderPrint({
-## 						print(rv_current$missing_prop_df)
-## 					})
-## 
-## 				} else {
-## 					output$transform_data_handle_missing_values_ui = NULL
-## 					output$transform_data_handle_missing_values_out = NULL
-## 					output$transform_data_handle_missing_values = NULL
-## 					output$transform_data_handle_missing_values_choices = NULL
-## 					output$transform_data_handle_missing_values_options = NULL
-## 					output$transform_data_handle_missing_values_new_category = NULL
-## 					output$transform_data_handle_missing_values_new_numeric = NULL
-## 				}
-## 			}
-## ## 			else {
-## ## 				output$transform_data_handle_missing_values = NULL
-## ## 				output$transform_data_handle_missing_values_choices = NULL
-## ## 				output$transform_data_handle_missing_values_options = NULL
-## ## 				output$transform_data_handle_missing_values_new_category = NULL
-## ## 			}
-## 		} else {
-## 			output$transform_data_create_missing_values = NULL
-## 		}
-## 	})
-## 
-## 	observe({
-## 		if (isTRUE(input$transform_data_create_missing_values_check)) {
-## 
-## 			output$transform_data_create_missing_values_choices = renderUI({
-## 				empty_lab = ""
-## 				names(empty_lab) = get_rv_labels("transform_data_create_missing_values_choices_ph")
-## 				selectInput(
-## 					inputId = "transform_data_create_missing_values_choices"
-## 					, label = NULL
-## 					, selected = ""
-## 					, choices = c(empty_lab, get_named_choices(input_choices_file, input$change_language, "transform_data_create_missing_values_choices"))
-## 				)
-## 			})
-## 		} else {
-## 			output$transform_data_create_missing_values_choices = NULL
-## 			output$transform_data_create_missing_values_input = NULL
-## 		}
-## 	})
-## 
-## 	observe({
-## 			if (isTRUE(input$transform_data_create_missing_values_check) & isTRUE(input$transform_data_create_missing_values_choices!="")) {
-## 				output$transform_data_create_missing_values_options = renderUI({
-## 					radioButtons("transform_data_create_missing_values_options"
-## 						, label = get_rv_labels("transform_data_create_missing_values_options")
-## 						, choices = get_named_choices(input_choices_file, input$change_language, "transform_data_create_missing_values_options")
-## 						, selected = character(0)
-## 						, inline = TRUE
-## 					)
-## 				})
-## 			} else {
-## 				output$transform_data_create_missing_values_options = NULL
-## 			}
-## 		
-## 		
-## 	})
-## 
-## 	observe({
-## 		if (isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
-## 			output$transform_data_create_missing_values_input = renderUI({
-## 				 #### FIXME: Default value is set ""
-## 				 textInput("transform_data_create_missing_values_input"
-## 					, label = NULL
-## 					, value=""
-## 					, placeholder = get_rv_labels("transform_data_create_missing_values_input_pattern")
-## 					, width = "100%"
-## 				 )
-## 			})
-## 		} else if (isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
-## 
-## 			if (isTRUE(rv_current$vartype=="numeric")) {
-## 				min_max = get_range(rv_current$working_df, rv_current$selected_var)
-## 				output$transform_data_create_missing_values_input = renderUI({
-## 					numericRangeInput(inputId = "transform_data_create_missing_values_input"
-## 						, label = get_rv_labels("transform_data_create_missing_values_input_range")
-## 						, value = min_max
-## 					)
-## 				})
-## 			} else if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
-## 				empty_lab = ""
-## 				names(empty_lab) = get_rv_labels("transform_data_create_missing_values_input_categories_ph")
-## 				output$transform_data_create_missing_values_input = renderUI({
-## 					selectInput(
-## 						inputId = "transform_data_create_missing_values_input"
-## 						, label = NULL
-## 						, selected = NULL
-## 						, choices = c(empty_lab, extract_value_labels(rv_current$working_df, rv_current$selected_var))
-## 						, multiple = TRUE
-## 					)
-## 				})
-## 			}
-## 		} else {
-## 			output$transform_data_create_missing_values_input = NULL
-## 		}
-## 	})
-## 
-## 	observe({
-## 		if (isTRUE(input$transform_data_handle_missing_values_check)) {
-## 			output$transform_data_handle_missing_values_choices = renderUI({
-## 				selectInput(
-## 					inputId = "transform_data_handle_missing_values_choices"
-## 					, label = NULL
-## 					, selected = ""
-## 					, choices = c("", get_named_choices(input_choices_file, input$change_language, "transform_data_handle_missing_values_choices"))
-## 				)
-## 			})
-## 		
-## 		} else {
-## 			output$transform_data_handle_missing_values_choices = NULL
-## 			output$transform_data_handle_missing_values_options = NULL
-## 			output$transform_data_handle_missing_values_new_category = NULL
-## 			output$transform_data_handle_missing_values_new_numeric = NULL
-## 		}
-## 	})
-## 
-##		## HERE 
-## 	observe({
-## 		if (isTRUE(input$transform_data_handle_missing_values_check)) {
-##  			if (isTRUE(any(input$transform_data_handle_missing_values_choices %in% c("Create new category (for all)",  "Create new category (for this)")))) {
-##  				missing_indicators = get_named_choices(input_choices_file, input$change_language, "transform_data_handle_missing_values_options")
-##  				output$transform_data_handle_missing_values_options = renderUI({
-##  					checkboxGroupInput(
-##  						"transform_data_handle_missing_values_options"
-##  						, label = get_rv_labels("transform_data_handle_missing_values_options")
-##  						, choices = missing_indicators
-##  						, selected = missing_indicators
-##  						, inline = TRUE
-##  					)
-##  				})
-## 			} else {
-## 				output$transform_data_handle_missing_values_options = NULL
-## 			}
-## 		} else {
-## 			output$transform_data_handle_missing_values_options = NULL
-## 			output$transform_data_handle_missing_values_new_category = NULL
-## 			output$transform_data_handle_missing_values_new_numeric = NULL
-## 		}
-## 	})
-## 
-## 	observe({
-##  		if (isTRUE(length(input$transform_data_handle_missing_values_options)>0) & isTRUE(input$transform_data_handle_missing_values_check)) {
-## 			if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
-## 				if (isTRUE(any(rv_current$selected_var %in% rv_current$missing_prop_df$variable))) {
-## 					if (isTRUE(rv_current$vartype=="numeric")) {
-## 						output$transform_data_handle_missing_values_new_category = NULL
-## 						output$transform_data_handle_missing_values_new_numeric = renderUI({
-## 							 numericInput("transform_data_handle_missing_values_new_numeric"
-## 								, label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
-## 								, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
-## 								, width = "100%"
-## 							 )
-## 						})
-## 					} else if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
-## 						output$transform_data_handle_missing_values_new_numeric = NULL
-## 						output$transform_data_handle_missing_values_new_category = renderUI({
-## 							 textInput("transform_data_handle_missing_values_new_category"
-## 								, label = get_rv_labels("transform_data_handle_missing_values_new_category")
-## 								, value=""
-## 								, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
-## 								, width = "100%"
-## 							 )
-## 						})
-## 					}
-## 				}
-## 			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for all)")) {
-##  				output$transform_data_handle_missing_values_new_category = renderUI({
-##  					 textInput("transform_data_handle_missing_values_new_category"
-##  						, label = get_rv_labels("transform_data_handle_missing_values_new_category")
-##  						, value=""
-##  						, placeholder = get_rv_labels("transform_data_handle_missing_values_new_category_ph")
-##  						, width = "100%"
-##  					 )
-##  				})
-##  				
-##  				output$transform_data_handle_missing_values_new_numeric = renderUI({
-##  					 numericInput("transform_data_handle_missing_values_new_numeric"
-##  						, label = get_rv_labels("transform_data_handle_missing_values_new_numeric")
-##  						, value=get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
-##  						, width = "100%"
-##  					 )
-##  				})
-## 			} else {
-## 				output$transform_data_handle_missing_values_new_category = NULL
-## 				output$transform_data_handle_missing_values_new_numeric = NULL
-## 			}
-## 		} else {
-## 			output$transform_data_handle_missing_values_new_category = NULL
-## 			output$transform_data_handle_missing_values_new_numeric = NULL
-## 		}
-## 	})
-## 
-##		## HERE 
-## 	observeEvent(input$transform_data_apply, {
-## 		if (isTRUE(input$transform_data_create_missing_values_check) & isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
-## 			if (isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
-## 				if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
-## 					rv_current$working_df = na_if_pattern(rv_current$working_df
-## 						, rv_current$selected_var
-## 						, pattern = input$transform_data_create_missing_values_input
-## 						, replacement = NA_character_
-## 					)
-## 				} else {
-## 					rv_current$working_df = na_if_pattern(rv_current$working_df
-## 						, rv_current$selected_var
-## 						, pattern = input$transform_data_create_missing_values_input
-## 						, replacement = NA_character_
-## 						, apply_all = TRUE
-## 					)
-## 				}
-## 			}
-## 		} else {
-## 				if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
-## 					if (isTRUE(rv_current$vartype=="numeric")) {
-## 						rv_current$working_df = na_if_numeric(rv_current$working_df
-## 							, rv_current$selected_var
-## 							, input$transform_data_create_missing_values_input
-## 						)
-## 					} else {
-## 						rv_current$working_df = na_if_label(rv_current$working_df
-## 							, rv_current$selected_var
-## 							, input$transform_data_create_missing_values_input
-## 						)
-## 					}
-## 				} else {
-## 					if (isTRUE(rv_current$vartype=="numeric")) {
-## 						rv_current$working_df = na_if_numeric(rv_current$working_df
-## 							, rv_current$selected_var
-## 							, input$transform_data_create_missing_values_input
-## 							, apply_all = TRUE
-## 						)
-## 					} else {
-## 						rv_current$working_df = na_if_label(rv_current$working_df
-## 							, rv_current$selected_var
-## 							, input$transform_data_create_missing_values_input
-## 							, apply_all = TRUE
-## 						)
-## 					}
-## 				}
-## 		}
-## 
-## 		if (isTRUE(input$transform_data_create_missing_values_check) & isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
-## 			if (isTRUE(input$transform_data_create_missing_values_choices=="For all variables")) {
-## 				current_var = colnames(rv_current$working_df)
-## 			} else {
-## 				current_var = rv_current$selected_var
-## 			}
-## 
-## 			rv_current$create_missing_values_log = c(rv_current$create_missing_values_log
-## 				, paste0("{ ", current_var, ": ", unique(input$transform_data_create_missing_values_input), " ----> ", "Missing (NA)", " }")
-## 			)
-## 			output$transform_data_create_missing_values_log_ui = renderUI({
-## 				p( hr()
-## 					, HTML(paste0("<b>", get_rv_labels("create_missing_values_log"), "</b>"))
-## 				)
-## 			})
-## 			output$transform_data_create_missing_values_log = renderPrint({
-## 				cat(rv_current$create_missing_values_log, sep="\n")
-## 			})
-## 		}
-## 
-## 
-## 		if (isTRUE(input$transform_data_handle_missing_values_choices == "Drop missing (for all)")) {
-## 			rv_current$working_df = (rv_current$working_df
-## 				|> tidyr::drop_na()
-## 			)
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices == "Drop missing (for this)")) {
-## 			rv_current$working_df = (rv_current$working_df
-## 				|> tidyr::drop_na(all_of(rv_current$selected_var))
-## 			)
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices == "Create new category (for all)")) {
-## 			apply_all = TRUE
-## 		} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for this)")) {
-## 			apply_all = FALSE			
-## 		}
-## 
-## 		if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category))) {
-## 			rv_current$working_df = na_to_values(rv_current$working_df
-## 				, rv_current$selected_var
-## 				, na_pattern = input$transform_data_handle_missing_values_options
-## 				, new_category = input$transform_data_handle_missing_values_new_category
-## 				, apply_all = apply_all
-## 			)
-## 	##		updateMaterialSwitch(session=session, "transform_data_handle_missing_values_check", value=FALSE)
-## 		}
-## 
-## 	})
-## }
-## 
 
 #### ---- Plot single variables in transform data --------------------------------
 transform_data_quick_explore_plot_server = function() {
