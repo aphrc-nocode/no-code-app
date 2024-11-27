@@ -80,3 +80,31 @@ transfun = function(var, old, new) {
 	paste0("{", var, ": ", old, " ----> ", new, "}")
 }
 
+
+## Handle missing values UI hack
+
+### Numeric values
+transform_data_handle_missing_values_numericUI = function(label, value) {
+	transform_data_handle_missing_values_new_numeric = renderUI({
+		 numericInput("transform_data_handle_missing_values_new_numeric"
+			, label = label # get_rv_labels("transform_data_handle_missing_values_new_numeric")
+			, value = value # get_rv_labels("transform_data_handle_missing_values_new_numeric_ph")
+			, width = "100%"
+		 )
+	})
+	return(transform_data_handle_missing_values_new_numeric)
+}
+
+### Categorical values
+transform_data_handle_missing_values_categoricalUI = function(label, value="", placeholder) {
+	transform_data_handle_missing_values_new_category = renderUI({
+		 textInput("transform_data_handle_missing_values_new_category"
+			, label = label # get_rv_labels("transform_data_handle_missing_values_new_category")
+			, value=value # ""
+			, placeholder = placeholder # get_rv_labels("transform_data_handle_missing_values_new_category_ph")
+			, width = "100%"
+		 )
+	})
+	return(transform_data_handle_missing_values_new_category)
+}
+
