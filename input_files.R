@@ -15,6 +15,11 @@ input_files = renderUI({
 			)
 	  	, width = "50%"
 		)
- 	} 
+ 	} else if (isTRUE(input$upload_type=="Database connection")) {
+		textInput("db_host_url", label = get_rv_labels("db_host_url")
+			, placeholder = get_rv_labels("db_host_url_ph")
+			, width = "50%"
+		)	
+	}
 })
 

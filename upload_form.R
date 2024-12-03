@@ -26,13 +26,6 @@ additional_info <- renderUI({
 
 ### --- Additional form details for database section --- ###
 
-### ----------OMOP Schema Views---------------------------------------####
-db_type <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_type", "Database Type", choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
-  }
-})
-
 ### --- Database host ---###
 db_host <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
@@ -120,21 +113,28 @@ db_connect <- renderUI({
     } 
 })
 
-
-### ----------OMOP Schema Views---------------------------------------####
-db_schema_list <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_schema_list", "List of Schemas", choices = NULL, multiple = FALSE)
-  }
-})
-
-
 ### ----------OMOP Table Views---------------------------------------####
 db_table_list <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) {
-        selectInput("db_table_list", "List of Tables", choices = NULL, multiple = FALSE)
+        selectInput("db_table_list", "List of Tables", choices = list("None", "test"), multiple = FALSE)
     }
 })
 
 
-
+### ----------OMOP Table Saving---------------------------------------####
+save_omop_table <- renderUI({
+    if (isTRUE(input$upload_type == "Database connection")) {
+        div(
+            actionBttn("save_db_table",
+                label = "Save", width = "25%",
+                inline = TRUE,
+                block = FALSE,
+                color = "success",
+                class = "btn-primary"
+            ),
+            style = "text-align:right; margin-top:20px;"
+        )
+    } else {
+        NULL
+    }
+})
