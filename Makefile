@@ -22,6 +22,8 @@ Sources += $(wildcard ui/*.R)
 Sources += $(wildcard static_files/*.*)
 Sources += LICENSE
 
+Ignore += datasets/*
+
 ######################################################################
 
 ## Application
