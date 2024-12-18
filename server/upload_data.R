@@ -10,12 +10,24 @@ upload_data_server = function(){
 		req(iv_url$is_valid())
 		req(input$url_upload)
 		file_name_full = input$url_upload
+	 } else if(input$upload_type == "Database connection"){
+	   req(rv_database$df_table)
+	   file_name_full = paste0(rv_database$schema_selected,rv_database$table_selected,".csv")
+	   file_ext = "csv"
+	   file_name = paste0(rv_database$schema_selected,rv_database$table_selected)
+	   temp_name = paste0(file_name, "-", format_date_time(Sys.time(), "%d%m%Y%H%M%S"), ".", "csv")
+	   file_path = get_data_class(paste0("datasets", "/", temp_name))
+	   df = data.frame(rv_database$df_table)
+	   if(length(rv_database$df_table > 0)){
+	       write_data(file_path, df)
+	     }else{shinyalert("", "Table save failed.", type = "info")}
+	     
 	 }
+	  
+    file_name = get_file_name(file_name_full)
+    file_ext = get_file_ext(file_name_full)
+    supported_files_temp = gsub("\\.", "", supported_files)
 
-	 file_name = get_file_name(file_name_full)
-	 file_ext = get_file_ext(file_name_full)
-	 supported_files_temp = gsub("\\.", "", supported_files)
-	 
 	 if (input$upload_type=="URL" & tolower(file_ext) == "xls") {
 		shinyalert("", get_rv_labels("xls_error_msg"), type = "error", inputId="upload_error")
 		reset("upload_form")
@@ -27,6 +39,7 @@ upload_data_server = function(){
 		  }
 		  reset("upload_form")
 		} else {
+		  
 		  upload_time = Sys.time()
 		  temp_name = paste0(file_name, "-", format_date_time(upload_time, "%d%m%Y%H%M%S"), ".", file_ext)
 		  upload_time = format_date_time(upload_time)

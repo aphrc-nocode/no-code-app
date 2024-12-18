@@ -22,7 +22,9 @@ library(countries)
 
 library(plotly)
 library(ggplot2)
-
+library(DBI)
+library(RPostgreSQL)
+library(DT)
 
 fluidPage(
   shiny::includeScript("js/script.js"),
@@ -49,7 +51,27 @@ fluidPage(
               , uiOutput("study_country")
               , uiOutput("additional_info")
               , uiOutput("input_files")
-              , uiOutput("submit_upload")
+              , uiOutput("db_type")
+              , uiOutput("db_host")
+              , uiOutput("db_name")
+              , uiOutput("db_user")
+              , uiOutput("db_pwd")
+              , uiOutput("db_connect")
+              , hr()
+              , uiOutput("db_schema_list")
+              , uiOutput("db_table_list")
+              ,br()
+              , conditionalPanel(
+                condition = "input.upload_type == 'Database connection'",
+                DT::DTOutput("db_table_view", width = "100%")
+              ) 
+              ,br()
+              ,conditionalPanel(
+                condition = "input.upload_type == 'Database connection'",
+                DT::DTOutput("db_table_view", width = "100%")
+              )
+              ,uiOutput("submit_upload")              
+              ,br()
             )
             , br()
             , uiOutput("upload_info")
