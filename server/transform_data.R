@@ -369,57 +369,54 @@ transform_data_create_missing_values_server = function() {
 	## Fields for inputing missing value patterns
 	observe({
 		if (isTRUE(input$transform_data_create_missing_values_choices!="") & (isTRUE(!is.null(input$transform_data_create_missing_values_choices))) & isTRUE(input$transform_data_create_missing_values_check) & isTRUE(!is.null(rv_current$selected_var))) {
-			
-			if (isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
-				output$transform_data_create_missing_values_input = renderUI({
-					 #### FIXME: Default value is set ""
-					 textInput("transform_data_create_missing_values_input"
-						, label = NULL
-						, value=""
-						, placeholder = get_rv_labels("transform_data_create_missing_values_input_pattern")
-						, width = "100%"
-					 )
-				})
-			} else {
-				output$transform_data_create_missing_values_input = NULL
-				updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
-			}
-			
-			if (isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
-				if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
-					if (isTRUE(rv_current$vartype=="numeric")) {
-						output$transform_data_create_missing_values_input = renderUI({
-							textInput(inputId = "transform_data_create_missing_values_input"
-								, label = get_rv_labels("transform_data_create_missing_values_input")
-								, placeholder = get_rv_labels("transform_data_create_missing_values_input_range_ph")
-								, value = NULL
-							)
-						})
-						
-						output$transform_data_create_missing_values_input_range = renderUI({
-							checkboxInput("transform_data_create_missing_values_input_range"
-								, label = get_rv_labels("transform_data_create_missing_values_input_range")
-								, value = FALSE
-							)
-						})			
-					}
+		
+			if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
 
-					if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
-						empty_lab = ""
-						names(empty_lab) = get_rv_labels("transform_data_create_missing_values_input_categories_ph")
-						output$transform_data_create_missing_values_input = renderUI({
-							selectInput(
-								inputId = "transform_data_create_missing_values_input"
-								, label = NULL
-								, selected = NULL
-								, choices = c(empty_lab, extract_value_labels(rv_current$working_df, rv_current$selected_var))
-								, multiple = TRUE
-							)
-						})
-					}
+				if (isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
+					output$transform_data_create_missing_values_input = renderUI({
+						 #### FIXME: Default value is set ""
+						 textInput("transform_data_create_missing_values_input"
+							, label = NULL
+							, value=""
+							, placeholder = get_rv_labels("transform_data_create_missing_values_input_pattern")
+							, width = "100%"
+						 )
+					})
+				} else if (isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
+						if (isTRUE(rv_current$vartype=="numeric")) {
+							output$transform_data_create_missing_values_input = renderUI({
+								textInput(inputId = "transform_data_create_missing_values_input"
+									, label = get_rv_labels("transform_data_create_missing_values_input")
+									, placeholder = get_rv_labels("transform_data_create_missing_values_input_range_ph")
+									, value = NULL
+								)
+							})
+							
+						} else if (isTRUE(any(rv_current$vartype %in% recode_var_types))) {
+							empty_lab = ""
+							names(empty_lab) = get_rv_labels("transform_data_create_missing_values_input_categories_ph")
+							output$transform_data_create_missing_values_input = renderUI({
+								selectInput(
+									inputId = "transform_data_create_missing_values_input"
+									, label = NULL
+									, selected = NULL
+									, choices = c(empty_lab, extract_value_labels(rv_current$working_df, rv_current$selected_var))
+									, multiple = TRUE
+								)
+							})
+						}
+				} else {
+					output$transform_data_create_missing_values_input = NULL
+					updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
 
+					output$transform_data_create_missing_values_input_range = NULL
+					updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
 
-				} else if (isTRUE(input$transform_data_create_missing_values_choices=="For all variables")) {
+					output$transform_data_create_missing_values_input_numeric = NULL
+					updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
+				}
+			} else if (isTRUE(input$transform_data_create_missing_values_choices=="For all variables")) {
+				if (isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
 					output$transform_data_create_missing_values_input = renderUI({
 						textInput(inputId = "transform_data_create_missing_values_input"
 							, label = "Categorical"
@@ -435,36 +432,57 @@ transform_data_create_missing_values_server = function() {
 							, value = NULL
 						)
 					})
+					
+				} else if (isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
+					output$transform_data_create_missing_values_input = renderUI({
+						 #### FIXME: Default value is set ""
+						 textInput("transform_data_create_missing_values_input"
+							, label = NULL
+							, value=""
+							, placeholder = get_rv_labels("transform_data_create_missing_values_input_pattern")
+							, width = "100%"
+						 )
+					})
+					
+					output$transform_data_create_missing_values_input_numeric = NULL
+					updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
 				} else {
 					output$transform_data_create_missing_values_input = NULL
 					updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
-
+					
 					output$transform_data_create_missing_values_input_range = NULL
 					updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
 
 					output$transform_data_create_missing_values_input_numeric = NULL
 					updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
+					
 				}
-			}
+			} else {
+				output$transform_data_create_missing_values_input = NULL
+				updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
 
+				output$transform_data_create_missing_values_input_range = NULL
+				updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
+
+				output$transform_data_create_missing_values_input_numeric = NULL
+				updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
+			}
 		} else {
 			output$transform_data_create_missing_values_input = NULL
-			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)	
-					
+			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
+
 			output$transform_data_create_missing_values_input_range = NULL
 			updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
-			
+
 			output$transform_data_create_missing_values_input_numeric = NULL
 			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
-			output$transform_data_create_missing_values_input_range = NULL
-			updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
-			
 		}
+
 	})
 
 	## Activate range check for numeric values
 	observe({
-		if (isTRUE(input$transform_data_create_missing_values_input_numeric!="") & isTRUE(!is.null(input$transform_data_create_missing_values_input_numeric)) & isTRUE(input$transform_data_create_missing_values_choices=="For all variables") & isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
+		if ((isTRUE(input$transform_data_create_missing_values_input_numeric!="") & isTRUE(!is.null(input$transform_data_create_missing_values_input_numeric)) | isTRUE(input$transform_data_create_missing_values_input!="") & isTRUE(!is.null(input$transform_data_create_missing_values_input))) & isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
 			output$transform_data_create_missing_values_input_range = renderUI({
 				checkboxInput("transform_data_create_missing_values_input_range"
 					, label = get_rv_labels("transform_data_create_missing_values_input_range")
@@ -474,6 +492,78 @@ transform_data_create_missing_values_server = function() {
 		} else {
 			output$transform_data_create_missing_values_input_range = NULL
 			updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
+		}
+	})
+
+	#### Apply Creation of missing values
+
+	observeEvent(input$transform_data_apply, {
+
+		if (isTRUE(input$transform_data_create_missing_values_check)) {
+			if (isTRUE(input$transform_data_create_missing_values_options=="Use patterns")) {
+				if (isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
+					if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
+						current_var = rv_current$selected_var
+						rv_current$working_df = na_if_pattern(rv_current$working_df
+							, rv_current$selected_var
+							, pattern = input$transform_data_create_missing_values_input
+							, replacement = NA_character_
+						)
+						recode_result = input$transform_data_create_missing_values_input
+					} else {
+						rv_current$working_df = na_if_pattern(rv_current$working_df
+							, rv_current$selected_var
+							, pattern = input$transform_data_create_missing_values_input
+							, replacement = NA_character_
+							, apply_all = TRUE
+						)
+						recode_result = input$transform_data_create_missing_values_input
+						current_var = colnames(rv_current$working_df)
+					}
+				}
+			} else if (isTRUE(input$transform_data_create_missing_values_options=="Use categories")) {
+				if (isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
+					if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
+						current_var = rv_current$selected_var
+						rv_current$working_df = na_if_category_single(rv_current$working_df
+							, rv_current$selected_var
+							, input$transform_data_create_missing_values_input
+							, range = input$transform_data_create_missing_values_input_range
+						)
+						recode_result = input$transform_data_create_missing_values_input
+					} else {
+						rv_current$working_df = na_if_category_multiple(rv_current$working_df
+							, numeric_labels = input$transform_data_create_missing_values_input_numeric
+							, categorical_labels = input$transform_data_create_missing_values_input
+							, range = isTRUE(input$transform_data_create_missing_values_input_range)
+						)
+						recode_result = paste0(input$transform_data_create_missing_values_input, "; ", input$transform_data_create_missing_values_input_numeric)
+						current_var = colnames(rv_current$working_df)
+					}
+				}
+			}
+			
+			rv_current$missing_prop = missing_prop(rv_current$working_df)
+			rv_current$created_missing_values_log = c(rv_current$created_missing_values_log
+				, paste0("{ ", current_var, ": {", recode_result, "} ----> ", NA, " }")
+			)
+			output$transform_data_created_missing_values_log_ui = renderUI({
+				p( hr()
+					, HTML(paste0("<b>", get_rv_labels("created_missing_values_log"), "</b>"))
+				)
+			})
+			output$transform_data_created_missing_values_log = renderPrint({
+				cat(rv_current$created_missing_values_log, sep="\n")
+			})
+			
+			updateMaterialSwitch(session=session, "transform_data_create_missing_values_check", value=FALSE)
+			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_choices", selected = "")
+			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input", selected = NULL)
+			updateRadioButtons(session = session, inputId = "transform_data_create_missing_values_options", selected = character(0))
+			updateTextInput(session = session, inputId = "transform_data_create_missing_values_input", value = "")
+			updateNumericRangeInput(session = session, inputId = "transform_data_create_missing_values_input", value = NULL)
+			updateCheckboxInput(session = session, inputId = "transform_data_create_missing_values_input_range", value = FALSE)
+			updateSelectInput(session = session, inputId = "transform_data_create_missing_values_input_numeric", selected = NULL)
 		}
 	})
 
