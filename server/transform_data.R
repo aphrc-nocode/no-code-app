@@ -110,7 +110,7 @@ transform_data_change_type_server = function() {
 	#### FIXME: ADD ALL CONDITIONS WHICH DEPENDS ON APPLY
 	observe({
 		if (isTRUE(!is.null(rv_current$selected_var))) {
-			if ((isTRUE(input$transform_data_change_type_check) & isTRUE(!grepl("---", input$transform_data_change_type_choices)))| (isTRUE(!is.null(input$transform_data_rename_variable_input)) & isTRUE(input$transform_data_rename_variable_check)  & isTRUE(input$transform_data_rename_variable_input!="")) | (isTRUE(input$transform_data_recode_variable_check) & isTRUE(!is.null(input$transform_data_recode_variable_input)) & isTRUE(input$transform_data_recode_variable_input!="")) | (isTRUE(input$transform_data_create_missing_values_check) & (isTRUE(!is.null(input$transform_data_create_missing_values_input))) & (isTRUE(input$transform_data_create_missing_values_choices!="")) & (isTRUE(length(input$transform_data_create_missing_values_options)>0))) | ((isTRUE(any(input$transform_data_handle_outliers_choices %in% c("drop", "nothing"))) | (isTRUE(any(input$transform_data_handle_outliers_correct_options %in% c("mean", "median")))) | (isTRUE(!is.na(input$transform_data_handle_outliers_correct_options_input)))) & (isTRUE(length(rv_current$outlier_values)>0)) ) | (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category)) & isTRUE(input$transform_data_handle_missing_values_new_category!="") & isTRUE(rv_current$has_missing_data_check))   ) {
+			if ((isTRUE(input$transform_data_change_type_check) & isTRUE(!grepl("---", input$transform_data_change_type_choices)))| (isTRUE(!is.null(input$transform_data_rename_variable_input)) & isTRUE(input$transform_data_rename_variable_check)  & isTRUE(input$transform_data_rename_variable_input!="")) | (isTRUE(input$transform_data_recode_variable_check) & isTRUE(!is.null(input$transform_data_recode_variable_input)) & isTRUE(input$transform_data_recode_variable_input!="")) | ((isTRUE(input$transform_data_create_missing_values_input_numeric!="") & isTRUE(!is.null(input$transform_data_create_missing_values_input_numeric)) | isTRUE(input$transform_data_create_missing_values_input!="") & isTRUE(!is.null(input$transform_data_create_missing_values_input)))) | ((isTRUE(any(input$transform_data_handle_outliers_choices %in% c("drop", "nothing"))) | (isTRUE(any(input$transform_data_handle_outliers_correct_options %in% c("mean", "median")))) | (isTRUE(!is.na(input$transform_data_handle_outliers_correct_options_input)))) & (isTRUE(length(rv_current$outlier_values)>0)) ) | (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category)) & isTRUE(input$transform_data_handle_missing_values_new_category!="") & isTRUE(rv_current$has_missing_data_check))   ) {
 				output$transform_data_apply = renderUI({
 				p(
 						actionBttn("transform_data_apply"
@@ -721,23 +721,23 @@ transform_data_identify_outliers_server = function() {
 					outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_correct_options_input)
 				}
 			}
-		} else {
-			## HERE
+		} else if (isTRUE(input$transform_data_handle_outliers_choices=="nothing")) {
 			outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_choices)
 		}
 		
-		rv_current$handle_outlier_values_log = c(rv_current$handle_outlier_values_log
-			, paste0("{ ", rv_current$selected_var, ": {", outliers_result, " }")
-		)
-		output$transform_data_handle_outlier_values_log_ui = renderUI({
-			p( hr()
-				, HTML(paste0("<b>", get_rv_labels("handle_outlier_values_log"), "</b>"))
+		if (isTRUE(any(input$transform_data_handle_outliers_choices %in% c("drop", "correct", "nothing")))) {
+			rv_current$handle_outlier_values_log = c(rv_current$handle_outlier_values_log
+				, paste0("{ ", rv_current$selected_var, ": {", outliers_result, " } }")
 			)
-		})
-		output$transform_data_handle_outlier_values_log = renderPrint({
-			cat(rv_current$handle_outlier_values_log, sep="\n")
-		})
-
+			output$transform_data_handle_outlier_values_log_ui = renderUI({
+				p( hr()
+					, HTML(paste0("<b>", get_rv_labels("handle_outlier_values_log"), "</b>"))
+				)
+			})
+			output$transform_data_handle_outlier_values_log = renderPrint({
+				cat(rv_current$handle_outlier_values_log, sep="\n")
+			})
+		}
 		rv_current$outlier_values = NULL
 		updateMaterialSwitch(session=session, "transform_data_identify_outliers_check", value=FALSE)
 		output$transform_data_handle_outliers_log_ui = NULL
