@@ -203,6 +203,8 @@ fluidPage(
               , verbatimTextOutput("transform_data_recoded_variable_labels_log")
               , htmlOutput("transform_data_created_missing_values_log_ui")
               , verbatimTextOutput("transform_data_created_missing_values_log")
+              , htmlOutput("transform_data_handle_missing_values_log_ui")
+              , verbatimTextOutput("transform_data_handle_missing_values_log")
               , htmlOutput("transform_data_handle_outlier_values_log_ui")
               , verbatimTextOutput("transform_data_handle_outlier_values_log")
             )
