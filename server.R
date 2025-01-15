@@ -22,11 +22,11 @@ function(input, output, session) {
     , current_filter_reset = NULL
     , manage_data_title_explore = NULL
     , missing_prop = NULL
-	 , has_missing_data_check=FALSE
+	  , has_missing_data_check=FALSE
     , manage_data_title_transform = NULL
     , transform_data_select_vars = NULL
     , vartype = NULL
-	 , changed_variable_type_log = NULL
+	  , changed_variable_type_log = NULL
     , transform_data_plot_df = NULL
     , renamed_variable_log = NULL
     , transform_data_quick_plot_out = NULL
@@ -34,6 +34,7 @@ function(input, output, session) {
     , missing_prop_df = NULL
     , created_missing_values_log = NULL
     , outlier_values = NULL
+	  , handle_missing_values_log = NULL
     , handle_outlier_values_log = NULL
   )
   
