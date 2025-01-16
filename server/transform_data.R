@@ -755,7 +755,7 @@ transform_data_handle_missing_values_server = function() {
 	
 	## Generate missing data summary
 	observe({
-		if (isTRUE(!is.null(rv_current$selected_var)) & (!is.null(rv_current$working_df))) {
+		if (isTRUE(!is.null(rv_current$selected_var)) & (isTRUE(!is.null(rv_current$working_df)))) {
 			
 			if (!isTRUE(input$explore_data_missingness_check)) {
 				rv_current$missing_prop = missing_prop(rv_current$working_df)
@@ -1009,3 +1009,18 @@ transform_data_quick_explore_plot_server = function() {
 		})
 }
 
+
+transform_data_plot_missing_data_server = function() {
+	observe({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			rv_current$transform_data_plot_missing_data_out = missing_data_plot(rv_current$working_df)
+				output$transform_data_plot_missing_data_out_ui = renderUI({
+				 HTML(paste0("<b>", get_rv_labels("transform_data_plot_missing_data_out"), "</b>"))
+				 })
+				output$transform_data_plot_missing_data_out = renderPlot({
+					rv_current$transform_data_plot_missing_data_out
+				})
+			
+		}
+	})
+}

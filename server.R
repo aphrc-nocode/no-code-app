@@ -36,6 +36,7 @@ function(input, output, session) {
     , outlier_values = NULL
 	  , handle_missing_values_log = NULL
     , handle_outlier_values_log = NULL
+    , transform_data_plot_missing_data_out = NULL
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -173,6 +174,9 @@ function(input, output, session) {
   
   ##### ---- Plot transform data ----------------------------------------------###
   transform_data_quick_explore_plot_server()
+  
+  ##### ---- Plot missing data ----------------------------------------------###
+  transform_data_plot_missing_data_server()
   
   
   #### ---- Reset various components --------------------------------------####
