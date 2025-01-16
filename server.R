@@ -200,9 +200,9 @@ function(input, output, session) {
   iv_url$enable()
   
   ### --- Database connection schema, table listing and save ---#
-  rv_database <- reactiveValues(schema_list = NULL, table_list = NULL, conn = NULL, schema_selected = NULL, table_selected = NULL, df_table = data.frame())
-  source("server/database_integration.R", local = TRUE)
-  database_integration_server()
+  # rv_database <- reactiveValues(schema_list = NULL, table_list = NULL, conn = NULL, schema_selected = NULL, table_selected = NULL, df_table = data.frame())
+  # source("server/database_integration.R", local = TRUE)
+  # database_integration_server()
   
 }
 
