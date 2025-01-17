@@ -49,6 +49,13 @@ function(input, output, session) {
     , data_summary_summarytools = NULL
   )
 
+	rv_database <- reactiveValues(schema_list = NULL
+		, table_list = NULL
+		, conn = NULL
+		, schema_selected = NULL
+		, table_selected = NULL
+		, df_table = data.frame()
+	)
   
   #### ---- Change language ----------------------------------------------------
   source("server/change_language.R", local = TRUE)
@@ -76,7 +83,7 @@ function(input, output, session) {
   output$study_country = study_country
   output$additional_info = additional_info
   output$submit_upload = submit_upload
-  
+ 
   #### ---- Databse and API connection warning ---------------------
   db_api_con_future
   
@@ -84,6 +91,20 @@ function(input, output, session) {
   source("server/upload_data.R", local = TRUE)
   upload_data_server()
   
+  #### ---- Database integration ----------------------------------------
+  source("server/database_integration.R", local = TRUE)
+  database_integration_server()
+ 
+  #### --- Database related form elements ---###
+  output$db_type = db_type
+  output$db_host = db_host
+  output$db_name = db_name
+  output$db_user = db_user
+  output$db_pwd = db_pwd
+  output$db_connect = db_connect
+  output$db_schema_list = db_schema_list
+  output$db_table_list = db_table_list
+
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
   collect_logs_server()

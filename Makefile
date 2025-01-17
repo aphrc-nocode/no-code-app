@@ -58,6 +58,9 @@ input_files.Rout: server/input_files.R
 ### Upload data
 upload_data.Rout: server/upload_data.R
 
+### Transform data
+database_integration.Rout: server/database_integration.R
+
 ### Display uploaded data
 display_uploaded_data.Rout: server/display_uploaded_data.R
 
@@ -87,7 +90,6 @@ explore_data.Rout: server/explore_data.R
 
 ### Transform data
 transform_data.Rout: server/transform_data.R
-
 
 ### Reset inputs
 resets.Rout: server/resets.R

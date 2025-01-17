@@ -10,6 +10,18 @@ upload_data_server = function(){
 		req(iv_url$is_valid())
 		req(input$url_upload)
 		file_name_full = input$url_upload
+	 }  else if(input$upload_type == "Database connection"){
+	   req(rv_database$df_table)
+	   file_name_full = paste0(rv_database$schema_selected,rv_database$table_selected,".csv")
+	   file_ext = "csv"
+	   file_name = paste0(rv_database$schema_selected,rv_database$table_selected)
+	   temp_name = paste0(file_name, "-", format_date_time(Sys.time(), "%d%m%Y%H%M%S"), ".", "csv")
+	   file_path = get_data_class(paste0("datasets", "/", temp_name))
+	   df = data.frame(rv_database$df_table)
+	   if(length(rv_database$df_table > 0)){
+	       write_data(file_path, df)
+	     }else{shinyalert("", "Table save failed.", type = "info")}
+	     
 	 }
 
 	 file_name = get_file_name(file_name_full)
@@ -57,7 +69,7 @@ upload_data_server = function(){
 			 }
 			 
 			 ## Generate metadata
-			 meta_data = create_df_metadata(data=df
+			 meta_data = Rautoml::create_df_metadata(data=df
 				, filename=temp_name
 				, study_name=input$study_name
 				, study_country=input$study_country

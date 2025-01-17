@@ -3,6 +3,7 @@ library(shinyjs)
 library(shinyvalidate)
 library(shinyalert)
 library(shinyWidgets)
+library(DT)
 
 library(sjlabelled)
 library(dplyr)
@@ -49,6 +50,23 @@ fluidPage(
               , uiOutput("study_country")
               , uiOutput("additional_info")
               , uiOutput("input_files")
+
+              , uiOutput("db_type")
+              , uiOutput("db_host")
+              , uiOutput("db_name")
+              , uiOutput("db_user")
+              , uiOutput("db_pwd")
+              , uiOutput("db_connect")
+              , hr()
+              , uiOutput("db_schema_list")
+              , uiOutput("db_table_list")
+              ,br()
+              , conditionalPanel(
+                condition = "input.upload_type == 'Database connection'",
+                DT::DTOutput("db_table_view", width = "100%")
+              ) 
+
+				  ## This is my thing
               , uiOutput("submit_upload")
             )
             , br()

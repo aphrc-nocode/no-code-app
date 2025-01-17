@@ -1,4 +1,4 @@
-### PostgreSQL connection logic
+### Possubmit_uploadtgreSQL connection logic
 database_integration_server <- function(){
 
 observeEvent(input$db_connect, {
@@ -6,8 +6,8 @@ observeEvent(input$db_connect, {
   database_name <- input$db_name
   database_user <- input$db_user
   database_pass <- input$db_pwd
-  db_port <- "5432"
-  drv <- dbDriver("PostgreSQL")
+  db_port <- "5432" ## FIXME: Transfer to UI
+  drv <- RPostgres::Postgres()
   
   if(input$db_type == "PostgreSQL"){
     tryCatch({
@@ -17,9 +17,9 @@ observeEvent(input$db_connect, {
                         port = db_port,
                         user = database_user, 
                         password = database_pass)
-      print("Database Connected!")
-      rv_database$conn <- conn
-      shinyalert("", "database connection successful", type = "success")
+      
+		rv_database$conn <- conn
+      shinyalert("", get_rv_labels("db_connect_success"), type = "success")
       query_schemas <-"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema') AND schema_name NOT LIKE 'pg_%' "
       schemas <- dbGetQuery(conn, query_schemas)
       schema_list <- c(schemas)
