@@ -76,17 +76,8 @@ function(input, output, session) {
   output$study_country = study_country
   output$additional_info = additional_info
   output$submit_upload = submit_upload
-  ### --- Database related form elements ---###
-  output$db_type = db_type
-  output$db_host = db_host
-  output$db_name = db_name
-  output$db_user = db_user
-  output$db_pwd = db_pwd
-  output$db_connect = db_connect
-  output$db_schema_list = db_schema_list
-  output$db_table_list = db_table_list
   
-  #### ---- Database and API connection warning ---------------------
+  #### ---- Databse and API connection warning ---------------------
   db_api_con_future
   
   #### ---- Upload datasets ----------------------------------------
@@ -158,31 +149,31 @@ function(input, output, session) {
   explore_data_update_data_server()
   
   #### ---- Transform variables -------------------------------------- ####
-  #source("server/transform_data.R", local = TRUE)
+  source("server/transform_data.R", local = TRUE)
 
   ##### ---- Select variables to transform ------------------------------------###
-  #transform_data_select_variables_server()
+  transform_data_select_variables_server()
 
   ##### ---- Change type  -----------------------------------------------###
-  #transform_data_change_type_server()
+  transform_data_change_type_server()
 
   ##### ---- Rename variables  -----------------------------------------------###
-  #transform_data_rename_variables_server()
+  transform_data_rename_variables_server()
 
   ##### ---- Recode/change value labels ---------------------------------------###
-  #transform_data_quick_explore_recode_server()
+  transform_data_quick_explore_recode_server()
   
   ##### ---- Handle missing data ---------------------------------------###
-  #transform_data_create_missing_values_server()
+  transform_data_create_missing_values_server()
   
   ##### ---- Identify outliers ---------------------------------------###
-  #transform_data_identify_outliers_server()
+  transform_data_identify_outliers_server()
   
   ##### ---- Handle missing values ---------------------------------------###
-  #transform_data_handle_missing_values_server()
+  transform_data_handle_missing_values_server()
   
   ##### ---- Plot transform data ----------------------------------------------###
-  #transform_data_quick_explore_plot_server()
+  transform_data_quick_explore_plot_server()
   
   ##### ---- Plot missing data ----------------------------------------------###
   transform_data_plot_missing_data_server()
@@ -199,11 +190,8 @@ function(input, output, session) {
   iv$enable()
   iv_url$enable()
   
-  ### --- Database connection schema, table listing and save ---#
-  # rv_database <- reactiveValues(schema_list = NULL, table_list = NULL, conn = NULL, schema_selected = NULL, table_selected = NULL, df_table = data.frame())
-  # source("server/database_integration.R", local = TRUE)
-  # database_integration_server()
   
 }
+
 
 

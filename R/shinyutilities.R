@@ -13,6 +13,9 @@ input_choices_file = readxl::read_excel("static_files/labelling_file.xlsx", shee
 ## Supported files
 supported_files = readxl::read_excel("static_files/labelling_file.xlsx", sheet="supported_files") |> pull()
 
+## Recode variable types
+recode_var_types = readxl::read_excel("static_files/labelling_file.xlsx", sheet="recode_var_types") |> pull()
+
 
 ### Get named vector, based on input language
 get_named_choices = function(df , lang, var) {
