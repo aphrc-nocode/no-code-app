@@ -1,20 +1,29 @@
 library(dplyr)
+library(gsheet)
 
 ## Labelling files
-labelling_file = readxl::read_excel("static_files/labelling_file.xlsx", sheet="ui_labels")
+
+## local_path = "static_files/labelling_file.xlsx"
+
+## labelling_file = readxl::read_excel(local_path, sheet="ui_labels")
+labelling_file = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=1571856299#gid=1571856299", sheetid="ui_labels")
 
 ## Language choices
 language_choices = labelling_file$input_language
 language_labels = labelling_file$language_label
 
 ## Input choices
-input_choices_file = readxl::read_excel("static_files/labelling_file.xlsx", sheet="choices")
+## input_choices_file = readxl::read_excel(local_path, sheet="choices")
+input_choices_file = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=897768892#gid=897768892", sheetid="choices")
 
 ## Supported files
-supported_files = readxl::read_excel("static_files/labelling_file.xlsx", sheet="supported_files") |> pull()
+## supported_files = readxl::read_excel(local_path, sheet="supported_files") |> pull()
+
+supported_files = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=841760633#gid=841760633", sheetid="supported_files") |> pull()
 
 ## Recode variable types
-recode_var_types = readxl::read_excel("static_files/labelling_file.xlsx", sheet="recode_var_types") |> pull()
+## recode_var_types = readxl::read_excel("static_files/labelling_file.xlsx", sheet="recode_var_types") |> pull()
+recode_var_types = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=1626004338#gid=1626004338", sheetid="recode_var_types") |> pull()
 
 
 ### Get named vector, based on input language

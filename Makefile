@@ -94,6 +94,9 @@ transform_data.Rout: server/transform_data.R
 ### Reset inputs
 resets.Rout: server/resets.R
 
+### Helper files
+shinyutilities.Rout: R/shinyutilities.R
+
 ## All make rules goes here 
 runapp:
 	echo "shiny::runApp(\".\")" | R --slave
