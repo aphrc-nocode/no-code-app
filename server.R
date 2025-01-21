@@ -22,11 +22,12 @@ function(input, output, session) {
     , current_filter_reset = NULL
     , manage_data_title_explore = NULL
     , missing_prop = NULL
-	  , has_missing_data_check=FALSE
+	 , has_missing_data_check=FALSE
     , manage_data_title_transform = NULL
+    , merge_data_title_merge = NULL
     , transform_data_select_vars = NULL
     , vartype = NULL
-	  , changed_variable_type_log = NULL
+	 , changed_variable_type_log = NULL
     , transform_data_plot_df = NULL
     , renamed_variable_log = NULL
     , transform_data_quick_plot_out = NULL
@@ -34,7 +35,7 @@ function(input, output, session) {
     , missing_prop_df = NULL
     , created_missing_values_log = NULL
     , outlier_values = NULL
-	  , handle_missing_values_log = NULL
+	 , handle_missing_values_log = NULL
     , handle_outlier_values_log = NULL
     , transform_data_plot_missing_data_out = NULL
   )
@@ -56,7 +57,12 @@ function(input, output, session) {
 		, table_selected = NULL
 		, df_table = data.frame()
 	)
-  
+ 
+
+  #### ---- App title ----------------------------------------------------
+  source("server/header_footer_configs.R", local=TRUE)
+  app_title()
+
   #### ---- Change language ----------------------------------------------------
   source("server/change_language.R", local = TRUE)
   output$change_language = change_language
@@ -199,6 +205,9 @@ function(input, output, session) {
   ##### ---- Plot missing data ----------------------------------------------###
   transform_data_plot_missing_data_server()
   
+  #### ---- Combine datasets with the existing one --------------------------------------####
+  source("server/combine_data.R", local = TRUE)
+  combine_data_combine_type()
   
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

@@ -48,7 +48,14 @@ aphrcSiderbar <- dashboardSidebar(
              menuSubItem(text = HTML("<span class='menu-label'> Overview</span>"), tabName = "Overview",icon = icon("table-columns",lib="font-awesome"),selected = TRUE),
              menuSubItem(text =  HTML("<span class='menu-label'> Explore</span>"), tabName = "Explore", icon = icon("object-ungroup",lib="font-awesome")),
              menuSubItem(text =  HTML("<span class='menu-label'> Transform</span>"), tabName = "Transform", icon = icon("table-columns",llib="font-awesome"))),
-    
+   
+
+
+    menuItem(HTML("<span class='menu-label'> Combine data</span>"), tabName = "addData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
+             menuSubItem(text = HTML("<span class='menu-label'> Add rows</span>"), tabName = "addRows",icon = icon("table-columns",lib="font-awesome"), selected = TRUE),
+             menuSubItem(text =  HTML("<span class='menu-label'> Add columns</span>"), tabName = "addColumns", icon = icon("object-ungroup",lib="font-awesome"))),
+
+
     
     menuItem( HTML("<span class='menu-label'> Visualize data</span>"), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib="glyphicon"),
               menuSubItem(text =  HTML("<span class='menu-label'> Summarize categorical</span>"), tabName = "summarizeCategorical",icon = icon("glyphicon glyphicon-stats",lib="glyphicon"),selected = TRUE),
@@ -125,26 +132,6 @@ aphrcBody <- dashboardBody(
                      )
                    )
            ),
-           tabItem(tabName = "manageData",
-                   fluidRow(
-                     column(
-                       style = "height:90vh; overflow-y: auto;",
-                       width = 3
-                       , uiOutput("dataset_id")
-                       , uiOutput("manage_data_apply")
-                       , br()
-                       , uiOutput("manage_data_show")
-                     )
-                     , column(width=9
-                              , htmlOutput("manage_data_title")
-                              , conditionalPanel(
-                                condition = "input.manage_data_show == 'summarytools'"
-                                , style = "display: none;"
-                                , htmlOutput("data_summary_summarytools")
-                              )
-                              , verbatimTextOutput("data_summary")
-                     )
-                   )),
            
            tabItem(tabName = "Overview",
                    
@@ -270,8 +257,20 @@ aphrcBody <- dashboardBody(
                               )
                      )
                    )),
-           
-           tabItem(tabName = "summarizeCategorical",
+
+			  tabItem(tabName = "addRows"
+					, fluidRow(
+						column(width = 3
+							, htmlOutput("merge_data_title_merge")
+						)
+						, column(width=9
+							, uiOutput("combine_data_source_choices")
+						)
+					)
+			  ),
+          
+
+			 tabItem(tabName = "summarizeCategorical",
                    fluidRow()),
            tabItem(tabName = "summarizeNumerical",
                    fluidRow()),

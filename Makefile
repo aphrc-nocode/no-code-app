@@ -17,6 +17,7 @@ autopipeR = defined
 Sources += $(wildcard *.md)
 Sources += $(wildcard *.R R/*.R)
 Sources += $(wildcard js/*.js)
+Sources += $(wildcard WWW/*.js)
 Sources += $(wildcard server/*.R)
 Sources += $(wildcard ui/*.R)
 Sources += $(wildcard static_files/*.*)
@@ -38,10 +39,18 @@ server.Rout: server.R
 # upload_data.Rout: ui/upload_data.R
 # upload_form.Rout: ui/upload_form.R
 
+## Theme
+appTheme.Rout: ui/appTheme.R
+header.Rout: ui/header.R
+footer.Rout: ui/footer.R
+headertag.Rout: ui/headertag.R
 
 ######################################################################
 
 ## Server side
+
+#### Header and footer details 
+header_footer_configs.Rout: server/header_footer_configs.R
 
 #### Create directories
 create_dirs.Rout: server/create_dirs.R
@@ -90,6 +99,9 @@ explore_data.Rout: server/explore_data.R
 
 ### Transform data
 transform_data.Rout: server/transform_data.R
+
+### Combine data
+combine_data.Rout: server/combine_data.R
 
 ### Reset inputs
 resets.Rout: server/resets.R
