@@ -115,6 +115,8 @@ aphrcBody <- dashboardBody(
                          , uiOutput("db_schema_list")
                          , uiOutput("db_table_list")
                          ,br()
+                         ,uiOutput("db_custom_query")
+                         ,uiOutput("db_run_query")
                          , conditionalPanel(
                            condition = "input.upload_type == 'Database connection'",
                            DT::DTOutput("db_table_view", width = "100%")

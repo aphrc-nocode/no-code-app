@@ -135,3 +135,27 @@ db_pwd <- renderUI({
         NULL
     }
 })
+
+
+
+### ---------- Custom Query ---------------------------------------####
+
+db_custom_query <- renderUI({
+  if (isTRUE(input$upload_type == "Database connection")) { 
+    textAreaInput("db_custom_query", "Custom Query", placeholder = "Write Query Here", width = "50%")
+  }
+})
+
+
+db_run_query<- renderUI({
+  if (isTRUE(input$upload_type == "Database connection")) { 
+    actionBttn("db_run_query",
+               label = "Run Query", width = "25%" 
+               , inline = TRUE 
+               , block = FALSE 
+               , color = "success" 
+    ) 
+  } else { 
+    NULL 
+  } 
+})

@@ -110,7 +110,8 @@ function(input, output, session) {
   output$db_connect = db_connect
   output$db_schema_list = db_schema_list
   output$db_table_list = db_table_list
-
+  output$db_custom_query = db_custom_query
+  output$db_run_query = db_run_query
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
   collect_logs_server()

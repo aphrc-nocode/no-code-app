@@ -7,7 +7,8 @@ observeEvent(input$db_connect, {
   database_user <- input$db_user
   database_pass <- input$db_pwd
   db_port <- "5432" ## FIXME: Transfer to UI
-  drv <- RPostgres::Postgres()
+  #drv <- RPostgres::Postgres()
+  drv <- dbDriver("PostgreSQL")
   
   if(input$db_type == "PostgreSQL"){
     tryCatch({
@@ -18,7 +19,7 @@ observeEvent(input$db_connect, {
                         user = database_user, 
                         password = database_pass)
       
-		rv_database$conn <- conn
+		  rv_database$conn <- conn
       shinyalert("", get_rv_labels("db_connect_success"), type = "success")
       query_schemas <-"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema') AND schema_name NOT LIKE 'pg_%' "
       schemas <- dbGetQuery(conn, query_schemas)
@@ -27,12 +28,12 @@ observeEvent(input$db_connect, {
       updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
     }, 
     error = function(e){
-      shinyalert("", "database connection failed", type = "error")
+      shinyalert("", "database connection failed, Confirm Host,Username and Password are correct", type = "error")
       
     })
     
   }else{
-    shinyalert("", "MySQL database integration in progress", type = "info")
+    shinyalert("", "MySQL database integration not yet implemented", type = "info")
   }
  
  
@@ -70,6 +71,11 @@ output$db_table_view<- renderDT({
     df_table,
     options = list(pageLength =10)
   )
+})
+
+observeEvent(input$db_run_query, {
+  query_string <- input$db_custom_query
+  print(query_string)
 })
 
 }
