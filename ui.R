@@ -51,9 +51,10 @@ aphrcSiderbar <- dashboardSidebar(
    
 
 
-    menuItem(HTML("<span class='menu-label'> Combine data</span>"), tabName = "addData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
-             menuSubItem(text = HTML("<span class='menu-label'> Add rows</span>"), tabName = "addRows",icon = icon("table-columns",lib="font-awesome"), selected = TRUE),
-             menuSubItem(text =  HTML("<span class='menu-label'> Add columns</span>"), tabName = "addColumns", icon = icon("object-ungroup",lib="font-awesome"))),
+    menuItem(HTML("<span class='menu-label'> Combine data</span>"), tabName = "combineData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
+             menuSubItem(text = HTML("<span class='menu-label'> New data</span>"), tabName = "newData",icon = icon("table-columns",lib="font-awesome"), selected = TRUE),
+             menuSubItem(text = HTML("<span class='menu-label'> Combine rows</span>"), tabName = "combineRows",icon = icon("table-columns",lib="font-awesome")),
+             menuSubItem(text =  HTML("<span class='menu-label'> Combine columns</span>"), tabName = "combineColumns", icon = icon("object-ungroup",lib="font-awesome"))),
 
 
     
@@ -258,15 +259,24 @@ aphrcBody <- dashboardBody(
                      )
                    )),
 
-			  tabItem(tabName = "addRows"
+			  tabItem(tabName = "newData"
 					, fluidRow(
 						column(width = 3
-							, htmlOutput("merge_data_title_merge")
+							, htmlOutput("combine_data_title")
 						)
 						, column(width=9
-							, uiOutput("combine_data_source_choices")
+							, uiOutput("combine_data_list_datasets")
+							, uiOutput("combine_data_apply")
 						)
 					)
+			  ),
+			  
+			  tabItem(tabName = "combineRows"
+					, fluidRow()
+			  ),
+			  
+			  tabItem(tabName = "combineColumns"
+					, fluidRow()
 			  ),
           
 

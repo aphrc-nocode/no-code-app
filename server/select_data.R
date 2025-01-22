@@ -24,6 +24,7 @@ select_data_server = function(){
 					, label = get_rv_labels("apply_selection"))
 			})
 		} else {
+			rv_metadata$dataset_ids = NULL
 			output$manage_data_apply = NULL
 			output$dataset_id = renderText(paste0(get_rv_labels("no_data"), "<b> Source data </b>"))
 			output$manage_data_show = NULL

@@ -207,8 +207,13 @@ function(input, output, session) {
   
   #### ---- Combine datasets with the existing one --------------------------------------####
   source("server/combine_data.R", local = TRUE)
-  combine_data_combine_type()
   
+  ##### ---- List of internal data ------------------------------------------####
+  combine_data_list_datasets()
+  
+  ##### ---- Identify matching colums ------------------------------------------####
+  combine_data_match_columns()
+
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
