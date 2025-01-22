@@ -64,8 +64,39 @@ combine_data_match_columns = function() {
 	
 	observe({
 		if (isTRUE(!is.null(rv_current$combine_df)) & isTRUE(!is.null(rv_current$working_df))) {
-			combine_data_matched = intersect(rv_current$selected_vars, rv_current$combine_data_selected_vars)
-			print(combine_data_matched)
+			rv_current$combine_data_matched_vars = intersect(rv_current$selected_vars, rv_current$combine_data_selected_vars)
+			if (isTRUE(!is.null(rv_current$combine_data_matched_vars)) & isTRUE(length(rv_current$combine_data_matched_vars)>0)) {
+				output$combine_data_matched_vars = renderUI({
+				  p(
+					hr()
+					 , HTML(paste0("<b>", get_rv_labels("combine_data_matched_vars"), "</b>"))
+				 	 , helpText(get_rv_labels("combine_data_matched_vars_ht"))
+					 , selectInput('combine_data_matched_vars'
+						, label = NULL
+						, rv_current$combine_data_matched_vars
+						, selectize=FALSE
+						, multiple=TRUE
+						, size = min(10, length(rv_current$combine_data_matched_vars))
+						, width = "50%"
+					 )
+				  )
+				})
+			} else {
+				output$combine_data_matched_vars = renderUI({
+					p(
+						hr()
+						 , HTML(paste0("<b>", get_rv_labels("combine_data_no_matched_vars"), "</b>"))
+						 , helpText(get_rv_labels("combine_data_no_matched_vars_ht"))
+						  , radioButtons("combine_data_matched_vars"
+								, NULL
+								, choices = get_named_choices(input_choices_file, input$change_language, "combine_data_no_matched_vars_choices")
+								, inline = TRUE
+						  )
+					)
+				})
+			} 
+		} else {
+			output$combine_data_matched_vars = NULL
 		}
 	})
 

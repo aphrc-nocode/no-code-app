@@ -267,6 +267,8 @@ aphrcBody <- dashboardBody(
 						, column(width=9
 							, uiOutput("combine_data_list_datasets")
 							, uiOutput("combine_data_apply")
+							, hr()
+							, htmlOutput("combine_data_matched_vars")
 						)
 					)
 			  ),
