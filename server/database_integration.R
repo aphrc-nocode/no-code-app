@@ -74,8 +74,37 @@ output$db_table_view<- renderDT({
 })
 
 observeEvent(input$db_run_query, {
-  query_string <- input$db_custom_query
-  print(query_string)
+  if (is.null(rv_database$conn)) {
+    shinyalert(
+      title = "",
+      text = "Please establish a database connection before running a query.",
+      type = "error"
+    )
+    return()
+  }
+  
+  result <- tryCatch({
+    
+    query_string <- input$db_custom_query
+    conn <- rv_database$conn
+    df_table <- dbGetQuery(conn, query_string)
+    rv_database$df_table <- df_table
+    df_table
+  },
+  error = function(e) {
+    df_table <- NULL
+    
+  })
+  
+  if(is.null(result)){
+    shinyalert(
+      title = "",
+      text = "Check your SQL Syntax.",
+      type = "error"
+    )
+  }
+  
 })
+
 
 }
