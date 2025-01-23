@@ -137,6 +137,20 @@ db_pwd <- renderUI({
 })
 
 
+#### ---- Database port ---------------------------------------#####
+db_port <- renderUI({
+  if (isTRUE(input$upload_type == "Database connection")) {
+    textInput("db_port",
+                  label = "Database port"
+                  , placeholder = "Enter your database port"
+                  , width = "50%"
+                  , value ="5432"
+    )
+  } else {
+    NULL
+  }
+})
+
 
 ### ---------- Custom Query ---------------------------------------####
 

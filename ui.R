@@ -110,10 +110,15 @@ aphrcBody <- dashboardBody(
                          , uiOutput("db_name")
                          , uiOutput("db_user")
                          , uiOutput("db_pwd")
+                         , uiOutput("db_port")
                          , uiOutput("db_connect")
                          , hr()
                          , uiOutput("db_schema_list")
                          , uiOutput("db_table_list")
+                         , conditionalPanel(
+                           condition = "input.upload_type == 'Database connection'",
+                           verbatimTextOutput("db_table_str")
+                         )
                          ,br()
                          ,uiOutput("db_custom_query")
                          ,uiOutput("db_run_query")

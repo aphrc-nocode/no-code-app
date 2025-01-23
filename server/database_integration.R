@@ -6,7 +6,8 @@ observeEvent(input$db_connect, {
   database_name <- input$db_name
   database_user <- input$db_user
   database_pass <- input$db_pwd
-  db_port <- "5432" ## FIXME: Transfer to UI
+  #db_port <- "5432" ## FIXME: Transfer to UI
+  db_port <- input$db_port
   #drv <- RPostgres::Postgres()
   drv <- dbDriver("PostgreSQL")
   
@@ -58,10 +59,18 @@ observeEvent(input$db_table_list,{
   rv_database$table_selected <- table_selected
   schema_selected <- rv_database$schema_selected
   conn <- rv_database$conn
-  query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, ";", sep = "")
-  df_table <- dbGetQuery(conn, query_table_data)
-  rv_database$df_table <- df_table
+  query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, " LIMIT 10;", sep = "")
+  df_table_str <- dbGetQuery(conn, query_table_data)
+  rv_database$df_table_str <- df_table_str
+  
 })
+
+output$db_table_str <- renderPrint({ 
+  if(!is.null(rv_database$df_table_str)){
+    str(rv_database$df_table_str)
+  }
+    
+  })
 
 
 output$db_table_view<- renderDT({
