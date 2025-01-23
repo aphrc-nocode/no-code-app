@@ -62,6 +62,12 @@ function(input, output, session) {
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
+  
+  ###-------App Footer--------------------------
+  footer_language_translation()
+  ###-------Menu Translate---------
+  
+  menu_translation()
 
   #### ---- Change language ----------------------------------------------------
   source("server/change_language.R", local = TRUE)

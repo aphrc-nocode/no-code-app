@@ -38,44 +38,53 @@ source(paste0(getwd(), "/ui/footer.R"))
 #Sidebar
 aphrcSiderbar <- dashboardSidebar(
   width = "20%",
-  
   sidebarMenu(
-    menuItem(text = HTML("<span class='menu-label'> Home</span>"), tabName = "homePage", icon = icon("house")),
-    menuItem(text = HTML("<span class='menu-label'> Source data</span>"), tabName = "sourcedata", icon = icon("file-import",lib="font-awesome")),
+    menuItem(text =  uiOutput("menu_home"), tabName = "homePage", icon = icon("house")),
+    menuItem(text =  uiOutput("menu_source_data"), tabName = "sourcedata", icon = icon("file-import",lib="font-awesome")),
     
     
-    menuItem(HTML("<span class='menu-label'> Manage data</span>"), tabName = "manageData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
-             menuSubItem(text = HTML("<span class='menu-label'> Overview</span>"), tabName = "Overview",icon = icon("table-columns",lib="font-awesome"),selected = TRUE),
-             menuSubItem(text =  HTML("<span class='menu-label'> Explore</span>"), tabName = "Explore", icon = icon("object-ungroup",lib="font-awesome")),
-             menuSubItem(text =  HTML("<span class='menu-label'> Transform</span>"), tabName = "Transform", icon = icon("table-columns",llib="font-awesome"))),
+    menuItem(text=uiOutput("menu_manage_data"), tabName = "manageData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
+             menuSubItem(text = uiOutput("menu_overview"), tabName = "Overview",icon = icon("table-columns",lib="font-awesome"),selected = TRUE),
+             menuSubItem(text = uiOutput("menu_explore"), tabName = "Explore", icon = icon("object-ungroup",lib="font-awesome")),
+             menuSubItem(text = uiOutput("menu_transform"), tabName = "Transform", icon = icon("table-columns",llib="font-awesome"))),
    
 
 
-    menuItem(HTML("<span class='menu-label'> Combine data</span>"), tabName = "addData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
-             menuSubItem(text = HTML("<span class='menu-label'> Add rows</span>"), tabName = "addRows",icon = icon("table-columns",lib="font-awesome"), selected = TRUE),
-             menuSubItem(text =  HTML("<span class='menu-label'> Add columns</span>"), tabName = "addColumns", icon = icon("object-ungroup",lib="font-awesome"))),
+    menuItem(text = uiOutput("menu_combine_data"), tabName = "addData", icon = icon("glyphicon glyphicon-tasks",lib="glyphicon"),
+             menuSubItem(text = uiOutput("menu_add_rows"), tabName = "addRows",icon = icon("table-columns",lib="font-awesome"), selected = TRUE),
+             menuSubItem(text =  uiOutput("menu_add_columns"), tabName = "addColumns", icon = icon("object-ungroup",lib="font-awesome"))),
 
 
     
-    menuItem( HTML("<span class='menu-label'> Visualize data</span>"), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib="glyphicon"),
-              menuSubItem(text =  HTML("<span class='menu-label'> Summarize categorical</span>"), tabName = "summarizeCategorical",icon = icon("glyphicon glyphicon-stats",lib="glyphicon"),selected = TRUE),
-              menuSubItem(text =  HTML("<span class='menu-label'> Summarize numerical</span>"), tabName = "summarizeNumerical", icon = icon("glyphicon glyphicon-stats",lib="glyphicon"))
+    menuItem(uiOutput("menu_visualize_data"), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib="glyphicon"),
+              menuSubItem(text =  uiOutput("menu_visualize_categorical"), tabName = "summarizeCategorical",icon = icon("glyphicon glyphicon-stats",lib="glyphicon"),selected = TRUE),
+              menuSubItem(text =  uiOutput("menu_visualize_numeric"), tabName = "summarizeNumerical", icon = icon("glyphicon glyphicon-stats",lib="glyphicon"))
               
     ),
     
-    menuItem( HTML("<span class='menu-label'> Machine learning</span>"), tabName = "machineLearning", icon = icon("code-merge",lib="font-awesome"),
-              menuSubItem(text = HTML("<span class='menu-label'> Data partitioning</span>"), tabName = "dataPartitioning",icon = icon("arrows-split-up-and-left", lib="font-awesome"),selected = TRUE),
-              menuSubItem(text = HTML("<span class='menu-label'> Feature Engineering</span>"), tabName = "featureEngineering", icon = icon("sitemap",lib="font-awesome")),
-              menuSubItem(text = HTML("<span class='menu-label'> Train Model</span>"), tabName = "trainModel", icon = icon("gear", lib="font-awesome")),
-              menuSubItem(text = HTML("<span class='menu-label'> Validate and deploy model</span>"), tabName = "validateDeployModel", icon = icon("server", lib="font-awesome")),
-              menuSubItem(text = HTML("<span class='menu-label'> Predict/classify</span>"), tabName = "predictClassify", icon = icon("layer-group", lib="font-awesome"))
+    menuItem(text = uiOutput("menu_machine_learning"), tabName = "machineLearning", icon = icon("code-merge",lib="font-awesome"),
+              menuSubItem(text = uiOutput("menu_partition_data"), tabName = "dataPartitioning",icon = icon("arrows-split-up-and-left", lib="font-awesome"),selected = TRUE),
+              menuSubItem(text = uiOutput("menu_feature_engineering"), tabName = "featureEngineering", icon = icon("sitemap",lib="font-awesome")),
+              menuSubItem(text =uiOutput("menu_train_model"), tabName = "trainModel", icon = icon("gear", lib="font-awesome")),
+              menuSubItem(text = uiOutput("menu_validate_model"), tabName = "validateDeployModel", icon = icon("server", lib="font-awesome")),
+              menuSubItem(text = uiOutput("menu_predict"), tabName = "predictClassify", icon = icon("layer-group", lib="font-awesome"))
               
     ),
     
-    menuItem(HTML("<span class='menu-label'>Additional resources</span>"), tabName = "addResources", icon = icon("book"))
+    menuItem(
+      uiOutput("menu_additional_resources"), tabName = "addResources", icon = icon("book"))
   )
   
 )
+
+
+
+
+
+
+
+
+
 
 #Body
 aphrcBody <- dashboardBody(
