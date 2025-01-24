@@ -28,67 +28,36 @@ footer_language_translation = function() {
 
 
 menu_translation = function(){
-  output$menu_home = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_home"), "</span>"))
-  })
-  output$menu_source_data = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_source_data"), "</span>"))
-  })
-  output$menu_manage_data = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_manage_data"), "</span>"))
-  })
-  output$menu_overview = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_overview"), "</span>"))
-  })
-  output$menu_explore = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_explore"), "</span>"))
-  })
-  output$menu_transform = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>"))
-  })
-  output$menu_combine_data = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>"))
-  })
-  output$menu_add_rows = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_add_rows"), "</span>"))
-  })
-  output$menu_visualize_data = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>"))
-  })
-  
-  output$menu_visualize_numeric = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_numeric"), "</span>"))
-  })
-  
-  output$menu_visualize_categorical = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_categorical"), "</span>"))
-  })
-  
-  output$menu_machine_learning = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_machine_learning"), "</span>"))
-  })
-  
-  output$menu_partition_data = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_partition_data"), "</span>"))
-  })
-  
-  output$menu_feature_engineering = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_feature_engineering"), "</span>"))
-  })
-  
-  output$menu_train_model = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_train_model"), "</span>"))
-  })
-  
-  output$menu_validate_model = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>"))
-  })
-  output$menu_predict = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>"))
-  })
-  
-  output$menu_additional_resources = renderUI({
-    HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>"))
+  output$dynamic_meinu_aphrc <- renderMenu({
+    sidebarMenu(
+      menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_home"), "</span>")), tabName = "homePage", icon = icon("house")),
+      menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_source_data"), "</span>")), tabName = "sourcedata", icon = icon("file-import", lib = "font-awesome"), selected = TRUE),
+      menuItem(
+        text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_manage_data"), "</span>")), tabName = "manageData", icon = icon("glyphicon glyphicon-tasks", lib = "glyphicon"),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_overview"), "</span>")), tabName = "Overview", icon = icon("table-columns", lib = "font-awesome")),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_explore"), "</span>")), tabName = "Explore", icon = icon("object-ungroup", lib = "font-awesome")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>")), tabName = "Transform", icon = icon("table-columns", lib = "font-awesome"))
+      ),
+      menuItem(
+        text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "addData", icon = icon("glyphicon glyphicon-tasks", lib = "glyphicon"),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_add_rows"), "</span>")), tabName = "addRows", icon = icon("table-columns", lib = "font-awesome")),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_add_columns"), "</span>")), tabName = "addColumns", icon = icon("table-columns", lib = "font-awesome"))
+      ),
+      menuItem(
+        HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>")), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_categorical"), "</span>")), tabName = "summarizeCategorical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_numeric"), "</span>")), tabName = "summarizeNumerical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"))
+      ),
+      menuItem(
+        text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_machine_learning"), "</span>")), tabName = "machineLearning", icon = icon("code-merge", lib = "font-awesome"),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_partition_data"), "</span>")), tabName = "dataPartitioning", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_feature_engineering"), "</span>")), tabName = "featureEngineering", icon = icon("sitemap", lib = "font-awesome")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_train_model"), "</span>")), tabName = "trainModel", icon = icon("gear", lib = "font-awesome")),
+        menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
+      ),
+      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
+    )
   })
   
   
