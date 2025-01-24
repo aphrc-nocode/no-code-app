@@ -115,5 +115,10 @@ observeEvent(input$db_run_query, {
   
 })
 
+observeEvent(input$db_disconnect, {
+  dbDisconnect(rv_database$conn)
+  rv_database$conn = NULL
+})
+
 
 }

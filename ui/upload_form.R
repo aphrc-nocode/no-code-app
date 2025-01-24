@@ -48,12 +48,16 @@ submit_upload <- renderUI({
 #### ----- Connect database ----------------------------------------####
 db_connect <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) { 
+      if(is.null(rv_database$conn)){
         actionBttn("db_connect",
-            label = "Connect", width = "25%" 
-            , inline = TRUE 
-            , block = FALSE 
-            , color = "success" 
-        ) 
+                   label = "Connect", width = "25%" 
+                   , inline = TRUE 
+                   , block = FALSE 
+                   , color = "success" 
+        )
+      }  
+
+      
     } else { 
         NULL 
     } 
@@ -87,11 +91,13 @@ db_type <- renderUI({
 ### --- Database host ---###
 db_host <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    textInput("db_host",
-              label = "Database Host"
-              , placeholder = "Enter your database host/IP address"
-              , width = "50%"
-    )
+    if(is.null(rv_database$conn)){
+      textInput("db_host",
+                label = "Database Host"
+                , placeholder = "Enter your database host/IP address"
+                , width = "50%"
+      )
+    }
   } else {
     NULL
   }
@@ -100,11 +106,13 @@ db_host <- renderUI({
 #### ---- Database name ---------------------------------------#####
 db_name <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) {
+      if(is.null(rv_database$conn)){  
         textInput("db_name",
-            label = "Database name"
-            , placeholder = "Enter your database name"
-            , width = "50%"
-        )
+              label = "Database name"
+              , placeholder = "Enter your database name"
+              , width = "50%"
+          )
+      }
     } else {
         NULL
     }
@@ -113,11 +121,13 @@ db_name <- renderUI({
 #### ---- Database user ---------------------------------------#####
 db_user <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) {
+      if(is.null(rv_database$conn)){  
         textInput("db_user",
-            label = "Database User"
-            , placeholder = "Enter your database User"
-            , width = "50%"
-        )
+              label = "Database User"
+              , placeholder = "Enter your database User"
+              , width = "50%"
+          )
+      }
     } else {
         NULL
     }
@@ -126,11 +136,13 @@ db_user <- renderUI({
 #### ---- Database password ---------------------------------------#####
 db_pwd <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) {
+      if(is.null(rv_database$conn)){  
         passwordInput("db_pwd",
-            label = "Database password"
-            , placeholder = "Enter your database password"
-            , width = "50%"
-        )
+              label = "Database password"
+              , placeholder = "Enter your database password"
+              , width = "50%"
+          )
+      }
     } else {
         NULL
     }
@@ -140,12 +152,14 @@ db_pwd <- renderUI({
 #### ---- Database port ---------------------------------------#####
 db_port <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    textInput("db_port",
-                  label = "Database port"
-                  , placeholder = "Enter your database port"
-                  , width = "50%"
-                  , value ="5432"
-    )
+    if(is.null(rv_database$conn)){
+      textInput("db_port",
+                    label = "Database port"
+                    , placeholder = "Enter your database port"
+                    , width = "50%"
+                    , value ="5432"
+      )
+      }
   } else {
     NULL
   }
@@ -173,3 +187,23 @@ db_run_query<- renderUI({
     NULL 
   } 
 })
+
+
+#### ----- Disconnect database ----------------------------------------####
+db_disconnect <- renderUI({
+  if (isTRUE(input$upload_type == "Database connection")) { 
+    if(!is.null(rv_database$conn)){
+      actionBttn("db_disconnect",
+                 label = "Disconnect", width = "25%" 
+                 , inline = TRUE 
+                 , block = FALSE 
+                 , color = "success" 
+      )
+      
+   }
+
+  } else { 
+    NULL 
+  } 
+})
+
