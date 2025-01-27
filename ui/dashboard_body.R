@@ -178,7 +178,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    )
                  )),
          
-         tabItem(tabName = "addRows"
+         tabItem(tabName = "combineData"
                  , fluidRow(
                    column(width = 3
                           , htmlOutput("combine_data_title")
