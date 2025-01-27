@@ -36,12 +36,8 @@ menu_translation = function(){
         text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_manage_data"), "</span>")), tabName = "manageData", icon = icon("glyphicon glyphicon-tasks", lib = "glyphicon"),
         menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_overview"), "</span>")), tabName = "Overview", icon = icon("table-columns", lib = "font-awesome")),
         menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_explore"), "</span>")), tabName = "Explore", icon = icon("object-ungroup", lib = "font-awesome")),
-        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>")), tabName = "Transform", icon = icon("table-columns", lib = "font-awesome"))
-      ),
-      menuItem(
-        text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "addData", icon = icon("glyphicon glyphicon-tasks", lib = "glyphicon"),
-        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_add_rows"), "</span>")), tabName = "addRows", icon = icon("table-columns", lib = "font-awesome")),
-        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_add_columns"), "</span>")), tabName = "addColumns", icon = icon("table-columns", lib = "font-awesome"))
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>")), tabName = "Transform", icon = icon("table-columns", lib = "font-awesome")),
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "combineData", icon = icon("table-columns", lib = "font-awesome"))
       ),
       menuItem(
         HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>")), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
