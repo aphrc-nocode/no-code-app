@@ -181,12 +181,15 @@ tabItems(tabItem(tabName = "homePage",class = "active",
          tabItem(tabName = "addRows"
                  , fluidRow(
                    column(width = 3
-                          , htmlOutput("merge_data_title_merge")
+                          , htmlOutput("combine_data_title")
                    )
-                   , column(width=9
-                            , uiOutput("combine_data_source_choices")
-                   )
-                 )
+ 						, column(width=9
+							, uiOutput("combine_data_list_datasets")
+							, uiOutput("combine_data_apply")
+							, hr()
+							, htmlOutput("combine_data_matched_vars")
+						)
+					  )
          ),
          
          
