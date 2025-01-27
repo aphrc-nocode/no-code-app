@@ -1,6 +1,6 @@
 ##### ---- List datasets ------------------------------------------####
 combine_data_list_datasets = function() {
-	observe({
+	observeEvent(input$manage_data_apply, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(rv_metadata$dataset_ids)>1)) {
 				combine_data_ids = rv_metadata$dataset_ids[!rv_metadata$dataset_ids %in% input$dataset_id]
@@ -16,10 +16,16 @@ combine_data_list_datasets = function() {
 			} else {
 				output$combine_data_apply = NULL
 				output$combine_data_list_datasets = renderText(paste0(get_rv_labels("combine_no_second_data"), "<b> Source data </b>"))
+				output$combine_data_apply = NULL
+				rv_current$combine_df = NULL 
+				rv_current$combine_data_selected_vars = NULL
 			}
 		} else {
-			output$combine_data_source_choices = NULL
 			output$combine_data_apply = NULL
+			output$combine_data_list_datasets = NULL
+			output$combine_data_apply = NULL
+			rv_current$combine_df = NULL 
+			rv_current$combine_data_selected_vars = NULL
 		}
 	})
 	
@@ -35,9 +41,13 @@ combine_data_list_datasets = function() {
 				})
 			} else {
 				output$combine_data_apply = NULL
+				rv_current$combine_df = NULL 
+				rv_current$combine_data_selected_vars = NULL
 			}
 		} else {
 				output$combine_data_apply = NULL
+				rv_current$combine_df = NULL 
+				rv_current$combine_data_selected_vars = NULL
 		}
 	})
 }
@@ -59,6 +69,7 @@ combine_data_match_columns = function() {
 			rv_current$combine_data_selected_vars = colnames(combine_df)
 		} else {
 			rv_current$combine_df = NULL 
+			rv_current$combine_data_selected_vars = NULL
 		}
 	})
 	
@@ -100,4 +111,24 @@ combine_data_match_columns = function() {
 		}
 	})
 
+
+	
+## 	observe({
+## 		if (isTRUE(!is.null(rv_current$combine_data_matched_vars)) & isTRUE(length(rv_current$combine_data_matched_vars)>0)) {
+## 			output$combine_data_type = renderUI({
+## 				  , radioButtons("combine_data_type"
+## 						, NULL
+## 						, choices = get_named_choices(input_choices_file, input$change_language, "combine_data_type")
+## 						, inline = TRUE
+## 				  )
+## 			})
+## 		}
+## 	})
+
+	## Reset fields 
+	observeEvent(input$combine_data_list_datasets, {
+		output$combine_data_matched_vars = NULL
+		rv_current$combine_df = NULL 
+		rv_current$combine_data_selected_vars = NULL
+	})
 }
