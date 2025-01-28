@@ -178,16 +178,20 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    )
                  )),
          
-         tabItem(tabName = "combineData"
-                 , fluidRow(
-                   column(width = 3
-                          , htmlOutput("merge_data_title_merge")
-                   )
-                   , column(width=9
-                            , uiOutput("combine_data_source_choices")
-                   )
-                 )
-         ),
+			  tabItem(tabName = "combineData"
+					, fluidRow(
+						column(width = 3
+							, htmlOutput("combine_data_title")
+						)
+						, column(width=9
+							, uiOutput("combine_data_list_datasets")
+							, uiOutput("combine_data_apply")
+							, hr()
+							, uiOutput("combine_data_type_choices")
+							, htmlOutput("combine_data_matched_vars")
+						)
+					)
+			  ),
          
          
          tabItem(tabName = "summarizeCategorical",

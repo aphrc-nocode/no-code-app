@@ -217,6 +217,10 @@ function(input, output, session) {
   ##### ---- List of internal data ------------------------------------------####
   combine_data_list_datasets()
   
+  ##### ---- Combine data options ------------------------------------------####
+  combine_data_type()
+
+
   ##### ---- Identify matching colums ------------------------------------------####
   combine_data_match_columns()
 

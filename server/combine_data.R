@@ -26,6 +26,7 @@ combine_data_list_datasets = function() {
 			output$combine_data_apply = NULL
 			rv_current$combine_df = NULL 
 			rv_current$combine_data_selected_vars = NULL
+			updateSelectInput(session = session, "combine_data_list_datasets", selected = "", choices = NULL)
 		}
 	})
 	
@@ -52,6 +53,25 @@ combine_data_list_datasets = function() {
 	})
 }
 
+##### ---- Combine type ------------------------------------------####
+
+combine_data_type = function() {
+	observeEvent(input$combine_data_apply, {
+		if (isTRUE(!is.null(input$combine_data_list_datasets))) {
+			output$combine_data_type_choices = renderUI({
+				  radioButtons("combine_data_type_choices"
+						, label = get_rv_labels("combine_data_type_choices")
+						, choices = get_named_choices(input_choices_file, input$change_language, "combine_data_type_choices")
+						, selected = character(0)
+						, inline = TRUE
+				  )
+			})
+		} else {
+			updateRadioButtons(session = session, inputId = "combine_data_type_choices", selected = character(0))
+			output$combine_data_type_choices = NULL
+		}
+	})
+}
 
 ##### ---- Match columns ------------------------------------------####
 
@@ -112,23 +132,12 @@ combine_data_match_columns = function() {
 	})
 
 
-	
-## 	observe({
-## 		if (isTRUE(!is.null(rv_current$combine_data_matched_vars)) & isTRUE(length(rv_current$combine_data_matched_vars)>0)) {
-## 			output$combine_data_type = renderUI({
-## 				  , radioButtons("combine_data_type"
-## 						, NULL
-## 						, choices = get_named_choices(input_choices_file, input$change_language, "combine_data_type")
-## 						, inline = TRUE
-## 				  )
-## 			})
-## 		}
-## 	})
-
 	## Reset fields 
 	observeEvent(input$combine_data_list_datasets, {
 		output$combine_data_matched_vars = NULL
 		rv_current$combine_df = NULL 
 		rv_current$combine_data_selected_vars = NULL
+		updateRadioButtons(session = session, inputId = "combine_data_type_choices", selected = character(0))
+		output$combine_data_type_choices = NULL
 	})
 }

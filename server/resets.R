@@ -92,6 +92,10 @@ reset_data_server = function() {
 		output$transform_data_handle_missing_values_choices = NULL      
 		updateSelectInput(session = session, "transform_data_handle_missing_values_choices", selected = "")
 
+		output$combine_data_matched_vars = NULL
+		rv_current$combine_df = NULL 
+		rv_current$combine_data_selected_vars = NULL
+		updateSelectInput(session = session, "combine_data_list_datasets", selected = "", choices = NULL)
 
 	})
 
@@ -194,6 +198,11 @@ reset_data_server = function() {
 
          output$transform_data_handle_missing_values_choices = NULL      
          updateSelectInput(session = session, "transform_data_handle_missing_values_choices", selected = "")
+		
+			output$combine_data_matched_vars = NULL
+			rv_current$combine_df = NULL 
+			rv_current$combine_data_selected_vars = NULL
+			updateSelectInput(session = session, "combine_data_list_datasets", selected = "", choices = NULL)
 
 
 			if (NROW(rv_metadata$upload_logs)) {
