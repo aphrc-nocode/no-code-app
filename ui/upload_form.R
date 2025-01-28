@@ -45,6 +45,8 @@ submit_upload <- renderUI({
     } 
 })
 
+### --- Additional form details for database section --- ###
+
 #### ----- Connect database ----------------------------------------####
 db_connect <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) { 
@@ -67,7 +69,10 @@ db_connect <- renderUI({
 ### ----------OMOP Schema Views---------------------------------------####
 db_schema_list <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_schema_list", "List of Schemas", choices = NULL, multiple = FALSE)
+    if(input$show_table == TRUE){
+      selectInput("db_schema_list", "List of Schemas", choices = NULL, multiple = FALSE)
+    }
+    
   }
 })
 
@@ -75,13 +80,16 @@ db_schema_list <- renderUI({
 ### ----------OMOP Table Views---------------------------------------####
 db_table_list <- renderUI({
     if (isTRUE(input$upload_type == "Database connection")) {
+      if(input$show_table == TRUE){
         selectInput("db_table_list", "List of Tables", choices = NULL, multiple = FALSE)
+      }
+        
     }
 })
 
-### --- Additional form details for database section --- ###
 
-### ----------OMOP Schema Views---------------------------------------####
+
+### ----------OMOP database type---------------------------------------####
 db_type <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     selectInput("db_type", "Database Type", choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
@@ -170,19 +178,25 @@ db_port <- renderUI({
 
 db_custom_query <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
-    textAreaInput("db_custom_query", "Custom Query", placeholder = "Write Query Here", width = "50%")
+    if(input$custom_query == TRUE){
+      textAreaInput("db_custom_query", "Custom Query", placeholder = "Write Query Here", width = "50%")
+    }
+    
   }
 })
 
 
 db_run_query<- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
-    actionBttn("db_run_query",
-               label = "Run Query", width = "25%" 
-               , inline = TRUE 
-               , block = FALSE 
-               , color = "success" 
-    ) 
+    if(input$custom_query == TRUE){
+      actionBttn("db_run_query",
+                 label = "Run Query", width = "25%" 
+                 , inline = TRUE 
+                 , block = FALSE 
+                 , color = "success" 
+      ) 
+    }
+    
   } else { 
     NULL 
   } 

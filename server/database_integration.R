@@ -1,6 +1,6 @@
 ### Possubmit_uploadtgreSQL connection logic
 database_integration_server <- function(){
-
+  
 observeEvent(input$db_connect, {
   database_host <- input$db_host 
   database_name <- input$db_name
@@ -26,7 +26,7 @@ observeEvent(input$db_connect, {
       schemas <- dbGetQuery(conn, query_schemas)
       schema_list <- c(schemas)
       rv_database$schema_list <- schema_list
-      updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
+      #updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
     }, 
     error = function(e){
       shinyalert("", "database connection failed, Confirm Host,Username and Password are correct", type = "error")
@@ -39,6 +39,14 @@ observeEvent(input$db_connect, {
  
  
 })
+  
+observeEvent(input$show_table, {
+  if(input$show_table == TRUE){
+    updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
+  }
+  
+})  
+  
 
 observeEvent(input$db_schema_list, {
   req(rv_database$conn, input$db_schema_list)
@@ -67,7 +75,13 @@ observeEvent(input$db_table_list,{
 
 output$db_table_str <- renderPrint({ 
   if(!is.null(rv_database$df_table_str)){
-    str(rv_database$df_table_str)
+    if(input$show_table == TRUE){
+        str(rv_database$df_table_str)
+
+    }else{
+      rv_database$df_table_str = NULL
+    }
+    
   }
     
   })
@@ -75,11 +89,18 @@ output$db_table_str <- renderPrint({
 
 output$db_table_view<- renderDT({
   df_table <- rv_database$df_table
-  
-  datatable(
-    df_table,
-    options = list(pageLength =10)
-  )
+  if(input$custom_query == TRUE){
+    datatable(
+      df_table,
+      options = list(pageLength =10)
+    )
+  }else{
+    #df_table = data.frame()
+    rv_database$df_table = NULL
+  }
+
+
+
 })
 
 observeEvent(input$db_run_query, {
@@ -118,6 +139,9 @@ observeEvent(input$db_run_query, {
 observeEvent(input$db_disconnect, {
   dbDisconnect(rv_database$conn)
   rv_database$conn = NULL
+  rv_database$schema_list = NULL
+  rv_database$table_list = NULL
+  
 })
 
 
