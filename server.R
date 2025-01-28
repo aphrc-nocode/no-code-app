@@ -62,6 +62,12 @@ function(input, output, session) {
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
+  
+  ###-------App Footer--------------------------
+  footer_language_translation()
+  ###-------Menu Translate---------
+  
+  menu_translation()
 
   #### ---- Change language ----------------------------------------------------
   source("server/change_language.R", local = TRUE)
@@ -207,8 +213,13 @@ function(input, output, session) {
   
   #### ---- Combine datasets with the existing one --------------------------------------####
   source("server/combine_data.R", local = TRUE)
-  combine_data_combine_type()
   
+  ##### ---- List of internal data ------------------------------------------####
+  combine_data_list_datasets()
+  
+  ##### ---- Identify matching colums ------------------------------------------####
+  combine_data_match_columns()
+
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)

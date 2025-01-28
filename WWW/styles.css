@@ -107,12 +107,14 @@
   /*Tables*/
   
 .dataTables_wrapper , .dataTables_wrapper .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper {
-          color: #ffffff;
+          color:#000000;
+          background-color:#ffffff;
           }
 
           thead {
           color: #ffffff;
           font-size:1.2em;
+          background-color:#17a2b8;
           }
 
           tbody {
