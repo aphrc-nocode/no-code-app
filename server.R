@@ -220,9 +220,11 @@ function(input, output, session) {
   ##### ---- Combine data options ------------------------------------------####
   combine_data_type()
 
+  ##### ---- Matched variables display ------------------------------------------####
+  combine_data_matched_vars()
 
-  ##### ---- Identify matching colums ------------------------------------------####
-  combine_data_match_columns()
+  ##### ---- Combine row-wise ------------------------------------------####
+  combine_data_row_wise()
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

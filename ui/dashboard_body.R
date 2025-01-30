@@ -186,9 +186,24 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						, column(width=9
 							, uiOutput("combine_data_list_datasets")
 							, uiOutput("combine_data_apply")
-							, hr()
+							, br()
 							, uiOutput("combine_data_type_choices")
-							, htmlOutput("combine_data_matched_vars")
+							, column(width=4
+								, uiOutput("combine_data_base_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_new_vars")
+							)
+							, column(width=4
+								, htmlOutput("combine_data_matched_vars")
+							)
+							, br()
+							, column(width=4
+								, uiOutput("combine_data_combine_modify_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_create_id_var")
+							)
 						)
 					)
 			  ),
