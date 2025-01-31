@@ -198,11 +198,16 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								, htmlOutput("combine_data_matched_vars")
 							)
 							, br()
+							, br()
 							, column(width=4
 								, uiOutput("combine_data_combine_modify_vars")
 							)
 							, column(width=4
 								, uiOutput("combine_data_create_id_var")
+								, uiOutput("combine_data_create_id_var_input")
+							)
+							, column(width=4
+								, uiOutput("combine_data_matched_apply")
 							)
 						)
 					)
