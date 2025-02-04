@@ -26,7 +26,7 @@ generate_data_summary_server = function() {
 			sumtoolsff = function() {
 				rv_current$data_summary_summarytools = renderUI({
 				 summarytools::view(
-					summarytools::dfSummary(rv_current$data, style= "grid")
+				   summarytools::dfSummary(rv_current$data, style= "grid")
 					, method = "render"
 					, silent=TRUE
 					, max.tbl.height = 600

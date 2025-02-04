@@ -106,7 +106,7 @@
   
   /*Tables*/
   
-.dataTables_wrapper , .dataTables_wrapper .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper {
+.dataTables_wrapper , .dataTables_wrapper .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper{
           color:#000000;
           background-color:#ffffff;
           }
@@ -133,5 +133,20 @@
   overflow-y: auto;
 }
 
+table {
+    background-color: white;
+    color: black;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #17a2b8;
+    color: white;
+}
+
+td {
+    background-color: #ffffff;
+    color: black;
+}
 
 
