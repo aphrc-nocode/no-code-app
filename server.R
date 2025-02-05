@@ -56,6 +56,7 @@ function(input, output, session) {
 		, schema_selected = NULL
 		, table_selected = NULL
 		, df_table = data.frame()
+		, df_table_str = NULL
 	)
  
 

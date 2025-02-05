@@ -36,7 +36,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                        , hr()
                        , conditionalPanel(
                          condition = "input.upload_type == 'Database connection'",
-                         checkboxInput("show_table", "Show Tables", value = FALSE)
+                         radioButtons("option_picked", "Upload database records", choices = c("use a table","use SQL query"), selected = "use a table")
                        )
                        , uiOutput("db_schema_list")
                        , uiOutput("db_table_list")
@@ -45,10 +45,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                          verbatimTextOutput("db_table_str")
                        )
                        , br()
-                       , conditionalPanel(
-                         condition = "input.upload_type == 'Database connection'",
-                         checkboxInput("custom_query", "Custom Query", value = FALSE)
-                       )
                        , uiOutput("db_custom_query")
                        , uiOutput("db_run_query")
                        , conditionalPanel(

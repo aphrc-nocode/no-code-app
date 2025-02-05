@@ -26,7 +26,7 @@ database_integration_server <- function(){
         schemas <- dbGetQuery(conn, query_schemas)
         schema_list <- c(schemas)
         rv_database$schema_list <- schema_list
-        #updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
+        updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       }, 
       error = function(e){
         shinyalert("", "database connection failed, Confirm Host,Username and Password are correct", type = "error")
@@ -40,8 +40,8 @@ database_integration_server <- function(){
     
   })
   
-  observeEvent(input$show_table, {
-    if(input$show_table == TRUE){
+  observeEvent(input$option_picked, {
+    if(input$option_picked == "use a table"){
       updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
     }
     
@@ -67,17 +67,19 @@ database_integration_server <- function(){
     rv_database$table_selected <- table_selected
     schema_selected <- rv_database$schema_selected
     conn <- rv_database$conn
-    query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, " LIMIT 10;", sep = "")
+    query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, " ;", sep = "")
     df_table_str <- dbGetQuery(conn, query_table_data)
     rv_database$df_table_str <- df_table_str
     
+
+
   })
   
   output$db_table_str <- renderPrint({ 
     if(!is.null(rv_database$df_table_str)){
-      if(input$show_table == TRUE){
+      if(input$option_picked == "use a table"){
         str(rv_database$df_table_str)
-        
+
       }else{
         rv_database$df_table_str = NULL
       }
@@ -89,15 +91,15 @@ database_integration_server <- function(){
   
   output$db_table_view<- renderDT({
     df_table <- rv_database$df_table
-    if(input$custom_query == TRUE){
+    if(input$option_picked == "use SQL query"){
       datatable(
-        df_table,
+        head(df_table,5),
         options = list(pageLength =10)
       )
     }else{
-      #df_table = data.frame()
       rv_database$df_table = NULL
     }
+
     
     
     
