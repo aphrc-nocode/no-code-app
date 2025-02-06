@@ -57,6 +57,7 @@ function(input, output, session) {
 		, table_selected = NULL
 		, df_table = data.frame()
 		, df_table_str = NULL
+		, query_table_name = NULL
 	)
  
 
