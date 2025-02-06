@@ -188,6 +188,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							, uiOutput("combine_data_apply")
 							, br()
 							, uiOutput("combine_data_type_choices")
+							, htmlOutput("combine_data_matched_vars_manual_ui")
 							, column(width=4
 								, uiOutput("combine_data_base_vars")
 							)
@@ -196,6 +197,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							)
 							, column(width=4
 								, htmlOutput("combine_data_matched_vars")
+								, uiOutput("combine_data_manual_match_apply")
 							)
 							, br()
 							, br()
@@ -209,6 +211,8 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							, column(width=4
 								, uiOutput("combine_data_matched_apply")
 							)
+							, htmlOutput("combine_data_row_wise_values_log_ui")
+							, verbatimTextOutput("combine_data_row_wise_values_log")
 						)
 					)
 			  ),

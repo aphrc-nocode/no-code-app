@@ -111,7 +111,7 @@ shinyutilities.Rout: R/shinyutilities.R
 
 ## All make rules goes here 
 runapp:
-	echo "shiny::runApp(\".\")" | R --slave
+	echo "shiny::runApp(\".\", port=3001)" | R --slave
 
 ######################################################################
 
