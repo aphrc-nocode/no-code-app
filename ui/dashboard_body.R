@@ -30,15 +30,28 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                        , uiOutput("db_name")
                        , uiOutput("db_user")
                        , uiOutput("db_pwd")
+                       , uiOutput("db_port")
                        , uiOutput("db_connect")
+                       , uiOutput("db_disconnect")
                        , hr()
+                       , conditionalPanel(
+                         condition = "input.upload_type == 'Database connection'",
+                         radioButtons("option_picked", "Upload database records", choices = c("use a table","use SQL query"), selected = "use a table")
+                       )
                        , uiOutput("db_schema_list")
                        , uiOutput("db_table_list")
-                       ,br()
+                       , conditionalPanel(
+                         condition = "input.upload_type == 'Database connection'",
+                         verbatimTextOutput("db_table_str")
+                       )
+                       , br()
+                       , uiOutput("db_custom_query")
+                       , uiOutput("db_run_query")
                        , conditionalPanel(
                          condition = "input.upload_type == 'Database connection'",
                          DT::DTOutput("db_table_view", width = "100%")
                        ) 
+                       
                        
                        ## This is my thing
                        , uiOutput("submit_upload")
@@ -197,8 +210,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                  fluidRow()),
          tabItem(tabName = "summarizeNumerical",
                  fluidRow()),
-						tabItem(tabName = "CustomDataVisualization",
-						        fluidRow()),
          tabItem(tabName = "dataPartitioning",
                  fluidRow()),
          tabItem(tabName = "featureEngineering",
