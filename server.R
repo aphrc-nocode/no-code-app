@@ -56,6 +56,7 @@ function(input, output, session) {
 		, schema_selected = NULL
 		, table_selected = NULL
 		, df_table = data.frame()
+		, df_table_str = NULL
 	)
  
 
@@ -116,6 +117,10 @@ function(input, output, session) {
   output$db_connect = db_connect
   output$db_schema_list = db_schema_list
   output$db_table_list = db_table_list
+  output$db_custom_query = db_custom_query
+  output$db_run_query = db_run_query
+  output$db_port = db_port
+  output$db_disconnect = db_disconnect
 
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
