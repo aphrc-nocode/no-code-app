@@ -191,20 +191,45 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    )
                  )),
          
-         tabItem(tabName = "combineData"
-                 , fluidRow(
-                   column(width = 3
-                          , htmlOutput("combine_data_title")
-                   )
- 						, column(width=9
+			  tabItem(tabName = "combineData"
+					, fluidRow(
+						column(width = 3
+							, htmlOutput("combine_data_title")
+						)
+						, column(width=9
 							, uiOutput("combine_data_list_datasets")
 							, uiOutput("combine_data_apply")
-							, hr()
-							, htmlOutput("combine_data_matched_vars")
+							, br()
+							, uiOutput("combine_data_type_choices")
+							, htmlOutput("combine_data_matched_vars_manual_ui")
+							, column(width=4
+								, uiOutput("combine_data_base_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_new_vars")
+							)
+							, column(width=4
+								, htmlOutput("combine_data_matched_vars")
+								, uiOutput("combine_data_manual_match_apply")
+							)
+							, br()
+							, br()
+							, column(width=4
+								, uiOutput("combine_data_combine_modify_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_create_id_var")
+								, uiOutput("combine_data_create_id_var_input")
+							)
+							, column(width=4
+								, uiOutput("combine_data_matched_apply")
+							)
+							, htmlOutput("combine_data_row_wise_values_log_ui")
+							, verbatimTextOutput("combine_data_row_wise_values_log")
 						)
-					  )
-         ),
-         
+					)
+			  ),
+     
          
          tabItem(tabName = "summarizeCategorical",
                  fluidRow()),
