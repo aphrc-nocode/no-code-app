@@ -30,15 +30,28 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                        , uiOutput("db_name")
                        , uiOutput("db_user")
                        , uiOutput("db_pwd")
+                       , uiOutput("db_port")
                        , uiOutput("db_connect")
+                       , uiOutput("db_disconnect")
                        , hr()
+                       , conditionalPanel(
+                         condition = "input.upload_type == 'Database connection'",
+                         radioButtons("option_picked", "Upload database records", choices = c("use a table","use SQL query"), selected = "use a table")
+                       )
                        , uiOutput("db_schema_list")
                        , uiOutput("db_table_list")
-                       ,br()
+                       , conditionalPanel(
+                         condition = "input.upload_type == 'Database connection'",
+                         verbatimTextOutput("db_table_str")
+                       )
+                       , br()
+                       , uiOutput("db_custom_query")
+                       , uiOutput("db_run_query")
                        , conditionalPanel(
                          condition = "input.upload_type == 'Database connection'",
                          DT::DTOutput("db_table_view", width = "100%")
                        ) 
+                       
                        
                        ## This is my thing
                        , uiOutput("submit_upload")
@@ -178,27 +191,50 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    )
                  )),
          
-         tabItem(tabName = "combineData"
-                 , fluidRow(
-                   column(width = 3
-                          , htmlOutput("combine_data_title")
-                   )
- 						, column(width=9
+			  tabItem(tabName = "combineData"
+					, fluidRow(
+						column(width = 3
+							, htmlOutput("combine_data_title")
+						)
+						, column(width=9
 							, uiOutput("combine_data_list_datasets")
 							, uiOutput("combine_data_apply")
-							, hr()
-							, htmlOutput("combine_data_matched_vars")
+							, br()
+							, uiOutput("combine_data_type_choices")
+							, htmlOutput("combine_data_matched_vars_manual_ui")
+							, column(width=4
+								, uiOutput("combine_data_base_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_new_vars")
+							)
+							, column(width=4
+								, htmlOutput("combine_data_matched_vars")
+								, uiOutput("combine_data_manual_match_apply")
+							)
+							, br()
+							, br()
+							, column(width=4
+								, uiOutput("combine_data_combine_modify_vars")
+							)
+							, column(width=4
+								, uiOutput("combine_data_create_id_var")
+								, uiOutput("combine_data_create_id_var_input")
+							)
+							, column(width=4
+								, uiOutput("combine_data_matched_apply")
+							)
+							, htmlOutput("combine_data_row_wise_values_log_ui")
+							, verbatimTextOutput("combine_data_row_wise_values_log")
 						)
-					  )
-         ),
-         
+					)
+			  ),
+     
          
          tabItem(tabName = "summarizeCategorical",
                  fluidRow()),
          tabItem(tabName = "summarizeNumerical",
                  fluidRow()),
-						tabItem(tabName = "CustomDataVisualization",
-						        fluidRow()),
          tabItem(tabName = "dataPartitioning",
                  fluidRow()),
          tabItem(tabName = "featureEngineering",
