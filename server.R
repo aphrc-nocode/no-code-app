@@ -225,11 +225,26 @@ function(input, output, session) {
   ##### ---- Combine data options ------------------------------------------####
   combine_data_type()
 
+  ##### ---- Combine data mtch type ------------------------------------------####
+  combine_data_match_type()
+
+  ##### ---- Combine data variables matched --------------------####
+  combine_data_variable_matching()
+  
+  #### ----- Perform matching ---------------------------------####
+  combine_data_perform_variable_match()
+
+  ##### ---- Combine data perform merging  --------------------####
+  combine_data_perform_merging()
+
+  #### ---- Reset combine data --------------------------------####
+  combine_data_reset()
+
   ##### ---- Matched variables display ------------------------------------------####
-  combine_data_matched_vars()
+##  combine_data_matched_vars()
 
   ##### ---- Combine row-wise ------------------------------------------####
-  combine_data_row_wise()
+##  combine_data_row_wise()
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

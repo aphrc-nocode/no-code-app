@@ -218,7 +218,7 @@ transform_data_rename_variables_server = function() {
 				cat(rv_current$renamed_variable_log, sep="\n")
 			})
 			rv_current$working_df = (rv_current$working_df
-				|> rename_at(input$transform_data_select_vars, ~c(input$transform_data_rename_variable_input))
+				|> Rautoml::rename_vars(input$transform_data_select_vars, input$transform_data_rename_variable_input)
 			)
 			rv_current$data = rv_current$working_df
 			rv_current$selected_var = input$transform_data_rename_variable_input
