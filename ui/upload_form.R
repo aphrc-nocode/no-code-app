@@ -93,7 +93,7 @@ db_table_list <- renderUI({
 ### ----------OMOP database type---------------------------------------####
 db_type <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_type", "Database Type", choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
+    selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
   }
 })
 
@@ -102,7 +102,7 @@ db_host <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){
       textInput("db_host",
-                label = "Database Host"
+                label = get_rv_labels("db_host")
                 , placeholder = "Enter your database host/IP address"
                 , width = "50%"
       )
@@ -117,7 +117,7 @@ db_name <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){  
       textInput("db_name",
-                label = "Database name"
+                label = get_rv_labels("db_name")
                 , placeholder = "Enter your database name"
                 , width = "50%"
       )
@@ -132,7 +132,7 @@ db_user <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){  
       textInput("db_user",
-                label = "Database User"
+                label = get_rv_labels("db_user")
                 , placeholder = "Enter your database User"
                 , width = "50%"
       )
@@ -147,7 +147,7 @@ db_pwd <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){  
       passwordInput("db_pwd",
-                    label = "Database password"
+                    label = get_rv_labels("db_pwd")
                     , placeholder = "Enter your database password"
                     , width = "50%"
       )
@@ -163,7 +163,7 @@ db_port <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){
       textInput("db_port",
-                label = "Database port"
+                label = get_rv_labels("db_port")
                 , placeholder = "Enter your database port"
                 , width = "50%"
                 , value ="5432"
