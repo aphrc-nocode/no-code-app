@@ -39,12 +39,12 @@ menu_translation = function(){
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>")), tabName = "Transform", icon = icon("table-columns", lib = "font-awesome")),
         menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "combineData", icon = icon("table-columns", lib = "font-awesome"))
       ),
-      menuItem(
-        HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>")), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
-        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_categorical"), "</span>")), tabName = "summarizeCategorical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
-        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_numeric"), "</span>")), tabName = "summarizeNumerical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"))
+        menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>")), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
+        menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_summarizeAutomatic"), "</span>")), tabName = "summarizeAutomatic", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
+            menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_categorical"), "</span>")), tabName = "summarizeCategorical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
+            menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_numeric"), "</span>")), tabName = "summarizeNumerical", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"))
       ),
-      menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_custom_visualization"), "</span>")), tabName = "CustomDataVisualization", icon = icon("chart-line")),
+      menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_summarizeCustom"), "</span>")), tabName = "summarizeCustom", icon = icon("chart-line"))),
       menuItem(
         text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_machine_learning"), "</span>")), tabName = "machineLearning", icon = icon("code-merge", lib = "font-awesome"),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_partition_data"), "</span>")), tabName = "dataPartitioning", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
