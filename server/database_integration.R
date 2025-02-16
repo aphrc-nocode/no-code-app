@@ -91,7 +91,7 @@ database_integration_server <- function(){
   
   output$db_table_view<- renderDT({
     df_table <- rv_database$df_table
-    if(input$option_picked == "use SQL query"){
+    if(!is.null(input$option_picked) && input$option_picked == "use SQL query"){
       datatable(
         head(df_table,5),
         options = list(pageLength =10)
