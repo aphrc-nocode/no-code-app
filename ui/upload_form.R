@@ -53,7 +53,7 @@ db_connect <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
     if(is.null(rv_database$conn)){
       actionBttn("db_connect",
-                 label = "Connect", width = "25%" 
+                 label = get_rv_labels("db_connect"), width = "25%" 
                  , inline = TRUE 
                  , block = FALSE 
                  , color = "success" 
@@ -71,7 +71,7 @@ db_connect <- renderUI({
 db_schema_list <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(input$option_picked == "use a table"){
-      selectInput("db_schema_list", "List of Schemas", choices = NULL, multiple = FALSE)
+      selectInput("db_schema_list", get_rv_labels("db_schema_list"), choices = NULL, multiple = FALSE)
     }
     
   }
@@ -82,7 +82,7 @@ db_schema_list <- renderUI({
 db_table_list <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(input$option_picked == "use a table"){
-      selectInput("db_table_list", "List of Tables", choices = NULL, multiple = FALSE)
+      selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
     }
     
   }
@@ -103,7 +103,7 @@ db_host <- renderUI({
     if(is.null(rv_database$conn)){
       textInput("db_host",
                 label = get_rv_labels("db_host")
-                , placeholder = "Enter your database host/IP address"
+                , placeholder = get_rv_labels("db_host_placeholder")
                 , width = "50%"
       )
     }
@@ -118,7 +118,7 @@ db_name <- renderUI({
     if(is.null(rv_database$conn)){  
       textInput("db_name",
                 label = get_rv_labels("db_name")
-                , placeholder = "Enter your database name"
+                , placeholder = get_rv_labels("db_name_placeholder")
                 , width = "50%"
       )
     }
@@ -133,7 +133,7 @@ db_user <- renderUI({
     if(is.null(rv_database$conn)){  
       textInput("db_user",
                 label = get_rv_labels("db_user")
-                , placeholder = "Enter your database User"
+                , placeholder = get_rv_labels("db_user_placeholder")
                 , width = "50%"
       )
     }
@@ -148,7 +148,7 @@ db_pwd <- renderUI({
     if(is.null(rv_database$conn)){  
       passwordInput("db_pwd",
                     label = get_rv_labels("db_pwd")
-                    , placeholder = "Enter your database password"
+                    , placeholder = get_rv_labels("db_pwd_placeholder")
                     , width = "50%"
       )
     }
@@ -164,7 +164,7 @@ db_port <- renderUI({
     if(is.null(rv_database$conn)){
       textInput("db_port",
                 label = get_rv_labels("db_port")
-                , placeholder = "Enter your database port"
+                , placeholder = get_rv_labels("db_port_placeholder")
                 , width = "50%"
                 , value ="5432"
       )
@@ -180,7 +180,7 @@ db_port <- renderUI({
 db_custom_query <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
     if(input$option_picked == "use SQL query"){
-      textAreaInput("db_custom_query", "Custom Query", placeholder = "Write Query Here", width = "50%")
+      textAreaInput("db_custom_query", get_rv_labels("db_custom_query"), placeholder = get_rv_labels("db_write_query_placeholder"), width = "50%")
     }
     
   }
@@ -191,7 +191,7 @@ db_run_query<- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
     if(input$option_picked == "use SQL query"){
       actionBttn("db_run_query",
-                 label = "Run Query", width = "25%" 
+                 label = get_rv_labels("db_run_query"), width = "25%" 
                  , inline = TRUE 
                  , block = FALSE 
                  , color = "success" 
@@ -209,7 +209,7 @@ db_disconnect <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
     if(!is.null(rv_database$conn)){
       actionBttn("db_disconnect",
-                 label = "Disconnect", width = "25%" 
+                 label = get_rv_labels("db_disconnect"), width = "25%" 
                  , inline = TRUE 
                  , block = FALSE 
                  , color = "success" 
@@ -221,4 +221,18 @@ db_disconnect <- renderUI({
     NULL 
   } 
 })
+
+db_tab_query <- renderUI({
+  if (isTRUE(input$upload_type == "Database connection")) { 
+    radioButtons("option_picked", get_rv_labels("db_tab_query"), choices = c("use a table","use SQL query"), selected = "use a table")
+    
+  }else { 
+    NULL 
+  }
+})
+
+
+
+
+
 

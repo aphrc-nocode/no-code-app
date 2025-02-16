@@ -34,10 +34,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                        , uiOutput("db_connect")
                        , uiOutput("db_disconnect")
                        , hr()
-                       , conditionalPanel(
-                         condition = "input.upload_type == 'Database connection'",
-                         radioButtons("option_picked", "Upload database records", choices = c("use a table","use SQL query"), selected = "use a table")
-                       )
+                       , uiOutput("db_tab_query")
                        , uiOutput("db_schema_list")
                        , uiOutput("db_table_list")
                        , conditionalPanel(

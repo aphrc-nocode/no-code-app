@@ -122,6 +122,7 @@ function(input, output, session) {
   output$db_run_query = db_run_query
   output$db_port = db_port
   output$db_disconnect = db_disconnect
+  output$ db_tab_query = db_tab_query
 
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
