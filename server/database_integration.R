@@ -91,7 +91,7 @@ database_integration_server <- function(){
   
   output$db_table_view<- renderDT({
     df_table <- rv_database$df_table
-    if(input$option_picked == "use SQL query"){
+    if(!is.null(input$option_picked) && input$option_picked == "use SQL query"){
       datatable(
         head(df_table,5),
         options = list(pageLength =10)
@@ -118,13 +118,17 @@ database_integration_server <- function(){
     result <- tryCatch({
       
       query_string <- input$db_custom_query
+      table_name <- sub("(?i).*\\bfrom\\s+([\\w.]+).*", "\\1", query_string, perl = TRUE)
+      query_table_name <- gsub("\\.","_",table_name)
       conn <- rv_database$conn
       df_table <- dbGetQuery(conn, query_string)
+      rv_database$query_table_name <- query_table_name
       rv_database$df_table <- df_table
       df_table
     },
     error = function(e) {
       df_table <- NULL
+      query_table_name <- NULL
       
     })
     
@@ -143,8 +147,8 @@ database_integration_server <- function(){
     rv_database$conn = NULL
     rv_database$schema_list = NULL
     rv_database$table_list = NULL
-    
+    rv_database$df_table = NULL
+    rv_database$df_table_str = NULL
   })
-  
   
 }
