@@ -342,7 +342,7 @@ combine_data_perform_merging = function() {
 							 textInput("combine_data_create_id_var_input"
 								, label = NULL
 								, value = NULL
-								, placeholder = "Type ID var"
+								, placeholder = get_rv_labels("combine_data_create_id_var_input_ph")
 								, width="30%"
 							)
 						})
