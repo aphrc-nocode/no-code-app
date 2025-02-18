@@ -70,7 +70,7 @@ db_connect <- renderUI({
 ### ----------OMOP Schema Views---------------------------------------####
 db_schema_list <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    if(!is.null(input$option_picked) &&  input$option_picked == "use a table"){
+    if(!is.null(rv_database$conn) && !is.null(input$option_picked) &&  input$option_picked == "use a table"){
       selectInput("db_schema_list", get_rv_labels("db_schema_list"), choices = NULL, multiple = FALSE)
     }
     
@@ -80,7 +80,7 @@ db_schema_list <- renderUI({
 
 ### ----------OMOP Table Views---------------------------------------####
 db_table_list <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
+  if (!is.null(rv_database$conn) && isTRUE(input$upload_type == "Database connection")) {
     if(!is.null(input$option_picked) && input$option_picked == "use a table"){
       selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
     }
@@ -179,7 +179,7 @@ db_port <- renderUI({
 
 db_custom_query <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
-    if(!is.null(input$option_picked) && input$option_picked == "use SQL query"){
+    if(!is.null(rv_database$conn) && !is.null(input$option_picked) && input$option_picked == "use SQL query"){
       textAreaInput("db_custom_query", get_rv_labels("db_custom_query"), placeholder = get_rv_labels("db_write_query_placeholder"), width = "50%")
     }
     
@@ -189,7 +189,7 @@ db_custom_query <- renderUI({
 
 db_run_query<- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
-    if(!is.null(input$option_picked) && input$option_picked == "use SQL query"){
+    if(!is.null(rv_database$conn) && !is.null(input$option_picked) && input$option_picked == "use SQL query"){
       actionBttn("db_run_query",
                  label = get_rv_labels("db_run_query"), width = "25%" 
                  , inline = TRUE 
@@ -224,7 +224,10 @@ db_disconnect <- renderUI({
 
 db_tab_query <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
-    radioButtons("option_picked", get_rv_labels("db_tab_query"), choices = c("use a table","use SQL query"), selected = "use a table")
+    if(!is.null(rv_database$conn)){
+      radioButtons("option_picked", get_rv_labels("db_tab_query"), choices = c("use a table","use SQL query"), selected = "use a table")
+      
+    }
     
   }else { 
     NULL 
