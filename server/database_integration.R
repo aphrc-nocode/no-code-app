@@ -29,12 +29,12 @@ database_integration_server <- function(){
         updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       }, 
       error = function(e){
-        shinyalert("", "database connection failed, Confirm Host,Username and Password are correct", type = "error")
+        shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
         
       })
       
     }else{
-      shinyalert("", "MySQL database integration not yet implemented", type = "info")
+      shinyalert("", get_rv_labels("db_mysql_failure"), type = "info")
     }
     
     
@@ -109,7 +109,7 @@ database_integration_server <- function(){
     if (is.null(rv_database$conn)) {
       shinyalert(
         title = "",
-        text = "Please establish a database connection before running a query.",
+        text = get_rv_labels("db_query_failure"),
         type = "error"
       )
       return()
@@ -135,7 +135,7 @@ database_integration_server <- function(){
     if(is.null(result)){
       shinyalert(
         title = "",
-        text = "Check your SQL Syntax.",
+        text = get_rv_labels("db_sql_syntax"),
         type = "error"
       )
     }

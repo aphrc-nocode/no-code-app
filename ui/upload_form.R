@@ -225,7 +225,10 @@ db_disconnect <- renderUI({
 db_tab_query <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) { 
     if(!is.null(rv_database$conn)){
-      radioButtons("option_picked", get_rv_labels("db_tab_query"), choices = c("use a table","use SQL query"), selected = "use a table")
+      radioButtons("option_picked", get_rv_labels("db_tab_query"), 
+                   choices = get_named_choices(input_choices_file, input$change_language, "ui_radio_button"),
+                   selected = get_named_choices(input_choices_file, input$change_language, "ui_radio_button")[1])
+                   
       
     }
     
