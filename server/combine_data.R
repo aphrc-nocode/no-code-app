@@ -185,7 +185,8 @@ combine_data_variable_matching = function() {
 					if (isTRUE(!is.null(rv_current$combine_data_matched_vars)) & isTRUE(length(rv_current$combine_data_matched_vars)>0)) {
 						output$combine_data_matched_vars = renderUI({
 							 selectInput('combine_data_matched_vars'
-								, label = get_rv_labels("combine_data_matched_vars")
+								, label = if (isTRUE(input$combine_data_type_choices=="row"))  get_rv_labels("combine_data_matched_vars") else get_rv_labels("combine_data_matched_vars_column")
+#								, label = get_rv_labels("combine_data_matched_vars")
 								, rv_current$combine_data_matched_vars
 								, selectize=FALSE
 								, multiple=TRUE
@@ -302,7 +303,7 @@ combine_data_perform_variable_match = function() {
 		if (isTRUE(!is.null(rv_current$combine_data_matched_vars)) & isTRUE(length(rv_current$combine_data_matched_vars)>0)) {
 			output$combine_data_matched_vars = renderUI({
 				 selectInput('combine_data_matched_vars'
-					, label = get_rv_labels("combine_data_matched_vars")
+					, label = if (isTRUE(input$combine_data_type_choices=="row"))  get_rv_labels("combine_data_matched_vars") else get_rv_labels("combine_data_matched_vars_column")
 					, rv_current$combine_data_matched_vars
 					, selectize=FALSE
 					, multiple=TRUE
@@ -337,28 +338,36 @@ combine_data_perform_merging = function() {
 								, label = get_rv_labels("apply_selection")
 							)
 						})
-
-						output$combine_data_create_id_var_input = renderUI({
-							 textInput("combine_data_create_id_var_input"
-								, label = NULL
-								, value = NULL
-								, placeholder = get_rv_labels("combine_data_create_id_var_input_ph")
-								, width="30%"
-							)
-						})
+						if (isTRUE(input$combine_data_type_choices=="row")) {
+							output$combine_data_create_id_var_input = renderUI({
+								 textInput("combine_data_create_id_var_input"
+									, label = NULL
+									, value = NULL
+									, placeholder = get_rv_labels("combine_data_create_id_var_input_ph")
+									, width="30%"
+								)
+							})	
+						} else {
+							updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
+							output$combine_data_create_id_var_input = NULL
+						}
 					} else {
+						updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 						output$combine_data_create_id_var_input = NULL
 						output$combine_data_perform_merging_apply = NULL
 					}
 				} else {
+					updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 					output$combine_data_create_id_var_input = NULL
 					output$combine_data_perform_merging_apply = NULL
 				}
 			} else {
+				updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 				output$combine_data_create_id_var_input = NULL
 				output$combine_data_perform_merging_apply = NULL
 			}
 		} else {
+			updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 			output$combine_data_create_id_var_input = NULL
 			output$combine_data_perform_merging_apply = NULL
 		}
@@ -367,9 +376,10 @@ combine_data_perform_merging = function() {
 	### Merge datasets
 	observeEvent(input$combine_data_perform_merging_apply, {
 		if (isTRUE(length(input$combine_data_type_choices)>0)) {
-			if (isTRUE(input$combine_data_type_choices=="row")) {
-				temp_out = Rautoml::combine_rows(rv_current$working_df
+			if (isTRUE(any(input$combine_data_type_choices %in% c("row", "column")))) {
+				temp_out = Rautoml::combine_data(rv_current$working_df
 					, rv_current$combine_df
+					, type = input$combine_data_type_choices
 					, id = input$combine_data_create_id_var_input
 				)
 				rv_current$working_df = temp_out$df
@@ -407,6 +417,7 @@ combine_data_perform_merging = function() {
 		output$combine_data_matched_vars_manual_ui = NULL
 		output$combine_data_manual_match_apply = NULL
 		output$combine_data_perform_merging_apply = NULL
+		updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 		output$combine_data_create_id_var_input = NULL
 	})
 }
@@ -435,6 +446,7 @@ combine_data_reset = function() {
 		output$combine_data_matched_vars_manual_ui = NULL
 		output$combine_data_manual_match_apply = NULL
 		output$combine_data_perform_merging_apply = NULL
+		updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 		output$combine_data_create_id_var_input = NULL
 	})
 	
@@ -455,6 +467,7 @@ combine_data_reset = function() {
 			output$combine_data_matched_vars_manual_ui = NULL
 			output$combine_data_manual_match_apply = NULL
 			output$combine_data_perform_merging_apply = NULL
+			updateTextInput(session = session , inputId = "combine_data_create_id_var_input")
 			output$combine_data_create_id_var_input = NULL
 		}
 	})
