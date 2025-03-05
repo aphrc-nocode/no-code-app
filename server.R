@@ -57,6 +57,7 @@ function(input, output, session) {
 		, table_selected = NULL
 		, df_table = data.frame()
 		, df_table_str = NULL
+		, query_table_name = NULL
 	)
  
 
@@ -121,6 +122,7 @@ function(input, output, session) {
   output$db_run_query = db_run_query
   output$db_port = db_port
   output$db_disconnect = db_disconnect
+  output$ db_tab_query = db_tab_query
 
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
@@ -300,16 +302,24 @@ function(input, output, session) {
   ##### ---- Combine data options ------------------------------------------####
   combine_data_type()
 
-  ##### ---- Matched variables display ------------------------------------------####
-  combine_data_matched_vars()
+  ##### ---- Combine data mtch type ------------------------------------------####
+  combine_data_match_type()
 
-  ##### ---- Combine row-wise ------------------------------------------####
-  combine_data_row_wise()
+  ##### ---- Combine data variables matched --------------------####
+  combine_data_variable_matching()
+  
+  #### ----- Perform matching ---------------------------------####
+  combine_data_perform_variable_match()
+
+  ##### ---- Combine data perform merging  --------------------####
+  combine_data_perform_merging()
+
+  #### ---- Reset combine data --------------------------------####
+  combine_data_reset()
   
   #-----Control Custom visualizations
   source("server/user_defined_visualization.R", local = TRUE)
   user_defined_server()
-  
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

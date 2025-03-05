@@ -167,18 +167,20 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    )
                    , column(width=9,
                             fluidRow(column(width=4
-                                            , htmlOutput("transform_data_variable_type_ui")
-                                            , verbatimTextOutput("transform_data_variable_type")
-                                            , htmlOutput("transform_data_variable_type_log_ui")
-                                            , verbatimTextOutput("transform_data_variable_type_log")
-                                            , htmlOutput("transform_data_renamed_variable_log_ui")
-                                            , verbatimTextOutput("transform_data_renamed_variable_log")
-                                            , htmlOutput("transform_data_recoded_variable_labels_log_ui")
-                                            , verbatimTextOutput("transform_data_recoded_variable_labels_log")
-                                            , htmlOutput("transform_data_create_missing_values_log_ui")
-                                            , verbatimTextOutput("transform_data_create_missing_values_log")
-                                            , htmlOutput("transform_data_handle_outliers_log_ui")
-                                            , verbatimTextOutput("transform_data_handle_outliers_log")
+													  , htmlOutput("transform_data_plot_missing_data_out_ui")
+													  , plotOutput("transform_data_plot_missing_data_out")
+													  , htmlOutput("transform_data_variable_type_ui")
+													  , verbatimTextOutput("transform_data_variable_type")
+													  , htmlOutput("transform_data_variable_type_log_ui")
+													  , verbatimTextOutput("transform_data_variable_type_log")
+													  , htmlOutput("transform_data_renamed_variable_log_ui")
+													  , verbatimTextOutput("transform_data_renamed_variable_log")
+													  , htmlOutput("transform_data_recoded_variable_labels_log_ui")
+													  , verbatimTextOutput("transform_data_recoded_variable_labels_log")
+													  , htmlOutput("transform_data_create_missing_values_log_ui")
+													  , verbatimTextOutput("transform_data_create_missing_values_log")
+													  , htmlOutput("transform_data_handle_outliers_log_ui")
+													  , verbatimTextOutput("transform_data_handle_outliers_log")
                             )
                             , column(width=8
                                      , htmlOutput("transform_data_quick_explore_ui")
@@ -199,8 +201,8 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						, column(width=9
 							, uiOutput("combine_data_list_datasets")
 							, uiOutput("combine_data_apply")
-							, br()
 							, uiOutput("combine_data_type_choices")
+							, uiOutput("combine_data_match_type")
 							, htmlOutput("combine_data_matched_vars_manual_ui")
 							, column(width=4
 								, uiOutput("combine_data_base_vars")
@@ -210,20 +212,13 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							)
 							, column(width=4
 								, htmlOutput("combine_data_matched_vars")
-								, uiOutput("combine_data_manual_match_apply")
 							)
 							, br()
+							, uiOutput("combine_data_manual_match_apply")
 							, br()
-							, column(width=4
-								, uiOutput("combine_data_combine_modify_vars")
-							)
-							, column(width=4
-								, uiOutput("combine_data_create_id_var")
-								, uiOutput("combine_data_create_id_var_input")
-							)
-							, column(width=4
-								, uiOutput("combine_data_matched_apply")
-							)
+							, uiOutput("combine_data_create_id_var_input")
+							, br()
+							, uiOutput("combine_data_perform_merging_apply")
 							, htmlOutput("combine_data_row_wise_values_log_ui")
 							, verbatimTextOutput("combine_data_row_wise_values_log")
 						)
@@ -379,6 +374,5 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                  fluidRow()),
          tabItem(tabName = "addResources",
                  fluidRow())
-         
-         
+        
 )
