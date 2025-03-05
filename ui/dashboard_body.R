@@ -348,7 +348,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    uiOutput("user_stacked"),
                    uiOutput("user_add_density"),
                    uiOutput("user_remove_histogram"),
-                   uiOutput("user_select_color_variable"),
                    uiOutput("user_select_color_parlet")
                      
                
