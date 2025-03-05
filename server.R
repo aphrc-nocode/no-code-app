@@ -164,12 +164,12 @@ function(input, output, session) {
   explore_data_server()
   explore_data_subactions_server()
   
+
   ##----User Defined Visualization section-----------------------
   source("ui/user_defined_visualization_header.R", local = TRUE)
   output$user_viz_header = user_viz_header
   output$user_output_type = user_output_type
   output$user_chart_type = user_chart_type
-  output$user_select_data_tab = user_select_data_tab
   output$user_tab_options = user_tab_options
   output$user_calc_var = user_calc_var
   output$user_strata_var = user_strata_var
@@ -184,7 +184,6 @@ function(input, output, session) {
   output$user_drop_missing_values = user_drop_missing_values
   output$user_table_caption = user_table_caption
   
-  output$user_select_dataset = user_select_dataset
   output$user_plot_options = user_plot_options
   output$user_select_variable_on_x_axis = user_select_variable_on_x_axis
   output$user_select_variable_on_y_axis = user_select_variable_on_y_axis
@@ -226,8 +225,18 @@ function(input, output, session) {
   output$user_remove_histogram = user_remove_histogram
   output$user_select_color_variable = user_select_color_variable
   output$user_select_color_parlet = user_select_color_parlet
-
-
+  
+  output$tabSummaries <- render_gt(tabsum())
+  output$btnDownloadTable <- downloadHandler(
+    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
+    
+    content = function(file) {
+      file.copy(tabsumimage(), file)
+      
+    },
+    contentType = 'image/png'
+  )
+  
   
 
   ##### ---- Explore data actions ----------------------------------
@@ -296,10 +305,16 @@ function(input, output, session) {
 
   ##### ---- Combine row-wise ------------------------------------------####
   combine_data_row_wise()
+  
+  #-----Control Custom visualizations
+  source("server/user_defined_visualization.R", local = TRUE)
+  user_defined_server()
+  
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
+
 
   ##### ---- Reset on delete or language change ------------------- ####
   reset_data_server()

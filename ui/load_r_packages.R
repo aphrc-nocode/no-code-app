@@ -28,5 +28,10 @@ library(DBI)
 library(RPostgreSQL)
 library(DT)
 library(bslib)
+library(gt)
+library(lubridate)
+library(dplyr)
+library(gtsummary)
+
 
 

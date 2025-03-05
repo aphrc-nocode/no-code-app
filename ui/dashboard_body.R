@@ -261,7 +261,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    id = "tabOutputs",
                    column(
                      width = 3,
-                     uiOutput("user_select_data_tab"),
                      uiOutput("user_tab_options"),
                      br(),
                      uiOutput("user_calc_var"),
@@ -303,7 +302,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    id = "graphOutputs",
                    column(
                      width = 3,
-                     uiOutput("user_select_dataset"),
+              
                      uiOutput("user_plot_options"),
                    uiOutput("user_select_variable_on_x_axis"),
                    uiOutput("user_select_variable_on_y_axis"),

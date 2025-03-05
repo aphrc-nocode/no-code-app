@@ -10,7 +10,7 @@ user_output_type = renderUI({
   radioButtons(
     "cboOutput",
     paste0(get_rv_labels("user_output_type"), ":"),
-    choices = c("Chart", "Table"),
+    choices = c("Chart", "Table"), selected = "Chart",
     inline = TRUE
   )
 })
@@ -34,10 +34,6 @@ user_chart_type = renderUI({
   )
 })
 
-
-user_select_data_tab = renderUI({
-  selectInput("cboSelectDatasetTab", paste(get_rv_labels("user_select_dataset"),":"), "")
-})
 
 user_tab_options =renderUI({
   h3(
@@ -137,13 +133,6 @@ user_table_caption <- renderUI({
 
 
 
-user_select_dataset =renderUI({
-  selectInput("cboSelectDataset", 
-              paste0(
-                get_rv_labels("user_select_dataset")
-                ,":"),
-              "")
-  })
 user_plot_options =renderUI({
   h3(get_rv_labels("user_plot_options"))
   })
