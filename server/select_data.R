@@ -38,7 +38,7 @@ manage_data_show_server = function() {
 		output$manage_data_show = renderUI({
 		  radioButtons("manage_data_show"
 			 , paste0(get_rv_labels("data_summary"), ": ")
-			 , choices = c("str", "summary", "skim", "summarytools")
+			 , choices = c("str", "summary","skim","summarytools")
 			 , inline = TRUE
 		  )
 		})

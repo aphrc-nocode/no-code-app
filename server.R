@@ -165,6 +165,81 @@ function(input, output, session) {
   source("server/explore_data.R", local = TRUE)
   explore_data_server()
   explore_data_subactions_server()
+  
+
+  ##----User Defined Visualization section-----------------------
+  source("ui/user_defined_visualization_header.R", local = TRUE)
+  output$user_viz_header = user_viz_header
+  output$user_output_type = user_output_type
+  output$user_chart_type = user_chart_type
+  output$user_tab_options = user_tab_options
+  output$user_calc_var = user_calc_var
+  output$user_strata_var = user_strata_var
+  output$user_row_var = user_row_var
+  output$user_create_table = user_create_table
+  output$user_download_table = user_download_table
+  
+  output$user_table_options = user_table_options
+  output$user_report_numeric = user_report_numeric
+  output$user_add_p_value = user_add_p_value
+  output$user_add_confidence_interval = user_add_confidence_interval
+  output$user_drop_missing_values = user_drop_missing_values
+  output$user_table_caption = user_table_caption
+  
+  output$user_plot_options = user_plot_options
+  output$user_select_variable_on_x_axis = user_select_variable_on_x_axis
+  output$user_select_variable_on_y_axis = user_select_variable_on_y_axis
+  output$user_plot_title = user_plot_title
+  output$user_x_axis_label = user_x_axis_label
+  output$user_y_axis_label = user_y_axis_label
+  output$user_create = user_create
+  output$user_download = user_download
+  
+  output$user_more_plot_options = user_more_plot_options
+  output$user_transform_to_doughnut = user_transform_to_doughnut
+  output$user_select_color_variable = user_select_color_variable
+  output$user_select_group_variable = user_select_group_variable
+  output$user_visual_orientation = user_visual_orientation
+  output$user_bar_width = user_bar_width
+  output$user_line_size = user_line_size
+  output$user_select_line_type = user_select_line_type
+  output$user_add_shapes = user_add_shapes
+  
+  output$user_select_shape = user_select_shape
+  output$user_add_smooth = user_add_smooth
+  output$user_display_confidence_interval = user_display_confidence_interval
+  output$user_level_of_confidence_interval = user_level_of_confidence_interval
+  output$user_select_line_join = user_select_line_join
+  output$user_add_line_type = user_add_line_type
+  output$user_add_points = user_add_points
+  output$user_y_variable_summary_type = user_y_variable_summary_type
+  output$user_title_position = user_title_position
+  
+  output$user_size_of_plot_title = user_size_of_plot_title
+  output$user_axis_title_size = user_axis_title_size
+  output$user_facet_title_size = user_facet_title_size
+  output$user_axis_text_size = user_axis_text_size
+  output$user_data_label_size = user_data_label_size
+  output$user_x_axis_text_angle = user_x_axis_text_angle
+  output$user_legend_title = user_legend_title
+  output$user_stacked = user_stacked
+  output$user_add_density = user_add_density
+  output$user_remove_histogram = user_remove_histogram
+  output$user_select_color_variable = user_select_color_variable
+  output$user_select_color_parlet = user_select_color_parlet
+  
+  output$tabSummaries <- render_gt(tabsum())
+  output$btnDownloadTable <- downloadHandler(
+    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
+    
+    content = function(file) {
+      file.copy(tabsumimage(), file)
+      
+    },
+    contentType = 'image/png'
+  )
+  
+  
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -241,16 +316,15 @@ function(input, output, session) {
 
   #### ---- Reset combine data --------------------------------####
   combine_data_reset()
-
-  ##### ---- Matched variables display ------------------------------------------####
-##  combine_data_matched_vars()
-
-  ##### ---- Combine row-wise ------------------------------------------####
-##  combine_data_row_wise()
+  
+  #-----Control Custom visualizations
+  source("server/user_defined_visualization.R", local = TRUE)
+  user_defined_server()
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
+
 
   ##### ---- Reset on delete or language change ------------------- ####
   reset_data_server()

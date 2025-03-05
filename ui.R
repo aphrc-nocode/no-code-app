@@ -25,7 +25,5 @@ fluidPage(
   aphrcHeader <- dashboardHeader(disable = TRUE),
   
   dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody,skin = "green"),
-  
-  
   footer
 )

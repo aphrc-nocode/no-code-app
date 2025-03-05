@@ -19,7 +19,7 @@ upload_type = renderUI({
 show_uploaded = renderUI({
 	p(
 		h5(HTML(paste0("<b>", get_rv_labels("show_uploaded"), ":</b>")))
-   	, checkboxInput("show_uploaded", get_rv_labels("uploaded_datasets"))
+   	, prettyCheckbox("show_uploaded", get_rv_labels("uploaded_datasets"), status = "success",fill=TRUE,value = TRUE)
 	)
 })
 
