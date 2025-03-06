@@ -1,10 +1,3 @@
-user_viz_header =renderUI({
-    h3(
-      get_rv_labels(
-        "custom_viz_header"
-      )
-    )
-  })
 
 user_output_type = renderUI({
   radioButtons(
@@ -21,7 +14,7 @@ user_chart_type = renderUI({
     "btnChartType",
     justified = TRUE,
     choices = c(
-      "user-barplot" = "Bar",
+      "Barplot" = "Bar",
       "Histogram" = "Histogram",
       "Scatterplot" = "Scatterplot",
       "Boxplot" = "Boxplot",
@@ -380,8 +373,8 @@ user_y_variable_summary_type =renderUI({
 
 user_title_position =renderUI({
   numericInput(
-  inputId = get_rv_labels("user_title_position"),
-  label = "Title Position",
+  inputId= "numplotposition",
+  label = get_rv_labels("user_title_position"),
   value = 0.5
 )
 })

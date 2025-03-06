@@ -223,18 +223,12 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			  ),
      
          
-         tabItem(tabName = "summarizeCategorical",
-                 fluidRow()),
-         tabItem(tabName = "summarizeNumerical",
+         tabItem(tabName = "menu_summarizeAutomatic",
                  fluidRow()),
          tabItem(tabName = "dataPartitioning",
                  fluidRow()),
          
          tabItem(tabName = "summarizeCustom",
-                   uiOutput(
-                     "user_viz_header"
-                 ),
-                 
                  fluidRow(
                    column(
                      width = 2,
