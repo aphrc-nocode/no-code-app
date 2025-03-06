@@ -650,4 +650,16 @@ user_defined_server <- function() {
   })
   
   
+  output$tabSummaries <- gt::render_gt(tabsum())
+  output$btnDownloadTable <- downloadHandler(
+    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
+    
+    content = function(file) {
+      file.copy(tabsumimage(), file)
+      
+    },
+    contentType = 'image/png'
+  )
+  
+  
 }

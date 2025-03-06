@@ -169,7 +169,6 @@ function(input, output, session) {
 
   ##----User Defined Visualization section-----------------------
   source("ui/user_defined_visualization_header.R", local = TRUE)
-  output$user_viz_header = user_viz_header
   output$user_output_type = user_output_type
   output$user_chart_type = user_chart_type
   output$user_tab_options = user_tab_options
@@ -225,19 +224,10 @@ function(input, output, session) {
   output$user_stacked = user_stacked
   output$user_add_density = user_add_density
   output$user_remove_histogram = user_remove_histogram
-  output$user_select_color_variable = user_select_color_variable
+  #output$user_select_color_variable = user_select_color_variable
   output$user_select_color_parlet = user_select_color_parlet
   
-  output$tabSummaries <- render_gt(tabsum())
-  output$btnDownloadTable <- downloadHandler(
-    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
-    
-    content = function(file) {
-      file.copy(tabsumimage(), file)
-      
-    },
-    contentType = 'image/png'
-  )
+ 
   
   
 
