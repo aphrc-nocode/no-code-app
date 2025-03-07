@@ -389,7 +389,7 @@ user_defined_server <- function() {
                {
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
-                     plt<- boxplot_custom(df = rv_current$working_df,
+                     plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
                                           xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                           ylab = input$txtYlab, plot_title = input$txtPlotTitle,
                                           vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
@@ -399,7 +399,7 @@ user_defined_server <- function() {
                                           legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                    } else if(input$btnChartType == "Violin"){
-                     plt<- violin_custom(df = rv_current$working_df,
+                     plt<- Rautoml::custom_violin(df = rv_current$working_df,
                                          xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                          ylab = input$txtYlab, plot_title = input$txtPlotTitle,
                                          vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
@@ -410,7 +410,7 @@ user_defined_server <- function() {
                      )
                      
                    } else if(input$btnChartType == "Histogram"){
-                     plt<-histogram(df = rv_current$working_df,
+                     plt<- Rautoml::custom_histogram(df = rv_current$working_df,
                                     variable = input$cboXVar, 
                                     xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
@@ -421,7 +421,7 @@ user_defined_server <- function() {
                      )
                      
                    }else if(input$btnChartType == "Line"){
-                     plt<- line_graph(df = rv_current$working_df,
+                     plt<- Rautoml::custom_linegraph(df = rv_current$working_df,
                                       xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                       ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
                                       line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
@@ -434,7 +434,7 @@ user_defined_server <- function() {
                      
                      
                    }else if(input$btnChartType == "Scatterplot"){
-                     plt<-scatterplot_custom(df = rv_current$working_df,
+                     plt<- Rautoml::custom_scatterplot(df = rv_current$working_df,
                                              xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                              ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
                                              line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
@@ -446,7 +446,7 @@ user_defined_server <- function() {
                      )
                      
                    }else if(input$btnChartType == "Bar"){
-                     plt<- barplot(df = rv_current$working_df,
+                     plt<- Rautoml::custom_barplot(df = rv_current$working_df,
                                    xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                    ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
                                    vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
@@ -456,7 +456,7 @@ user_defined_server <- function() {
                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                    }else if(input$btnChartType == "Pie"){
-                     plt<- pie_chart(df = rv_current$working_df,
+                     plt<- Rautoml::custom_piechart(df = rv_current$working_df,
                                      xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
                                      facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
                                      title_pos = input$numplotposition, title_size= input$numplottitlesize,
@@ -470,7 +470,7 @@ user_defined_server <- function() {
                    output$btnchartDown <- downloadHandler(
                      
                      filename = function() {
-                       paste(input$btnChartType,format(Sys.Date(), "%B %d %Y"), ".jpeg")
+                       paste(input$btnChartType,format(Sys.time(), "%B %d %Y %H:%M:%S"), ".jpeg")
                      },
                      
                      content = function(file) {
@@ -487,95 +487,94 @@ user_defined_server <- function() {
                {
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
-                     plt<- boxplot_custom(df = rv_current$working_df,
-                                          xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                          ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                          vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
-                                          title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                          axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                          axistext_angle = input$xaxistextangle,
-                                          legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
+                                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                   ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                   vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
+                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                   axistext_angle = input$xaxistextangle,
+                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                    } else if(input$btnChartType == "Violin"){
-                     plt<- violin_custom(df = rv_current$working_df,
-                                         xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                         ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                         vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
-                                         title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                         axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                         axistext_angle = input$xaxistextangle,
-                                         legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     plt<- Rautoml::custom_violin(df = rv_current$working_df,
+                                                  xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                  ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                  vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
+                                                  title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                  axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                  axistext_angle = input$xaxistextangle,
+                                                  legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                      
                    } else if(input$btnChartType == "Histogram"){
-                     plt<-histogram(df = rv_current$working_df,
-                                    variable = input$cboXVar, 
-                                    xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                    title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                    axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                    axistext_angle = input$xaxistextangle,
-                                    bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity, 
-                                    density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
+                     plt<- Rautoml::custom_histogram(df = rv_current$working_df,
+                                                     variable = input$cboXVar, 
+                                                     xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                     axistext_angle = input$xaxistextangle,
+                                                     bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity, 
+                                                     density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
                      )
                      
                    }else if(input$btnChartType == "Line"){
-                     plt<- line_graph(df = rv_current$working_df,
-                                      xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                      ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
-                                      line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
-                                      title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                      axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                      addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
-                                      legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
+                     plt<- Rautoml::custom_linegraph(df = rv_current$working_df,
+                                                     xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                     ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
+                                                     line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
+                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                     addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
+                                                     legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
                      )
                      
                      
                      
                    }else if(input$btnChartType == "Scatterplot"){
-                     plt<-scatterplot_custom(df = rv_current$working_df,
-                                             xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                             ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
-                                             line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
-                                             title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                             axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                             addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle,
-                                             legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
-                                             confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     plt<- Rautoml::custom_scatterplot(df = rv_current$working_df,
+                                                       xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                       ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
+                                                       line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
+                                                       title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                       axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                       addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle,
+                                                       legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
+                                                       confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                      
                    }else if(input$btnChartType == "Bar"){
-                     plt<- barplot(df = rv_current$working_df,
-                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                   ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
-                                   vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
-                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                   data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
-                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     plt<- Rautoml::custom_barplot(df = rv_current$working_df,
+                                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                   ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
+                                                   vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
+                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                   data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
+                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                    }else if(input$btnChartType == "Pie"){
-                     plt<- pie_chart(df = rv_current$working_df,
-                                     xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
-                                     facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
-                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                     data_label_size = input$numDataLabelSize,
-                                     legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer
+                     plt<- Rautoml::custom_piechart(df = rv_current$working_df,
+                                                    xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
+                                                    facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
+                                                    title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                    data_label_size = input$numDataLabelSize,
+                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer
                      )
                    }
                    
                    output$GeneratedPlot <- renderPlot({plot(plt)})
-                   
+                   shinyjs::show("btnUpdatePlot")
                    output$btnchartDown <- downloadHandler(
                      
                      filename = function() {
-                       paste(input$btnChartType,format(Sys.Date(), "%B %d %Y"), ".jpeg")
+                       paste(input$btnChartType,format(Sys.time(), "%B %d %Y %H:%M:%S"), ".jpeg")
                      },
                      
                      content = function(file) {
                        ggsave(file, plot = plt, device = "jpeg", width = 16, height = 9)
                        
                      })
-                   
                  }
                
                  
@@ -588,7 +587,7 @@ user_defined_server <- function() {
       
       if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
         
-        tab <-tablefun(df = rv_current$working_df
+        tab <- Rautoml::custom_crosstab(df = rv_current$working_df
                        , vars =  c(input$cboCalcVar)
                        , add.p=input$rdoAddTabPValue
                        , add.ci=input$rdoAddTabCI
@@ -598,7 +597,7 @@ user_defined_server <- function() {
                        , caption= input$txtTabCaption)%>%as_gt()
         
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) &&(!is.null(input$cboColVar)&&input$cboColVar!="") && (!is.null(input$cboRowVar)&&input$cboRowVar!="")){
-        tab <-tablefun(df = rv_current$working_df, by =  input$cboColVar
+        tab <- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                        , strata= input$cboRowVar
                        , vars =  c(input$cboCalcVar)
                        , add.p=input$rdoAddTabPValue
@@ -609,7 +608,7 @@ user_defined_server <- function() {
                        , caption= input$txtTabCaption)%>%as_gt()
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (!is.null(input$cboColVar)&&input$cboColVar!="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
         
-        tab<-tablefun(df = rv_current$working_df, by =  input$cboColVar
+        tab<- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                       , vars = c(input$cboCalcVar)
                       , add.p=input$rdoAddTabPValue
                       , add.ci=input$rdoAddTabCI
@@ -620,7 +619,7 @@ user_defined_server <- function() {
         
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (!is.null(input$cboRowVar) && input$cboRowVar!="")){
         
-        tab<- tablefun(df = rv_current$working_df, vars =  c(input$cboCalcVar)
+        tab<-  Rautoml::custom_crosstab(df = rv_current$working_df, vars =  c(input$cboCalcVar)
                        , strata= input$cboRowVar
                        , add.p=input$rdoAddTabPValue
                        , add.ci=input$rdoAddTabCI
