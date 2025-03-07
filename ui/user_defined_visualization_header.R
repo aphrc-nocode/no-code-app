@@ -459,13 +459,13 @@ user_remove_histogram =renderUI({
 )})
 
 
-user_select_color_variable =renderUI({
-  selectInput(
-  "cboColorSingle",
-  get_rv_labels("user_select_color_variable"),
-  choices = colors(),
-  selected = "blue")
-})
+# user_select_color_variable =renderUI({
+#   selectInput(
+#   "cboColorSingle",
+#   get_rv_labels("user_select_color_variable"),
+#   choices = colors(),
+#   selected = "blue")
+# })
 
 user_select_color_parlet =renderUI({
   selectInput(
