@@ -44,7 +44,12 @@ menu_translation = function(){
            
       ),
       menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_summarizeCustom"), "</span>")), tabName = "summarizeCustom", icon = icon("chart-line"))),
-      menuItem(
+      
+        
+      menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_research_question"), "</span>")), tabName = "researchQuestions", icon = icon("file-import", lib = "font-awesome"), selected = FALSE),
+
+
+		menuItem(
         text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_machine_learning"), "</span>")), tabName = "machineLearning", icon = icon("code-merge", lib = "font-awesome"),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_partition_data"), "</span>")), tabName = "dataPartitioning", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_feature_engineering"), "</span>")), tabName = "featureEngineering", icon = icon("sitemap", lib = "font-awesome")),

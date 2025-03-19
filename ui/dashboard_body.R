@@ -225,9 +225,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
          
          tabItem(tabName = "menu_summarizeAutomatic",
                  fluidRow()),
-         tabItem(tabName = "dataPartitioning",
-                 fluidRow()),
-         
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
                    column(
@@ -340,29 +337,48 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    uiOutput("user_add_density"),
                    uiOutput("user_remove_histogram"),
                    uiOutput("user_select_color_parlet")
-                     
-               
-                     
                    )
                    
                  ),
-                 hr(),
-                 fluidRow(dataTableOutput(outputId = "dt_selected_data"))
-                 
-         )
-                 
-                 
-                 ),
-         
-         tabItem(tabName = "featureEngineering",
-                 fluidRow()),
-         tabItem(tabName = "trainModel",
-                 fluidRow()),
-         tabItem(tabName = "validateDeployModel",
-                 fluidRow()),
-         tabItem(tabName = "predictClassify",
-                 fluidRow()),
-         tabItem(tabName = "addResources",
-                 fluidRow())
+ ##                hr(),
+ ##                fluidRow(dataTableOutput(outputId = "dt_selected_data"))
+
+					  ), 
+					  
+
+					  tabItem(tabName = "researchQuestions"
+                     , fluidRow(
+                        column(width = 3
+                           , htmlOutput("research_questions_title")
+                           , uiOutput("generate_research_questions_choices")
+									, uiOutput("generate_research_questions_api_token")
+									, uiOutput("generate_research_questions_api_token_apply")
+									, htmlOutput("generate_research_questions_additional")
+									, uiOutput("generate_research_questions_additional_analysis_ui")
+									, uiOutput("generate_research_questions_apply")
+                        )
+                        , column(width = 9
+									, htmlOutput("generate_research_questions_gemini")
+                        )
+                     )
+                  ),
+			
+
+						tabItem(tabName = "dataPartitioning",
+								  fluidRow()),
+						
+						tabItem(tabName = "featureEngineering",
+								  fluidRow()),
+						tabItem(tabName = "trainModel",
+								  fluidRow()),
+						tabItem(tabName = "validateDeployModel",
+								  fluidRow()),
+						tabItem(tabName = "predictClassify",
+								  fluidRow()),
+						tabItem(tabName = "addResources",
+								  fluidRow())
         
+                 
+
+					  )
 )

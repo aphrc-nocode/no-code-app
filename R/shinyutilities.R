@@ -25,6 +25,7 @@ supported_files = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4
 ## recode_var_types = readxl::read_excel("static_files/labelling_file.xlsx", sheet="recode_var_types") |> pull()
 recode_var_types = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=1626004338#gid=1626004338", sheetid="recode_var_types") |> pull()
 
+prompts_df___ = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=558607190#gid=558607190", sheetid="prompts")
 
 ### Get named vector, based on input language
 get_named_choices = function(df , lang, var) {
@@ -42,6 +43,17 @@ get_named_choices = function(df , lang, var) {
    labs = setNames(base_names, lang_names)
    return(labs)
 }
+
+## Get prompts from the prompts file
+get_prompts = function(var) {
+	pp  = (prompts_df___
+      |> dplyr::filter(variable %in% var)
+		|> dplyr::pull(prompt)
+   )
+	pp = paste0(pp, collapse=". ")
+	return(pp)
+}
+
 
 ### Get labels from labelling file
 get_rv_labels_base = function(df, var) {

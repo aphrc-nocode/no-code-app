@@ -96,6 +96,9 @@ reset_data_server = function() {
 		rv_current$combine_df = NULL 
 		rv_current$combine_data_selected_vars = NULL
 		updateSelectInput(session = session, "combine_data_list_datasets", selected = "", choices = NULL)
+			
+		output$generate_research_questions_choices = NULL
+		updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
 
 	})
 
@@ -203,6 +206,9 @@ reset_data_server = function() {
 			rv_current$combine_df = NULL 
 			rv_current$combine_data_selected_vars = NULL
 			updateSelectInput(session = session, "combine_data_list_datasets", selected = "", choices = NULL)
+			
+			output$generate_research_questions_choices = NULL
+			updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
 
 
 			if (NROW(rv_metadata$upload_logs)) {
