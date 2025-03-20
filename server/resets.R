@@ -99,7 +99,10 @@ reset_data_server = function() {
 			
 		output$generate_research_questions_choices = NULL
 		updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
+		output$generate_research_questions_gemini = NULL
+		output$generate_research_question_gemini_suggest_analysis = NULL
 
+		rv_generative_ai$history = NULL
 	})
 
 	observeEvent(c(input$current_id, input$non_data_ok), {
@@ -209,6 +212,10 @@ reset_data_server = function() {
 			
 			output$generate_research_questions_choices = NULL
 			updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
+			output$generate_research_questions_gemini = NULL
+			output$generate_research_question_gemini_suggest_analysis = NULL
+			
+			rv_generative_ai$history = NULL
 
 
 			if (NROW(rv_metadata$upload_logs)) {

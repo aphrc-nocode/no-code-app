@@ -40,6 +40,8 @@ function(input, output, session) {
     , transform_data_plot_missing_data_out = NULL
 	 , quick_explore_summary = NULL
 	 , max_tockens = 10000
+	 , seed = 9991
+	 , outcome = NULL
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -61,7 +63,11 @@ function(input, output, session) {
 		, df_table_str = NULL
 		, query_table_name = NULL
 	)
- 
+
+	## LLM/GAI
+	rv_generative_ai = reactiveValues(
+		history = NULL
+	)
 
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
