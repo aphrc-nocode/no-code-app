@@ -224,8 +224,9 @@ function(input, output, session) {
   output$user_stacked = user_stacked
   output$user_add_density = user_add_density
   output$user_remove_histogram = user_remove_histogram
-  #output$user_select_color_variable = user_select_color_variable
+  output$user_select_color_variable_single = user_select_color_variable_single
   output$user_select_color_parlet = user_select_color_parlet
+  output$user_numeric_summary = user_numeric_summary
   
  
   
