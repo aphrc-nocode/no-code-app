@@ -5,8 +5,14 @@ alter_renderUI_title = function() {
 			rv_current$manage_data_title_transform = alter_renderUI(ui=rv_current$manage_data_title_transform, session=session, replacement="<hr/>")
 			output$manage_data_title_transform = rv_current$manage_data_title_transform
 			
-			rv_current$visualize_data_title=rv_current$combine_data_title = alter_renderUI(ui=rv_current$combine_data_title, session=session, replacement="<hr/>")
+			rv_current$combine_data_title = alter_renderUI(ui=rv_current$combine_data_title, session=session, replacement="<hr/>")
 			output$combine_data_title = rv_current$combine_data_title
+			
+
+			rv_current$research_questions_title = alter_renderUI(ui=rv_current$research_questions_title, session=session, replacement="<hr/>")
+			output$research_questions_title = rv_current$research_questions_title
+			
+			rv_current$visualize_data_title = alter_renderUI(ui=rv_current$visualize_data_title, session=session, replacement="<hr/>")
 			output$visualize_data_title = rv_current$visualize_data_title
 		})
 }
@@ -17,7 +23,7 @@ explore_data_server = function() {
 	observeEvent(input$manage_data_apply, {
 		req(input$manage_data_apply)
 		if (isTRUE(!is.null(input$dataset_id))) {
-			 rv_current$visualize_data_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderUI({
+			 rv_current$visualize_data_title = rv_current$research_questions_title = rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderUI({
 				p(
 					  HTML(
 						 c(paste0("<b>", get_rv_labels("you_selected"), ":</b> <br/>")
@@ -37,32 +43,35 @@ explore_data_server = function() {
 	observe({
 		if (NROW(rv_metadata$upload_logs)) {
 			if (is.null(input$dataset_id)) {
-				rv_current$visualize_data_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
+				rv_current$visualize_data_title=rv_current$research_questions_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
 					paste0(get_rv_labels("no_data_selected"),  " <b>Manage data > Overview</b>")
 				)
 				output$manage_data_title_explore = rv_current$manage_data_title_explore
 				output$manage_data_title_transform = rv_current$manage_data_title_transform
 				output$combine_data_title = rv_current$combine_data_title
+				output$research_questions_title = rv_current$research_questions_title
 				output$visualize_data_title = rv_current$visualize_data_title
 			} 
 		} else {
-			rv_current$visualize_data_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
+			rv_current$visualize_data_title=rv_current$research_questions_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
 				paste0(get_rv_labels("no_data"), "<b> Source data </b>")
 			)
 			output$manage_data_title_explore = rv_current$manage_data_title_explore
 			output$manage_data_title_transform = rv_current$manage_data_title_transform
 			output$combine_data_title = rv_current$combine_data_title
+			output$research_questions_title = rv_current$research_questions_title
 			output$visualize_data_title = rv_current$visualize_data_title
 		}
 	})
 
 	observeEvent(c(input$change_language, input$dataset_id), {
-		rv_current$visualize_data_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
+		rv_current$visualize_data_title=rv_current$research_questions_title=rv_current$combine_data_title=rv_current$manage_data_title_transform=rv_current$manage_data_title_explore = renderText(
 			paste0(get_rv_labels("no_data_selected"),  " <b>Manage data > Overview</b>")
 		)
 		output$manage_data_title_explore = rv_current$manage_data_title_explore
 		output$manage_data_title_transform = rv_current$manage_data_title_transform
 		output$combine_data_title = rv_current$combine_data_title
+		output$research_questions_title = rv_current$research_questions_title
 		output$visualize_data_title = rv_current$visualize_data_title
 	})
 }
@@ -140,12 +149,14 @@ explore_data_subactions_server = function() {
 				, HTML(paste0("<b>", get_rv_labels("quick_explore_ui"), "</b>"))
 			)
 		})
-	  	output$explore_data_quick_explore_out = renderPrint({
-			generate_data_summary(rv_current$working_df)
+	  	rv_current$quick_explore_summary = generate_data_summary(rv_current$working_df)
+		output$explore_data_quick_explore_out = renderPrint({
+			rv_current$quick_explore_summary
 		})
 	  } else {
 	  	output$explore_data_quick_explore_ui = NULL
 	  	output$explore_data_quick_explore_out = NULL
+		rv_current$quick_explore_summary = NULL
 	  }
 	})
 }

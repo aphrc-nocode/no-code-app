@@ -44,6 +44,7 @@ appTheme.Rout: ui/appTheme.R
 header.Rout: ui/header.R
 footer.Rout: ui/footer.R
 headertag.Rout: ui/headertag.R
+dashboard_body.Rout: ui/dashboard_body.R
 
 ######################################################################
 
@@ -102,6 +103,9 @@ transform_data.Rout: server/transform_data.R
 
 ### Combine data
 combine_data.Rout: server/combine_data.R
+
+### Research questions
+research_questions.Rout: server/research_questions.R
 
 ### Reset inputs
 resets.Rout: server/resets.R

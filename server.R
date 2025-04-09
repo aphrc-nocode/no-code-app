@@ -38,6 +38,10 @@ function(input, output, session) {
 	 , handle_missing_values_log = NULL
     , handle_outlier_values_log = NULL
     , transform_data_plot_missing_data_out = NULL
+	 , quick_explore_summary = NULL
+	 , max_tockens = 10000
+	 , seed = 9991
+	 , outcome = NULL
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -59,7 +63,11 @@ function(input, output, session) {
 		, df_table_str = NULL
 		, query_table_name = NULL
 	)
- 
+
+	## LLM/GAI
+	rv_generative_ai = reactiveValues(
+		history = NULL
+	)
 
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
@@ -311,6 +319,26 @@ function(input, output, session) {
   #-----Control Custom visualizations
   source("server/user_defined_visualization.R", local = TRUE)
   user_defined_server()
+
+  #### ---- Generate Research Questions --------------------------------------####
+  source("server/research_questions.R", local = TRUE)
+
+  generate_research_questions_choices()
+
+  ##### ---- API Token ------------------ ####
+
+  generate_research_questions_api_token()
+
+  ##### ----- Set API ------------------- ####
+  generate_research_questions_api_store()
+
+  #### ---- Addional prompts --------------- ####
+  generate_research_questions_additional()
+
+  #### ---- Generate insights using Gemini --------------- ####
+  generate_research_questions_gemini()
+
+
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

@@ -5,6 +5,7 @@ library(shinyalert)
 library(shinyWidgets)
 library(shinydashboard)
 library(shinydashboardPlus)
+library(waiter)
 
 library(sjlabelled)
 library(dplyr)
