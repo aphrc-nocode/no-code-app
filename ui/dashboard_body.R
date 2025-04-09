@@ -1,7 +1,7 @@
 aphrcBody <- dashboardBody(
 headertag,
 useShinyjs(),
-useWaiter(), #FIXME: Use better one
+# useWaiter(), #FIXME: Use better one
 theme = appTheme,
 tabItems(tabItem(tabName = "homePage",class = "active",
                  fluidRow()),
@@ -364,7 +364,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 									, uiOutput("generate_research_questions_additional_analysis_ui")
                         )
                         , column(width = 9
-									, htmlOutput("generate_research_questions_gemini")
+									, htmlOutput("generate_research_questions_gemini") 
 									, htmlOutput("generate_research_question_gemini_suggest_analysis")
                         )
                      )

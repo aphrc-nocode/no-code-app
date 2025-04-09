@@ -107,6 +107,12 @@ combine_data.Rout: server/combine_data.R
 ### Research questions
 research_questions.Rout: server/research_questions.R
 
+## Machine learning and AI
+
+### Setup
+setup_models.Rout: server/setup_models.R
+
+
 ### Reset inputs
 resets.Rout: server/resets.R
 

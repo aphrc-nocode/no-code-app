@@ -193,10 +193,11 @@ generate_research_questions_gemini = function() {
 					rv_current$quick_explore_summary = generate_data_summary(rv_current$working_df)
 				}
 
-				 waiter_show( # show the waiter
-					html = spin_loaders(id = 15, color = "green", style = "spin")
-					, color = NULL
-				 )
+## 				 waiter_show( # show the waiter
+## 					html = spin_loaders(id = 15, color = "green", style = "spin")
+## 					, color = NULL
+## 				 )
+				showPageSpinner()
 				if (isTRUE(!is.null(rv_current$outcome))) {
 					outcome_prompt = paste0(get_prompts("generate_research_questions_outcome"), " ", rv_current$outcome)
 				} else {
@@ -226,7 +227,8 @@ generate_research_questions_gemini = function() {
 						, shiny::markdown(research_question_chat$outputs)
 					)
 				})
-			 waiter_hide()
+## 			 waiter_hide()
+				hidePageSpinner()
 			}
 		}
 	})
@@ -235,10 +237,11 @@ generate_research_questions_gemini = function() {
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 				if (isTRUE(input$generate_research_questions_additional_analysis)) {
-				 waiter_show( # show the waiter
-					html = spin_loaders(id = 15, color = "green", style = "spin")
-					, color = NULL
-				 )
+## 				 waiter_show( # show the waiter
+## 					html = spin_loaders(id = 15, color = "green", style = "spin")
+## 					, color = NULL
+## 				 )
+						showPageSpinner()
 						analysis_prompt = get_prompts("generate_research_questions_additional_analysis")
 					suggest_analysis_chat = tryCatch({
 						gemini.R::gemini_chat(prompt = analysis_prompt
@@ -258,7 +261,8 @@ generate_research_questions_gemini = function() {
 							, shiny::markdown(suggest_analysis_chat$outputs)
 						)
 					})
-					waiter_hide()
+## 					waiter_hide()
+					hidePageSpinner()
 				}
 				
 			}
