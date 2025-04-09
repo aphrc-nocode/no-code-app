@@ -1,9 +1,28 @@
 
+#This Function only returns non numeric dataframe
+non_numric_df <- function(df){
+  final_df <- df[,sapply(df, FUN =  function(x){is.character(x)||is.factor(x)||is.logical(x)||is.Date(x)})]
+  return(final_df)
+}
+
+#This Function only returns numeric dataframe
+numeric_df <- function(df){
+  final_df <- df[,sapply(df, FUN =  function(x){is.numeric(x)||is.integer(x)})]
+  return(final_df)
+}
+
+#This Function only returns numeric dataframe
+non_numric_non_date_df <- function(df){
+  final_df <- df[,sapply(df, FUN =  function(x){is.character(x)||is.factor(x)||is.logical(x)})]
+  return(final_df)
+}
+
+
 user_output_type = renderUI({
   radioButtons(
     "cboOutput",
     paste0(get_rv_labels("user_output_type"), ":"),
-    choices = c("Chart", "Table"), selected = "Chart",
+    choices = c("Chart", "Table"), selected = character(0),
     inline = TRUE
   )
 })
@@ -186,7 +205,7 @@ user_select_color_variable =renderUI({
   selectInput("cboColorVar", 
     paste0(
       get_rv_labels("user_select_color_variable"),
-  ":"), "")
+  ":"), "", selected = NULL)
 })
 user_select_group_variable =renderUI({
   selectInput("cboFacetVar",  paste0(
@@ -459,13 +478,13 @@ user_remove_histogram =renderUI({
 )})
 
 
-# user_select_color_variable =renderUI({
-#   selectInput(
-#   "cboColorSingle",
-#   get_rv_labels("user_select_color_variable"),
-#   choices = colors(),
-#   selected = "blue")
-# })
+user_select_color_variable_single =renderUI({
+  selectInput(
+  "cboColorSingle",
+  get_rv_labels("color_single"),
+  choices = colors(),
+  selected = "blue")
+})
 
 user_select_color_parlet =renderUI({
   selectInput(

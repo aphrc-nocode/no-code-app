@@ -1,7 +1,7 @@
 aphrcBody <- dashboardBody(
 headertag,
 useShinyjs(),
-useWaiter(),
+useWaiter(), #FIXME: Use better one
 theme = appTheme,
 tabItems(tabItem(tabName = "homePage",class = "active",
                  fluidRow()),
@@ -228,10 +228,11 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                  fluidRow()),
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
-                   column(
-                     width = 2,
-                     uiOutput("user_output_type")
-                   ),
+						column(width = 2
+							, htmlOutput("visualize_data_title")
+							, br()
+                     , uiOutput("user_output_type")
+						),
                    column(
                      width = 10,
                      uiOutput("user_chart_type")
@@ -268,7 +269,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                      br(),
                      uiOutput("user_report_numeric"),
                      
-                     uiOutput("user_numeric_summary"),
+     #                uiOutput("user_numeric_summary"),
                      
                      uiOutput("user_add_p_value"),
                      uiOutput("user_add_confidence_interval"),
@@ -337,12 +338,14 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                    uiOutput("user_stacked"),
                    uiOutput("user_add_density"),
                    uiOutput("user_remove_histogram"),
-                   uiOutput("user_select_color_parlet")
-                   )
-                   
-                 ),
- ##                hr(),
- ##                fluidRow(dataTableOutput(outputId = "dt_selected_data"))
+                   uiOutput("user_select_color_variable_single"),
+                   uiOutput("user_select_color_parlet"),
+                   uiOutput("user_numeric_summary")
+                     
+               
+                     
+                   ) 
+                 )
 
 					  ), 
 					  

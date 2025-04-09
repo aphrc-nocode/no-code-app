@@ -1,15 +1,60 @@
+
 user_defined_server <- function() {
+
+	observeEvent(input$manage_data_apply, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			shinyjs::show("cboOutput")
+		} else {
+			NULL #FIXME:
+			shinyjs::hide("cboOutput")
+			output$user_output_type = NULL
+			updateRadioButtons(session, inputId = "cboOutput", selected = character(0))
+		}
+	})
+
+  observeEvent(input$cboOutput,{
+    
+    if(isTRUE(!is.null(rv_current$working_df))){
+      if (isTRUE(input$cboOutput == "Chart")) {
+        
+        updateSelectInput(session, "cboXVar", choices = names(rv_current$working_df), selected = "")
+        
+        updateSelectInput(session, "cboYVar", choices = names(numeric_df(rv_current$working_df)) , selected = "")
+        
+        updateSelectInput(session, "cboColorVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
+        updateSelectInput(session, "cboFacetVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
+        
+        
+      } else if(input$cboOutput == "Table"){
+        
+        updateSelectInput(session, "cboRowVar", choices = names(non_numric_df(rv_current$working_df)), selected = "")
+        updateSelectInput(session, "cboColVar", choices = names(non_numric_df(rv_current$working_df)), selected = "")
+        updateSelectInput(session, "cboCalcVar", choices = names(rv_current$working_df), selected = "")
+        
+      }
+    } else {
+	 	output$user_output_type = NULL
+	 	output$user_select_variable_on_x_axis = NULL
+     	updateSelectInput(session, "cboXVar", choices = NULL, selected = NULL)
+	 }
+    
+  })
+  
   
   observeEvent(input$cboOutput, {
-    if (input$cboOutput == "Table") {
+    if (isTRUE(input$cboOutput == "Table")) {
       shinyjs::hide("btnChartType")
       shinyjs::hide("graphOutputs")
       shinyjs::show("tabOutputs")
-    } else {
+    } else if (isTRUE(input$cboOutput == "Chart")){
       shinyjs::show("btnChartType")
       shinyjs::show("graphOutputs")
       shinyjs::hide("tabOutputs")
-    }
+    } else {
+      shinyjs::hide("btnChartType")
+      shinyjs::hide("graphOutputs")
+      shinyjs::hide("tabOutputs")
+	 }
   })
   
   observeEvent(input$btnChartType, {
@@ -115,7 +160,7 @@ user_defined_server <- function() {
   })
   
   observeEvent(input$cboColorVar, {
-    if (input$cboColorVar == "" ||
+    if (input$cboColorVar == "" || is.null(input$cboColorVar) ||
         is.null(input$cboColorVar) || input$btnChartType == "Histogram") {
       shinyjs::show("cboColorSingle")
       shinyjs::hide("cboColorBrewer")
@@ -186,6 +231,55 @@ user_defined_server <- function() {
                         choices = nams,
                         selected = nams[1])
     }
+  })
+  
+  
+  
+  observeEvent(input$cboOutput,{
+    if(isTRUE(!is.null(rv_current$working_df))){
+    if (input$cboOutput == "Chart") {
+      
+      if(input$btnChartType %in% c("Bar","Pie", "Boxplot", "Violin")){
+        updateSelectInput(session, "cboXVar", choices = names(non_numric_df(rv_current$working_df)), selected = "")
+        
+      }else{
+        updateSelectInput(session, "cboXVar", choices = names(rv_current$working_df), selected = "")
+      }
+      
+      updateSelectInput(session, "cboYVar", choices = names(numeric_df(rv_current$working_df)), selected = "")
+      
+      updateSelectInput(session, "cboColorVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
+      updateSelectInput(session, "cboFacetVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
+      
+    }else if (input$cboOutput == "Table"){
+      updateSelectInput(session, "cboRowVar", choices = names(rv_current$working_df), selected = "")
+      updateSelectInput(session, "cboColVar", choices = names(rv_current$working_df), selected = "")
+      updateSelectInput(session, "cboCalcVar", choices = names(rv_current$working_df), selected = "")
+    }
+    }
+  })
+  
+  
+  
+  observeEvent(input$btnChartType, {
+    if (isTRUE(!is.null(rv_current$working_df))) {
+      if (input$btnChartType %in% c("Bar", "Pie", "Boxplot", "Violin")) {
+        updateSelectInput(session,
+                          "cboXVar",
+                          choices = names(non_numric_df(rv_current$working_df)),
+                          selected = "")
+        
+      } else{
+        updateSelectInput(
+          session,
+          "cboXVar",
+          choices = names(rv_current$working_df),
+          selected = ""
+        )
+        
+      }
+    }
+    
   })
   
   
@@ -279,37 +373,16 @@ user_defined_server <- function() {
   })
   
   
-  #temp
   
-  #This Function only returns non numeric dataframe
-  non_numric_df <- function(df){
-    final_df <- df[,sapply(df, FUN =  function(x){is.character(x)||is.factor(x)||is.logical(x)||is.Date(x)})]
-    return(final_df)
-  }
-  
-  #This Function only returns numeric dataframe
-  numeric_df <- function(df){
-    final_df <- df[,sapply(df, FUN =  function(x){is.numeric(x)||is.integer(x)})]
-    return(final_df)
-  }
-  
-  #This Function only returns numeric dataframe
-  non_numric_non_date_df <- function(df){
-    final_df <- df[,sapply(df, FUN =  function(x){is.character(x)||is.factor(x)||is.logical(x)})]
-    return(final_df)
-  }
-  
-  
-  observeEvent(input$cboRowVar,{
+  observeEvent(input$cboRowVar ,{
     
     if(isTRUE(!is.null(rv_current$working_df))){
       current_calc_var <- input$cboCalcVar
       current_col_var <- input$cboColVar
       
       if(!is.null(input$cboRowVar)|| input$cboRowVar !=""){
-        df_selected <- rv_current$working_df
-        updateSelectInput(session, "cboCalcVar", choices = setdiff(names(df_selected),input$cboRowVar), selected = current_calc_var)
-        updateSelectInput(session, "cboColVar", choices = setdiff(names(non_numric_df(df_selected)),input$cboRowVar), selected = current_col_var)
+        updateSelectInput(session, "cboCalcVar", choices = setdiff(names(rv_current$working_df),input$cboRowVar), selected = current_calc_var)
+        updateSelectInput(session, "cboColVar", choices = setdiff(names(non_numric_df(rv_current$working_df)),input$cboRowVar), selected = current_col_var)
       }
       
     }
@@ -324,9 +397,8 @@ user_defined_server <- function() {
       current_col_var <- input$cboColVar
       
       if(!is.null(input$cboCalcVar)||input$cboCalcVar!=""){
-        df_selected <- rv_current$working_df
-        updateSelectInput(session, "cboRowVar", choices = setdiff(names(df_selected),input$cboCalcVar), selected = current_Row_var)
-        updateSelectInput(session, "cboColVar", choices = setdiff(names(non_numric_df(df_selected)),input$cboCalcVar), selected = current_col_var)
+        updateSelectInput(session, "cboRowVar", choices = setdiff(names(rv_current$working_df),input$cboCalcVar), selected = current_Row_var)
+        updateSelectInput(session, "cboColVar", choices = setdiff(names(non_numric_df(rv_current$working_df)),input$cboCalcVar), selected = current_col_var)
       }
     }
     
@@ -341,50 +413,24 @@ user_defined_server <- function() {
       current_calc_var <- input$cboCalcVar
       
       if(!is.null(input$cboColVar)||input$cboColVar!=""){
-        df_selected <- rv_current$working_df
-        updateSelectInput(session, "cboRowVar", choices = setdiff(names(df_selected),input$cboColVar), selected = current_Row_var)
-        updateSelectInput(session, "cboCalcVar", choices = setdiff(names(non_numric_df(df_selected)),input$cboColVar), selected = current_calc_var)
+        updateSelectInput(session, "cboRowVar", choices = setdiff(names(rv_current$working_df),input$cboColVar), selected = current_Row_var)
+        updateSelectInput(session, "cboCalcVar", choices = setdiff(names(non_numric_df(rv_current$working_df)),input$cboColVar), selected = current_calc_var)
       }
       
     }
     
-
-    
-    
   })
   
-  observeEvent(input$cboOutput,{
-    
-    if(isTRUE(!is.null(rv_current$working_df))){
-      if (input$cboOutput == "Chart") {
-        
-        df_selected <- rv_current$working_df
-        
-        updateSelectInput(session, "cboXVar", choices = names(df_selected), selected = "")
-        
-        
-        updateSelectInput(session, "cboYVar", choices = names(numeric_df(df_selected)) , selected = "")
-        
-        updateSelectInput(session, "cboColorVar", choices = names(non_numric_non_date_df(df_selected)), selected = "")
-        updateSelectInput(session, "cboFacetVar", choices = names(non_numric_non_date_df(df_selected)), selected = "")
-        
-        
-      } else if(input$cboOutput == "Table"){
-        
-        df_selected <- rv_current$working_df
-        
-        updateSelectInput(session, "cboRowVar", choices = names(non_numric_df(df_selected)), selected = "")
-        updateSelectInput(session, "cboColVar", choices = names(non_numric_df(df_selected)), selected = "")
-        updateSelectInput(session, "cboCalcVar", choices = names(df_selected), selected = "")
-        
-      }
+  observeEvent(c(input$cboXVar,input$cboYVar,input$cboColorVar, input$summarizeCustom),{
+    if(input$cboXVar==""|| is.null(input$cboXVar)){
+      shinyjs::disable("btnchartOut")
+    }else{
+      shinyjs::enable("btnchartOut")
     }
-  
+    
   })
   
-  
-  
-  
+ 
   observeEvent(input$btnchartOut,
                {
                  if(isTRUE(!is.null(rv_current$working_df))){
@@ -584,7 +630,6 @@ user_defined_server <- function() {
   
   tabsum <- eventReactive(input$btnCreatetable,{
     if(isTRUE(!is.null(rv_current$working_df))){
-      
       if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
         
         tab <- Rautoml::custom_crosstab(df = rv_current$working_df
