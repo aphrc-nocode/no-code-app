@@ -230,10 +230,11 @@ tabItems(tabItem(tabName = "homePage",class = "active",
          
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
-                   column(
-                     width = 2,
-                     uiOutput("user_output_type")
-                   ),
+						column(width = 2
+							, htmlOutput("visualize_data_title")
+							, br()
+                     , uiOutput("user_output_type")
+						),
                    column(
                      width = 10,
                      uiOutput("user_chart_type")
@@ -270,7 +271,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                      br(),
                      uiOutput("user_report_numeric"),
                      
-                     uiOutput("user_numeric_summary"),
+     #                uiOutput("user_numeric_summary"),
                      
                      uiOutput("user_add_p_value"),
                      uiOutput("user_add_confidence_interval"),

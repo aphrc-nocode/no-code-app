@@ -19,12 +19,12 @@ non_numric_non_date_df <- function(df){
 
 
 user_output_type = renderUI({
-  shinyjs::disabled(radioButtons(
+  radioButtons(
     "cboOutput",
     paste0(get_rv_labels("user_output_type"), ":"),
-    choices = c("Chart", "Table"), selected = "Chart",
+    choices = c("Chart", "Table"), selected = character(0),
     inline = TRUE
-  ))
+  )
 })
 
 
