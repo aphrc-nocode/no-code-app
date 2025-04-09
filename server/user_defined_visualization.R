@@ -1,10 +1,21 @@
 
 user_defined_server <- function() {
-  
+
+	observeEvent(input$manage_data_apply, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			shinyjs::show("cboOutput")
+		} else {
+			NULL #FIXME:
+			shinyjs::hide("cboOutput")
+			output$user_output_type = NULL
+			updateRadioButtons(session, inputId = "cboOutput", selected = character(0))
+		}
+	})
+
   observeEvent(input$cboOutput,{
     
     if(isTRUE(!is.null(rv_current$working_df))){
-      if (input$cboOutput == "Chart") {
+      if (isTRUE(input$cboOutput == "Chart")) {
         
         updateSelectInput(session, "cboXVar", choices = names(rv_current$working_df), selected = "")
         
@@ -21,21 +32,29 @@ user_defined_server <- function() {
         updateSelectInput(session, "cboCalcVar", choices = names(rv_current$working_df), selected = "")
         
       }
-    }
+    } else {
+	 	output$user_output_type = NULL
+	 	output$user_select_variable_on_x_axis = NULL
+     	updateSelectInput(session, "cboXVar", choices = NULL, selected = NULL)
+	 }
     
   })
   
   
   observeEvent(input$cboOutput, {
-    if (input$cboOutput == "Table") {
+    if (isTRUE(input$cboOutput == "Table")) {
       shinyjs::hide("btnChartType")
       shinyjs::hide("graphOutputs")
       shinyjs::show("tabOutputs")
-    } else {
+    } else if (isTRUE(input$cboOutput == "Chart")){
       shinyjs::show("btnChartType")
       shinyjs::show("graphOutputs")
       shinyjs::hide("tabOutputs")
-    }
+    } else {
+      shinyjs::hide("btnChartType")
+      shinyjs::hide("graphOutputs")
+      shinyjs::hide("tabOutputs")
+	 }
   })
   
   observeEvent(input$btnChartType, {
