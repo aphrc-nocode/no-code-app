@@ -5,7 +5,8 @@ library(shinyalert)
 library(shinyWidgets)
 library(shinydashboard)
 library(shinydashboardPlus)
-library(waiter)
+# library(waiter)
+library(shinycssloaders)
 
 library(sjlabelled)
 library(dplyr)
@@ -35,4 +36,4 @@ library(dplyr)
 library(gtsummary)
 
 #Temp
-source("ui/tablefun.R")
+## source("ui/tablefun.R")
