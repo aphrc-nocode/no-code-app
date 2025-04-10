@@ -42,6 +42,7 @@ function(input, output, session) {
 	 , max_tockens = 10000
 	 , seed = 9991
 	 , outcome = NULL
+	 , vartype_all = NULL
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -338,7 +339,11 @@ function(input, output, session) {
   #### ---- Generate insights using Gemini --------------- ####
   generate_research_questions_gemini()
 
-
+  #### ---- Machine learning and AI --------------- ####
+  
+  ##### ----- Set ML/AI UI ------------------- ####
+  source("server/setup_models.R", local=TRUE)
+  setup_models_ui()
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
@@ -351,6 +356,7 @@ function(input, output, session) {
   #### ---- Activate required fields --------------------------------------####
   iv$enable()
   iv_url$enable()
+  iv_ml$enable()
   
   
 }

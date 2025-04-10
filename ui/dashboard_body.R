@@ -371,8 +371,18 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                   ),
 			
 
-						tabItem(tabName = "dataPartitioning",
-								  fluidRow()),
+						tabItem(tabName = "setupModels",
+							fluidRow(
+								column(width=3
+									, uiOutput("setup_models_analysis_type")
+									, uiOutput("setup_models_analysis_type_specifics")
+									, uiOutput("setup_models_analysis_target_variable")
+									, uiOutput("setup_models_analysis_partition_ratio")
+									, uiOutput("setup_models_analysis_session_name")
+									, uiOutput("setup_models_analysis_apply")
+								)
+							)
+						),
 						
 						tabItem(tabName = "featureEngineering",
 								  fluidRow()),
