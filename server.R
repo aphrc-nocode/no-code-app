@@ -70,6 +70,19 @@ function(input, output, session) {
 		history = NULL
 	)
 
+	## Reactive values for ML/AI module
+	rv_ml_ai = reactiveValues(
+		session_id = NULL
+		, dataset_id = NULL 
+		, analysis_type = NULL
+		, task = NULL
+		, outcome = NULL
+		, partition_ratio = NULL
+		, predictors = NULL
+		, ml_ai_setup_result = NULL
+		, history = NULL
+	)
+
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()

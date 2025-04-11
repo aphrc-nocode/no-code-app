@@ -381,6 +381,10 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 									, uiOutput("setup_models_analysis_session_name")
 									, uiOutput("setup_models_analysis_apply")
 								)
+
+								, column(width = 9
+									, htmlOutput("setup_models_analysis_results")
+								)
 							)
 						),
 						

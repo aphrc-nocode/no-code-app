@@ -141,6 +141,45 @@ setup_models_ui = function() {
 			output$setup_models_analysis_apply = NULL	
 		}
 	})
+
+	observeEvent(input$setup_models_analysis_apply, {
+		if (isTRUE(!is.null(input$setup_models_analysis_session_name)) & isTRUE(input$setup_models_analysis_session_name!="")) {
+			rv_ml_ai$session_id = input$setup_models_analysis_session_name
+			rv_ml_ai$dataset_id = rv_current$dataset_id
+			rv_ml_ai$analysis_type = input$setup_models_analysis_type
+			rv_ml_ai$task = input$setup_models_analysis_type_specifics
+			rv_ml_ai$outcome = input$setup_models_analysis_target_variable
+			rv_ml_ai$partition_ratio = input$setup_models_analysis_partition_ratio
+			rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$setup_models_analysis_target_variable)
+		
+			rv_ml_ai$ml_ai_setup_result = paste0(
+				"<b>", "Session ID: ", "</b>", rv_ml_ai$session_id
+				, "<br>"
+				, "<b>", "Dataset ID: ", "</b>", rv_ml_ai$dataset_id
+				, "<br>"
+				, "<b>", "Analysis Type: ", "</b>", rv_ml_ai$analysis_type
+				, "<br>"
+				, "<b>", "Task: ", "</b>", rv_ml_ai$task
+				, "<br>"
+				, "<b>", "Outcome: ", "</b>", rv_ml_ai$outcome
+				, "<br>"
+				, "<b>", "Train/Test ratio ", "</b>", paste0(rv_ml_ai$partition_ratio*100, "% : ", (1-rv_ml_ai$partition_ratio)*100, "%")
+				, "<br>"
+				, "<b>", "Predictors: ", "</b>", paste0(rv_ml_ai$predictors, collapse=", ")
+			)
+
+			output$setup_models_analysis_results = renderUI({
+				p(
+					HTML(
+						paste0("<b>Initialization Output</b><br>"
+							, rv_ml_ai$ml_ai_setup_result
+						)
+					)
+				)
+			})
+		}
+		
+	})
 	
 	## Reset if task is updated
 	observeEvent(input$setup_models_analysis_type, {
@@ -156,4 +195,3 @@ setup_models_ui = function() {
 	})
 }
 
-#### ---- Preprocessing ------------------------ ####
