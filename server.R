@@ -235,10 +235,8 @@ function(input, output, session) {
   output$user_select_color_variable_single = user_select_color_variable_single
   output$user_select_color_parlet = user_select_color_parlet
   output$user_numeric_summary = user_numeric_summary
-  
- 
-  
-  
+  output$user_tab_more_out = user_tab_more_out
+  output$user_graph_more_out = user_tab_more_out
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()

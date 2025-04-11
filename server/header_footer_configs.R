@@ -29,7 +29,7 @@ footer_language_translation = function() {
 
 menu_translation = function(){
   output$dynamic_meinu_aphrc <- renderMenu({
-    sidebarMenu(
+    sidebarMenu(id = "tabs",
       menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_home"), "</span>")), tabName = "homePage", icon = icon("house")),
       menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_source_data"), "</span>")), tabName = "sourcedata", icon = icon("file-import", lib = "font-awesome"), selected = TRUE),
       menuItem(
