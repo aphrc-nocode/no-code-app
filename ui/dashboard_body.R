@@ -246,14 +246,14 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                          uiOutput("user_row_var"),
                          
                          br(),
-                         uiOutput("user_create_table"),
+                         uiOutput("usr_create_cross_tab"),
                          br(),
                          uiOutput("user_download_table")
                        ),
                        
                        
                        column(width = 7,
-                              gt::gt_output(outputId = "tabSummaries")),
+                              uiOutput("tabSummaries")),
                        
                        
                        column(

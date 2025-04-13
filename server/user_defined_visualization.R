@@ -10,7 +10,7 @@ user_defined_server <- function() {
 		  output$user_calc_var = user_calc_var
 		  output$user_strata_var = user_strata_var
 		  output$user_row_var = user_row_var
-		  output$user_create_table = user_create_table
+		  output$usr_create_cross_tab = usr_create_cross_tab
 		  output$user_download_table = user_download_table
 		  
 		  output$user_table_options = user_table_options
@@ -74,7 +74,7 @@ user_defined_server <- function() {
 		  output$user_calc_var = NULL
 		  output$user_strata_var = NULL
 		  output$user_row_var = NULL
-		  output$user_create_table = NULL
+		  output$usr_create_cross_tab = NULL
 		  output$user_download_table = NULL
 		  
 		  output$user_table_options = NULL
@@ -578,6 +578,17 @@ user_defined_server <- function() {
  
   observeEvent(input$btnchartOut,
                {
+                 shinyalert::shinyalert(
+                   html = TRUE,
+                   title =paste0("<span style='color:#7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+                   text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
+                   closeOnClickOutside = FALSE,
+                   showConfirmButton = FALSE,
+                   showCancelButton = FALSE,
+                   imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                   closeOnEsc = FALSE)
+                 
+                 
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
                      plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
@@ -657,6 +668,7 @@ user_defined_server <- function() {
                    }
                    
                    output$GeneratedPlot <- renderPlot({plot(plt)})
+                   shinyalert::closeAlert()
                    shinyjs::show("btnUpdatePlot")
                    output$btnchartDown <- downloadHandler(
                      
@@ -676,6 +688,16 @@ user_defined_server <- function() {
   
   observeEvent(input$btnUpdatePlot,
                {
+                 shinyalert::shinyalert(
+                   html = TRUE,
+                   title =paste0("<span style='color: #7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+                   text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
+                   closeOnClickOutside = FALSE,
+                   showConfirmButton = FALSE,
+                   showCancelButton = FALSE,
+                   imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                   closeOnEsc = FALSE)
+                 
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
                      plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
@@ -755,6 +777,7 @@ user_defined_server <- function() {
                    }
                    
                    output$GeneratedPlot <- renderPlot({plot(plt)})
+                   shinyalert::closeAlert()
                    shinyjs::show("btnUpdatePlot")
                    output$btnchartDown <- downloadHandler(
                      
@@ -772,11 +795,21 @@ user_defined_server <- function() {
                })
   
   
-  
-  tabsum <- eventReactive(input$btnCreatetable,{
+  observeEvent(input$btnCreatetable,{
+    shinyalert::shinyalert(
+      html = TRUE,
+      title =paste0("<span style='color: #7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+      text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("table_loading"),"</h5></span>"),
+      closeOnClickOutside = FALSE,
+      showConfirmButton = FALSE,
+      showCancelButton = FALSE,
+      imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+      closeOnEsc = FALSE)
+    
+    
     if(isTRUE(!is.null(rv_current$working_df))){
       if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
-        
+
         tab <- Rautoml::custom_crosstab(df = rv_current$working_df
                        , vars =  c(input$cboCalcVar)
                        , add.p=input$rdoAddTabPValue
@@ -784,8 +817,8 @@ user_defined_server <- function() {
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
-        
+                       , caption= input$txtTabCaption)%>%as_flex_table()
+
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) &&(!is.null(input$cboColVar)&&input$cboColVar!="") && (!is.null(input$cboRowVar)&&input$cboRowVar!="")){
         tab <- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                        , strata= input$cboRowVar
@@ -795,20 +828,20 @@ user_defined_server <- function() {
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
+                       , caption= input$txtTabCaption)%>%as_flex_table()
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (!is.null(input$cboColVar)&&input$cboColVar!="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
-        
-        tab<- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
+
+        tab <- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                       , vars = c(input$cboCalcVar)
                       , add.p=input$rdoAddTabPValue
                       , add.ci=input$rdoAddTabCI
                       , report_numeric = input$chkReportNumeric
                       , numeric_summary = input$chkNumericSummary
                       , drop_na=input$rdoDropTabMissingValues
-                      , caption= input$txtTabCaption)%>%as_gt()
-        
+                      , caption= input$txtTabCaption)%>%as_flex_table()
+
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (!is.null(input$cboRowVar) && input$cboRowVar!="")){
-        
+
         tab <-  Rautoml::custom_crosstab(df = rv_current$working_df, vars =  c(input$cboCalcVar)
                        , strata= input$cboRowVar
                        , add.p=input$rdoAddTabPValue
@@ -816,40 +849,32 @@ user_defined_server <- function() {
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
-        
+                       , caption= input$txtTabCaption)%>%as_flex_table()
+
+      }else{
+        tab <- NULL
       }
-      print(tab)
-      return(tab)
+    }else{
+      tab <- NULL
     }
     
+    output$tabSummaries <- renderUI({flextable::htmltools_value(tab)})
+    shinyalert::closeAlert()
+    
+    output$btnDownloadTable <- downloadHandler(
+      filename = function() {
+        paste0("summary_table_", format(Sys.Date(), "%B %d %Y"), ".docx")
+      },
+      content = function(file) {
+        doc <- read_docx() %>%
+          body_add_flextable(value = tab)
+        
+        print(doc, target = file)  
+      },
+      contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    
   })
-  
-  ##Downloading Tables
-  
-  tabsumimage <- reactive({
-    
-    outfile <- tempfile(fileext = ".png")
-    
-    gtsave(data = tabsum(), 
-           filename = outfile)
-    
-    outfile
-    
-  })
-  
-  
-  output$tabSummaries <- gt::render_gt(tabsum())
-  
-  output$btnDownloadTable <- downloadHandler(
-    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
-    
-    content = function(file) {
-      file.copy(tabsumimage(), file)
-      
-    },
-    contentType = 'image/png'
-  )
   
   
 }

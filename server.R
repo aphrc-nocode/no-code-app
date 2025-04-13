@@ -183,7 +183,7 @@ function(input, output, session) {
   output$user_calc_var = user_calc_var
   output$user_strata_var = user_strata_var
   output$user_row_var = user_row_var
-  output$user_create_table = user_create_table
+  output$usr_create_cross_tab = usr_create_cross_tab
   output$user_download_table = user_download_table
   
   output$user_table_options = user_table_options
