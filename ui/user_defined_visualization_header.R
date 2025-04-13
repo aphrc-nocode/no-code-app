@@ -68,7 +68,7 @@ user_row_var = renderUI({
   selectInput("cboColVar", paste(get_rv_labels("user_row_variable"),":"), "")
 })
 
-user_create_table = renderUI({
+usr_create_cross_tab = renderUI({
   div(style = "width: 200px;", 
       actionBttn(
         inputId = "btnCreatetable", 
