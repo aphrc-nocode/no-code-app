@@ -197,7 +197,7 @@ function(input, output, session) {
   output$user_calc_var = user_calc_var
   output$user_strata_var = user_strata_var
   output$user_row_var = user_row_var
-  output$user_create_table = user_create_table
+  output$usr_create_cross_tab = usr_create_cross_tab
   output$user_download_table = user_download_table
   
   output$user_table_options = user_table_options
@@ -249,10 +249,8 @@ function(input, output, session) {
   output$user_select_color_variable_single = user_select_color_variable_single
   output$user_select_color_parlet = user_select_color_parlet
   output$user_numeric_summary = user_numeric_summary
-  
- 
-  
-  
+  output$user_tab_more_out = user_tab_more_out
+  output$user_graph_more_out = user_tab_more_out
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()

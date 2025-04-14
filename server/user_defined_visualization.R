@@ -1,20 +1,138 @@
 
 user_defined_server <- function() {
 
-	observeEvent(input$manage_data_apply, {
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			shinyjs::show("cboOutput")
+	observeEvent(c(input$manage_data_apply,input$tabs), {
+		if (!is.null(rv_current$working_df)) {
+			#shinyjs::show("cboOutput")
+		  output$user_output_type = user_output_type
+		  output$user_chart_type = user_chart_type
+		  output$user_tab_options = user_tab_options
+		  output$user_calc_var = user_calc_var
+		  output$user_strata_var = user_strata_var
+		  output$user_row_var = user_row_var
+		  output$usr_create_cross_tab = usr_create_cross_tab
+		  output$user_download_table = user_download_table
+		  
+		  output$user_table_options = user_table_options
+		  output$user_report_numeric = user_report_numeric
+		  output$user_add_p_value = user_add_p_value
+		  output$user_add_confidence_interval = user_add_confidence_interval
+		  output$user_drop_missing_values = user_drop_missing_values
+		  output$user_table_caption = user_table_caption
+		  
+		  output$user_plot_options = user_plot_options
+		  output$user_select_variable_on_x_axis = user_select_variable_on_x_axis
+		  output$user_select_variable_on_y_axis = user_select_variable_on_y_axis
+		  output$user_plot_title = user_plot_title
+		  output$user_x_axis_label = user_x_axis_label
+		  output$user_y_axis_label = user_y_axis_label
+		  output$user_create = user_create
+		  output$user_download = user_download
+		  
+		  output$user_more_plot_options = user_more_plot_options
+		  output$user_transform_to_doughnut = user_transform_to_doughnut
+		  output$user_select_color_variable = user_select_color_variable
+		  output$user_select_group_variable = user_select_group_variable
+		  output$user_visual_orientation = user_visual_orientation
+		  output$user_bar_width = user_bar_width
+		  output$user_line_size = user_line_size
+		  output$user_select_line_type = user_select_line_type
+		  output$user_add_shapes = user_add_shapes
+		  
+		  output$user_select_shape = user_select_shape
+		  output$user_add_smooth = user_add_smooth
+		  output$user_display_confidence_interval = user_display_confidence_interval
+		  output$user_level_of_confidence_interval = user_level_of_confidence_interval
+		  output$user_select_line_join = user_select_line_join
+		  output$user_add_line_type = user_add_line_type
+		  output$user_add_points = user_add_points
+		  output$user_y_variable_summary_type = user_y_variable_summary_type
+		  output$user_title_position = user_title_position
+		  
+		  output$user_size_of_plot_title = user_size_of_plot_title
+		  output$user_axis_title_size = user_axis_title_size
+		  output$user_facet_title_size = user_facet_title_size
+		  output$user_axis_text_size = user_axis_text_size
+		  output$user_data_label_size = user_data_label_size
+		  output$user_x_axis_text_angle = user_x_axis_text_angle
+		  output$user_legend_title = user_legend_title
+		  output$user_stacked = user_stacked
+		  output$user_add_density = user_add_density
+		  output$user_remove_histogram = user_remove_histogram
+		  output$user_select_color_variable_single = user_select_color_variable_single
+		  output$user_select_color_parlet = user_select_color_parlet
+		  output$user_numeric_summary = user_numeric_summary
+		  output$user_tab_more_out = user_tab_more_out
+		  output$user_graph_more_out = user_graph_more_out
+		  updateSwitchInput(session = session , inputId = "tabmore", value = FALSE)
+		  updateSwitchInput(session = session , inputId = "graphmore", value = FALSE)
+		  updateRadioButtons(session = session, inputId = "cboOutput", selected = "Chart")
 		} else {
-			NULL #FIXME:
-			shinyjs::hide("cboOutput")
-			output$user_output_type = NULL
-			updateRadioButtons(session, inputId = "cboOutput", selected = character(0))
+		  output$user_output_type = NULL
+		  output$user_chart_type = NULL
+		  output$user_tab_options = NULL
+		  output$user_calc_var = NULL
+		  output$user_strata_var = NULL
+		  output$user_row_var = NULL
+		  output$usr_create_cross_tab = NULL
+		  output$user_download_table = NULL
+		  
+		  output$user_table_options = NULL
+		  output$user_report_numeric = NULL
+		  output$user_add_p_value = NULL
+		  output$user_add_confidence_interval = NULL
+		  output$user_drop_missing_values = NULL
+		  output$user_table_caption = NULL
+		  
+		  output$user_plot_options = NULL
+		  output$user_select_variable_on_x_axis = NULL
+		  output$user_select_variable_on_y_axis = NULL
+		  output$user_plot_title = NULL
+		  output$user_x_axis_label = NULL
+		  output$user_y_axis_label = NULL
+		  output$user_create = NULL
+		  output$user_download = NULL
+		  
+		  output$user_more_plot_options = NULL
+		  output$user_transform_to_doughnut = NULL
+		  output$user_select_color_variable = NULL
+		  output$user_select_group_variable = NULL
+		  output$user_visual_orientation = NULL
+		  output$user_bar_width = NULL
+		  output$user_line_size = NULL
+		  output$user_select_line_type = NULL
+		  output$user_add_shapes = NULL
+		  
+		  output$user_select_shape = NULL
+		  output$user_add_smooth = NULL
+		  output$user_display_confidence_interval = NULL
+		  output$user_level_of_confidence_interval = NULL
+		  output$user_select_line_join = NULL
+		  output$user_add_line_type = NULL
+		  output$user_add_points = NULL
+		  output$user_y_variable_summary_type = NULL
+		  output$user_title_position = NULL
+		  
+		  output$user_size_of_plot_title = NULL
+		  output$user_axis_title_size = NULL
+		  output$user_facet_title_size = NULL
+		  output$user_axis_text_size = NULL
+		  output$user_data_label_size = NULL
+		  output$user_x_axis_text_angle = NULL
+		  output$user_legend_title = NULL
+		  output$user_stacked = NULL
+		  output$user_add_density = NULL
+		  output$user_remove_histogram = NULL
+		  output$user_select_color_variable_single = NULL
+		  output$user_select_color_parlet = NULL
+		  output$user_numeric_summary =NULL
+		  output$user_tab_more_out = NULL
+		  output$user_graph_more_out = NULL
 		}
 	})
 
+
   observeEvent(input$cboOutput,{
-    
-    if(isTRUE(!is.null(rv_current$working_df))){
       if (isTRUE(input$cboOutput == "Chart")) {
         
         updateSelectInput(session, "cboXVar", choices = names(rv_current$working_df), selected = "")
@@ -32,13 +150,34 @@ user_defined_server <- function() {
         updateSelectInput(session, "cboCalcVar", choices = names(rv_current$working_df), selected = "")
         
       }
-    } else {
-	 	output$user_output_type = NULL
-	 	output$user_select_variable_on_x_axis = NULL
-     	updateSelectInput(session, "cboXVar", choices = NULL, selected = NULL)
-	 }
     
   })
+  
+  observeEvent(input$cboOutput,{
+    
+    output$tabSummaries = NULL
+    output$GeneratedPlot = NULL
+    
+  })
+  
+  
+  observeEvent(input$tabmore, {
+    if(input$tabmore==1){
+      shinyjs::show("tabmoreoption")
+    }else{
+      shinyjs::hide("tabmoreoption")
+    }
+  })
+  
+  
+  observeEvent(input$graphmore, {
+    if(input$graphmore==1){
+      shinyjs::show("graphmoreoption")
+    }else{
+      shinyjs::hide("graphmoreoption")
+    }
+  })
+  
   
   
   observeEvent(input$cboOutput, {
@@ -92,7 +231,7 @@ user_defined_server <- function() {
     }
   })
   
-  observeEvent(input$btnChartType, {
+  observeEvent(c(input$btnChartType,input$rdoAddLineType), {
     if (input$btnChartType == "Line") {
       shinyjs::show("numLineSize")
       shinyjs::show("cboLineJoin")
@@ -110,14 +249,20 @@ user_defined_server <- function() {
       shinyjs::hide("rdoAddPoints")
       shinyjs::hide("rdoSummaryTye")
       
-      if (input$rdoAddLineType == TRUE) {
-        shinyjs::show("cboLineType")
-      } else{
-        shinyjs::hide("cboLineType")
-      }
     }
     
   })
+  
+  observeEvent(input$rdoAddLineType, {
+    if (input$rdoAddLineType == TRUE) {
+      shinyjs::show("cboLineType")
+    } else{
+      shinyjs::hide("cboLineType")
+    }
+    
+  }
+  )
+
   
   observeEvent(input$btnChartType,
                {
@@ -433,6 +578,17 @@ user_defined_server <- function() {
  
   observeEvent(input$btnchartOut,
                {
+                 shinyalert::shinyalert(
+                   html = TRUE,
+                   title =paste0("<span style='color:#7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+                   text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
+                   closeOnClickOutside = FALSE,
+                   showConfirmButton = FALSE,
+                   showCancelButton = FALSE,
+                   imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                   closeOnEsc = FALSE)
+                 
+                 
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
                      plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
@@ -512,6 +668,7 @@ user_defined_server <- function() {
                    }
                    
                    output$GeneratedPlot <- renderPlot({plot(plt)})
+                   shinyalert::closeAlert()
                    shinyjs::show("btnUpdatePlot")
                    output$btnchartDown <- downloadHandler(
                      
@@ -531,6 +688,16 @@ user_defined_server <- function() {
   
   observeEvent(input$btnUpdatePlot,
                {
+                 shinyalert::shinyalert(
+                   html = TRUE,
+                   title =paste0("<span style='color: #7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+                   text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
+                   closeOnClickOutside = FALSE,
+                   showConfirmButton = FALSE,
+                   showCancelButton = FALSE,
+                   imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                   closeOnEsc = FALSE)
+                 
                  if(isTRUE(!is.null(rv_current$working_df))){
                    if(input$btnChartType == "Boxplot"){
                      plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
@@ -610,6 +777,7 @@ user_defined_server <- function() {
                    }
                    
                    output$GeneratedPlot <- renderPlot({plot(plt)})
+                   shinyalert::closeAlert()
                    shinyjs::show("btnUpdatePlot")
                    output$btnchartDown <- downloadHandler(
                      
@@ -627,11 +795,21 @@ user_defined_server <- function() {
                })
   
   
-  
-  tabsum <- eventReactive(input$btnCreatetable,{
+  observeEvent(input$btnCreatetable,{
+    shinyalert::shinyalert(
+      html = TRUE,
+      title =paste0("<span style='color: #7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+      text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("table_loading"),"</h5></span>"),
+      closeOnClickOutside = FALSE,
+      showConfirmButton = FALSE,
+      showCancelButton = FALSE,
+      imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+      closeOnEsc = FALSE)
+    
+    
     if(isTRUE(!is.null(rv_current$working_df))){
       if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
-        
+
         tab <- Rautoml::custom_crosstab(df = rv_current$working_df
                        , vars =  c(input$cboCalcVar)
                        , add.p=input$rdoAddTabPValue
@@ -639,8 +817,8 @@ user_defined_server <- function() {
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
-        
+                       , caption= input$txtTabCaption)%>%as_flex_table()
+
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) &&(!is.null(input$cboColVar)&&input$cboColVar!="") && (!is.null(input$cboRowVar)&&input$cboRowVar!="")){
         tab <- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                        , strata= input$cboRowVar
@@ -650,60 +828,53 @@ user_defined_server <- function() {
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
+                       , caption= input$txtTabCaption)%>%as_flex_table()
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (!is.null(input$cboColVar)&&input$cboColVar!="") && (is.null(input$cboRowVar)||input$cboRowVar=="")){
-        
-        tab<- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
+
+        tab <- Rautoml::custom_crosstab(df = rv_current$working_df, by =  input$cboColVar
                       , vars = c(input$cboCalcVar)
                       , add.p=input$rdoAddTabPValue
                       , add.ci=input$rdoAddTabCI
                       , report_numeric = input$chkReportNumeric
                       , numeric_summary = input$chkNumericSummary
                       , drop_na=input$rdoDropTabMissingValues
-                      , caption= input$txtTabCaption)%>%as_gt()
-        
+                      , caption= input$txtTabCaption)%>%as_flex_table()
+
       }else if((all(!is.null(input$cboCalcVar) & input$cboCalcVar!="")) && (is.null(input$cboColVar)||input$cboColVar=="") && (!is.null(input$cboRowVar) && input$cboRowVar!="")){
-        
-        tab<-  Rautoml::custom_crosstab(df = rv_current$working_df, vars =  c(input$cboCalcVar)
+
+        tab <-  Rautoml::custom_crosstab(df = rv_current$working_df, vars =  c(input$cboCalcVar)
                        , strata= input$cboRowVar
                        , add.p=input$rdoAddTabPValue
                        , add.ci=input$rdoAddTabCI
                        , report_numeric = input$chkReportNumeric
                        , numeric_summary = input$chkNumericSummary
                        , drop_na=input$rdoDropTabMissingValues
-                       , caption= input$txtTabCaption)%>%as_gt()
-        
+                       , caption= input$txtTabCaption)%>%as_flex_table()
+
+      }else{
+        tab <- NULL
       }
-      
-      return(tab)
+    }else{
+      tab <- NULL
     }
     
+    output$tabSummaries <- renderUI({flextable::htmltools_value(tab)})
+    shinyalert::closeAlert()
+    
+    output$btnDownloadTable <- downloadHandler(
+      filename = function() {
+        paste0("summary_table_", format(Sys.Date(), "%B %d %Y"), ".docx")
+      },
+      content = function(file) {
+        doc <- read_docx() %>%
+          body_add_flextable(value = tab)
+        
+        print(doc, target = file)  
+      },
+      contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    
   })
-  
-  ##Downloading Tables
-  
-  tabsumimage <- reactive({
-    
-    outfile <- tempfile(fileext = ".png")
-    
-    gtsave(data = tabsum(), 
-           filename = outfile)
-    
-    outfile
-    
-  })
-  
-  
-  output$tabSummaries <- gt::render_gt(tabsum())
-  output$btnDownloadTable <- downloadHandler(
-    filename = paste0("Table",format(Sys.Date(), "%B %d %Y"), ".png"),
-    
-    content = function(file) {
-      file.copy(tabsumimage(), file)
-      
-    },
-    contentType = 'image/png'
-  )
   
   
 }

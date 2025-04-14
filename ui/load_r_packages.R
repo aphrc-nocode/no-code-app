@@ -13,6 +13,7 @@ library(dplyr)
 library(stringr)
 library(stringi)
 
+library(officer)
 library(readr)
 library(readxl)
 library(openxlsx)
@@ -34,6 +35,10 @@ library(gt)
 library(lubridate)
 library(dplyr)
 library(gtsummary)
+library(webshot)
+library(webshot2)
+library(shinyFiles)
+library(flextable)
 
 #Temp
 ## source("ui/tablefun.R")

@@ -22,7 +22,7 @@ user_output_type = renderUI({
   radioButtons(
     "cboOutput",
     paste0(get_rv_labels("user_output_type"), ":"),
-    choices = c("Chart", "Table"), selected = character(0),
+    choices = c("Chart", "Table"), selected = "Chart",
     inline = TRUE
   )
 })
@@ -68,21 +68,27 @@ user_row_var = renderUI({
   selectInput("cboColVar", paste(get_rv_labels("user_row_variable"),":"), "")
 })
 
-user_create_table = renderUI({
-  actionBttn("btnCreatetable", get_rv_labels("usr_create_cross_tab"), size = "md"
-             , inline = TRUE 
-             , block = FALSE 
-             , color = "success" 
+usr_create_cross_tab = renderUI({
+  div(style = "width: 200px;", 
+      actionBttn(
+        inputId = "btnCreatetable", 
+        label = get_rv_labels("usr_create_cross_tab"), 
+        size = "md",
+        inline = TRUE,
+        block = FALSE,
+        color = "success"
+      )
   )
 })
 
 user_download_table = renderUI({
-  downloadBttn("btnDownloadTable", 
-               block = FALSE 
-               , color = "success" 
-  )
+  div(style = "width: 200px;", 
+      downloadBttn("btnDownloadTable", get_rv_labels("user_download_table")
+                   , block = FALSE , size = "md"
+                   , color = "success" ))
+             
+  
 })
-
 
 user_table_options =renderUI({
   h3(
@@ -173,16 +179,23 @@ user_y_axis_label =renderUI({
 })
 
 user_create =renderUI({
-  actionBttn("btnchartOut", get_rv_labels("user_create"), size = "md"
-             ,inline = TRUE 
-             , block = FALSE 
-             , color = "success" )
+  div(style = "width: 200px;", 
+      actionBttn(
+        inputId = "btnchartOut", 
+        label = get_rv_labels("user_create"), 
+        size = "md",
+        inline = TRUE,
+        block = FALSE,
+        color = "success"
+      )
+  )
 })
 
 user_download =renderUI({
+  div(style = "width: 200px;", 
   downloadBttn("btnchartDown", get_rv_labels("user_download")
-               , block = FALSE , size = "lg"
-               , color = "success" )
+               , block = FALSE , size = "md"
+               , color = "success" ))
 })
 
 
@@ -347,6 +360,29 @@ user_level_of_confidence_interval=renderUI({
   label = get_rv_labels("user_level_of_confidence_interval"),
   value = 0.95
 )})
+
+user_tab_more_out=renderUI({
+  switchInput(
+    inputId = "tabmore",
+    label = NULL,
+    value = FALSE,
+    onLabel = "Hide options",
+    offLabel = "Show options",
+    onStatus ="#7bc148"
+    
+  )})
+
+
+user_graph_more_out=renderUI({
+  switchInput(
+    inputId = "graphmore",
+    label = NULL,
+    value = FALSE,
+    onStatus ="#7bc148",
+    onLabel = "Hide options",
+    offLabel = "Show options"
+    
+  )})
 
 user_select_line_join =renderUI({
   selectInput(
