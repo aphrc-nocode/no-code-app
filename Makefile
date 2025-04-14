@@ -112,6 +112,9 @@ research_questions.Rout: server/research_questions.R
 ### Setup
 setup_models.Rout: server/setup_models.R
 
+### Feature engineering
+feature_engineering.Rout: server/feature_engineering.R
+
 
 ### Reset inputs
 resets.Rout: server/resets.R
