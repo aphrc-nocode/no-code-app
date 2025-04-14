@@ -13,6 +13,7 @@ library(dplyr)
 library(stringr)
 library(stringi)
 
+library(officer)
 library(readr)
 library(readxl)
 library(openxlsx)
@@ -38,8 +39,6 @@ library(webshot)
 library(webshot2)
 library(shinyFiles)
 library(flextable)
-library(officer)
-webshot::install_phantomjs()
 
 #Temp
 ## source("ui/tablefun.R")
