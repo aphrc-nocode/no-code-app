@@ -317,7 +317,8 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                          uiOutput("user_numeric_summary")
                      ),
                      align = "right")
-                   )
+                   ),
+						fluidRow(br(),DT::DTOutput("dfPreview"))
 					  ), 
 
 					  tabItem(tabName = "researchQuestions"

@@ -130,6 +130,17 @@ user_defined_server <- function() {
 		  
 		}
 	})
+  
+
+  output$dfPreview <- DT::renderDataTable({
+    req(rv_current$working_df)
+    data.table::data.table(rv_current$working_df)
+                  }, options = list(
+                    pageLength = 5,
+                    scrollX = TRUE,
+                    scrollY=TRUE,
+                    searching = FALSE
+                  ), class = 'display nowrap')
 
 
   observeEvent(input$cboOutput,{
@@ -205,12 +216,14 @@ user_defined_server <- function() {
       shinyjs::hide("btnChartType")
       shinyjs::hide("graphOutputs")
       shinyjs::show("tabOutputs")
+      updateSwitchInput(session = session, inputId = "graphmore", value = 0)
       shinyjs::hide("graphmore")
       shinyjs::show("tabmore")
     } else if (isTRUE(input$cboOutput == "Chart")){
       shinyjs::show("btnChartType")
       shinyjs::show("graphOutputs")
       shinyjs::hide("tabOutputs")
+      updateSwitchInput(session = session, inputId = "tabmore", value = 0)
       shinyjs::show("graphmore")
       shinyjs::hide("tabmore")
     } else {
@@ -219,6 +232,9 @@ user_defined_server <- function() {
       shinyjs::hide("tabOutputs")
       shinyjs::hide("graphmore")
       shinyjs::hide("tabmore")
+      updateSwitchInput(session = session, inputId = "tabmore", value = 0)
+      updateSwitchInput(session = session, inputId = "graphmore", value = 0)
+
     }
   })
 
