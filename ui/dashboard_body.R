@@ -278,6 +278,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                              uiOutput("user_add_p_value"),
                              uiOutput("user_add_confidence_interval"),
                              uiOutput("user_drop_missing_values"),
+                             uiOutput("user_numeric_summary")
                              uiOutput("user_table_caption")
                          ),
                          
@@ -313,8 +314,8 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                          uiOutput("user_add_density"),
                          uiOutput("user_remove_histogram"),
                          uiOutput("user_select_color_variable_single"),
-                         uiOutput("user_select_color_parlet"),
-                         uiOutput("user_numeric_summary")
+                         uiOutput("user_select_color_parlet")
+                         
                      ),
                      align = "right")
                    ),
