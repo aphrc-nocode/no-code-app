@@ -43,6 +43,9 @@ function(input, output, session) {
 	 , seed = 9991
 	 , outcome = NULL
 	 , vartype_all = NULL
+	  ,plot_rv=NULL
+	 ,tab_rv=NULL
+	 
   )
   
   ##### --------- Meta data ---------------------------------------------
