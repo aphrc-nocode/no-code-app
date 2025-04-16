@@ -110,6 +110,17 @@ setup_models_ui = function() {
 						, step = NULL
 					)
 			})
+			
+			## Exclude vars
+			output$setup_models_analysis_exclude_variables = renderUI({
+					empty_lab = ""
+					names(empty_lab) = get_rv_labels("setup_models_analysis_exclude_variables_ph")
+					selectInput("setup_models_analysis_exclude_variables"
+						, label = get_rv_labels("setup_models_analysis_exclude_variables") 
+						, choices = c(empty_lab, setdiff(colnames(rv_current$working_df), input$setup_models_analysis_target_variable))
+						, multiple=TRUE
+					)
+			})
 
 			output$setup_models_analysis_session_name = renderUI({
 				textInput("setup_models_analysis_session_name"
@@ -124,6 +135,8 @@ setup_models_ui = function() {
 			output$setup_models_analysis_partition_ratio = NULL
 			output$setup_models_analysis_session_name = NULL
 			updateTextInput(session , "setup_models_analysis_session_name", value="")
+			output$setup_models_analysis_exclude_variables=NULL
+			updateSelectInput(session, "setup_models_analysis_exclude_variables", selected="")
 		}
 	})
 
@@ -151,7 +164,12 @@ setup_models_ui = function() {
 			rv_ml_ai$outcome = input$setup_models_analysis_target_variable
 			rv_ml_ai$partition_ratio = input$setup_models_analysis_partition_ratio
 			rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$setup_models_analysis_target_variable)
-		
+			rv_ml_ai$excluded_predictors = input$setup_models_analysis_exclude_variables
+			
+			if (isTRUE(input$setup_models_analysis_exclude_variables!="")) {
+				rv_current$working_df = Rautoml::drop_variables(rv_current$working_df, input$setup_models_analysis_exclude_variables)
+			}
+
 			rv_ml_ai$ml_ai_setup_result = paste0(
 				"<b>", "Session ID: ", "</b>", rv_ml_ai$session_id
 				, "<br>"
@@ -166,6 +184,8 @@ setup_models_ui = function() {
 				, "<b>", "Train/Test ratio ", "</b>", paste0(rv_ml_ai$partition_ratio*100, "% : ", (1-rv_ml_ai$partition_ratio)*100, "%")
 				, "<br>"
 				, "<b>", "Predictors: ", "</b>", paste0(rv_ml_ai$predictors, collapse=", ")
+				, "<br>"
+				, "<b>", "Excluded Predictors: ", "</b>", paste0(rv_ml_ai$excluded_predictors, collapse=", ")
 			)
 
 			output$setup_models_analysis_results = renderUI({
@@ -191,6 +211,9 @@ setup_models_ui = function() {
 		
 		updateSliderInput(session, "setup_models_analysis_partition_ratio", value = NULL)
 		output$setup_models_analysis_partition_ratio = NULL
+			
+		output$setup_models_analysis_exclude_variables=NULL
+		updateSelectInput(session, "setup_models_analysis_exclude_variables", selected="")
 		
 	})
 }
