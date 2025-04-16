@@ -82,6 +82,7 @@ function(input, output, session) {
 		, outcome = NULL
 		, partition_ratio = NULL
 		, predictors = NULL
+		, excluded_predictors = NULL
 		, ml_ai_setup_result = NULL
 		, history = NULL
 	)
