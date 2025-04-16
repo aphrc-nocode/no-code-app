@@ -237,7 +237,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						       br(),
 						       uiOutput("user_calc_var"),
 						       uiOutput("user_row_var"),
-						       uiOutput("user_strata_var"),
+						       #uiOutput("user_strata_var"),
 						       br(),
 						       uiOutput("usr_create_cross_tab"),
 						       br(),
@@ -257,16 +257,15 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						    br(),
 						    br(),
 						    uiOutput("user_download")
-						)
+						),align = "left"
 						
 						),
                    column(
                      width = 8,
                      uiOutput("user_chart_type"),
                               uiOutput("tabSummaries"),
-                     plotOutput("GeneratedPlot", height = "80vh")),
-                       
-                       
+                     plotOutput("GeneratedPlot", height = "65vh"),
+                     align = "center"),
                        column(
                          width = 2,
                          uiOutput("user_tab_more_out"),

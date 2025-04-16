@@ -199,7 +199,7 @@ function(input, output, session) {
   output$user_chart_type = user_chart_type
   output$user_tab_options = user_tab_options
   output$user_calc_var = user_calc_var
-  output$user_strata_var = user_strata_var
+  #output$user_strata_var = user_strata_var
   output$user_row_var = user_row_var
   output$usr_create_cross_tab = usr_create_cross_tab
   output$user_download_table = user_download_table

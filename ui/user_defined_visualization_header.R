@@ -60,16 +60,12 @@ user_calc_var = renderUI({
   selectInput("cboCalcVar", paste(get_rv_labels("user_calc_var"),":"), "", multiple = TRUE)
 })
 
-user_strata_var = renderUI({
-  selectInput("cboRowVar", paste(get_rv_labels("user_strata_var"),":"), "")
-})
 
 user_row_var = renderUI({
   selectInput("cboColVar", paste(get_rv_labels("user_row_variable"),":"), "")
 })
 
 usr_create_cross_tab = renderUI({
-  div(style = "width: 200px;", 
       actionBttn(
         inputId = "btnCreatetable", 
         label = get_rv_labels("usr_create_cross_tab"), 
@@ -77,17 +73,14 @@ usr_create_cross_tab = renderUI({
         inline = TRUE,
         block = FALSE,
         color = "success"
-      )
+      
   )
 })
 
 user_download_table = renderUI({
-  div(style = "width: 200px;", 
       downloadBttn("btnDownloadTable", get_rv_labels("user_download_table")
                    , block = FALSE , size = "md"
-                   , color = "success" ))
-             
-  
+                   , color = "success" )
 })
 
 user_table_options =renderUI({
@@ -109,7 +102,6 @@ user_report_numeric <- renderUI({
   )
 })
 
-
 user_numeric_summary <- renderUI({
   radioButtons(
   "chkNumericSummary",
@@ -127,7 +119,6 @@ user_add_p_value <- renderUI({radioButtons(
   selected = FALSE,
   inline = TRUE
 )})
-
 
 user_add_confidence_interval <- renderUI({radioButtons(
   "rdoAddTabCI",
@@ -148,8 +139,6 @@ user_drop_missing_values <- renderUI({radioButtons(
 
 user_table_caption <- renderUI({
   textInput("txtTabCaption", label = get_rv_labels("user_table_caption"))})
-
-
 
 user_plot_options =renderUI({
   h3(get_rv_labels("user_plot_options"))
@@ -179,7 +168,6 @@ user_y_axis_label =renderUI({
 })
 
 user_create =renderUI({
-  div(style = "width: 200px;", 
       actionBttn(
         inputId = "btnchartOut", 
         label = get_rv_labels("user_create"), 
@@ -187,15 +175,13 @@ user_create =renderUI({
         inline = TRUE,
         block = FALSE,
         color = "success"
-      )
   )
 })
 
 user_download =renderUI({
-  div(style = "width: 200px;", 
   downloadBttn("btnchartDown", get_rv_labels("user_download")
                , block = FALSE , size = "md"
-               , color = "success" ))
+               , color = "success" )
 })
 
 
@@ -567,6 +553,109 @@ user_select_color_parlet =renderUI({
   selected = "Dark2"
 )
 })
+  
+  user_select_color_parlet_corrplot =renderUI({
+    selectInput(
+      "cboColorBrewerCorrplot",
+      paste0(get_rv_labels("user_select_color_parlet"), ":"),
+      choices =
+        c(
+          "Accent",
+          "Dark2",
+          "Paired",
+          "Pastel1",
+          "Pastel2",
+          "Set1",
+          "Set2",
+          "Set3",
+          "BrBG",
+          "PiYG",
+          "PRGn",
+          "PuOr",
+          "RdBu",
+          "RdGy",
+          "RdYlBu",
+          "RdYlGn",
+          "Spectral",
+          "Blues",
+          "BuGn",
+          "BuPu",
+          "GnBu",
+          "Greens",
+          "Greys",
+          "Oranges",
+          "OrRd",
+          "PuBu",
+          "PuBuGn",
+          "PuRd",
+          "Purples",
+          "RdPu",
+          "Reds",
+          "YlGn",
+          "YlGnBu",
+          "YlOrBr",
+          "YlOrRd"
+        ),
+      selected = "Dark2"
+    )
+    
+  })
+    
+    
+    user_select_color_parlet_bivariate =renderUI({
+      selectInput(
+        "cboColorBrewerBivariate",
+        paste0(get_rv_labels("user_select_color_parlet"), ":"),
+        choices =
+          c(
+            "Accent",
+            "Dark2",
+            "Paired",
+            "Pastel1",
+            "Pastel2",
+            "Set1",
+            "Set2",
+            "Set3",
+            "BrBG",
+            "PiYG",
+            "PRGn",
+            "PuOr",
+            "RdBu",
+            "RdGy",
+            "RdYlBu",
+            "RdYlGn",
+            "Spectral",
+            "Blues",
+            "BuGn",
+            "BuPu",
+            "GnBu",
+            "Greens",
+            "Greys",
+            "Oranges",
+            "OrRd",
+            "PuBu",
+            "PuBuGn",
+            "PuRd",
+            "Purples",
+            "RdPu",
+            "Reds",
+            "YlGn",
+            "YlGnBu",
+            "YlOrBr",
+            "YlOrRd"
+          ),
+        selected = "Dark2"
+      )
+})
+    
+user_select_corrplot_var =renderUI({
+      selectInput("cboXVar1", paste0(
+        get_rv_labels("user_select_variable_on_x_axis")
+        ,":"), "")
+    })  
+    
 
 
 
+
+    
