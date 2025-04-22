@@ -359,6 +359,17 @@ function(input, output, session) {
   ##### ----- Set ML/AI UI ------------------- ####
   source("server/setup_models.R", local=TRUE)
   setup_models_ui()
+  
+  ##### ----- Preprocessing ------------------- ####
+  source("server/feature_engineering.R", local=TRUE)
+  
+  ###### ----- Initialize recipe ------------------- ####
+  setup_recipe_server()
+  
+  ###### ----- Impute missing values ------------------- ####
+  impute_missing_server()
+
+
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
