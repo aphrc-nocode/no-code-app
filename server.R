@@ -42,6 +42,10 @@ function(input, output, session) {
 	 , max_tockens = 10000
 	 , seed = 9991
 	 , outcome = NULL
+	 , vartype_all = NULL
+	  ,plot_rv=NULL
+	 ,tab_rv=NULL
+	 
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -67,6 +71,20 @@ function(input, output, session) {
 	## LLM/GAI
 	rv_generative_ai = reactiveValues(
 		history = NULL
+	)
+
+	## Reactive values for ML/AI module
+	rv_ml_ai = reactiveValues(
+		session_id = NULL
+		, dataset_id = NULL 
+		, analysis_type = NULL
+		, task = NULL
+		, outcome = NULL
+		, partition_ratio = NULL
+		, predictors = NULL
+		, excluded_predictors = NULL
+		, ml_ai_setup_result = NULL
+		, history = NULL
 	)
 
   #### ---- App title ----------------------------------------------------
@@ -181,7 +199,7 @@ function(input, output, session) {
   output$user_chart_type = user_chart_type
   output$user_tab_options = user_tab_options
   output$user_calc_var = user_calc_var
-  output$user_strata_var = user_strata_var
+  #output$user_strata_var = user_strata_var
   output$user_row_var = user_row_var
   output$usr_create_cross_tab = usr_create_cross_tab
   output$user_download_table = user_download_table
@@ -336,6 +354,21 @@ function(input, output, session) {
   #### ---- Generate insights using Gemini --------------- ####
   generate_research_questions_gemini()
 
+  #### ---- Machine learning and AI --------------- ####
+  
+  ##### ----- Set ML/AI UI ------------------- ####
+  source("server/setup_models.R", local=TRUE)
+  setup_models_ui()
+  
+  ##### ----- Preprocessing ------------------- ####
+  source("server/feature_engineering.R", local=TRUE)
+  
+  ###### ----- Initialize recipe ------------------- ####
+  setup_recipe_server()
+  
+  ###### ----- Impute missing values ------------------- ####
+  impute_missing_server()
+
 
 
   #### ---- Reset various components --------------------------------------####
@@ -349,6 +382,7 @@ function(input, output, session) {
   #### ---- Activate required fields --------------------------------------####
   iv$enable()
   iv_url$enable()
+  iv_ml$enable()
   
   
 }

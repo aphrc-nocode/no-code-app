@@ -51,7 +51,7 @@ menu_translation = function(){
 
 		menuItem(
         text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_machine_learning"), "</span>")), tabName = "machineLearning", icon = icon("code-merge", lib = "font-awesome"),
-        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_partition_data"), "</span>")), tabName = "dataPartitioning", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_setup_models"), "</span>")), tabName = "setupModels", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_feature_engineering"), "</span>")), tabName = "featureEngineering", icon = icon("sitemap", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_train_model"), "</span>")), tabName = "trainModel", icon = icon("gear", lib = "font-awesome")),
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
