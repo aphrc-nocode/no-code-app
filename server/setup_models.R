@@ -111,7 +111,7 @@ setup_models_ui = function() {
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(input$setup_models_analysis_session_name!="") & isTRUE(!is.null(input$setup_models_analysis_session_name))) {
-				if ((isTRUE(input$setup_models_analysis_target_variable!="") & isTRUE(!is.null(input$setup_models_analysis_target_variable))) | isTRUE(input$setup_models_analysis_target_variable_check=="no")) {
+				if (isTRUE(input$setup_models_analysis_target_variable_check=="yes") & (isTRUE(input$setup_models_analysis_target_variable!="") & isTRUE(!is.null(input$setup_models_analysis_target_variable))) | isTRUE(input$setup_models_analysis_target_variable_check=="no")) {
 					rv_current$vartype_all = Rautoml::get_types(rv_current$working_df)
 				
 					output$setup_models_analysis_type = renderUI({
@@ -132,19 +132,57 @@ setup_models_ui = function() {
 						)
 					})
 				} else {
-					output$setup_models_analysis_type = NULL
 					updateSelectInput(session, "setup_models_analysis_type", selected="")
+					output$setup_models_analysis_type = NULL
 				}
 			} else {
-				output$setup_models_analysis_type = NULL
 				updateSelectInput(session, "setup_models_analysis_type", selected="")
+				output$setup_models_analysis_type = NULL
 			}
 		} else {
-			output$setup_models_analysis_type = NULL
 			updateSelectInput(session, "setup_models_analysis_type", selected="")
+			output$setup_models_analysis_type = NULL
 		}
 	})
-	
+
+
+	## Model types
+	observe({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(input$setup_models_analysis_session_name!="") & isTRUE(!is.null(input$setup_models_analysis_session_name))) {
+				if (isTRUE(input$setup_models_analysis_type!="") & isTRUE(!is.null(input$setup_models_analysis_type))) {
+					output$setup_models_analysis_model_type = renderUI({
+						if (isTRUE(any(input$setup_models_analysis_type %in% c("Supervised learning", "Semi-supervised learning")))) {
+							temp_labs=get_named_choices(input_choices_file, input$change_language, "setup_models_analysis_model_type_check_supervised")
+						} else if (isTRUE(input$setup_models_analysis_type=="Clustering")) {
+							temp_labs=get_named_choices(input_choices_file, input$change_language, "setup_models_analysis_model_type_check_clustering")
+						} else if (isTRUE(input$setup_models_analysis_type=="Anomaly detection")) {
+							temp_labs=get_named_choices(input_choices_file, input$change_language, "setup_models_analysis_model_type_check_anomaly")
+						}
+						prettyCheckboxGroup(
+							inputId = "setup_models_analysis_model_type_check"
+								, label = get_rv_labels("setup_models_analysis_model_type_check")
+								, choices = temp_labs
+								, inline = FALSE
+								, status = "success"
+						)
+					})			
+				} else {
+					output$setup_models_analysis_model_type = NULL
+					updatePrettyCheckboxGroup(session=session, inputId="setup_models_analysis_model_type_check", selected = character(0))
+				}
+			} else {
+				output$setup_models_analysis_model_type = NULL	
+				updatePrettyCheckboxGroup(session=session, inputId="setup_models_analysis_model_type_check", selected = character(0))
+			}
+
+		} else {
+			output$setup_models_analysis_model_type = NULL	
+			updatePrettyCheckboxGroup(session=session, inputId="setup_models_analysis_model_type_check", selected = character(0))
+			
+		}
+		
+	})
 	
 }
 
