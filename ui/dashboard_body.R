@@ -345,15 +345,17 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "setupModels",
 							fluidRow(
 								column(width=3
+									, uiOutput("setup_models_analysis_session_name")
+									, uiOutput("setup_models_analysis_session_seed")
+									, uiOutput("setup_models_analysis_target_variable_options")
+									, uiOutput("setup_models_analysis_target_variable")
+
+
 									, uiOutput("setup_models_analysis_type")
 									, uiOutput("setup_models_analysis_type_specifics")
-									, uiOutput("setup_models_analysis_target_variable")
 									, uiOutput("setup_models_analysis_exclude_variables")
 									, uiOutput("setup_models_analysis_partition_ratio")
-									, uiOutput("setup_models_analysis_session_name")
 									, uiOutput("setup_models_analysis_apply")
-									, br()
-									, uiOutput("impute_missing_options")
 								)
 
 								, column(width = 9
@@ -365,7 +367,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "featureEngineering",
 							fluidRow(
 								column(width = 3
-									#, uiOutput("impute_missing_options")
+									, uiOutput("impute_missing_options")
 								)
 							)
 						),
