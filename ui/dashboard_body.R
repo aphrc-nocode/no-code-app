@@ -224,8 +224,33 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			  ),
      
          
-         tabItem(tabName = "menu_summarizeAutomatic",
-                 fluidRow(htmlOutput("visualize_auto_data_title"))),
+			  tabItem(tabName = "summarizeAutomatic",
+			          fluidRow(htmlOutput("visualize_auto_data_title")),
+			          fluidRow(uiOutput("bivariate_header_label")),
+			          hr(),
+			          fluidRow(column(
+			            width = 3,
+			            uiOutput("user_select_bivariate_outcome"),
+			            uiOutput("user_select_Bivariate_features"),
+			            uiOutput("user_select_color_parlet_bivariate"),
+			            uiOutput("user_select_bivariate_single_color"),
+			            uiOutput("bivariate_plot_title")
+			          ),
+			          column(
+			            width = 9,
+			            plotOutput("BivariatePlotOutput")
+			          )),
+			          hr(),
+			          fluidRow(uiOutput("corrplot_header_label")),
+			          hr(),
+			          fluidRow(column(
+			            width = 3,
+			            uiOutput("user_select_corr_features"),
+			            uiOutput("user_select_color_parlet_corrplot")),
+			            column(width=9,
+			                   plotOutput("CorrPlotOutput")
+			            )
+			          )),
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
 						column(width = 2,

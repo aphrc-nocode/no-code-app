@@ -256,6 +256,18 @@ function(input, output, session) {
   output$user_numeric_summary = user_numeric_summary
   output$user_tab_more_out = user_tab_more_out
   output$user_graph_more_out = user_tab_more_out
+  
+  output$bivariate_header_label = bivariate_header_label
+  output$corrplot_header_label = corrplot_header_label
+  output$user_select_corr_features = user_select_corr_features
+  output$user_select_Bivariate_features = user_select_Bivariate_features
+  
+  output$user_select_bivariate_single_color = user_select_bivariate_single_color
+  output$user_select_bivariate_outcome = user_select_bivariate_outcome
+  output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+  output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
+  output$bivariate_plot_title = bivariate_plot_title
+  output$corrplot_title = corrplot_title
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
