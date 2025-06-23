@@ -6,11 +6,11 @@ function(input, output, session) {
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
-  #### ---- Create needed folders for datasets and logs -------------------------
+  #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   
   #### ---- Placeholder for reactive values ------------------------------------
-  ##### --------- Currently selected dataset --------------------------
+  ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
     dataset_id = NULL
     , metadata_id = NULL
@@ -42,6 +42,10 @@ function(input, output, session) {
 	 , max_tockens = 10000
 	 , seed = 9991
 	 , outcome = NULL
+	 , vartype_all = NULL
+	  ,plot_rv=NULL
+	 ,tab_rv=NULL
+	 
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -67,6 +71,21 @@ function(input, output, session) {
 	## LLM/GAI
 	rv_generative_ai = reactiveValues(
 		history = NULL
+	)
+
+	## Reactive values for ML/AI module
+	rv_ml_ai = reactiveValues(
+		session_id = NULL
+		, seed_value = NULL
+		, dataset_id = NULL 
+		, analysis_type = NULL
+		, task = NULL
+		, outcome = NULL
+		, partition_ratio = NULL
+		, predictors = NULL
+		, excluded_predictors = NULL
+		, ml_ai_setup_result = NULL
+		, history = NULL
 	)
 
   #### ---- App title ----------------------------------------------------
@@ -181,7 +200,7 @@ function(input, output, session) {
   output$user_chart_type = user_chart_type
   output$user_tab_options = user_tab_options
   output$user_calc_var = user_calc_var
-  output$user_strata_var = user_strata_var
+  #output$user_strata_var = user_strata_var
   output$user_row_var = user_row_var
   output$usr_create_cross_tab = usr_create_cross_tab
   output$user_download_table = user_download_table
@@ -237,6 +256,18 @@ function(input, output, session) {
   output$user_numeric_summary = user_numeric_summary
   output$user_tab_more_out = user_tab_more_out
   output$user_graph_more_out = user_tab_more_out
+  
+  output$bivariate_header_label = bivariate_header_label
+  output$corrplot_header_label = corrplot_header_label
+  output$user_select_corr_features = user_select_corr_features
+  output$user_select_Bivariate_features = user_select_Bivariate_features
+  
+  output$user_select_bivariate_single_color = user_select_bivariate_single_color
+  output$user_select_bivariate_outcome = user_select_bivariate_outcome
+  output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+  output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
+  output$bivariate_plot_title = bivariate_plot_title
+  output$corrplot_title = corrplot_title
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -336,6 +367,26 @@ function(input, output, session) {
   #### ---- Generate insights using Gemini --------------- ####
   generate_research_questions_gemini()
 
+  #### ---- Machine learning and AI --------------- ####
+  
+  ##### ----- Set ML/AI UI ------------------- ####
+  source("server/setup_models.R", local=TRUE)
+  setup_models_ui()
+  
+  ##### ----- Preprocessing ------------------- ####
+  source("server/feature_engineering.R", local=TRUE)
+
+  #### ----- Modelling framework --------------------------------- ####
+
+  source("server/modelling_framework.R", local=TRUE)
+  modelling_framework_choices()
+
+  ###### ----- Initialize recipe ------------------- ####
+#  setup_recipe_server()
+  
+  ###### ----- Impute missing values ------------------- ####
+#  impute_missing_server()
+
 
 
   #### ---- Reset various components --------------------------------------####
@@ -349,6 +400,7 @@ function(input, output, session) {
   #### ---- Activate required fields --------------------------------------####
   iv$enable()
   iv_url$enable()
+  iv_ml$enable()
   
   
 }

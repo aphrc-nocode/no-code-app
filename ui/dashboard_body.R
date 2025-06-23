@@ -224,41 +224,77 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			  ),
      
          
-         tabItem(tabName = "menu_summarizeAutomatic",
-                 fluidRow()),
+			  tabItem(tabName = "summarizeAutomatic",
+			          fluidRow(htmlOutput("visualize_auto_data_title")),
+			          fluidRow(uiOutput("bivariate_header_label")),
+			          hr(),
+			          fluidRow(column(
+			            width = 3,
+			            uiOutput("user_select_bivariate_outcome"),
+			            uiOutput("user_select_Bivariate_features"),
+			            uiOutput("user_select_color_parlet_bivariate"),
+			            uiOutput("user_select_bivariate_single_color"),
+			            uiOutput("bivariate_plot_title")
+			          ),
+			          column(
+			            width = 9,
+			            plotOutput("BivariatePlotOutput")
+			          )),
+			          hr(),
+			          fluidRow(uiOutput("corrplot_header_label")),
+			          hr(),
+			          fluidRow(column(
+			            width = 3,
+			            uiOutput("user_select_corr_features"),
+			            uiOutput("user_select_color_parlet_corrplot")),
+			            column(width=9,
+			                   plotOutput("CorrPlotOutput")
+			            )
+			          )),
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
 						column(width = 2,
 						       htmlOutput("visualize_data_title")
-                     , uiOutput("user_output_type")
+                     , uiOutput("user_output_type"),
+						       
+						       div(id = "tabOutputs",
+						       uiOutput("user_tab_options"),
+						       br(),
+						       uiOutput("user_calc_var"),
+						       uiOutput("user_row_var"),
+						       #uiOutput("user_strata_var"),
+						       br(),
+						       uiOutput("usr_create_cross_tab"),
+						       br(),
+						       uiOutput("user_download_table")
+						),
+						
+						div(
+						  id = "graphOutputs",
+						    uiOutput("user_plot_options"),
+						    uiOutput("user_select_variable_on_x_axis"),
+						    uiOutput("user_select_variable_on_y_axis"),
+						    uiOutput("user_plot_title"),
+						    uiOutput("user_x_axis_label"),
+						    uiOutput("user_y_axis_label"),
+						    br(),
+						    uiOutput("user_create"),
+						    br(),
+						    br(),
+						    uiOutput("user_download")
+						),align = "left"
+						
 						),
                    column(
-                     width = 10,
+                     width = 8,
                      uiOutput("user_chart_type"),
-                     fluidRow(
-                       id = "tabOutputs",
-                       column(
-                         width = 3,
-                         uiOutput("user_tab_options"),
-                         br(),
-                         uiOutput("user_calc_var"),
-                         uiOutput("user_strata_var"),
-                         uiOutput("user_row_var"),
-                         
-                         br(),
-                         uiOutput("usr_create_cross_tab"),
-                         br(),
-                         uiOutput("user_download_table")
-                       ),
-                       
-                       
-                       column(width = 7,
-                              uiOutput("tabSummaries")),
-                       
-                       
+                              uiOutput("tabSummaries"),
+                     plotOutput("GeneratedPlot", height = "65vh"),
+                     align = "center"),
                        column(
                          width = 2,
                          uiOutput("user_tab_more_out"),
+                         uiOutput("user_graph_more_out"),
                          div(id = "tabmoreoption",
                              uiOutput("user_table_options"),
                              br(),
@@ -266,35 +302,10 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                              uiOutput("user_add_p_value"),
                              uiOutput("user_add_confidence_interval"),
                              uiOutput("user_drop_missing_values"),
+                             uiOutput("user_numeric_summary"),
                              uiOutput("user_table_caption")
-                         )
+                         ),
                          
-                       )),
-                     
-                     fluidRow(
-                       id = "graphOutputs",
-                       column(
-                         width = 3,
-                         
-                         uiOutput("user_plot_options"),
-                         uiOutput("user_select_variable_on_x_axis"),
-                         uiOutput("user_select_variable_on_y_axis"),
-                         uiOutput("user_plot_title"),
-                         uiOutput("user_x_axis_label"),
-                         uiOutput("user_y_axis_label"),
-                         br(),
-                         uiOutput("user_create"),
-                         br(),
-                         br(),
-                         uiOutput("user_download")
-                       ),
-                       
-                       
-                       column(width = 7,
-                              plotOutput("GeneratedPlot", height = "80vh")),
-                       column(
-                         width = 2,
-                         uiOutput("user_graph_more_out"),
                          div(id = "graphmoreoption",
                          uiOutput("user_more_plot_options"),
                          uiOutput("user_transform_to_doughnut"),
@@ -327,18 +338,13 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                          uiOutput("user_add_density"),
                          uiOutput("user_remove_histogram"),
                          uiOutput("user_select_color_variable_single"),
-                         uiOutput("user_select_color_parlet"),
-                         uiOutput("user_numeric_summary")
+                         uiOutput("user_select_color_parlet")
                          
-                         
-                         
-                       
                      ),
                      align = "right")
-                   )
-                 )
-					  )), 
-					  
+                   ),
+						fluidRow(br(),DT::DTOutput("dfPreview"))
+					  ), 
 
 					  tabItem(tabName = "researchQuestions"
                      , fluidRow(
@@ -361,11 +367,35 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                   ),
 			
 
-						tabItem(tabName = "dataPartitioning",
-								  fluidRow()),
+						tabItem(tabName = "setupModels",
+							fluidRow(
+								column(width=3
+									, uiOutput("setup_models_analysis_session_name")
+									, uiOutput("setup_models_analysis_session_seed")
+									, uiOutput("setup_models_analysis_target_variable_options")
+									, uiOutput("setup_models_analysis_target_variable")
+									, uiOutput("setup_models_analysis_exclude_variables")
+									, uiOutput("setup_models_analysis_type")
+									, uiOutput("setup_models_analysis_model_type")
+									, uiOutput("setup_models_analysis_partition_ratio")
+
+									, uiOutput("setup_models_analysis_apply")
+								)
+
+								, column(width = 9
+									, htmlOutput("setup_models_analysis_results")
+								)
+							)
+						),
 						
 						tabItem(tabName = "featureEngineering",
-								  fluidRow()),
+							fluidRow(
+								column(width = 3
+									, uiOutput("modelling_framework_choices")
+									, uiOutput("impute_missing_options")
+								)
+							)
+						),
 						tabItem(tabName = "trainModel",
 								  fluidRow()),
 						tabItem(tabName = "validateDeployModel",

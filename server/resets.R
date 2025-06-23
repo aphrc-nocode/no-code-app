@@ -126,7 +126,6 @@ reset_data_server = function() {
 			output$manage_data_show = NULL
 			output$manage_data_title_explore = NULL
 			output$explore_data_missingness = NULL
-			rv_current$missing_prop = NULL
 			output$transform_data_handle_missing_values = NULL
 			output$explore_data_select_variables = NULL
 			output$explore_data_quick_explore = NULL
@@ -165,7 +164,7 @@ reset_data_server = function() {
 			rv_current$recoded_variable_labels_log = NULL
 			output$transform_data_recoded_variable_labels_log_ui = NULL
 			output$transform_data_recoded_variable_labels_log = NULL
-			rv_current$missing_prop_df = NULL
+			rv_current$missing_prop = NULL
 			output$transform_data_handle_missing_values_choices = NULL
 			updateSelectInput(session = session, "transform_data_select_vars", selected = "", choices = NULL)
 			output$transform_data_identify_outliers = NULL
