@@ -6,11 +6,11 @@ function(input, output, session) {
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
-  #### ---- Create needed folders for datasets and logs -------------------------
+  #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   
   #### ---- Placeholder for reactive values ------------------------------------
-  ##### --------- Currently selected dataset --------------------------
+  ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
     dataset_id = NULL
     , metadata_id = NULL
@@ -76,6 +76,7 @@ function(input, output, session) {
 	## Reactive values for ML/AI module
 	rv_ml_ai = reactiveValues(
 		session_id = NULL
+		, seed_value = NULL
 		, dataset_id = NULL 
 		, analysis_type = NULL
 		, task = NULL
@@ -364,10 +365,10 @@ function(input, output, session) {
   source("server/feature_engineering.R", local=TRUE)
   
   ###### ----- Initialize recipe ------------------- ####
-  setup_recipe_server()
+#  setup_recipe_server()
   
   ###### ----- Impute missing values ------------------- ####
-  impute_missing_server()
+#  impute_missing_server()
 
 
 
