@@ -375,7 +375,12 @@ function(input, output, session) {
   
   ##### ----- Preprocessing ------------------- ####
   source("server/feature_engineering.R", local=TRUE)
-  
+
+  #### ----- Modelling framework --------------------------------- ####
+
+  source("server/modelling_framework.R", local=TRUE)
+  modelling_framework_choices()
+
   ###### ----- Initialize recipe ------------------- ####
 #  setup_recipe_server()
   

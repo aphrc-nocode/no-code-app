@@ -391,6 +391,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "featureEngineering",
 							fluidRow(
 								column(width = 3
+									, uiOutput("modelling_framework_choices")
 									, uiOutput("impute_missing_options")
 								)
 							)
