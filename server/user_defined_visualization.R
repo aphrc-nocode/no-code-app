@@ -66,6 +66,19 @@ user_defined_server <- function() {
 		  updateSwitchInput(session = session , inputId = "tabmore", value = FALSE)
 		  updateSwitchInput(session = session , inputId = "graphmore", value = FALSE)
 		  updateRadioButtons(session = session, inputId = "cboOutput", selected = "Chart")
+		  
+		  output$bivariate_header_label = bivariate_header_label
+		  output$corrplot_header_label = corrplot_header_label
+		  output$user_select_corr_features = user_select_corr_features
+		  output$user_select_Bivariate_features = user_select_Bivariate_features
+		  
+		  # output$user_select_bivariate_single_color = user_select_bivariate_single_color
+		  output$user_select_bivariate_outcome = user_select_bivariate_outcome
+		  #output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+		  output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
+		  output$bivariate_plot_title = bivariate_plot_title
+		  output$corrplot_title = corrplot_title
+		  
 		} else {
 		  output$user_output_type = NULL
 		  output$user_chart_type = NULL
@@ -128,8 +141,92 @@ user_defined_server <- function() {
 		  output$user_tab_more_out = NULL
 		  output$user_graph_more_out = NULL
 		  
+		  output$bivariate_header_label = NULL
+		  output$corrplot_header_label = NULL
+		  output$user_select_corr_features = NULL
+		  output$user_select_Bivariate_features = NULL
+		  
+		  #output$user_select_bivariate_single_color = NULL
+		  output$user_select_bivariate_outcome = NULL
+		  #output$user_select_color_parlet_bivariate = NULL
+		  output$user_select_color_parlet_corrplot = NULL
+		  output$bivariate_plot_title = NULL
+		  output$corrplot_title = NULL
+		  
 		}
 	})
+  
+  
+  
+  
+  ################Automatic visualization
+  
+  observe({
+    req(rv_current$working_df)
+    req(input$cboBivariateOutcome)
+    
+    if (is.numeric(rv_current$working_df[[input$cboBivariateOutcome]])) {
+      output$user_select_bivariate_single_color = user_select_bivariate_single_color
+      output$user_select_color_parlet_bivariate = NULL
+      #shinyjs::show("cboBivariateColor")
+      # shinyjs::hide("cboColorBrewerBivariate")
+    } else {
+      #shinyjs::hide("cboBivariateColor")
+      # shinyjs::show("cboColorBrewerBivariate")
+      output$user_select_bivariate_single_color = NULL
+      output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+    }
+  })
+  
+  
+  # When features are chosen, update outcome (exclude features)
+  observe({
+    req(rv_current$working_df)
+    req(input$cboBivariateFeatures)
+    if(!all(is.null(input$cboBivariateFeatures)) & !all(is.null(input$cboBivariateOutcome)) & any(input$cboBivariateOutcome%in%input$cboBivariateFeatures)){
+      other_cols <- setdiff(names(rv_current$working_df), input$cboBivariateFeatures)
+      updateSelectInput(session, "cboBivariateOutcome", choices = other_cols, selected = character(0))
+    }
+    
+  })
+  
+  
+  
+observe({
+    req(rv_current$working_df)
+    req(input$cboBivariateOutcome)
+    if(!all(is.null(input$cboBivariateFeatures)) & !all(is.null(input$cboBivariateOutcome)) & any(input$cboBivariateOutcome%in%input$cboBivariateFeatures)){
+      other_cols <- setdiff(names(rv_current$working_df), input$cboBivariateOutcome)
+      updateSelectInput(session, "cboBivariateFeatures", choices = other_cols, selected = character(0))
+    }
+    
+  })
+  
+  # General population of select inputs
+  observe({
+    req(rv_current$working_df)
+    updateSelectInput(session, "cboCorrFeatures", choices = names(numeric_df(rv_current$working_df)), selected = names(numeric_df(rv_current$working_df)))
+    updateSelectInput(session, "cboBivariateFeatures", choices = names(rv_current$working_df), selected = character(0))
+    updateSelectInput(session, "cboBivariateOutcome", choices = names(rv_current$working_df), selected = character(0))
+  })
+  
+  # Reactive correlation plot
+  plot_corr <- eventReactive(c(input$cboCorrFeatures, input$cboColorBrewerCorrplot), {
+    req(rv_current$working_df)
+    Rautoml::custom_corrplot(
+      df = rv_current$working_df,
+      features = input$cboCorrFeatures,
+      colorbrewer = input$cboColorBrewerCorrplot
+    )
+  })
+  
+  output$CorrPlotOutput <- renderPlot({
+    plot_corr()
+  })
+  
+  
+  
+  
   
 
   output$dfPreview <- DT::renderDataTable({
@@ -215,20 +312,20 @@ user_defined_server <- function() {
   })
   
   
-  observeEvent(c(input$cboXVar,input$cboYVar,input$cboColorVar,input$cboFacetVar,input$btnChartType,
-                 input$manage_data_apply,input$tabs,input$change_language),{
-                   
-  if(isTRUE(!is.null(rv_current$tab_rv))){                 
-    if(input$cboXVar==""|is.null(input$cboXVar)){
-      shinyjs::disable("btnchartOut")
-    }else{
-      shinyjs::enable("btnchartOut")
-    }
-    }else{
-      shinyjs::disable("btnchartOut")
-    }
-    
-  })
+  # observeEvent(c(input$cboXVar,input$cboYVar,input$cboColorVar,input$cboFacetVar,input$btnChartType,
+  #                input$manage_data_apply,input$tabs,input$change_language),{
+  #                  
+  # if(isTRUE(!is.null(rv_current$tab_rv))){                 
+  #   if(input$cboXVar==""|is.null(input$cboXVar)){
+  #     shinyjs::disable("btnchartOut")
+  #   }else{
+  #     shinyjs::enable("btnchartOut")
+  #   }
+  #   }else{
+  #     shinyjs::disable("btnchartOut")
+  #   }
+  #   
+  # })
   
   observeEvent(input$cboOutput, {
     if (isTRUE(input$cboOutput == "Table")) {
@@ -732,14 +829,14 @@ user_defined_server <- function() {
                  
                })
   
-  observe({
-    if(is.null(input$cboXVar)||is.null(input$cboXVar=="")){
-      shinyjs::disable("btnchartOut")
-      }else{
-        shinyjs::enable("btnchartOut")
-      }
-    
-  })
+  # observe({
+  #   if(is.null(input$cboXVar)||is.null(input$cboXVar=="")){
+  #     shinyjs::disable("btnchartOut")
+  #     }else{
+  #       shinyjs::enable("btnchartOut")
+  #     }
+  #   
+  # })
   
   
   observe({

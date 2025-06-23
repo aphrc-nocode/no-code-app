@@ -648,11 +648,65 @@ user_select_color_parlet =renderUI({
       )
 })
     
-user_select_corrplot_var =renderUI({
-      selectInput("cboXVar1", paste0(
-        get_rv_labels("user_select_variable_on_x_axis")
-        ,":"), "")
-    })  
+    
+user_select_bivariate_outcome =renderUI({
+  selectInput("cboBivariateOutcome", paste0(
+    get_rv_labels("bivariate_outcome")
+    ,":"), "")
+})  
+
+user_select_bivariate_single_color =renderUI({
+  selectInput("cboBivariateColor", paste0(
+    get_rv_labels("bivariate_single_color")
+    ,":"), choices = colors(distinct =TRUE),
+    selected = "forestgreen")
+})  
+
+user_select_Bivariate_features =renderUI({
+  selectInput("cboBivariateFeatures", paste0(
+    get_rv_labels("bivariate_features")
+    ,":"), "", multiple = TRUE)
+})  
+
+user_select_corr_features =renderUI({
+  selectInput("cboCorrFeatures", paste0(
+    get_rv_labels("corr_numeric_variables")
+    ,":"), "", multiple = TRUE)
+}) 
+
+
+corrplot_header_label =renderUI({
+  h3(
+    get_rv_labels(
+      "corrplot_header_lebel"
+    )
+  )
+})
+
+bivariate_header_label =renderUI({
+  h3(
+    get_rv_labels(
+      "bivariate_header_label"
+    )
+  )
+})
+
+
+bivariate_plot_title =renderUI({
+  textInput(
+    inputId= "txtPlotBivariateTitle",
+    label = get_rv_labels("bivariate_plot_title")
+  )
+})
+
+
+corrplot_title =renderUI({
+  textInput(
+    inputId= "txtPlotCorrTitle",
+    label = get_rv_labels("bivariate_plot_title")
+  )
+})
+
     
 
 
