@@ -81,11 +81,17 @@ function(input, output, session) {
 		, analysis_type = NULL
 		, task = NULL
 		, outcome = NULL
+		, model_formula = NULL
 		, partition_ratio = NULL
 		, predictors = NULL
 		, excluded_predictors = NULL
 		, ml_ai_setup_result = NULL
 		, history = NULL
+		, split = NULL
+		, train_df = NULL
+		, test_df = NULL
+		, preprocessed = NULL
+		, feature_engineering_preprocessed_log = NULL
 	)
 
   #### ---- App title ----------------------------------------------------
@@ -375,6 +381,13 @@ function(input, output, session) {
   
   ##### ----- Preprocessing ------------------- ####
   source("server/feature_engineering.R", local=TRUE)
+  
+  #### Preprocessing ------------------------------------------- ####
+  feature_engineering_perform_preprocess_server()
+
+  #### ------ Missing value imputation -------------------------- ####
+  feature_engineering_recipe_server()
+  feature_engineering_impute_missing_server()
 
   #### ----- Modelling framework --------------------------------- ####
 
