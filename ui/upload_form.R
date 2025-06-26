@@ -79,21 +79,40 @@ db_schema_list <- renderUI({
   }
 })
 
+observe({
+  if (!is.null(rv_database$table_list)) {
+    message(">>> TABLES DISPONIBLES : ", paste(rv_database$table_list, collapse = ", "))
+  }
+})
+
 
 ### ----------OMOP Table Views---------------------------------------####
 db_table_list <- renderUI({
   if (!is.null(rv_database$conn) && isTRUE(input$upload_type == "Database connection")) {
-    if(!is.null(input$option_picked) && input$option_picked == "use a table"){
-      #U3
+    if (!is.null(input$option_picked) && input$option_picked == "use a table") {
+      
+      # Sécurité : convertir en vecteur
       choices <- rv_database$table_list
+      if (is.data.frame(choices)) {
+        choices <- choices[[1]]
+      }
+      
       if (!is.null(choices) && length(choices) > 0) {
-        selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
+        # Label : corriger get_rv_labels()
+        label_raw <- get_rv_labels("db_table_list")
+        label_txt <- if (is.null(label_raw)) {
+          "Choisir une table"
+        } else if (length(label_raw) > 1) {
+          paste(label_raw, collapse = " ")  # concatène s’il y a plusieurs textes
+        } else {
+          as.character(label_raw)
+        }
+        
+        return(selectInput("db_table_list", label = label_txt, choices = choices, multiple = FALSE))
       }
-      }
+    }
   }
-  else {
-    NULL
-  }
+  return(NULL)
 })
 
 
