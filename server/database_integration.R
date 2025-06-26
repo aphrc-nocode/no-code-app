@@ -9,10 +9,11 @@ database_integration_server <- function(){
     #db_port <- "5432" ## FIXME: Transfer to UI
     db_port <- input$db_port
     #drv <- RPostgres::Postgres()
-    drv <- dbDriver("PostgreSQL")
+    #drv <- dbDriver("PostgreSQL") #U1
     
     if(input$db_type == "PostgreSQL"){
       tryCatch({
+        drv <- dbDriver("PostgreSQL") #U2
         conn <- dbConnect(drv, 
                           dbname = database_name,
                           host = database_host, 
@@ -33,16 +34,38 @@ database_integration_server <- function(){
         
       })
       
-    }else{
-      shinyalert("", get_rv_labels("db_mysql_failure"), type = "info")
     }
+    # U3 start
+    else if (input$db_type == "MySQL") {
+      tryCatch({
+        conn <- dbConnect(RMySQL::MySQL(),
+                          dbname = database_name,
+                          host = database_host,
+                          port = as.integer(db_port),
+                          user = database_user,
+                          password = database_pass)
+        
+        rv_database$conn <- conn
+        shinyalert("", get_rv_labels("db_connect_success"), type = "success")
+        
+        tables <- dbListTables(conn)
+        rv_database$table_list <- tables
+        updateSelectInput(session, inputId = "db_table_list",
+                          choices = tables,
+                          selected = tables[1])
+        
+      }, error = function(e) {
+        shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
+      })
+    } # U3 end
     
     
   })
   
   observeEvent(input$option_picked, {
-    if(input$option_picked == "use a table"){
-      updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
+    if(input$option_picked == "use a table" && input$db_type == "PostgreSQL"){ #U4
+      updateSelectInput(session,inputId = "db_schema_list", 
+      choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
     }
     
   })  
@@ -50,24 +73,38 @@ database_integration_server <- function(){
   
   observeEvent(input$db_schema_list, {
     req(rv_database$conn, input$db_schema_list)
-    schema_selected <- input$db_schema_list
-    rv_database$schema_selected <- schema_selected
-    query_tables <- paste("SELECT table_name FROM information_schema.tables WHERE table_schema = '", schema_selected, "';", sep = "")
-    conn <- rv_database$conn
-    tables <- dbGetQuery(conn, query_tables)
-    table_list <-c(tables)
-    rv_database$table_list <- table_list
-    updateSelectInput(session,inputId = "db_table_list", choices = rv_database$table_list,selected = rv_database$table_list[1] )
-    
+    if (input$db_type == "PostgreSQL") { # U5
+      schema_selected <- input$db_schema_list
+      rv_database$schema_selected <- schema_selected
+      query_tables <- paste("SELECT table_name FROM information_schema.tables WHERE table_schema = '", schema_selected, "';", sep = "")
+      conn <- rv_database$conn
+      tables <- dbGetQuery(conn, query_tables)
+      table_list <-c(tables)
+      rv_database$table_list <- table_list
+      updateSelectInput(session,inputId = "db_table_list", choices = rv_database$table_list,selected = rv_database$table_list[1] )
+    }  
   })
   
   observeEvent(input$db_table_list,{
     req(rv_database$conn, input$db_table_list)
     table_selected <- input$db_table_list
     rv_database$table_selected <- table_selected
-    schema_selected <- rv_database$schema_selected
+    #schema_selected <- rv_database$schema_selected #U6
     conn <- rv_database$conn
-    query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, " ;", sep = "")
+    #query_table_data <-  paste("SELECT * FROM ",schema_selected,".",table_selected, " ;", sep = "")
+    # U7 start
+    query_table_data <- if (input$db_type == "PostgreSQL") {
+      schema_selected <- rv_database$schema_selected
+      if (!is.null(schema_selected) && schema_selected != "") {
+        paste0("SELECT * FROM ", schema_selected, ".", table_selected, ";")
+      } else {
+        paste0("SELECT * FROM ", table_selected, ";")
+      }
+    } else {
+      paste0("SELECT * FROM ", table_selected, ";")
+    }
+    # U7 end
+    
     df_table_str <- dbGetQuery(conn, query_table_data)
     rv_database$df_table_str <- df_table_str
     
@@ -118,7 +155,7 @@ database_integration_server <- function(){
     result <- tryCatch({
       
       query_string <- input$db_custom_query
-      table_name <- sub("(?i).*\\bfrom\\s+([\\w.]+).*", "\\1", query_string, perl = TRUE)
+      table_name <- sub("(?i).*\\bfrom\\s+([\\w.]+).*", "\\1", query_string, perl = TRUE) # U8
       query_table_name <- gsub("\\.","_",table_name)
       conn <- rv_database$conn
       df_table <- dbGetQuery(conn, query_string)

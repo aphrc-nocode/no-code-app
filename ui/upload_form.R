@@ -69,11 +69,13 @@ db_connect <- renderUI({
 
 ### ----------OMOP Schema Views---------------------------------------####
 db_schema_list <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
+  if (!is.null(input$db_type) &&  isTRUE(input$upload_type == "Database connection") && input$db_type == "PostgreSQL") { #U1
     if(!is.null(rv_database$conn) && !is.null(input$option_picked) &&  input$option_picked == "use a table"){
       selectInput("db_schema_list", get_rv_labels("db_schema_list"), choices = NULL, multiple = FALSE)
     }
-    
+  }
+  else {#U2
+    NULL
   }
 })
 
@@ -82,9 +84,15 @@ db_schema_list <- renderUI({
 db_table_list <- renderUI({
   if (!is.null(rv_database$conn) && isTRUE(input$upload_type == "Database connection")) {
     if(!is.null(input$option_picked) && input$option_picked == "use a table"){
-      selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
-    }
-    
+      #U3
+      choices <- rv_database$table_list
+      if (!is.null(choices) && length(choices) > 0) {
+        selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
+      }
+      }
+  }
+  else {
+    NULL
   }
 })
 
