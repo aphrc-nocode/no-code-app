@@ -78,10 +78,10 @@ db_schema_list <- renderUI({
     NULL
   }
 })
-
+#U for checking
 observe({
   if (!is.null(rv_database$table_list)) {
-    message(">>> TABLES DISPONIBLES : ", paste(rv_database$table_list, collapse = ", "))
+    message(">>> Tables availables : ", paste(rv_database$table_list, collapse = ", "))
   }
 })
 
@@ -91,19 +91,19 @@ db_table_list <- renderUI({
   if (!is.null(rv_database$conn) && isTRUE(input$upload_type == "Database connection")) {
     if (!is.null(input$option_picked) && input$option_picked == "use a table") {
       
-      # Sécurité : convertir en vecteur
+      # Maj Force to Convert into vector
       choices <- rv_database$table_list
       if (is.data.frame(choices)) {
         choices <- choices[[1]]
       }
       
       if (!is.null(choices) && length(choices) > 0) {
-        # Label : corriger get_rv_labels()
+        # Maj Label : Fix get_rv_labels()
         label_raw <- get_rv_labels("db_table_list")
         label_txt <- if (is.null(label_raw)) {
-          "Choisir une table"
+          "Choose a table"
         } else if (length(label_raw) > 1) {
-          paste(label_raw, collapse = " ")  # concatène s’il y a plusieurs textes
+          paste(label_raw, collapse = " ")  # concatenation if there contains several text
         } else {
           as.character(label_raw)
         }

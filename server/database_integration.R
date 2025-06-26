@@ -155,7 +155,7 @@ database_integration_server <- function(){
     result <- tryCatch({
       
       query_string <- input$db_custom_query
-      table_name <- sub("(?i).*\\bfrom\\s+([\\w.]+).*", "\\1", query_string, perl = TRUE) # U8
+      table_name <- sub("(?i).*\\bfrom\\s+([\\w.]+).*", "\\1", query_string, perl = TRUE) #U?
       query_table_name <- gsub("\\.","_",table_name)
       conn <- rv_database$conn
       df_table <- dbGetQuery(conn, query_string)
