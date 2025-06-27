@@ -1,5 +1,6 @@
 #Only UI files and R packages should be included
-
+# U1 Add this line of code to call automl_UI from UI folder
+source("ui/automl_ui.R")
 #Load R packages
 source(paste0(getwd(), "/ui/load_r_packages.R"))
 #Load Headertag

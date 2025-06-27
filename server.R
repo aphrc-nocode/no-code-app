@@ -376,6 +376,10 @@ function(input, output, session) {
   ##### ----- Preprocessing ------------------- ####
   source("server/feature_engineering.R", local=TRUE)
 
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+  source("server/automl_server.R")
+  automl_server("automl_module", rv_current)
+  
   #### ----- Modelling framework --------------------------------- ####
 
   source("server/modelling_framework.R", local=TRUE)

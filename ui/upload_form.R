@@ -120,7 +120,9 @@ db_table_list <- renderUI({
 ### ----------OMOP database type---------------------------------------####
 db_type <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
+    selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL")
+                #, selected = "PostgreSQL" 
+                , multiple = FALSE)
   }
 })
 

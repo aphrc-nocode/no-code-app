@@ -402,10 +402,14 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								  fluidRow()),
 						tabItem(tabName = "predictClassify",
 								  fluidRow()),
+    			  tabItem(tabName = "automl_tab",
+    			          fluidRow(
+    			            column(width = 12,
+    			                   automl_ui("automl_module")
+    			            )
+    			          )
+			              ),
 						tabItem(tabName = "addResources",
 								  fluidRow())
-        
-                 
-
 					  )
 )
