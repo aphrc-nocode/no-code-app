@@ -396,6 +396,29 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								)
 							)
 						),
+			      tabItem(
+			        tabName = "evidenceQuality",
+			        fluidRow( 
+			          p("OMOP Data Quality Check and Characterization"),
+			          uiOutput("omop_connection")
+			          , uiOutput("db_host_omop")
+			          , uiOutput("db_name_omop")
+			          , uiOutput("db_user_omop")
+			          , uiOutput("db_pwd_omop")
+			          , uiOutput("db_port_omop")
+			          , uiOutput("db_port_omop")
+			          , uiOutput("db_connect_omop")
+			          , uiOutput("existing_connection")
+			          , uiOutput("omop_quality_type")
+			          , uiOutput("schemas")
+			          , uiOutput("generate_dqd")
+			          ,verbatimTextOutput("stderr_log")
+			          ,uiOutput("view_dqd")
+			        )
+			      ), 
+			     tabItem(tabName = "cohortConstruction",
+			          fluidRow()),
+			  
 						tabItem(tabName = "trainModel",
 								  fluidRow()),
 						tabItem(tabName = "validateDeployModel",

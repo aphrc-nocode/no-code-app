@@ -57,13 +57,18 @@ menu_translation = function(){
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
       ),
+		menuItem(
+		  text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop_data"), "</span>")), tabName = "omopAnalysis", icon = icon("magnifying-glass-chart", lib = "font-awesome"),
+		  menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("evidenceQuality"), "</span>")), tabName = "evidenceQuality", icon = icon("server", lib = "font-awesome")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("cohortConstruction"), "</span>")), tabName = "cohortConstruction", icon = icon("layer-group", lib = "font-awesome"))
+		  
+		  ),
       menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
     )
   })
   
   
 }
-
 
 
 

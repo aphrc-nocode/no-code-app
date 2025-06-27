@@ -91,11 +91,13 @@ db_table_list <- renderUI({
 
 
 ### ----------OMOP database type---------------------------------------####
+
 db_type <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
-    selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
-  }
-})
+    if (isTRUE(input$upload_type == "Database connection")) {
+      selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
+    }
+  })
+
 
 ### --- Database host ---###
 db_host <- renderUI({
@@ -238,7 +240,194 @@ db_tab_query <- renderUI({
 })
 
 
+# -- New database connection
+
+output$omop_connection <- renderUI({
+  radioButtons(
+    inputId = "omop_db",
+    label = "Database Connect:",
+    choices = c("New Connection", "Existing Connection"),
+    selected = "New Connection"
+  )
+})
 
 
 
+### --- Database host ---###
+db_host_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) {
+    if(is.null(rv_database$conn)){ 
+      textInput("db_host_omop",
+                label = get_rv_labels("db_host")
+                , placeholder = get_rv_labels("db_host_placeholder")
+                , width = "50%"
+      )
+    }
+  } else {
+    NULL
+  }
+})
+
+#### ---- Database name ---------------------------------------#####
+db_name_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) {
+    if(is.null(rv_database$conn)){  
+      textInput("db_name_omop",
+                label = get_rv_labels("db_name")
+                , placeholder = get_rv_labels("db_name_placeholder")
+                , width = "50%"
+      )
+    }
+  } else {
+    NULL
+  }
+})
+
+#### ---- Database user ---------------------------------------#####
+db_user_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) {
+    if(is.null(rv_database$conn)){  
+      textInput("db_user_omop",
+                label = get_rv_labels("db_user")
+                , placeholder = get_rv_labels("db_user_placeholder")
+                , width = "50%"
+      )
+    }
+  } else {
+    NULL
+  }
+})
+
+#### ---- Database password ---------------------------------------#####
+db_pwd_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) {
+    if(is.null(rv_database$conn)){  
+      passwordInput("db_pwd_omop",
+                    label = get_rv_labels("db_pwd")
+                    , placeholder = get_rv_labels("db_pwd_placeholder")
+                    , width = "50%"
+      )
+    }
+  } else {
+    NULL
+  }
+})
+
+
+#### ---- Database port ---------------------------------------#####
+db_port_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) {
+    if(is.null(rv_database$conn)){
+      textInput("db_port_omop",
+                label = get_rv_labels("db_port")
+                , placeholder = get_rv_labels("db_port_placeholder")
+                , width = "50%"
+                , value ="5432"
+      )
+    }
+  } else {
+    NULL
+  }
+})
+
+
+
+db_connect_omop <- renderUI({
+  if (isTRUE(input$omop_db == "New Connection")) { 
+    if(is.null(rv_database$conn)){
+      actionBttn("db_connect_omop",
+                 label = get_rv_labels("db_connect"), width = "25%" 
+                 , inline = TRUE 
+                 , block = FALSE 
+                 , color = "success" 
+      )
+    }  
+    
+    
+  } else { 
+    NULL 
+  } 
+})
+
+
+
+existing_connection <- renderUI({
+  if (!is.null(rv_database$conn) && isTRUE(input$omop_db == "Existing Connection")) {
+      selectInput("existed_conn", "Use Connection", choices = "Postgres Connection", multiple = FALSE)
+  
+  }
+})
+  
+
+
+output$omop_quality_type <- renderUI({
+  if (!is.null(rv_database$conn) && isTRUE(input$omop_db == "Existing Connection")) {
+    radioButtons(
+      inputId = "omop_quality",
+      label = "",
+      choices = c("Data Quality Dashboard", "ACHILLES"),
+      selected = "Data Quality Dashboard"
+    )
+  }
+  
+})
+
+
+output$schemas <- renderUI({
+  if (!is.null(rv_database$conn) && input$omop_quality == "Data Quality Dashboard") {
+    tagList(
+      selectInput("cdm_schema", "CDM schema", choices = "demo_cdm", multiple = FALSE),
+      selectInput("results_schema", "Results schema", choices = "demo_cdm_results", multiple = FALSE),
+      textInput("cdmSourceName", "CDM Source Name", placeholder = "NO-CODE CDM", width = "50%")
+    )
+  } else {
+    NULL
+  }
+})
+  
+  
+output$generate_dqd <- renderUI({
+  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+    
+    if(isTRUE(!is.null(rv_database$conn))){
+      
+      actionBttn("generate_dqd",
+                 label = "Generate DQD", width = "25%" 
+                 , inline = TRUE 
+                 , block = FALSE 
+                 , color = "success" 
+      )
+      
+    } else {  NULL }
+    
+  }else{ NULL }
+    
+  
+})
+
+
+output$view_dqd <- renderUI({
+  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+    
+    if(isTRUE(!is.null(rv_database$conn))){
+      
+      actionBttn("view_dqd",
+                 label = "View DQD", width = "25%" 
+                 , inline = TRUE 
+                 , block = FALSE 
+                 , color = "success" 
+      )
+      
+    } else {  NULL }
+    
+  }else{ NULL }
+  
+  
+})
+
+
+output$stderr_log <- renderText({
+  stderr_content()
+
+})
 
