@@ -274,11 +274,11 @@ setup_models_ui = function() {
 			rv_ml_ai$outcome = input$setup_models_analysis_target_variable
 			
 			if (isTRUE(any(rv_ml_ai$outcome %in% rv_current$vartype_all$categorical))) {
-				rv_ml_ai$task = get_rv_labels("setup_models_analysis_type_classification")
+				rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_classification")
 			} else if (isTRUE(any(rv_ml_ai$outcome %in% rv_current$vartype_all$numeric))) {
-				rv_ml_ai$task = get_rv_labels("setup_models_analysis_type_supervised_regression")
+				rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_supervised_regression")
 			} else {
-				rv_ml_ai$task = get_rv_labels("setup_models_analysis_type_unsupervised")
+				rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_unsupervised")
 			}
 
 			rv_ml_ai$partition_ratio = input$setup_models_analysis_partition_ratio
@@ -319,7 +319,7 @@ setup_models_ui = function() {
 				)
 			})
 
-			updateTextInput(session , "setup_models_analysis_session_name", value="")
+##				updateTextInput(session , "setup_models_analysis_session_name", value="")
 ## 			
 ## 			output$setup_models_analysis_session_seed = NULL
 ## 			updateTextInput(session , "setup_models_analysis_session_seed", value=123)

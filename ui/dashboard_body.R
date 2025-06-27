@@ -411,7 +411,19 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							)
 						),
 						tabItem(tabName = "trainModel",
-								  fluidRow()),
+								  fluidRow(
+									column(width = 3
+										, uiOutput("model_training_setup_eval_metric")
+										, uiOutput("model_training_setup_customize_train_control")
+										, uiOutput("model_training_caret_models_ui")
+										, uiOutput("model_training_caret_models_ols")
+										, uiOutput("model_training_caret_models_ols_advance_control")
+										
+		#								, uiOutput("model_training_apply")
+
+									)
+							)
+						),
 						tabItem(tabName = "validateDeployModel",
 								  fluidRow()),
 						tabItem(tabName = "predictClassify",

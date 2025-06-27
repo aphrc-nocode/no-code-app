@@ -92,9 +92,29 @@ function(input, output, session) {
 		, test_df = NULL
 		, preprocessed = NULL
 		, feature_engineering_preprocessed_log = NULL
+		, at_least_one_model = FALSE
 	)
 
-  #### ---- App title ----------------------------------------------------
+	
+	## Train control caret
+	rv_train_control_caret = reactiveValues(
+		method = NULL
+		, number = NULL
+		, repeats = NULL
+		, search = NULL
+		, verboseIter = NULL
+		, savePredictions = NULL
+		, classProbs = NULL
+	)
+   
+	## Trained models
+	rv_training_results = reactiveValues(
+		models = NULL
+		, ols_param = FALSE
+		, ols_name = NULL
+	)
+
+	#### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
   
@@ -394,13 +414,13 @@ function(input, output, session) {
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
 
-  ###### ----- Initialize recipe ------------------- ####
-#  setup_recipe_server()
-  
-  ###### ----- Impute missing values ------------------- ####
-#  impute_missing_server()
+  #### ----- Model setup ----------------------------------------- ####
+  source("server/model_training_setup.R", local=TRUE)
+  model_training_setup_server()
 
-
+  #### ----- Caret models --------------------------------------- ####
+  source("server/model_training_caret_models.R", local=TRUE)
+  model_training_caret_models_ols_server()
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

@@ -128,15 +128,20 @@ feature_engineering_impute_missing_server = function() {
 					})
 
 					## Up sample
-					output$feature_engineering_perform_upsample_steps = renderUI({
-						materialSwitch(
-							inputId = "feature_engineering_perform_upsample_steps_check",
-							label = get_rv_labels("feature_engineering_perform_upsample_steps_check"), 
-							status = "success",
-							right = TRUE,
-							value = TRUE
-						 )
-					})
+					if (isTRUE(rv_ml_ai$task=="Classifcation")) {
+						output$feature_engineering_perform_upsample_steps = renderUI({
+							materialSwitch(
+								inputId = "feature_engineering_perform_upsample_steps_check",
+								label = get_rv_labels("feature_engineering_perform_upsample_steps_check"), 
+								status = "success",
+								right = TRUE,
+								value = TRUE
+							 )
+						})
+					} else {
+						output$feature_engineering_perform_upsample_steps = NULL
+						updateMaterialSwitch(session , inputId="feature_engineering_perform_upsample_steps_check" , value=FALSE)
+					}
 				
 				} else {
 					output$feature_engineering_perform_missing_impute = NULL
@@ -189,7 +194,7 @@ feature_engineering_impute_missing_server = function() {
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
-				if (isTRUE(input$feature_engineering_perform_missing_impute_check)) {
+				if (isTRUE(input$feature_engineering_perform_missing_impute_check) & isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					output$feature_engineering_impute_missing_impute = renderUI({
 						empty_lab = ""
 						names(empty_lab) = get_rv_labels("impute_missing_options_ph")
@@ -206,7 +211,7 @@ feature_engineering_impute_missing_server = function() {
 					
 				}
 
-				if (isTRUE(input$feature_engineering_perform_upsample_steps_check)) {
+				if (isTRUE(input$feature_engineering_perform_upsample_steps_check) & isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					output$feature_engineering_perform_upsample_steps_choices = renderUI({
 						empty_lab = ""
 						selectInput("feature_engineering_perform_upsample_steps_choices"
@@ -221,7 +226,7 @@ feature_engineering_impute_missing_server = function() {
 					updateSelectInput(session, "feature_engineering_perform_upsample_steps_choices", selected="")
 				}
 
-				if (isTRUE(input$feature_engineering_perform_corr_steps_check)) {
+				if (isTRUE(input$feature_engineering_perform_corr_steps_check) & isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					output$feature_engineering_perform_corr_steps_value = renderUI({
 						sliderInput("feature_engineering_perform_corr_steps_value"
 							, label = NULL
@@ -302,22 +307,32 @@ feature_engineering_impute_missing_server = function() {
 						, perform_fe = input$feature_engineering_perform_fe_steps_check
 						, perform_pca = input$feature_engineering_perform_pca_steps_check
 						, up_sample = input$feature_engineering_perform_upsample_steps_check
+						, up_sample_type = input$feature_engineering_perform_upsample_steps_choices 
 						, df_test = rv_ml_ai$test_df
 					)
-					rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
-					output$feature_engineering_preprocessed_log_ui = renderUI({
-						p(
-							
-							HTML(paste0("<b>", get_rv_labels("feature_engineering_preprocessed_log"), "</b>"))
-						)
-					})
-					output$feature_engineering_preprocessed_log = renderPrint({
-						cat(rv_ml_ai$feature_engineering_preprocessed_log, sep="\n")
-					})
 				} else {
-					rv_ml_ai$preprocessed = NULL
-					rv_ml_ai$feature_engineering_preprocessed_log = NULL
+					rv_ml_ai$preprocessed = Rautoml::preprocess(
+						df = rv_ml_ai$train_df
+						, model_form = rv_ml_ai$model_formula
+						, outcome_var = rv_ml_ai$outcome
+						, corr = 0 
+						, impute = FALSE 
+						, perform_fe = FALSE 
+						, perform_pca = FALSE 
+						, up_sample = FALSE
+						, df_test = rv_ml_ai$test_df
+					)
 				} 
+				rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
+				output$feature_engineering_preprocessed_log_ui = renderUI({
+					p(
+						
+						HTML(paste0("<b>", get_rv_labels("feature_engineering_preprocessed_log"), "</b>"))
+					)
+				})
+				output$feature_engineering_preprocessed_log = renderPrint({
+					cat(rv_ml_ai$feature_engineering_preprocessed_log, sep="\n")
+				})
 			} else {
 				rv_ml_ai$preprocessed = NULL
 				rv_ml_ai$split = NULL

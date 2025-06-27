@@ -118,6 +118,12 @@ modelling_framework.Rout: server/modelling_framework.R
 ### Feature engineering
 feature_engineering.Rout: server/feature_engineering.R
 
+### Training set up
+model_training_setup.Rout: server/model_training_setup.R
+
+### Caret models
+model_training_caret_models.Rout: server/model_training_caret_models.R
+
 
 ### Reset inputs
 resets.Rout: server/resets.R
