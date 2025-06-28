@@ -57,7 +57,8 @@ menu_translation = function(){
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
       ),
-      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
+      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
+		  menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_achilles"), "</span>")), tabName = "achilles", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"))
     )
   })
   
