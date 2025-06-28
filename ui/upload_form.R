@@ -253,102 +253,6 @@ output$omop_connection <- renderUI({
 
 
 
-### --- Database host ---###
-db_host_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) {
-    if(is.null(rv_database$conn)){ 
-      textInput("db_host_omop",
-                label = get_rv_labels("db_host")
-                , placeholder = get_rv_labels("db_host_placeholder")
-                , width = "50%"
-      )
-    }
-  } else {
-    NULL
-  }
-})
-
-#### ---- Database name ---------------------------------------#####
-db_name_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) {
-    if(is.null(rv_database$conn)){  
-      textInput("db_name_omop",
-                label = get_rv_labels("db_name")
-                , placeholder = get_rv_labels("db_name_placeholder")
-                , width = "50%"
-      )
-    }
-  } else {
-    NULL
-  }
-})
-
-#### ---- Database user ---------------------------------------#####
-db_user_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) {
-    if(is.null(rv_database$conn)){  
-      textInput("db_user_omop",
-                label = get_rv_labels("db_user")
-                , placeholder = get_rv_labels("db_user_placeholder")
-                , width = "50%"
-      )
-    }
-  } else {
-    NULL
-  }
-})
-
-#### ---- Database password ---------------------------------------#####
-db_pwd_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) {
-    if(is.null(rv_database$conn)){  
-      passwordInput("db_pwd_omop",
-                    label = get_rv_labels("db_pwd")
-                    , placeholder = get_rv_labels("db_pwd_placeholder")
-                    , width = "50%"
-      )
-    }
-  } else {
-    NULL
-  }
-})
-
-
-#### ---- Database port ---------------------------------------#####
-db_port_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) {
-    if(is.null(rv_database$conn)){
-      textInput("db_port_omop",
-                label = get_rv_labels("db_port")
-                , placeholder = get_rv_labels("db_port_placeholder")
-                , width = "50%"
-                , value ="5432"
-      )
-    }
-  } else {
-    NULL
-  }
-})
-
-
-
-db_connect_omop <- renderUI({
-  if (isTRUE(input$omop_db == "New Connection")) { 
-    if(is.null(rv_database$conn)){
-      actionBttn("db_connect_omop",
-                 label = get_rv_labels("db_connect"), width = "25%" 
-                 , inline = TRUE 
-                 , block = FALSE 
-                 , color = "success" 
-      )
-    }  
-    
-    
-  } else { 
-    NULL 
-  } 
-})
-
 
 
 existing_connection <- renderUI({
@@ -361,13 +265,20 @@ existing_connection <- renderUI({
 
 
 output$omop_quality_type <- renderUI({
-  if (!is.null(rv_database$conn) && isTRUE(input$omop_db == "Existing Connection")) {
-    radioButtons(
-      inputId = "omop_quality",
-      label = "",
-      choices = c("Data Quality Dashboard", "ACHILLES"),
-      selected = "Data Quality Dashboard"
-    )
+  if (isTRUE(input$omop_db == "Existing Connection")) {
+    if(!is.null(rv_database$conn)){
+      radioButtons(
+        inputId = "omop_quality",
+        label = "",
+        choices = c("Data Quality Dashboard", "ACHILLES"),
+        selected = "Data Quality Dashboard"
+      )
+    }else{
+      shinyalert("", "Please create a connection using Source data page", type = "info")
+    }
+    
+  }else{
+    shinyalert("", "Please create a connection using Source data page", type = "info")
   }
   
 })
@@ -427,7 +338,36 @@ output$view_dqd <- renderUI({
 
 
 output$stderr_log <- renderText({
-  stderr_content()
+  
+  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+    
+    if(isTRUE(!is.null(rv_database$conn))){
+      stderr_content()
+    }
 
+}
+  
+
+
+})
+
+
+output$open_link <- renderUI({
+  
+  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+    
+    if(isTRUE(!is.null(rv_database$conn))){
+      url <- rv_omop$url  # Assuming this is a reactive value
+      
+      # Make sure it's a non-empty character string
+      if (!is.null(url) && is.character(url) && grepl("^http", url)) {
+        tags$a(href = url, "Open Dashboard", target = "_blank")
+      } else {
+        tags$span("No valid URL yet.")
+      }
+    }
+  }else {
+  
+}
 })
 

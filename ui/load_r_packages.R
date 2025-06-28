@@ -49,7 +49,7 @@ libraries <- c(
   "skimr", "summarytools",
   "countries",
   "plotly", "ggplot2", "DBI", "RPostgreSQL", "DT", "bslib", "gt",
-  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable"
+  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable","remotes"
 )
 
 #Check if libraies have been isntalled before loading them.
@@ -61,3 +61,29 @@ for(lib in libraries){
 }
 
 st_options(footnote=NA, headings = FALSE)
+
+
+
+install_github_if_missing <- function(pkg, repo) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    remotes::install_github(repo)
+  }
+}
+
+
+install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
+
+library("DataQualityDashboard")
+
+
+
+
+
+
+
+
+
+
+
+
+

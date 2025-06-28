@@ -1,6 +1,5 @@
 ### OMOP analysis - DQD ACHILLES CohortConstructor
 library(DataQualityDashboard)
-library(shiny)
 library(callr)
 
 omop_analysis_server <- function(){
@@ -112,16 +111,38 @@ omop_analysis_server <- function(){
     supervise = TRUE
   )
   
-  p()
+  #p()   Not running on bg
   
-  showNotification("DQD check running in background...", type = "message")
+  # Running interactively
+  tryCatch({
+    showModal(modalDialog("Generating DQD ...", footer = NULL))
+    DataQualityDashboard::executeDqChecks(connectionDetails = connectionDetails,
+                                          cdmDatabaseSchema = cdmDatabaseSchema,
+                                          resultsDatabaseSchema = resultsDatabaseSchema,
+                                          cdmSourceName = cdmSourceName,
+                                          numThreads = numThreads,
+                                          sqlOnly = sqlOnly,
+                                          outputFolder = outputFolder,
+                                          verboseMode = verboseMode,
+                                          writeToTable = writeToTable,
+                                          checkLevels = checkLevels,
+                                          checkNames = checkNames)
+    removeModal()
+    
+  },
+  error = function(e){
+    shinyalert("", "Error running DQD", type = "error")
+  })
+
+  
+  #showNotification("DQD check running in background...", type = "message")
   
   
   })
   
   
   observeEvent(input$view_dqd, {
-    
+   
     
     # To run shiny report dashboard bg
     
@@ -144,8 +165,7 @@ omop_analysis_server <- function(){
     folder <- file.path(getwd(),"output")
     
     path_to_json <- get_latest_json(folder)
-    #path_to_json<-paste(folder, "synthea-20250626011649.json", sep="/")
-    
+
     jsonPath <-path_to_json
     
     
@@ -182,10 +202,8 @@ omop_analysis_server <- function(){
   })  
   
 
-
   
 }
-
 
 
 create_log_reader <- function(stderr_file_path) {
@@ -196,9 +214,19 @@ create_log_reader <- function(stderr_file_path) {
     readFunc = function(path) {
       if (file.exists(path)) {
         paste(readLines(path, warn = FALSE), collapse = "\n")
-      } else {
-        "No log yet."
-      }
+        
+        content <- paste(readLines(path, warn = FALSE), collapse = "\n")
+        
+        match <- regmatches(content, regexpr("http[s]?://[^\\s]+", content))
+        
+        if (length(match) > 0) {
+          rv_omop$url<-as.character(match)
+          return(match)
+        } else {
+          return("No URL found.")
+        }
+        
+      } 
     }
   )
 }
