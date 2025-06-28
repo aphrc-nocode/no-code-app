@@ -391,7 +391,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "featureEngineering",
 							fluidRow(
 								column(width = 3
-									, uiOutput("modelling_framework_choices")
 									, uiOutput("impute_missing_options")
 								)
 							)
@@ -403,9 +402,195 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "predictClassify",
 								  fluidRow()),
 						tabItem(tabName = "addResources",
-								  fluidRow())
-        
-                 
+								  fluidRow()),
+# 			  tabItem(tabName = "CohortConstructor",
+# 			            #shinydashboardPlus::box(
+# 			             #title = htmlOutput("DatabaseConnectionID")
+# 			           # )
+# 			          
+# 			          box(
+# 			            title = "Database Connection", #htmlOutput("DatabaseConnectionID"),
+# 			            width = 12,
+# 			            closable = FALSE,
+# 			            status = "success",
+# 			            solidHeader = TRUE,
+# 			            collapsible = FALSE,
+# 			            fluidRow(
+# 			              column(
+# 			                width = 4,
+# 			              uiOutput("dbmsID")
+# 			              ),
+# 			              column(
+# 			                width = 4,
+#                       uiOutput("dbmsServerID")
+# 			              ),
+# 			              column(
+# 			                width = 4,
+# 			            uiOutput("UserID")
+# 			              )
+# 			            )
+# 			         ,
+# 			         fluidRow(column(
+# 			                width = 4,
+# 			               uiOutput("UserPswdID")
+# 			              ),
+# 			              column(
+# 			                width = 4,
+# 			             uiOutput("PortID")
+# 			              ),
+# 			              column(
+# 			                width = 4,
+# 			             uiOutput("PathID")
+# 			              )
+# 			            ),
+# 			         
+# 			         fluidRow(
+# 			           column(width = 3, offset = 9,uiOutput("ConnectCohortID"))
+# 			         )
+# 			          ),
+# 			         box(
+# 			           title = "CDM reference",
+# 			           width = 12,
+# 			           closable = FALSE,
+# 			           status = "success",
+# 			           solidHeader = TRUE,
+# 			           collapsible = TRUE,
+# 			           collapsed = TRUE,
+# 			           
+# 			           fluidRow(
+# 			             column(width = 4, uiOutput("CDMConn")),
+# 			             column(width = 4, uiOutput("CDMConnName")),
+# 			             column(width = 4, uiOutput("CDMSchemaName"))
+# 			           ),
+# 			           
+# 			           fluidRow(
+# 			             column(width = 4, uiOutput("ResultSchemaName")),
+# 			             column(width = 4, uiOutput("achillesSchemaName")),
+# 			             column(width = 3, offset = 1, br(), uiOutput("CreateCDMID"))
+# 			           ),
+# 			           
+# 			           # Add new row for table dropdowns
+# 			           fluidRow(
+# 			             column(width = 6, uiOutput("tableDropdown1UI")),
+# 			             column(width = 6, uiOutput("tableDropdown2UI"))
+# 			           )
+# 			         )
+# 			         ,
+# 			        box(
+# 			          title = "Cohort Creation", #htmlOutput("DatabaseConnectionID"),
+# 			          width = 12,
+# 			          closable = FALSE,
+# 			          status = "success",
+# 			          solidHeader = TRUE,
+# 			          collapsible = TRUE,
+# 			          collapsed = TRUE,
+# 			          fluidRow(
+# 			            column(
+# 			              width = 4,
+# 			          uiOutput("CohortcreationName")
+# 			            ),
+# 			            column(
+# 			              width = 4,
+# 			            uiOutput("ConceptKeyword")
+# 			            ),
+# 			            column(
+# 			              width = 4,
+# 			          uiOutput("CohortNameID")
+# 			            )
+# 			          )
+# 			          ,
+# 			          fluidRow(column(
+# 			            width = 4,
+# 			          uiOutput("CohortDateID")),
+# 			            column(width = 3, offset = 5, 
+# 			                   br(),
+# 			                  uiOutput("GenerateCohortID"))
+# 			          
+# 			        )
+# 			        
+# 			        )
+            tabItem(
+              tabName = "CohortConstructor",
+              
+              # --- DATABASE CONNECTION ---
+              box(
+                title = "Database Connection",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = FALSE,
+                fluidRow(
+                  column(4, uiOutput("dbmsID")),
+                  column(4, uiOutput("dbmsServerID")),
+                  column(4, uiOutput("UserID"))
+                ),
+                fluidRow(
+                  column(4, uiOutput("UserPswdID")),
+                  column(4, uiOutput("PortID")),
+                  column(4, uiOutput("PathID"))
+                ),
+                fluidRow(
+                  column(3, offset = 9, uiOutput("ConnectCohortID"))
+                )
+              ),
+              
+              # --- CDM REFERENCE CREATION ---
+              box(
+                title = "CDM Reference",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                 # column(4, uiOutput("CDMConn")),
+                  column(4, uiOutput("CDMConnName")),
+                  column(4, uiOutput("CDMSchemaName")),
+                  column(4, uiOutput("ResultSchemaName")),
+                  
+                ),
+                fluidRow(
+                  # column(4, uiOutput("ResultSchemaName")),
+                  # column(4, uiOutput("achillesSchemaName")),
+                  column(4, uiOutput("achillesSchemaName")),
+                  column(3, offset = 1, br(), uiOutput("CreateCDMID"))
+                )
+                # ,fluidRow(
+                #   column(6, uiOutput("tableDropdown1UI")),
+                #   column(6, uiOutput("tableDropdown2UI"))
+                # )
+              )
+              , # --- COHORT CREATION ---
+              box(
+                title = "Cohort Creation",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                  column(4, uiOutput("CohortcreationName")),
+                  column(4, uiOutput("ConceptKeyword")),
+                  column(4, uiOutput("CohortNameID"))
+                ),
+                fluidRow(
+                  column(4, uiOutput("CohortDateID")),
+                  column(3, offset = 5, br(), uiOutput("GenerateCohortID"))
+                ),
+                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
+                box(
+                  title = "Cohort Summary",
+                  width = 12,
+                  status = "info",
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = TRUE,
+                  tableOutput("cohort_summary"),
+                  tableOutput("cohort_demographics")
+                )
+              )
+            
+            
+            
 
-					  )
-)
+)))

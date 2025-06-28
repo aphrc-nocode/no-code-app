@@ -366,6 +366,10 @@ function(input, output, session) {
 
   #### ---- Generate insights using Gemini --------------- ####
   generate_research_questions_gemini()
+  
+  #############-----Cohort Constructor ---------#####
+  source("server/run_cohort_pipeline.R", local = TRUE)
+  run_cohort_pipeline()
 
   #### ---- Machine learning and AI --------------- ####
   
