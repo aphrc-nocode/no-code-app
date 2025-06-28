@@ -4,4 +4,6 @@
 create_dir("datasets")
 ### Create logs
 create_dir(".log_files")
+### Create outputs
+create_dir("output")
 
