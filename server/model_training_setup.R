@@ -1,4 +1,4 @@
-#### ---- Configuration for model training ---------------------  ####
+#### ---- trainControlConfiguration for model training ---------------------  ####
 
 model_training_setup_server = function() {
 
@@ -11,11 +11,11 @@ model_training_setup_server = function() {
 				output$model_training_setup_eval_metric = renderUI({
 				
 					if (isTRUE(rv_ml_ai$task=="Classification")) {
-						temp_choices = get_named_choices(input_choices_file, input$change_language,"model_training_setup_eval_metric_choices_classification")	
+						temp_choices = get_named_choices(input_choices_file, input$change_language,"model_training_setup_eval_metric_choices_classification")
 					} else if (isTRUE(rv_ml_ai$task=="Regression")) {
 						temp_choices = get_named_choices(input_choices_file, input$change_language,"model_training_setup_eval_metric_choices_regression")	
 					} else if (isTRUE(rv_ml_ai$task=="Unsupervised")) {
-						temp_choices = get_named_choices(input_choices_file, input$change_language,"model_training_setup_eval_metric_choices_unsupervised")	
+						temp_choices = get_named_choices(input_choices_file, input$change_language,"model_training_setup_eval_metric_choices_unsupervised")
 					}
 					selectInput("model_training_setup_eval_metric"
 						, label = get_rv_labels("model_training_setup_eval_metric") 
@@ -157,7 +157,6 @@ model_training_setup_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$modelling_framework_choices=="Caret")) {
-					removeModal()
 					rv_train_control_caret$method = input$train_control_method_caret
 					rv_train_control_caret$number = input$train_control_number_caret
 					rv_train_control_caret$repeats = input$train_control_repeat_caret
@@ -168,6 +167,7 @@ model_training_setup_server = function() {
 				}
 			}
 		}
+		removeModal()
 	})
 }
 

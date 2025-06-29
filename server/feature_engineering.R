@@ -307,7 +307,8 @@ feature_engineering_impute_missing_server = function() {
 						, perform_fe = input$feature_engineering_perform_fe_steps_check
 						, perform_pca = input$feature_engineering_perform_pca_steps_check
 						, up_sample = input$feature_engineering_perform_upsample_steps_check
-						, up_sample_type = input$feature_engineering_perform_upsample_steps_choices 
+						, up_sample_type = input$feature_engineering_perform_upsample_steps_choices
+						, task = rv_ml_ai$task
 						, df_test = rv_ml_ai$test_df
 					)
 				} else {
@@ -320,6 +321,7 @@ feature_engineering_impute_missing_server = function() {
 						, perform_fe = FALSE 
 						, perform_pca = FALSE 
 						, up_sample = FALSE
+						, task = rv_ml_ai$task
 						, df_test = rv_ml_ai$test_df
 					)
 				} 

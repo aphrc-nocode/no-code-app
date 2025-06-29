@@ -95,23 +95,35 @@ function(input, output, session) {
 		, at_least_one_model = FALSE
 	)
 
-	
+	## RV to hold UIs
+	rv_ui_models = reactiveValues(
+	   model_training_caret_models_ols_check = NULL
+		, model_training_caret_models_ols_advance_control = NULL
+	)
+		
 	## Train control caret
 	rv_train_control_caret = reactiveValues(
-		method = NULL
-		, number = NULL
-		, repeats = NULL
-		, search = NULL
-		, verboseIter = NULL
-		, savePredictions = NULL
-		, classProbs = NULL
+		method = "cv"
+		, number = 5
+		, repeats = 1
+		, search = "grid"
+		, verboseIter = FALSE
+		, savePredictions = FALSE
+		, classProbs = TRUE
 	)
    
 	## Trained models
-	rv_training_results = reactiveValues(
-		models = NULL
+	rv_training_models = reactiveValues(
+		ols_model = NULL
 		, ols_param = FALSE
 		, ols_name = NULL
+		, rf_model = NULL
+		, rf_param = FALSE
+		, rf_name = NULL
+	)
+	
+	rv_training_results = reactiveValues(
+		models = NULL
 	)
 
 	#### ---- App title ----------------------------------------------------
@@ -420,7 +432,15 @@ function(input, output, session) {
 
   #### ----- Caret models --------------------------------------- ####
   source("server/model_training_caret_models.R", local=TRUE)
+  
+  ## LM/GLM
   model_training_caret_models_ols_server()
+
+  ## RF
+  model_training_caret_models_rf_server()
+
+  model_training_caret_train_all_server()
+
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
