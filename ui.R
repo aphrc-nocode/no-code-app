@@ -20,10 +20,11 @@ aphrcSiderbar <- dashboardSidebar(
 #Body
 source("ui/dashboard_body.R")
 
-fluidPage(
+auth0::auth0_ui(fluidPage(
   header,
   aphrcHeader <- dashboardHeader(disable = TRUE),
   
   dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody,skin = "green"),
   footer
+)
 )

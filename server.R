@@ -2,7 +2,7 @@ library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
 
-function(input, output, session) {
+auth0::auth0_server(function(input, output, session) {
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
@@ -429,5 +429,5 @@ function(input, output, session) {
   
 }
 
-
+)
 

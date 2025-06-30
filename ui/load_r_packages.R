@@ -49,7 +49,7 @@ libraries <- c(
   "skimr", "summarytools",
   "countries",
   "plotly", "ggplot2", "DBI", "RPostgreSQL", "DT", "bslib", "gt",
-  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable","remotes"
+  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable","remotes", "auth0"
 )
 
 #Check if libraies have been isntalled before loading them.
