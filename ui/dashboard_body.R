@@ -407,6 +407,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			          , uiOutput("generate_dqd")
 			          ,verbatimTextOutput("stderr_log")
 			          ,uiOutput("view_dqd")
+			          ,br()
 			          ,uiOutput("open_link")
 			        )
 			      ), 

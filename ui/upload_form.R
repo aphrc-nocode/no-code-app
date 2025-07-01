@@ -247,7 +247,7 @@ output$omop_connection <- renderUI({
     inputId = "omop_db",
     label = "Database Connect:",
     choices = c("New Connection", "Existing Connection"),
-    selected = "New Connection"
+    selected = "Existing Connection"
   )
 })
 
@@ -298,7 +298,7 @@ output$schemas <- renderUI({
   
   
 output$generate_dqd <- renderUI({
-  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
     
     if(isTRUE(!is.null(rv_database$conn))){
       
@@ -318,12 +318,12 @@ output$generate_dqd <- renderUI({
 
 
 output$view_dqd <- renderUI({
-  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
     
     if(isTRUE(!is.null(rv_database$conn))){
       
       actionBttn("view_dqd",
-                 label = "View DQD", width = "25%" 
+                 label = "Run DQD", width = "25%" 
                  , inline = TRUE 
                  , block = FALSE 
                  , color = "success" 
@@ -339,7 +339,7 @@ output$view_dqd <- renderUI({
 
 output$stderr_log <- renderText({
   
-  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
     
     if(isTRUE(!is.null(rv_database$conn))){
       stderr_content()
@@ -354,20 +354,21 @@ output$stderr_log <- renderText({
 
 output$open_link <- renderUI({
   
-  if (isTRUE(!is.null(input$omop_quality == "Data Quality Dashboard"))) {
+  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
     
     if(isTRUE(!is.null(rv_database$conn))){
       url <- rv_omop$url  # Assuming this is a reactive value
       
       # Make sure it's a non-empty character string
       if (!is.null(url) && is.character(url) && grepl("^http", url)) {
-        tags$a(href = url, "Open Dashboard", target = "_blank")
+        tags$a(href = url, "View Dashboard", target = "_blank")
       } else {
         tags$span("No valid URL yet.")
       }
-    }
-  }else {
+    }else {
   
 }
+  }else{}
+  
 })
 
