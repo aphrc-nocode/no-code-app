@@ -15,7 +15,10 @@ source(paste0(getwd(), "/ui/footer.R"))
 #Sidebar
 aphrcSiderbar <- dashboardSidebar(
   width = "20%",
-  menuItemOutput("dynamic_meinu_aphrc")
+  #menuItemOutput("dynamic_meinu_aphrc"),
+  sidebarMenuOutput("dynamic_meinu_aphrc")
+  #menuItem("AutoML", tabName = "automl_tab", icon = icon("robot"))
+  
   )
 
 #Body

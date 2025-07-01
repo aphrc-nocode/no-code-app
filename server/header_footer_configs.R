@@ -29,6 +29,8 @@ footer_language_translation = function() {
 
 menu_translation = function(){
   output$dynamic_meinu_aphrc <- renderMenu({
+    # Check availables labels
+    req(get_rv_labels("automl_menu"))
     sidebarMenu(id = "tabs",
       menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_home"), "</span>")), tabName = "homePage", icon = icon("house")),
       menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_source_data"), "</span>")), tabName = "sourcedata", icon = icon("file-import", lib = "font-awesome"), selected = TRUE),
@@ -55,7 +57,8 @@ menu_translation = function(){
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_feature_engineering"), "</span>")), tabName = "featureEngineering", icon = icon("sitemap", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_train_model"), "</span>")), tabName = "trainModel", icon = icon("gear", lib = "font-awesome")),
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
-        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
+        menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome")),
+        menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("automl_menu"), "</span>")), tabName = "automl_tab", icon = icon("server", lib = "font-awesome"))
       ),
       menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
     )

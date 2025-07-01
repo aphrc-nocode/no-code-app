@@ -378,7 +378,8 @@ function(input, output, session) {
 
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R")
-  automl_server("automl_module", rv_current)
+  #automl_server("automl_module", rv_current)
+  automl_server("automl_module", rv_current, rv_ml_ai)
   
   #### ----- Modelling framework --------------------------------- ####
 
@@ -386,12 +387,16 @@ function(input, output, session) {
   modelling_framework_choices()
 
   ###### ----- Initialize recipe ------------------- ####
-#  setup_recipe_server()
+#setup_recipe_server()
   
   ###### ----- Impute missing values ------------------- ####
 #  impute_missing_server()
 
-
+# Pycaret
+#pycaret_feature_engineering_server("pycaret_module", rv_current, rv_ml_ai)
+#feature_engineering_server("feature_engineering_module", rv_current, rv_ml_ai)
+  
+  
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this

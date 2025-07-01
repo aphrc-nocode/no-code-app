@@ -393,6 +393,14 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								column(width = 3
 									, uiOutput("modelling_framework_choices")
 									, uiOutput("impute_missing_options")
+									#, uiOutput("launch_pycaret_button")
+									#,DTOutput("pycaret_results_table"),
+									#downloadButton("download_pycaret_results", "Download Results")
+									
+								)
+								, column(width = 9
+								         , DT::DTOutput("pycaret_results_table")
+								         , downloadButton("download_pycaret_results", "Download PyCaret results")
 								)
 							)
 						),
