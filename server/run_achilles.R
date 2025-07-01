@@ -6,8 +6,28 @@ achilles_integration_server <- function() {
                                   conn = NULL,
                                   schemas = NULL)
   
+      output$cbodatabasetype <-  renderUI(selectInput("achilles_dbms", get_rv_labels("achilles_dbms"), 
+                                                        choices = c("", "postgresql", "mysql"), 
+                                                        selected = "postgresql"))
+        
+      output$cbodbhost<- renderUI(textInput("achilles_db_host",
+                                            get_rv_labels("achilles_db_host"),
+                                            placeholder = "e.g., localhost or IP"))
+        
+      output$cbodbport <- renderUI(numericInput("achilles_db_port",
+                                                 get_rv_labels("achilles_db_port"),
+                                                 value = 5432))
+       
+      output$cbodbname<- renderUI(textInput("achilles_db_name",
+                                             get_rv_labels("achilles_db_name"),
+                                             placeholder = "Required"))
+      
+      output$cbodbuser<- renderUI(textInput("achilles_db_user",
+                                            get_rv_labels("achilles_db_user"),
+                                            placeholder = "Required"))
+     
   observeEvent(input$achilles_db_connect, {
-    req(input$achilles_dbms == "postgresql",
+    req(input$achilles_dbms,
         input$achilles_db_host,
         input$achilles_db_port,
         input$achilles_db_name,
@@ -37,18 +57,37 @@ achilles_integration_server <- function() {
       
       shinyalert("Success", "Connected successfully!", type = "success")
       
+      
       # Populate schema dropdowns
+      
       output$schema_selectors <- renderUI({
         tagList(
-          selectInput("cdm_schema", "CDM Schema", choices = achilles_conn$schemas),
-          selectInput("results_schema", "Results Schema", choices = achilles_conn$schemas),
-          selectInput("vocab_schema", "Vocabulary Schema (optional)", choices = c("", achilles_conn$schemas)),
-          selectInput("cdm_version", "CDM Version", choices = c("5.3", "5.4"), selected = "5.4")
+          selectInput("cdm_schema",
+                      get_rv_labels("cdm_schema"),
+                      choices = achilles_conn$schemas),
+          
+          selectInput("results_schema",
+                      get_rv_labels("results_schema"),
+                      choices = achilles_conn$schemas),
+          
+          selectInput("vocab_schema",
+                      get_rv_labels("vocab_schema"),
+                      choices = c("", achilles_conn$schemas)),
+          
+          selectInput("cdm_version",
+                      get_rv_labels("cdm_version"),
+                      choices = c("5.3", "5.4"),
+                      selected = "5.4")
         )
       })
       
+      
+      
       output$run_achilles <- renderUI({
-        actionButton("run_achilles", "Run Achilles", class = "btn-success")
+        actionButton("run_achilles",
+                     get_rv_labels("run_achilles"),
+                     class = "btn-success")
+        
       })
       
     }, error = function(e) {

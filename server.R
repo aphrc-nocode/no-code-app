@@ -387,6 +387,10 @@ function(input, output, session) {
   source("server/run_achilles.R", local = TRUE)
   achilles_integration_server()
   
+  ### ---- OMOP CDM Summaries---------------------------####
+  source("server/omop_summaries.R", local = TRUE)
+  omopVizServer()
+  
   ###### ----- Initialize recipe ------------------- ####
 #  setup_recipe_server()
   

@@ -43,14 +43,14 @@
 
 libraries <- c(
   "shiny", "shinyjs", "shinyvalidate", "shinyalert", "shinyWidgets",
-  "shinydashboard", "shinydashboardPlus", "shinycssloaders",
+  "shinydashboard", "shinydashboardPlus", "shinycssloaders", "shinybusy",
   "sjlabelled", "dplyr", "stringr", "stringi",
   "officer", "readr", "readxl", "openxlsx", "haven", "forcats",
   "skimr", "summarytools",
   "countries",
   "plotly", "ggplot2", "DBI", "RPostgreSQL", "DT", "bslib", "gt",
   "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable","Achilles",
-  "DatabaseConnector"
+  "DatabaseConnector", "OmopSketch"
 )
 
 #Check if libraies have been isntalled before loading them.
