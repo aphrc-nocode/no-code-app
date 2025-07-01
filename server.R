@@ -66,8 +66,18 @@ function(input, output, session) {
 		, df_table = data.frame()
 		, df_table_str = NULL
 		, query_table_name = NULL
+		, database_host = NULL
+		, database_name = NULL
+		, database_user = NULL
+		, database_pass = NULL
 	)
 
+	## ---
+	
+	rv_omop<- reactiveValues(
+	  url = NULL )
+	
+	
 	## LLM/GAI
 	rv_generative_ai = reactiveValues(
 		history = NULL
@@ -149,7 +159,16 @@ function(input, output, session) {
   output$db_run_query = db_run_query
   output$db_port = db_port
   output$db_disconnect = db_disconnect
-  output$ db_tab_query = db_tab_query
+  output$db_tab_query = db_tab_query
+  output$existing_connection = existing_connection
+  
+  source("server/omop_analysis.R", local = TRUE)
+  omop_analysis_server()
+  
+  stderr_file_path <- file.path(getwd(), "output", "dq_stderr.txt")
+  
+  stderr_content<-create_log_reader(stderr_file_path)
+  
 
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
@@ -407,6 +426,11 @@ function(input, output, session) {
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+  
+  
+
+  
+  
   
   
 }
