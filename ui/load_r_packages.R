@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # library(shiny)
 # library(shinyjs)
 # library(shinyvalidate)
@@ -63,7 +63,7 @@ for(lib in libraries){
 }
 
 st_options(footnote=NA, headings = FALSE)
-=======
+
 
 # library(shiny)
 # library(shinyjs)
@@ -146,4 +146,4 @@ library("DataQualityDashboard")
 
 
 
->>>>>>> e50fef3f7062892221ff6654e0c7690728359a3d
+
