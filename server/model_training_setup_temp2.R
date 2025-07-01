@@ -1,4 +1,3 @@
-
 #### ---- trainControlConfiguration for model training ---------------------  ####
 
 model_training_setup_server = function() {
@@ -27,20 +26,6 @@ model_training_setup_server = function() {
 					)
 				})
 
-				output$model_training_setup_start_clusters = renderUI({
-					prettySwitch("model_training_setup_start_clusters_check"
-						, get_rv_labels("model_training_setup_start_clusters_check")
-						, value = FALSE
-					)
-				})
-				
-				output$model_training_setup_include_ensemble = renderUI({
-					prettySwitch("model_training_setup_include_ensemble_check"
-						, get_rv_labels("model_training_setup_include_ensemble_check")
-						, value = FALSE
-					)
-				})
-				
 				## Advanced model control
 				output$model_training_setup_customize_train_control = renderUI({
 					actionButton("customize_train_control_apply"
@@ -49,47 +34,16 @@ model_training_setup_server = function() {
 						, width="100%"
 					)
 				})
-						
-				output$model_training_setup_presetup = renderUI({
-					box(title = get_rv_labels("model_training_setup_presetup")
-						, status = "success"
-						, solidHeader = TRUE
-						, collapsible = TRUE
-						, collapsed = FALSE
-						, width = 12
-						, fluidRow(
-							column(width=4
-								, uiOutput("model_training_setup_eval_metric")
-							)
-							, column(width=4
-								, uiOutput("model_training_setup_start_clusters")
-							)
-							, column(width=4
-								, uiOutput("model_training_setup_include_ensemble")
-							)
-						)
-						, uiOutput("model_training_setup_customize_train_control")
-					)		
-				})
+				
 
 			} else {
 
-				output$model_training_setup_presetup = NULL
 				output$model_training_setup_eval_metric = NULL
 				updateSelectInput(session, "model_training_setup_eval_metric", selected="")
-				output$model_training_setup_start_clusters = NULL
- 				updatePrettySwitch(session, inputId="model_training_setup_start_clusters_check" , value=FALSE)
-				output$model_training_setup_include_ensemble = NULL
- 				updatePrettySwitch(session, inputId="model_training_setup_include_ensemble_check" , value=FALSE)
 			}
 		} else {	
-			output$model_training_setup_presetup = NULL
 			output$model_training_setup_eval_metric = NULL
 			updateSelectInput(session, "model_training_setup_eval_metric", selected="")
-			output$model_training_setup_start_clusters = NULL
-			updatePrettySwitch(session, inputId="model_training_setup_start_clusters_check" , value=FALSE)
-			output$model_training_setup_include_ensemble = NULL
-			updatePrettySwitch(session, inputId="model_training_setup_include_ensemble_check" , value=FALSE)
 		}
 
 	})
@@ -97,31 +51,32 @@ model_training_setup_server = function() {
 
 	## Train control diaglog box
 	observeEvent(input$train_control_method_caret, {
-		req(input$train_control_method_caret)
-		new_value = if (grepl("cv", input$train_control_method_caret)) 5 else 25
-		new_min = if (grepl("cv", input$train_control_method_caret)) 3 else 10
-		new_max = if (grepl("cv", input$train_control_method_caret)) 10 else 100
-	  	updateNumericInput(
-			session,
-			"train_control_number_caret",
-			value = new_value,
-			min = new_min,
-			max = new_max
-	  	)
-		
-		output$train_control_repeat_caret = renderUI({
+		if (isTRUE(input$train_control_method_caret)) {
+			new_value = if (isTRUE(grepl("cv", input$train_control_method_caret))) 5 else 25
+			new_min = if (isTRUE(grepl("cv", input$train_control_method_caret))) 3 else 10
+			new_max = if (isTRUE(grepl("cv", input$train_control_method_caret))) 10 else 100
+			updateNumericInput(
+				session,
+				"train_control_number_caret",
+				value = new_value,
+				min = new_min,
+				max = new_max
+			)
+
 			if(isTRUE(grepl("[d_]cv$", input$train_control_method_caret))) {
-				numericInput("train_control_repeat_caret"
-					, get_rv_labels("train_control_repeat_caret")
-					, value = 5
-					, min = 1
-					, max = 10
-				)
+				output$train_control_repeat_caret = NULL
+				updateNumericInput(session, "train_control_repeat_caret", value = NA)
 			} else {
-				updateNumericInput(session, "train_control_repeat_caret", value = NULL)
-				NULL
+				output$train_control_repeat_caret = renderUI({
+					numericInput("train_control_repeat_caret"
+						, get_rv_labels("train_control_repeat_caret")
+						, value = 5
+						, min = 1
+						, max = 10
+					)
+				})
 			}
-		})
+		}
 	})
 
 	observeEvent(input$customize_train_control_apply, {

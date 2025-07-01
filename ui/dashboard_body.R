@@ -412,18 +412,15 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						),
 						tabItem(tabName = "trainModel",
 								  fluidRow(
-									column(width = 3
-										, uiOutput("model_training_setup_eval_metric")
-										, uiOutput("model_training_setup_customize_train_control")
-## 										, uiOutput("model_training_caret_models_ui")
-## 										, uiOutput("model_training_caret_models_ols")
-## 										, uiOutput("model_training_caret_models_ols_advance_control")
-## 										
-## 										, uiOutput("model_training_apply")
+									column(width = 12
+										, uiOutput("model_training_setup_presetup")
 
 									)
 								, column(width=12
 									, uiOutput("model_training_caret_models_ui")
+								)
+								, column(width=12
+									, uiOutput("model_training_caret_train_metrics")
 								)
 							)
 						),

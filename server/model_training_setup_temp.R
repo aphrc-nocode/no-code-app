@@ -1,4 +1,3 @@
-
 #### ---- trainControlConfiguration for model training ---------------------  ####
 
 model_training_setup_server = function() {
@@ -51,7 +50,7 @@ model_training_setup_server = function() {
 				})
 						
 				output$model_training_setup_presetup = renderUI({
-					box(title = get_rv_labels("model_training_setup_presetup")
+					box(title = "Model setup"#get_rv_labels("model_training_caret_models_advance_options")
 						, status = "success"
 						, solidHeader = TRUE
 						, collapsible = TRUE
@@ -186,9 +185,6 @@ model_training_setup_server = function() {
 					rv_train_control_caret$method = input$train_control_method_caret
 					rv_train_control_caret$number = input$train_control_number_caret
 					rv_train_control_caret$repeats = input$train_control_repeat_caret
-					if (isTRUE(is.null(rv_train_control_caret$repeats))) {
-						rv_train_control_caret$repeats = NA
-					}
 					rv_train_control_caret$search = input$train_control_search_caret
 					rv_train_control_caret$verboseIter = input$train_control_verbose_caret
 					rv_train_control_caret$savePredictions = input$train_control_save_predictions_caret

@@ -105,7 +105,7 @@ function(input, output, session) {
 	rv_train_control_caret = reactiveValues(
 		method = "cv"
 		, number = 5
-		, repeats = 1
+		, repeats = NA
 		, search = "grid"
 		, verboseIter = FALSE
 		, savePredictions = FALSE
@@ -124,6 +124,7 @@ function(input, output, session) {
 	
 	rv_training_results = reactiveValues(
 		models = NULL
+		, train_metrics_df = NULL
 	)
 
 	#### ---- App title ----------------------------------------------------
@@ -439,7 +440,23 @@ function(input, output, session) {
   ## RF
   model_training_caret_models_rf_server()
 
+  ## GBM
+  model_training_caret_models_gbm_server()
+
+  ## xgbTree
+  model_training_caret_models_xgbTree_server()
+
+  ## xgbLinear
+  model_training_caret_models_xgbLinear_server()
+
+  ## svmRadial
+  model_training_caret_models_svmRadial_server()
+
+  ## Train all models
   model_training_caret_train_all_server()
+
+  ## Model metrics
+  model_training_caret_train_metrics_server()
 
 
   #### ---- Reset various components --------------------------------------####
