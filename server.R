@@ -372,6 +372,7 @@ function(input, output, session) {
   source("server/research_questions.R", local = TRUE)
 
   generate_research_questions_choices()
+  
 
   ##### ---- API Token ------------------ ####
 
@@ -399,7 +400,12 @@ function(input, output, session) {
 
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
-
+  
+  #### ---- Achilles Integration -------------------####
+  
+  source("server/run_achilles.R", local = TRUE)
+  achilles_integration_server()
+  
   ###### ----- Initialize recipe ------------------- ####
 #  setup_recipe_server()
   

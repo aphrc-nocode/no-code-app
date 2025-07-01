@@ -1,3 +1,4 @@
+
 aphrcBody <- dashboardBody(
 headertag,
 useShinyjs(),
@@ -421,7 +422,51 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "predictClassify",
 								  fluidRow()),
 						tabItem(tabName = "addResources",
-								  fluidRow())
+								  fluidRow(),
+                   
+                   tabItem(
+             tabName = "achilles",
+             fluidRow(
+               box(
+                 title = "Create Connection Details",
+                 status = "primary",
+                 solidHeader = TRUE,
+                 width = 12,
+                 collapsible = FALSE,
+                 fluidRow(
+                   column(4, 
+                          selectInput("achilles_dbms", "Database Type", 
+                                      choices = c("", "postgresql", "mysql"), 
+                                      selected = "postgresql")),
+                   column(4, textInput("achilles_db_host", "Host", placeholder = "e.g., localhost or IP")),
+                   column(4, numericInput("achilles_db_port", "Port", value = 5432))
+                 ),
+                 fluidRow(
+                   column(4, textInput("achilles_db_name", "Database Name", placeholder = "Required")),
+                   column(4, textInput("achilles_db_user", "Username", placeholder = "Required")),
+                   column(4, passwordInput("achilles_db_pwd", "Password", placeholder = "Required"))
+                 ),
+                 fluidRow(
+                   column(12,
+                          actionButton("achilles_db_connect", "Connect", icon = icon("plug"), class = "btn btn-primary"))
+                 )
+               )
+             ),
+             
+             fluidRow(
+               box(
+                 title = "Schema Selection",
+                 status = "info",
+                 solidHeader = TRUE,
+                 width = 12,
+                 collapsible = FALSE,
+                 
+                 # Shown after connection
+                 uiOutput("schema_selectors"),
+                 uiOutput("run_achilles")
+               )
+             )
+                   )
         
                  
 
