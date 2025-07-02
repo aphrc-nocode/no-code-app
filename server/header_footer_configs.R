@@ -57,8 +57,11 @@ menu_translation = function(){
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
       ),
-		,
-		menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Cohort_Constructor"), "</span>")), tabName = "CohortConstructor", icon = icon("house")),
+		menuItem(
+		  text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_ohdsi_analysis"), "</span>")), tabName = "Ohdsianalysis", icon = icon("share-alt", lib = "font-awesome"),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Cohort_Constructor"), "</span>")), tabName = "CohortConstructor", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Feature_Extraction"), "</span>")), tabName = "FeatureExtraction", icon = icon("arrows-split-up-and-left", lib = "font-awesome"))
+		  ),
       menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
     )
   })
