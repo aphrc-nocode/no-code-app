@@ -49,8 +49,9 @@ libraries <- c(
   "skimr", "summarytools",
   "countries",
   "plotly", "ggplot2", "DBI", "RPostgreSQL", "DT", "bslib", "gt",
-  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable", "login"
+  "lubridate", "gtsummary", "webshot", "webshot2", "shinyFiles", "flextable", "login", "DBI", "RSQLite"
 )
+
 
 #Check if libraies have been isntalled before loading them.
 for(lib in libraries){

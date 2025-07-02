@@ -349,10 +349,10 @@ user_defined_server <- function() {
   #,
   observe({
     if(isTRUE(is.null(plots_sec_rv$plot_rv))){
-      #updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("user_create"))
+      updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("user_create"))
       shinyjs::disable("btnchartDown")
     }else{
-      #updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("update_chart_button"))
+      updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("update_chart_button"))
       shinyjs::enable("btnchartDown")
     }
 
@@ -361,10 +361,10 @@ user_defined_server <- function() {
   
   observe({
     if(isTRUE(is.null(plots_sec_rv$tab_rv))){
-      #updateActionButton(session = session, inputId = "btnCreatetable", label = get_rv_labels("usr_create_cross_tab"))
+      updateActionButton(session = session, inputId = "btnCreatetable", label = get_rv_labels("usr_create_cross_tab"))
       shinyjs::disable("btnDownloadTable")
     }else{
-      #updateActionButton(session = session, inputId = "btnCreatetable", label = get_rv_labels("update_tab_button"))
+      updateActionButton(session = session, inputId = "btnCreatetable", label = get_rv_labels("update_tab_button"))
       shinyjs::enable("btnDownloadTable")
     }
     
@@ -787,13 +787,13 @@ user_defined_server <- function() {
     
   })
   
-  
-  # observeEvent(input$btnChartType, {
-  #   output$tabSummaries <- NULL
-  #   output$GeneratedPlot <- NULL
-  #   plots_sec_rv$plot_rv <- NULL
-  #   plots_sec_rv$tab_rv <- NULL
-  # })
+
+  observeEvent(input$btnChartType, {
+    output$tabSummaries <- NULL
+    output$GeneratedPlot <- NULL
+    plots_sec_rv$plot_rv <- NULL
+    plots_sec_rv$tab_rv <- NULL
+  })
   
   
   
@@ -823,12 +823,6 @@ user_defined_server <- function() {
  
   })
   
-  
-  observeEvent(input$btnChartType, {
-    print(paste("Selected:", input$btnChartType))
-    # Add your reactive logic here
-  })
- 
   plt_temp <- reactiveValues(chart_type1 = NULL)
   
   observeEvent(input$btnChartType,{
@@ -865,8 +859,8 @@ user_defined_server <- function() {
                                                    axistext_angle = input$xaxistextangle,
                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
-                     print(chart_type)
-                   } else if(chart_type == "Violin"){
+    
+                   } else if(chart_type == "Violin" & input$cboYVar!=""){
                      plt<- Rautoml::custom_violin(df = rv_current$working_df,
                                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                   ylab = input$txtYlab, plot_title = input$txtPlotTitle,
@@ -877,7 +871,7 @@ user_defined_server <- function() {
                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
                      
-                     print(chart_type)
+ 
                    } else if(chart_type =="Histogram"){
                      plt<- Rautoml::custom_histogram(df = rv_current$working_df,
                                                      variable = input$cboXVar,
@@ -888,8 +882,8 @@ user_defined_server <- function() {
                                                      bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity,
                                                      density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
                      )
-                     print(chart_type)
-                   }else if(chart_type =="Line"){
+
+                   }else if(chart_type =="Line" & input$cboYVar!=""){
                      plt<- Rautoml::custom_linegraph(df = rv_current$working_df,
                                                      xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                      ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
@@ -899,9 +893,8 @@ user_defined_server <- function() {
                                                      addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
                                                      legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
                      )
-                     print(chart_type)
                      
-                   }else if(chart_type == "Scatterplot"){
+                   }else if(chart_type == "Scatterplot" & input$cboYVar!=""){
                      plt<- Rautoml::custom_scatterplot(df = rv_current$working_df,
                                                        xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                        ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
@@ -912,8 +905,8 @@ user_defined_server <- function() {
                                                        legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
                                                        confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
-                     print(chart_type)
-                   }else if(chart_type == "Bar"){
+           
+                   }else if(chart_type == "Bar" ){
                      plt<- Rautoml::custom_barplot(df = rv_current$working_df,
                                                    xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                    ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
@@ -923,7 +916,7 @@ user_defined_server <- function() {
                                                    data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )
-                     print(chart_type)
+             
                    }else if(chart_type == "Pie"){
                      plt<- Rautoml::custom_piechart(df = rv_current$working_df,
                                                     xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
