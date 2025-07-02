@@ -715,7 +715,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								        )
 								      )
 								    )
-								  )
+								  ),
 								  
         
                  
