@@ -153,10 +153,63 @@ user_defined_server <- function() {
 		  output$bivariate_plot_title = NULL
 		  output$corrplot_title = NULL
 		  
+		  
 		}
 	})
   
+  ## Temporary file
   
+  # observe({
+  #   if(isTRUE(!is.null(rv_current$working_df))){
+  #     output$user_temp_var = renderUI({
+  #       selectInput("cbotempVar", paste(get_rv_labels("user_temp_var"),":"),
+  #                   choices = names(rv_current$working_df),
+  #                   selected = names(rv_current$working_df)[1],
+  #                   multiple = FALSE)
+  #     })
+  #   }else{
+  #     updateSelectInput(session = session, inputId = "cbotempVar", choices = "", selected = "")
+  #     output$user_temp_var=NULL
+  #   }
+  # 
+  #  })
+  
+  
+  
+  observe({
+    #if(isTRUE(!is.null(rv_current$working_df))){
+      output$user_temp_var = renderUI({
+        selectInput("cbotempVar", paste(get_rv_labels("user_temp_var"),":"),
+                    choices = names(rv_current$working_df),
+                    selected = names(rv_current$working_df)[1],
+                    multiple = FALSE)
+      })
+  }
+    # }else{
+    #   updateSelectInput(session = session, inputId = "cbotempVar", choices = "", selected = "")
+    #   output$user_temp_var=NULL
+    # }
+    
+  )
+  
+
+  
+  # temp_plot <- eventReactive(input$cbotempVar, {
+  #   if(isTRUE(!is.null(rv_current$working_df))){
+  #     if(is.numeric(rv_current$working_df[[input$cbotempVar]])){
+  #       return(hist(rv_current$working_df[[input$cbotempVar]]))
+  #     }else{
+  #       return(barplot.default(table(rv_current$working_df[[input$cbotempVar]])))
+  #     }
+  #     
+  #   }else{
+  #     return(ggplot()+theme_void())
+  #   }
+  # }
+  #   
+  # )
+  # 
+  # output$tempplot <- renderPlot({temp_plot()})
   
   
   ################Automatic visualization
