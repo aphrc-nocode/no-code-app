@@ -127,7 +127,7 @@ omopVizServer <- function() {
   })
   
   observe({
-    req(input$selected_cdm_table, omop_conn$cdm, input$cdm_schema, input$vocab_schema)
+    req(omop_conn$cdm, input$selected_cdm_table, input$cdm_schema,input$vocab_schema)
     
     con <- attr(omop_conn$cdm, "dbcon")
     
@@ -291,8 +291,8 @@ omopVizServer <- function() {
   })
   
   session$onSessionEnded(function() {
-    if (!is.null(omop_conn$conn)) {
-      DatabaseConnector::disconnect(omop_conn$conn)
+    if (!is.null(isolate(omop_conn$conn))) {
+      DatabaseConnector::disconnect(isolate(omop_conn$conn))
     }
   })
 }

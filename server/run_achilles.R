@@ -25,6 +25,10 @@ achilles_integration_server <- function() {
       output$cbodbuser<- renderUI(textInput("achilles_db_user",
                                             get_rv_labels("achilles_db_user"),
                                             placeholder = "Required"))
+      
+      output$cbodbpass<- renderUI(passwordInput("achilles_db_pwd",
+                                                get_rv_labels("achilles_db_pwd"),
+                                                placeholder = "Required"))
      
   observeEvent(input$achilles_db_connect, {
     req(input$achilles_dbms,
