@@ -515,18 +515,18 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                   collapsible = TRUE,
                   collapsed = FALSE,
                   fluidRow(
-                    column(6, plotlyOutput("gender_plot")),
+                    column(6, plotlyOutput("Gender_plot")),
                     column(6, plotlyOutput("age_group_plot"))
                   ),
                   fluidRow(
-                    column(6, plotlyOutput("race_plot")),
+                    column(6, plotlyOutput("Race_plot")),
                     column(6, plotlyOutput("ethnicity_plot"))
-                  ),
+                  )#,
                   
-                  uiOutput("SelectCohortTable"),     # dropdown for cohort table name
-                  uiOutput("ExtractFeaturesID"),     # extraction button
-                  br(),
-                  uiOutput("CovariateTableUI")       # table + download
+                  #uiOutput("SelectCohortTable"),     # dropdown for cohort table name
+                  #uiOutput("ExtractFeaturesID"),     # extraction button
+                  #br(),
+                  #uiOutput("CovariateTableUI")       # table + download
                 )
                 
                 

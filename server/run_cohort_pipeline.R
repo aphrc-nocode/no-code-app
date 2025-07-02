@@ -217,7 +217,7 @@ run_cohort_pipeline <- function() {
       
       
       # --- Plots after cohort summary ---
-      output$gender_plot <- plotly::renderPlotly({
+      output$Gender_plot <- plotly::renderPlotly({
         req(cohort_conn$person_summary)
         df <- cohort_conn$person_summary
         gender_df <- df %>%
@@ -250,7 +250,7 @@ run_cohort_pipeline <- function() {
           layout(title = "Age Group Distribution", yaxis = list(title = "Count"), xaxis = list(title = "Age Group"))
       })
       
-      output$race_plot <- plotly::renderPlotly({
+      output$Race_plot <- plotly::renderPlotly({
         req(cohort_conn$person_summary)
         df <- cohort_conn$person_summary %>%
           dplyr::filter(!is.na(race_source_value)) %>%
@@ -279,41 +279,7 @@ run_cohort_pipeline <- function() {
   })
 
   
-  # --- Feature Extraction UI Elements ---
-  output$SelectCohortTable <- renderUI({
-    req(input$CohortNameID)
-    selectInput("SelectedCohort", "Select Cohort Table", choices = c(input$CohortNameID))
-  })
-  
-  output$ExtractFeaturesID <- renderUI({
-    req(cohort_conn$cdm, input$CohortNameID)
-    actionButton("ExtractFeaturesID", "Extract Features", class = "btn-primary")
-  })
-  
-  output$CovariateTableUI <- renderUI({
-    req(cohort_conn$covariateData)
-    tagList(
-      h4("Sample Extracted Features"),
-      tableOutput("covariate_table"),
-      downloadButton("DownloadCovariates", "Download Covariates")
-    )
-  })
-  
-  output$covariate_table <- renderTable({
-    req(cohort_conn$covariateData)
-    if (is.null(cohort_conn$covariateData$covariates)) {
-      return(data.frame(message = "No covariates found."))
-    }
-    head(cohort_conn$covariateData$covariates %>% dplyr::collect(), 10)
-  })
-  
-  output$DownloadCovariates <- downloadHandler(
-    filename = function() paste0("covariates-", Sys.Date(), ".csv"),
-    content = function(file) {
-      df <- cohort_conn$covariateData$covariates %>% dplyr::collect()
-      readr::write_csv(df, file)
-    }
-  )
+
   
   
 }
