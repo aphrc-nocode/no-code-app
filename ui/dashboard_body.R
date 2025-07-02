@@ -226,22 +226,36 @@ tabItems(tabItem(tabName = "homePage",class = "active",
          
 			  tabItem(tabName = "summarizeAutomatic",
 			          fluidRow(htmlOutput("visualize_auto_data_title")),
-			          fluidRow(uiOutput("bivariate_header_label")),
-			          hr(),
-			          fluidRow(column(
-			            width = 3,
+			          
+			          div(id = "DivvisualizationMenu",
+			          box(
+			            title = htmlOutput("bivariate_header_label"),
+			            status = "success",
+			            solidHeader = TRUE,
+			            width = 12,
+			            collapsible = TRUE,
+			            collapsed = FALSE,
+  			          hr(),
+  			          fluidRow(column(
+  			            width = 3,
 			            uiOutput("user_select_bivariate_outcome"),
 			            uiOutput("user_select_Bivariate_features"),
 			            uiOutput("user_select_color_parlet_bivariate"),
-			            uiOutput("user_select_bivariate_single_color"),
-			            uiOutput("bivariate_plot_title")
+			            #uiOutput("user_select_bivariate_single_color"),
+			            htmlOutput("bivariate_plot_title")
 			          ),
 			          column(
 			            width = 9,
 			            plotOutput("BivariatePlotOutput")
-			          )),
-			          hr(),
-			          fluidRow(uiOutput("corrplot_header_label")),
+			          ))),
+			          br(),
+			          box(
+			            title = uiOutput("corrplot_header_label"),
+			            status = "success",
+			            solidHeader = TRUE,
+			            collapsible = TRUE,
+			            collapsed = FALSE,
+			            width = 12,
 			          hr(),
 			          fluidRow(column(
 			            width = 3,
@@ -250,6 +264,9 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			            column(width=9,
 			                   plotOutput("CorrPlotOutput")
 			            )
+			          )),
+			          br(),
+			          fluidRow(column(width = 3, offset = 9, uiOutput("user_download_autoreport")))
 			          )),
          tabItem(tabName = "summarizeCustom",
                  fluidRow(
@@ -343,6 +360,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                      ),
                      align = "right")
                    ),
+				
 						fluidRow(br(),DT::DTOutput("dfPreview"))
 					  ), 
 
@@ -403,8 +421,5 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								  fluidRow()),
 						tabItem(tabName = "addResources",
 								  fluidRow())
-        
-                 
-
 					  )
 )

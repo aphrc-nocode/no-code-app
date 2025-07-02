@@ -28,23 +28,7 @@ user_output_type = renderUI({
 })
 
 
-user_chart_type = renderUI({
-  radioGroupButtons(
-    "btnChartType",
-    justified = TRUE,
-    choices = c(
-      "Barplot" = "Bar",
-      "Histogram" = "Histogram",
-      "Scatterplot" = "Scatterplot",
-      "Boxplot" = "Boxplot",
-      "Lineplot" = "Line",
-      "Violin plot" = "Violin",
-      "Pie" = "Pie"
-    ),
-    selected = "Bar",
-    status = "primary"
-  )
-})
+
 
 
 user_tab_options =renderUI({
@@ -648,13 +632,6 @@ user_select_color_parlet =renderUI({
       )
 })
     
-    
-user_select_bivariate_outcome =renderUI({
-  selectInput("cboBivariateOutcome", paste0(
-    get_rv_labels("bivariate_outcome")
-    ,":"), "")
-})  
-
 user_select_bivariate_single_color =renderUI({
   selectInput("cboBivariateColor", paste0(
     get_rv_labels("bivariate_single_color")
@@ -662,21 +639,8 @@ user_select_bivariate_single_color =renderUI({
     selected = "forestgreen")
 })  
 
-user_select_Bivariate_features =renderUI({
-  selectInput("cboBivariateFeatures", paste0(
-    get_rv_labels("bivariate_features")
-    ,":"), "", multiple = TRUE)
-})  
-
-user_select_corr_features =renderUI({
-  selectInput("cboCorrFeatures", paste0(
-    get_rv_labels("corr_numeric_variables")
-    ,":"), "", multiple = TRUE)
-}) 
-
-
 corrplot_header_label =renderUI({
-  h3(
+  h4(
     get_rv_labels(
       "corrplot_header_lebel"
     )
@@ -684,7 +648,7 @@ corrplot_header_label =renderUI({
 })
 
 bivariate_header_label =renderUI({
-  h3(
+  h4(
     get_rv_labels(
       "bivariate_header_label"
     )
@@ -706,6 +670,17 @@ corrplot_title =renderUI({
     label = get_rv_labels("bivariate_plot_title")
   )
 })
+
+
+user_download_autoreport = renderUI({
+  actionBttn(inputId = "btnDownloadReportAuto", get_rv_labels("user_download_autoreport"),
+             size = "md",
+             inline = TRUE,
+             block = FALSE,
+             color = "success"
+  )
+})
+
 
     
 

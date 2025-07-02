@@ -37,7 +37,7 @@ menu_translation = function(){
         menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_overview"), "</span>")), tabName = "Overview", icon = icon("table-columns", lib = "font-awesome")),
         menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_explore"), "</span>")), tabName = "Explore", icon = icon("object-ungroup", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_transform"), "</span>")), tabName = "Transform", icon = icon("table-columns", lib = "font-awesome")),
-        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "combineData", icon = icon("table-columns", lib = "font-awesome"))
+        menuSubItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_combine_data"), "</span>")), tabName = "combineData", icon = icon("magnifying-glass-chart", lib = "font-awesome"))
       ),
         menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_visualize_data"), "</span>")), tabName = "visualizeData", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"),
         menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_summarizeAutomatic"), "</span>")), tabName = "summarizeAutomatic", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")
@@ -57,8 +57,14 @@ menu_translation = function(){
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
       ),
-      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
-    )
+      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
+    br(),
+    div(
+      style="display: flex; justify-content: flex-start; gap: 10px; margin-top: 5px;",
+      actionBttn("logoutID", label = get_rv_labels("logoutID"), class = "btn")
+      #is_logged_in(
+       # id = app_login_config$APP_ID,login::logout_button(id = "logout", label = "Sign out"))
+    ))
   })
   
   

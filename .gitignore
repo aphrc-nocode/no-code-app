@@ -36,3 +36,6 @@ rsconnect/
 no-code-app.Rproj
 .log_files
 datasets
+
+*.html
+

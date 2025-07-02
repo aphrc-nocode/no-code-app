@@ -2,12 +2,57 @@ library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
 
-function(input, output, session) {
+function(input, output, session){
+  
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
+  USER <- login::login_server(
+    id = app_login_config$APP_ID,
+    db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users.sqlite'),
+    emailer = emayili_emailer(
+      email_host = app_login_config$email_host,
+      email_port = app_login_config $email_port,
+      email_username = app_login_config$email_username,
+      email_password = app_login_config$email_password,
+      from_email = app_login_config$from_email
+    ),
+    additional_fields = c('first_name' = 'First Name',
+                          'last_name' = 'Last Name'),
+    cookie_name = "aphrc",
+    cookie_password = "aphrcpass"
+  )
+  
+  output$userName <- renderText({ paste0(USER$first_name," ", USER$last_name) })
+  
+  observeEvent(input$logoutID, {
+    shinyjs::runjs("document.cookie = 'aphrc=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'")
+    session$reload()
+  })
+  
+  observeEvent(input$show_login, {
+    shinyjs::show("login_form")
+    shinyjs::hide("signup_form")
+    shinyjs::hide("reset_form")
+    output$form_title <- renderText("APHRC Nocode Platform")
+  })
+  
+  observeEvent(input$show_signup, {
+    shinyjs::hide("login_form")
+    shinyjs::show("signup_form")
+    shinyjs::hide("reset_form")
+    output$form_title <- renderText("Create an Account")
+  })
+  
+  observeEvent(input$show_reset, {
+    shinyjs::hide("login_form")
+    shinyjs::hide("signup_form")
+    shinyjs::show("reset_form")
+    output$form_title <- renderText("Reset Password")
+  })
+  
   
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
@@ -43,9 +88,15 @@ function(input, output, session) {
 	 , seed = 9991
 	 , outcome = NULL
 	 , vartype_all = NULL
-	  ,plot_rv=NULL
-	 ,tab_rv=NULL
-	 
+  )
+  
+  #####------------------Plots Reactive-------------------
+  
+  plots_sec_rv <- reactiveValues(
+    plot_rv=NULL
+    ,tab_rv=NULL
+    ,plot_bivariate_auto=NULL
+    ,plot_corr = NULL
   )
   
   ##### --------- Meta data ---------------------------------------------
@@ -197,7 +248,6 @@ function(input, output, session) {
   ##----User Defined Visualization section-----------------------
   source("ui/user_defined_visualization_header.R", local = TRUE)
   output$user_output_type = user_output_type
-  output$user_chart_type = user_chart_type
   output$user_tab_options = user_tab_options
   output$user_calc_var = user_calc_var
   #output$user_strata_var = user_strata_var
@@ -259,15 +309,13 @@ function(input, output, session) {
   
   output$bivariate_header_label = bivariate_header_label
   output$corrplot_header_label = corrplot_header_label
-  output$user_select_corr_features = user_select_corr_features
-  output$user_select_Bivariate_features = user_select_Bivariate_features
   
   output$user_select_bivariate_single_color = user_select_bivariate_single_color
-  output$user_select_bivariate_outcome = user_select_bivariate_outcome
   output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
   output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
   output$bivariate_plot_title = bivariate_plot_title
   output$corrplot_title = corrplot_title
+  output$user_download_autoreport = user_download_autoreport
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
