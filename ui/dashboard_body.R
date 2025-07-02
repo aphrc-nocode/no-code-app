@@ -391,7 +391,6 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "featureEngineering",
 							fluidRow(
 								column(width = 3
-									, uiOutput("modelling_framework_choices")
 									, uiOutput("impute_missing_options")
 								)
 							)
@@ -422,6 +421,118 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								  fluidRow()),
 						tabItem(tabName = "addResources",
 								  fluidRow()),
+
+            tabItem(
+              tabName = "CohortConstructor",
+              
+              # --- DATABASE CONNECTION ---
+              box(
+                title = "Database Connection",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = FALSE,
+                fluidRow(
+                  column(4, uiOutput("dbmsID")),
+                  column(4, uiOutput("dbmsServerID")),
+                  column(4, uiOutput("UserID"))
+                ),
+                fluidRow(
+                  column(4, uiOutput("UserPswdID")),
+                  column(4, uiOutput("PortID")),
+                  #column(4, uiOutput("PathID"))
+                  column(2, offset = 2, 
+                         br(),uiOutput("ConnectCohortID"), align="right")
+                )
+                # fluidRow(
+                #   column(3, offset = 9, uiOutput("ConnectCohortID"))
+                # )
+              ),
+              
+              # --- CDM REFERENCE CREATION ---
+              box(
+                title = "CDM Reference",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                 # column(4, uiOutput("CDMConn")),
+                  column(4, uiOutput("CDMConnName")),
+                  column(4, uiOutput("CDMSchemaName")),
+                  column(4, uiOutput("ResultSchemaName"))
+                  
+                ),
+                fluidRow(
+                  # column(4, uiOutput("ResultSchemaName")),
+                  # column(4, uiOutput("achillesSchemaName")),
+                  #column(4, uiOutput("achillesSchemaName")),
+                  column(3, offset = 9, br(), uiOutput("CreateCDMID"), align="right")
+                )
+                # ,fluidRow(
+                #   column(6, uiOutput("tableDropdown1UI")),
+                #   column(6, uiOutput("tableDropdown2UI"))
+                # )
+              )
+              , # --- COHORT CREATION ---
+              box(
+                title = "Cohort Creation",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                  #column(4, uiOutput("CohortcreationName")),
+                  column(4, uiOutput("ConceptKeyword")),
+                  column(4, uiOutput("CohortNameID")),
+                  column(4, uiOutput("CohortDateID")
+                ),
+                fluidRow(
+                 # column(4, uiOutput("CohortDateID")),
+                  column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align="right")
+                ),
+                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
+                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
+                box(
+                  title = "Cohort Summary",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = TRUE,
+                  tableOutput("cohort_summary"),
+                  uiOutput("cohort_demographics")
+                ),
+                
+                # --- INTERACTIVE PLOTS ---
+                box(
+                  title = "Cohort Plots",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  fluidRow(
+                    column(6, plotlyOutput("gender_plot")),
+                    column(6, plotlyOutput("age_group_plot"))
+                  ),
+                  fluidRow(
+                    column(6, plotlyOutput("race_plot")),
+                    column(6, plotlyOutput("ethnicity_plot"))
+                  ),
+                  
+                  uiOutput("SelectCohortTable"),     # dropdown for cohort table name
+                  uiOutput("ExtractFeaturesID"),     # extraction button
+                  br(),
+                  uiOutput("CovariateTableUI")       # table + download
+                )
+                
+                
+              )
+)),
+
                    
                    tabItem(
              tabName = "achilles",
@@ -609,7 +720,54 @@ tabItems(tabItem(tabName = "homePage",class = "active",
         
                  
 
-					  )
+
+tabItem(
+  tabName = "FeatureExtraction",
+  fluidPage(
+    titlePanel("Feature Extraction Tool"),
+    
+    sidebarLayout(
+      sidebarPanel(
+        # --- DB connection info ---
+        selectInput("dbmsID", "DBMS", choices = c("postgresql", "sql server", "oracle"), selected = "postgresql"),
+        textInput("dbmsServerID", "Server:", value = ""),
+        textInput("PortID", "Port:", value = "5432"),
+        textInput("UserID", "Username:", value = ""),
+        passwordInput("UserPswdID", "Password:"),
+        #textInput("jdbc_path", "Path to JDBC Driver:", value = "/path/to/jdbc"),
+        
+        # --- Connect button ---
+        actionButton("ConnectCohortID", "Connect to Database", class = "btn-primary"),
+        tags$hr(),
+        
+        # --- Dynamic dropdowns populated after connection ---
+        uiOutput("cdm_schema_ui"),
+        uiOutput("results_schema_ui"),
+        uiOutput("cohort_table_ui"),
+        uiOutput("domain_choices_ui"),
+        
+        # --- Extraction settings ---
+        numericInput("cohort_id", "Cohort ID:", value = ""),
+        textInput("output_csv", "Output CSV Path:", value = "name.csv"),
+        actionButton("extract_features", "Extract Features", class = "btn-success")
+      ),
+      
+      mainPanel(
+        h4("Instructions"),
+        p("1. Enter DB details and click 'Connect to Database'."),
+        p("2. Then select schema and cohort info."),
+        p("3. Run feature extraction and download the CSV."),
+        verbatimTextOutput("feature_extract_log")
+      )
+    )
+  )
 )
 
+
+
+
+
+
+
+))
 
