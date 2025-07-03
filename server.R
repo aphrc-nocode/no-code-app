@@ -125,6 +125,7 @@ function(input, output, session) {
 	rv_training_results = reactiveValues(
 		models = NULL
 		, train_metrics_df = NULL
+		, test_metrics_objs = NULL
 	)
 
 	#### ---- App title ----------------------------------------------------

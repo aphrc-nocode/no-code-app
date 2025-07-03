@@ -733,6 +733,19 @@ model_training_caret_train_all_server = function() {
 						)
 					}
 					rv_training_results$train_metrics_df=Rautoml::extract_summary(rv_training_results$models)
+
+						rv_training_results$test_metrics_objs=Rautoml::boot_estimates_multiple(
+							models=rv_training_results$models
+							, df=rv_ml_ai$preprocessed$test_df
+							, outcome_var=rv_ml_ai$outcome
+							, problem_type=rv_ml_ai$task
+							, nreps=100
+							, model_name=NULL
+							, type="prob"
+							, report= input$model_training_setup_eval_metric
+							, summary_fun=Rautoml::quantile_summary
+						)
+
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_rf_check", value=FALSE)
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_gbm_check", value=FALSE)
@@ -758,14 +771,17 @@ model_training_caret_train_all_server = function() {
 				} else {
 					rv_training_results$models = NULL
 					rv_training_results$train_metrics_df = NULL
+					rv_training_results$test_metrics_objs = NULL
 				}
 			} else {
 				rv_training_results$models = NULL
 				rv_training_results$train_metrics_df = NULL
+				rv_training_results$test_metrics_objs = NULL
 			}
 		} else {
 			rv_training_results$models = NULL
 			rv_training_results$train_metrics_df = NULL
+			rv_training_results$test_metrics_objs = NULL
 		}
 	})	
 }
@@ -781,8 +797,10 @@ model_training_caret_train_metrics_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
+
+					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({
-						Rautoml::plot(rv_training_results$train_metrics_df)	
+						plot(rv_training_results$train_metrics_df)	
 					})
 
 					output$model_training_caret_train_metrics_df = DT::renderDT({
@@ -803,6 +821,41 @@ model_training_caret_train_metrics_server = function() {
 					  ) %>%
 						 DT::formatRound(columns = c("lower", "estimate", "upper"), digits = 4)
 					})
+					
+					## Test data
+					test_plots = plot(rv_training_results$test_metrics_objs)
+					output$model_training_caret_test_metrics_plot_specifics = renderPlot({
+						plot(test_plots$specifics)	
+					})
+					
+					output$model_training_caret_test_metrics_plot_all = renderPlot({
+						plot(test_plots$all)	
+					})
+
+					output$model_training_caret_test_metrics_plot_roc = renderPlot({
+						plot(test_plots$roc)	
+					})
+					
+					output$model_training_caret_test_metrics_df = DT::renderDT({
+					  df = rv_training_results$test_metrics_objs$all
+
+					  DT::datatable(
+						 df,
+						 escape = FALSE,
+						 rownames = FALSE,
+						 options = list(
+							processing = FALSE,
+							autoWidth = FALSE,
+							scrollX = TRUE,
+							columnDefs = list(
+							  list(className = 'dt-center', targets = c("lower", "estimate", "upper"))
+							)
+						 )
+					  ) %>%
+						 DT::formatRound(columns = c("lower", "estimate", "upper"), digits = 4)
+					})
+					
+
 
 				} else {
 					output$model_training_caret_train_metrics_plot = NULL
@@ -823,27 +876,71 @@ model_training_caret_train_metrics_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
-					p(hr()
-						, br()
-						, box(title = get_rv_labels("model_training_caret_train_metrics")
-							, status = "success"
-							, solidHeader = TRUE
-							, collapsible = TRUE
-							, collapsed = FALSE
-							, width = 12
-							, fluidRow(
-								column(width = 12
-									, DT::DTOutput("model_training_caret_train_metrics_df", width="100%", fill=TRUE)
-								)
-							)
+
+						p(br()
 							, hr()
-							, fluidRow(
-								 column(width=12
-									, plotOutput("model_training_caret_train_metrics_plot")
+							, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_metrics"), ":</b> <br/>"))
+							, tabsetPanel(
+								tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
+									, p(
+										br()
+										, box(title = NULL 
+											, status = "success"
+											, solidHeader = TRUE
+											, collapsible = TRUE
+											, collapsed = FALSE
+											, width = 12
+											, fluidRow(
+												column(width = 12
+													, DT::DTOutput("model_training_caret_train_metrics_df", width="100%", fill=TRUE)
+												)
+											)
+											, hr()
+											, fluidRow(
+												 column(width=12
+													, plotOutput("model_training_caret_train_metrics_plot")
+												)
+											)
+										)
+									)
+								)
+								, tabPanel(get_rv_labels("model_training_caret_train_metrics_test")
+									, p(
+										br()
+										, box(title = NULL 
+											, status = "success"
+											, solidHeader = TRUE
+											, collapsible = TRUE
+											, collapsed = FALSE
+											, width = 12
+											, fluidRow(
+												column(width = 6
+													, DT::DTOutput("model_training_caret_test_metrics_df", width="100%", fill=TRUE)
+												)
+												 , column(width=6
+													, plotOutput("model_training_caret_test_metrics_plot_specifics")
+												)
+											)
+											, hr()
+											, fluidRow(
+												 column(width=12
+													, plotOutput("model_training_caret_test_metrics_plot_all")
+												)
+											)
+											, hr()
+											, fluidRow(
+												column(width=12
+													, plotOutput("model_training_caret_test_metrics_plot_roc")
+												)
+											)
+										)
+									)
 								)
 							)
 						)
-					)
+
+
+
 				}
 			}
 		}

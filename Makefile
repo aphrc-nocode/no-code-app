@@ -124,6 +124,8 @@ model_training_setup.Rout: server/model_training_setup.R
 ### Caret models
 model_training_caret_models.Rout: server/model_training_caret_models.R
 
+### Compare trained models
+compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
 
 ### Reset inputs
 resets.Rout: server/resets.R
