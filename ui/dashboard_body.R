@@ -435,18 +435,18 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                 fluidRow(
                   column(4, uiOutput("dbmsID")),
                   column(4, uiOutput("dbmsServerID")),
-                  column(4, uiOutput("UserID"))
+                  column(4, uiOutput("cohort_db_port"))
                 ),
                 fluidRow(
-                  column(4, uiOutput("UserPswdID")),
-                  column(4, uiOutput("PortID")),
-                  #column(4, uiOutput("PathID"))
-                  column(2, offset = 2, 
-                         br(),uiOutput("ConnectCohortID"), align="right")
-                )
-                # fluidRow(
-                #   column(3, offset = 9, uiOutput("ConnectCohortID"))
-                # )
+                  column(4, uiOutput("cohort_db_name")),
+                  column(4, uiOutput("UserID")),
+                  column(4, uiOutput("UserPswdID"))
+                  #column(2, offset = 2, 
+                         #br(),uiOutput("ConnectCohortID"), align="right")
+                ),
+                fluidRow(
+                   column(2, offset = 9, uiOutput("ConnectCohortID"))
+                 )
               ),
               
               # --- CDM REFERENCE CREATION ---
@@ -729,11 +729,24 @@ tabItem(
     sidebarLayout(
       sidebarPanel(
         # --- DB connection info ---
-        selectInput("dbmsID", "DBMS", choices = c("postgresql", "sql server", "oracle"), selected = "postgresql"),
-        textInput("dbmsServerID", "Server:", value = ""),
-        textInput("PortID", "Port:", value = "5432"),
-        textInput("UserID", "Username:", value = ""),
-        passwordInput("UserPswdID", "Password:"),
+        selectInput("dbmsID", "Database Type", 
+                    choices = c("", "postgresql", "mysql"), 
+                    selected = "postgresql"),
+        textInput("dbmsServerID",
+                  "Host",
+                  placeholder = "e.g., localhost or IP"),
+        numericInput("cohort_db_port",
+                    "Port",
+                     value = 5432),
+        textInput("cohort_db_name",
+                  "Database Name",
+                  placeholder = "Required"),
+        textInput("UserID",
+                  "User",
+                  placeholder = "Required"),
+        passwordInput("UserPswdID",
+                      "Password",
+                      placeholder = "Required"),
         #textInput("jdbc_path", "Path to JDBC Driver:", value = "/path/to/jdbc"),
         
         # --- Connect button ---
