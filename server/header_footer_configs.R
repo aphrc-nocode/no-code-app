@@ -63,7 +63,7 @@ menu_translation = function(){
 		#   menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Cohort_Constructor"), "</span>")), tabName = "CohortConstructor", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
 		#   menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Feature_Extraction"), "</span>")), tabName = "FeatureExtraction", icon = icon("arrows-split-up-and-left", lib = "font-awesome"))
 		#   ),
-      menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
+      #menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
 
 		  menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop_data"), "</span>")), tabName = "omopAnalysis", icon = icon("magnifying-glass-chart", lib = "font-awesome"),
 		  menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("evidenceQuality"), "</span>")), tabName = "evidenceQuality", icon = icon("server", lib = "font-awesome")),
@@ -76,8 +76,6 @@ menu_translation = function(){
 		  
 		  ),
       menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
-		#menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_achilles"), "</span>")), tabName = "achilles", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
-		#menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop"), "</span>")), tabName = "omop_visualizations", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon"))
 
     )
   })
