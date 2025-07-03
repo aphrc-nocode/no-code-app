@@ -3,15 +3,20 @@ feature_extraction_pipeline <- function() {
   
   # --- 1. Connect and fetch schemas ---
   observeEvent(input$ConnectCohortID, {
-    req(input$dbmsID, input$dbmsServerID, input$UserID, input$UserPswdID, input$PortID)
+    req(input$dbmsID,
+        input$dbmsServerID,
+        input$cohort_db_port,
+        input$cohort_db_name,
+        input$UserID, 
+        input$UserPswdID)
     
     tryCatch({
       cohort_conn$details <- DatabaseConnector::createConnectionDetails(
         dbms = input$dbmsID,
-        server = input$dbmsServerID,
+        server = paste0(input$dbmsServerID, "/", input$cohort_db_name),
+        port = input$cohort_db_port,
         user = input$UserID,
         password = input$UserPswdID,
-        port = input$PortID,
         pathToDriver = "./static_files"
       )
       cohort_conn$conn <- DatabaseConnector::connect(cohort_conn$details)

@@ -6,32 +6,63 @@ run_cohort_pipeline <- function() {
     cdm = NULL,
     results = NULL,
     person_summary = NULL,
-    covariateData = NULL,
     summary_table = NULL
   )
   
   # --- UI Inputs ---
-  output$dbmsID <- renderUI({ selectInput("dbmsID", "DBMS", choices = c("postgresql", "sql server")) })
-  output$dbmsServerID <- renderUI({ textInput("dbmsServerID", "Server") })
-  output$UserID <- renderUI({ textInput("UserID", "Username") })
-  output$UserPswdID <- renderUI({ passwordInput("UserPswdID", "Password") })
-  output$PortID <- renderUI({ textInput("PortID", "Port", value = "5432") })
+  output$dbmsID <-  renderUI(selectInput("dbmsID", get_rv_labels("cohort_dbms"), 
+                                                  choices = c("", "postgresql", "mysql"), 
+                                                  selected = "postgresql"))
+  
+  output$dbmsServerID<- renderUI(textInput("dbmsServerID",
+                                        get_rv_labels("cohort_db_host"),
+                                        placeholder = "e.g., localhost or IP"))
+  
+  output$cohort_db_port <- renderUI(numericInput("cohort_db_port",
+                                            get_rv_labels("cohort_db_port"),
+                                            value = 5432))
+  
+  output$cohort_db_name<- renderUI(textInput("cohort_db_name",
+                                        get_rv_labels("cohort_db_name"),
+                                        placeholder = "Required"))
+  
+  output$UserID<- renderUI(textInput("UserID",
+                                        get_rv_labels("cohort_db_user"),
+                                        placeholder = "Required"))
+  
+  output$UserPswdID<- renderUI(passwordInput("UserPswdID",
+                                            get_rv_labels("cohort_db_pwd"),
+                                            placeholder = "Required"))
+  
   output$ConnectCohortID <- renderUI({ actionButton("ConnectCohortID", "Connect", class = "btn-success") })
+  
+  # output$dbmsID <- renderUI({ selectInput("dbmsID", "DBMS", choices = c("postgresql", "sql server")) })
+  # output$dbmsServerID <- renderUI({ textInput("dbmsServerID", "Server") })
+  # output$UserID <- renderUI({ textInput("UserID", "Username") })
+  # output$UserPswdID <- renderUI({ passwordInput("UserPswdID", "Password") })
+  # output$PortID <- renderUI({ textInput("PortID", "Port", value = "5432") })
+  
   
   # --- Connect to Database ---
   observeEvent(input$ConnectCohortID, {
-    req(input$dbmsID, input$dbmsServerID, input$UserID, input$UserPswdID, input$PortID)
+    req(input$dbmsID,
+        input$dbmsServerID,
+        input$cohort_db_port,
+        input$cohort_db_name,
+        input$UserID, 
+        input$UserPswdID)
     tryCatch({
-      if (!rJava::.jniInitialized) rJava::.jinit()
+      #if (!rJava::.jniInitialized) rJava::.jinit()
       
       cohort_conn$details <- DatabaseConnector::createConnectionDetails(
         dbms = input$dbmsID,
-        server = input$dbmsServerID,
+        server = paste0(input$dbmsServerID, "/", input$cohort_db_name),
+        port = input$cohort_db_port,
         user = input$UserID,
         password = input$UserPswdID,
-        port = input$PortID,
         pathToDriver = "./static_files"
       )
+
       cohort_conn$conn <- DatabaseConnector::connect(cohort_conn$details)
       
       cohort_conn$schema_names <- DBI::dbGetQuery(cohort_conn$conn,
@@ -217,7 +248,7 @@ run_cohort_pipeline <- function() {
       
       
       # --- Plots after cohort summary ---
-      output$gender_plot <- plotly::renderPlotly({
+      output$Gender_plot <- plotly::renderPlotly({
         req(cohort_conn$person_summary)
         df <- cohort_conn$person_summary
         gender_df <- df %>%
@@ -250,7 +281,7 @@ run_cohort_pipeline <- function() {
           layout(title = "Age Group Distribution", yaxis = list(title = "Count"), xaxis = list(title = "Age Group"))
       })
       
-      output$race_plot <- plotly::renderPlotly({
+      output$Race_plot <- plotly::renderPlotly({
         req(cohort_conn$person_summary)
         df <- cohort_conn$person_summary %>%
           dplyr::filter(!is.na(race_source_value)) %>%
@@ -279,41 +310,7 @@ run_cohort_pipeline <- function() {
   })
 
   
-  # --- Feature Extraction UI Elements ---
-  output$SelectCohortTable <- renderUI({
-    req(input$CohortNameID)
-    selectInput("SelectedCohort", "Select Cohort Table", choices = c(input$CohortNameID))
-  })
-  
-  output$ExtractFeaturesID <- renderUI({
-    req(cohort_conn$cdm, input$CohortNameID)
-    actionButton("ExtractFeaturesID", "Extract Features", class = "btn-primary")
-  })
-  
-  output$CovariateTableUI <- renderUI({
-    req(cohort_conn$covariateData)
-    tagList(
-      h4("Sample Extracted Features"),
-      tableOutput("covariate_table"),
-      downloadButton("DownloadCovariates", "Download Covariates")
-    )
-  })
-  
-  output$covariate_table <- renderTable({
-    req(cohort_conn$covariateData)
-    if (is.null(cohort_conn$covariateData$covariates)) {
-      return(data.frame(message = "No covariates found."))
-    }
-    head(cohort_conn$covariateData$covariates %>% dplyr::collect(), 10)
-  })
-  
-  output$DownloadCovariates <- downloadHandler(
-    filename = function() paste0("covariates-", Sys.Date(), ".csv"),
-    content = function(file) {
-      df <- cohort_conn$covariateData$covariates %>% dplyr::collect()
-      readr::write_csv(df, file)
-    }
-  )
+
   
   
 }
