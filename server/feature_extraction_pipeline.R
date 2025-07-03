@@ -1,3 +1,4 @@
+# Updated Feature Extraction Function (server-side)
 feature_extraction_pipeline <- function() {
   cohort_conn <- reactiveValues(details = NULL, conn = NULL, schema_names = NULL, tables = NULL)
   
@@ -19,6 +20,7 @@ feature_extraction_pipeline <- function() {
         password = input$UserPswdID,
         pathToDriver = "./static_files"
       )
+      
       cohort_conn$conn <- DatabaseConnector::connect(cohort_conn$details)
       
       cohort_conn$schema_names <- DBI::dbGetQuery(
@@ -78,7 +80,7 @@ feature_extraction_pipeline <- function() {
     req(input$cdm_schema, input$results_schema, input$cohort_table, input$cohort_id, input$output_csv)
     
     if (is.null(input$domain_choices) || length(input$domain_choices) == 0) {
-      showNotification("⚠️ Please select at least one domain.", type = "warning")
+      showNotification("\u26a0\ufe0f Please select at least one domain.", type = "warning")
       return(NULL)
     }
     
@@ -88,7 +90,6 @@ feature_extraction_pipeline <- function() {
       resultsSchema <- input$results_schema
       cohortTable <- input$cohort_table
       cohortId <- as.integer(input$cohort_id)
-      output_csv <- input$output_csv
       
       covariateSettings <- FeatureExtraction::createCovariateSettings(
         useDemographicsGender = "demographics" %in% input$domain_choices,
@@ -130,10 +131,8 @@ feature_extraction_pipeline <- function() {
       
       dt <- data.table::as.data.table(cov_named)
       cov_wide <- data.table::dcast(dt, person_id ~ covariateName, 
-                              value.var = "covariateValue", 
-                              fun.aggregate = sum, 
-                              fill = 0)
-
+                                    value.var = "covariateValue", 
+                                    fun.aggregate = sum, fill = 0)
       
       person_ids <- paste(na.omit(unique(cov_wide$person_id)), collapse = ",")
       
@@ -160,12 +159,32 @@ feature_extraction_pipeline <- function() {
       ))
       
       final_df <- left_join(cov_demo, condition_data, by = "person_id")
-      readr::write_csv(final_df %>% filter(!is.na(person_id)), output_csv)
       
+      # --- Save and integrate into Upload Overview ---
+      upload_time <- Sys.time()
+      file_name <- paste0("feature_extracted_", format(upload_time, "%Y%m%d%H%M%S"))
+      temp_name <- paste0(file_name, ".csv")
+      file_path <- file.path("datasets", temp_name)
       
-      showNotification("✅ Feature-enriched dataset saved!", type = "message")
+      readr::write_csv(final_df %>% filter(!is.na(person_id)), file_path)
+      
+      meta_data <- Rautoml::create_df_metadata(
+        data = final_df,
+        filename = temp_name,
+        study_name = "Feature Extraction",
+        study_country = NA,
+        additional_info = "Feature-extracted from CDM cohort",
+        upload_time = upload_time,
+        last_modified = upload_time
+      )
+      
+      log_file_main <- file.path(".log_files", paste0(temp_name, "-upload.main.log"))
+      write.csv(meta_data, log_file_main, row.names = FALSE)
+      
+      showNotification("\u2705 Feature-extracted dataset saved and appears in Upload Overview!", type = "message")
+      
     }, error = function(e) {
-      showNotification(paste("❌ Error:", e$message), type = "error")
+      showNotification(paste("\u274c Error:", e$message), type = "error")
     })
   })
 }
