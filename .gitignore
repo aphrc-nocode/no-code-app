@@ -38,4 +38,5 @@ no-code-app.Rproj
 datasets
 
 *.html
+.env
 
