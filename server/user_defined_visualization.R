@@ -154,6 +154,32 @@ user_defined_server <- function() {
 	})
   
   
+  ####Themes
+  
+  
+observe({
+      
+  if(isTRUE(!is.null(rv_current$working_df))){
+    output$user_ggthemes <- renderUI({
+      selectInput("ggplot_theme", "Choose ggplot2 theme:",
+                  choices = theme_choices <- c(
+                    "Default (theme_grey)" = "theme_grey",
+                    "Black & White (theme_bw)" = "theme_bw",
+                    "Classic (theme_classic)" = "theme_classic",
+                    "Minimal (theme_minimal)" = "theme_minimal",
+                    "Light (theme_light)" = "theme_light",
+                    "Dark (theme_dark)" = "theme_dark",
+                    "Linedraw (theme_linedraw)" = "theme_linedraw",
+                    "Void (theme_void)" = "theme_void",
+                    "Test (theme_test)" = "theme_test"
+                  ), selected = "Minimal (theme_minimal)")
+    })
+  }else{
+    output$user_ggthemes <- NULL
+  }
+    })
+  
+
   observe({
     if(isTRUE(!is.null(rv_current$working_df))){
       shinyjs::showElement("DivvisualizationMenu")
@@ -746,6 +772,19 @@ user_defined_server <- function() {
   })
   
   
+  observe({
+    req(input$btnChartType)
+    req(rv_current$working_df)
+    req(input$cboColorVar)
+    if((input$cboColorVar!="" & !is.null(input$cboColorVar) & input$btnChartType%in% c("Violin", "Boxplot", "Line", "Scatterplot", "Bar")) | input$btnChartType=="Pie"){
+      shinyjs::hide("cboColorSingle")
+      shinyjs::show("cboColorBrewer")
+    }else{
+      shinyjs::hide("cboColorBrewer")
+      shinyjs::show("cboColorSingle")
+    }
+  })
+  
   observeEvent(input$cboFacetVar,{
     
     if(isTRUE(!is.null(rv_current$working_df))){
@@ -868,7 +907,7 @@ user_defined_server <- function() {
                                                    vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
                                                    title_pos = input$numplotposition, title_size= input$numplottitlesize,
                                                    axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                   axistext_angle = input$xaxistextangle,
+                                                   axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                        )}, error = function(e){
                         ggplot2::ggplot()+ggplot2::theme_minimal()
@@ -883,7 +922,7 @@ user_defined_server <- function() {
                                                   vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
                                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                  axistext_angle = input$xaxistextangle,
+                                                  axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )}, error = function(e){
                        ggplot2::ggplot()+ggplot2::theme_minimal()
@@ -898,7 +937,7 @@ user_defined_server <- function() {
                                                      xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
                                                      title_pos = input$numplotposition, title_size= input$numplottitlesize,
                                                      axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                     axistext_angle = input$xaxistextangle,
+                                                     axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
                                                      bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity,
                                                      density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
                      )}, error = function(e){
@@ -910,7 +949,7 @@ user_defined_server <- function() {
                                                      xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                      ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
                                                      line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
-                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize, custom_theme = match.fun(input$ggplot_theme)(),
                                                      axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
                                                      addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
                                                      legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
@@ -925,7 +964,7 @@ user_defined_server <- function() {
                                                        line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
                                                        title_pos = input$numplotposition, title_size= input$numplottitlesize,
                                                        axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                       addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle,
+                                                       addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
                                                        legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
                                                        confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
                      )}, error = function(e){
@@ -939,7 +978,7 @@ user_defined_server <- function() {
                                                    xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
                                                    ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
                                                    vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
-                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize, custom_theme = match.fun(input$ggplot_theme)(),
                                                    axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
                                                    data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
@@ -954,7 +993,7 @@ user_defined_server <- function() {
                                                     xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
                                                     facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                    data_label_size = input$numDataLabelSize,
+                                                    data_label_size = input$numDataLabelSize, custom_theme = match.fun(input$ggplot_theme)(),
                                                     legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer
                        )}, error = function(e){
                          ggplot2::ggplot()+ggplot2::theme_minimal()

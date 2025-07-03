@@ -18,6 +18,7 @@ non_numric_non_date_df <- function(df){
 }
 
 
+
 user_output_type = renderUI({
   radioButtons(
     "cboOutput",
@@ -26,9 +27,6 @@ user_output_type = renderUI({
     inline = TRUE
   )
 })
-
-
-
 
 
 user_tab_options =renderUI({
@@ -494,48 +492,48 @@ user_select_color_variable_single =renderUI({
 
 user_select_color_parlet =renderUI({
   selectInput(
-  "cboColorBrewer",
-  paste0(get_rv_labels("user_select_color_parlet"), ":"),
-  choices =
-    c(
-      "Accent",
-      "Dark2",
-      "Paired",
-      "Pastel1",
-      "Pastel2",
-      "Set1",
-      "Set2",
-      "Set3",
-      "BrBG",
-      "PiYG",
-      "PRGn",
-      "PuOr",
-      "RdBu",
-      "RdGy",
-      "RdYlBu",
-      "RdYlGn",
-      "Spectral",
-      "Blues",
-      "BuGn",
-      "BuPu",
-      "GnBu",
-      "Greens",
-      "Greys",
-      "Oranges",
-      "OrRd",
-      "PuBu",
-      "PuBuGn",
-      "PuRd",
-      "Purples",
-      "RdPu",
-      "Reds",
-      "YlGn",
-      "YlGnBu",
-      "YlOrBr",
-      "YlOrRd"
-    ),
-  selected = "Dark2"
-)
+    "cboColorBrewer",
+    paste0(get_rv_labels("user_select_color_parlet"), ":"),
+    choices =
+      c(
+        "Accent",
+        "Dark2",
+        "Paired",
+        "Pastel1",
+        "Pastel2",
+        "Set1",
+        "Set2",
+        "Set3",
+        "BrBG",
+        "PiYG",
+        "PRGn",
+        "PuOr",
+        "RdBu",
+        "RdGy",
+        "RdYlBu",
+        "RdYlGn",
+        "Spectral",
+        "Blues",
+        "BuGn",
+        "BuPu",
+        "GnBu",
+        "Greens",
+        "Greys",
+        "Oranges",
+        "OrRd",
+        "PuBu",
+        "PuBuGn",
+        "PuRd",
+        "Purples",
+        "RdPu",
+        "Reds",
+        "YlGn",
+        "YlGnBu",
+        "YlOrBr",
+        "YlOrRd"
+      ),
+    selected = "Dark2"
+  )
 })
   
   user_select_color_parlet_corrplot =renderUI({
