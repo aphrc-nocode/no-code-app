@@ -21,8 +21,8 @@ function(input, output, session){
     ),
     additional_fields = c('first_name' = 'First Name',
                           'last_name' = 'Last Name'),
-    cookie_name = "aphrc",
-    cookie_password = "aphrcpass"
+    cookie_name = "aphrc1",
+    cookie_password = "aphrcpass1"
   )
   
   output$userName <- renderText({ paste0(USER$first_name," ", USER$last_name) })
@@ -444,6 +444,10 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+
+  #### ---- Deep Learning Server ----- ###
+  source("server/deep_learning.R", local=TRUE)
+  deep_learning()
   
   
 }
