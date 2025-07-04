@@ -6,10 +6,7 @@ import numpy as np
 import pandas as pd
 import pycaret
 from pycaret.clustering import setup as clu_setup, create_model as clu_create, pull as clu_pull
-import tempfile
-import os
 import uvicorn
-import base64
 import matplotlib
 from io import BytesIO
 import csv
@@ -17,9 +14,9 @@ import io
 import base64
 import matplotlib.pyplot as plt
 import tempfile, os
-import pandas as pd
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 import math
+
  
 from pycaret.classification import (
     compare_models as clf_compare,
@@ -33,6 +30,13 @@ from pycaret.classification import (
     get_config,
     interpret_model
 )
+
+
+# Répertoire racine du projet (là où se trouve ce fichier)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
+MODELS_DIR = os.path.join(BASE_DIR, "..", "models")
+MODELS_DIR = os.path.abspath(MODELS_DIR)
+
 
 
 
@@ -63,46 +67,54 @@ async def automl(
     analysis_type: str = Form("supervised"),
     n_models: int = Form(10)  # Default value => 10
 ):
-        # Lire le fichier temporairement
+        # Read temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
         contents = await file.read()
         tmp.write(contents)
         tmp_path = tmp.name
-    # Lire le CSV
+    # Read CSV file
     df = pd.read_csv(tmp_path)
     print("Columns:", df.columns.tolist())
     print(df.head())
     print("Target:", target)
 
     if analysis_type == "supervised":
-        # Setup + compare_models pour apprentissage supervisé (classification ici)
+        # Setup + compare_models for supervised learning
         clf_setup(data=df, target=target, session_id=session_id)
         #top_models = clf_compare(n_select=10)
         #leaderboard = clf_pull()
         # Manage index reset to get internal IDs
         #top_models = clf_compare(n_select=10)
         top_models = clf_compare(n_select=n_models)
-        n_models = int(n_models)  # Force la conversion (protection)
+        n_models = int(n_models)  # Force conversion
         top_models = clf_compare(n_select=n_models)
+        
+        # For deployment, save the best model
+        model_path = "deployed_model"
+        save_model(top_models[0], model_path)  # sauvegarde dans deployed_model.pkl
+        # end deployment
+        
         # Check if top_models is empty
         print("No of models for training :", n_models)
-        leaderboard = clf_pull() # important pour récupérer l'identifiant interne
-        leaderboard = leaderboard.reset_index()  # assure que l'index est une colonne
+        leaderboard = clf_pull() # get internal ID
+        leaderboard = leaderboard.reset_index()  # ensures that the index is a column
         # Limit the leaderboard
         leaderboard = leaderboard.iloc[:n_models]
-        # L'index du leaderboard contient les model_ids
+        # Index OF leaderboard contains model_ids
         if "index" in leaderboard.columns:
             leaderboard["model_id"] = leaderboard["index"].str.lower()
         else:
-            # fallback au nom du modèle, peu fiable mais au cas où
+            # fallback to the model name, unreliable but just in case
             leaderboard["model_id"] = leaderboard["Model"].str.extract(r"^(\w+)").iloc[:,0].str.lower()
         print(leaderboard[["index", "Model"]])
-        # Nettoyage
+        # Cleaning
         os.remove(tmp_path)
+        
         return JSONResponse(content={
             "best_model_name": str(top_models[0]),
             "leaderboard": leaderboard.to_dict(orient="records")
         })
+
 
     elif analysis_type == "unsupervised":
         # Setup + create_model for clustering (exemple: kmeans)
@@ -194,7 +206,7 @@ async def evaluate_model(
 
     # Step 6 : Feature importance
     try:
-        # Utiliser les vraies colonnes transformées utilisées pour entraîner le modèle
+        # Use the real transformed columns used to train the model
         features = get_config("X_train_transformed").columns
 
         if hasattr(model, "feature_importances_"):
@@ -271,7 +283,7 @@ async def evaluate_model(
 
         # Case 3 : (n_obs, n_features, n_classes) switch to (n_obs, n_classes, n_features)
         elif shap_arr.ndim == 3 and shap_arr.shape[1] == len(feature_names):
-            print("Transposing SHAP array: (n_obs, n_feat, n_class) → (n_obs, n_class, n_feat)")
+            print("Transposing SHAP arr!ay: (n_obs, n_feat, n_class) → (n_obs, n_class, n_feat)")
             shap_arr = np.transpose(shap_arr, axes=(0, 2, 1))
             mean_abs_shap = np.abs(shap_arr).mean(axis=(0, 1))
 
@@ -290,10 +302,16 @@ async def evaluate_model(
         print("SHAP not generated :", e)
         shap_values_json = []
 
-    # Step 10 : Save model
-    model_path = f"models/{model_name}"
-    os.makedirs("models", exist_ok=True)
+    # Step 10 : Save model on py folder
+    #model_path = f"models/{model_name}"
+    #os.makedirs("models", exist_ok=True)
+    #save_model(model, model_path)
+
+    # Chemin final du modèle
+    model_path = os.path.join(MODELS_DIR, model_name)
+    print("Dossier modèles absolu :", MODELS_DIR)
     save_model(model, model_path)
+
 
     # Step 11 : Clean and return
     result = {
@@ -310,9 +328,9 @@ async def evaluate_model(
         },
         "message": f"Model '{model_name}' saved in {model_path}.pkl"
     }
+    
 
     return clean_json(result)
-
 
 # Prediction endpoint
 @app.post("/predict_model")
@@ -363,12 +381,73 @@ async def run_prediction(
         pred.to_csv(result_file.name, index=False)
         print("Prediction file stored :", result_file.name)
 
-        # Affiche son contenu brut pour être sûr :
+        # Print raw content
         with open(result_file.name, "r") as f:
             print("Check Raw content of CSV file :\n", f.read())
         return FileResponse(path=result_file.name, media_type="text/csv", filename="predictions.csv")
 
     except Exception as e:
-        return {"error": f"Erreur API (predict_model) : {str(e)}"}
+        return {"error": f"Error API (predict_model) : {str(e)}"}
     
     
+
+from pycaret.classification import load_model, predict_model
+import csv
+import pandas as pd
+import tempfile
+import os
+from fastapi import UploadFile, File
+from pycaret.classification import load_model, predict_model
+
+@app.post("/predict_deployed_model")
+async def predict_deployed_model(file: UploadFile = File(...)):
+    # Sauvegarder temporairement le fichier reçu
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+        contents = await file.read()
+        tmp.write(contents)
+        tmp_path = tmp.name
+
+    # Détecter le séparateur automatiquement
+    with open(tmp_path, "r", encoding="utf-8") as f:
+        sample = f.read(2048)
+        f.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;")
+            sep = dialect.delimiter
+        except csv.Error:
+            sep = ","  # fallback par défaut
+
+    # Lire le fichier avec le bon séparateur
+    try:
+        df = pd.read_csv(tmp_path, sep=sep)
+        os.remove(tmp_path)
+    except Exception as e:
+        return {"error": f"Erreur lecture fichier CSV : {str(e)}"}
+
+    # Charger le modèle
+    try:
+        model = load_model("deployed_model")
+        predictions = predict_model(model, data=df)
+        return predictions.to_json(orient="records")
+    except Exception as e:
+        return {
+            "error": f"Erreur lors de la prédiction : {str(e)}",
+            "columns_received": df.columns.tolist()
+        }
+
+@app.post("/deploy_model")
+async def deploy_model(model_id: str = Form(...)):
+    import shutil
+    import os
+    # Chemins des modèles
+    model_source_path = f"models/{model_id}.pkl"
+    model_dest_path = "deployed_model.pkl"
+
+    # Vérification existence
+    if not os.path.exists(model_source_path):
+        return {"error": f"Modèle '{model_id}' non trouvé. Avez-vous bien évalué ce modèle ?"}
+
+    # Copier le fichier vers le modèle déployé
+    shutil.copyfile(model_source_path, model_dest_path)
+
+    return {"message": f"✅ Modèle '{model_id}' déployé avec succès."}

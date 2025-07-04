@@ -2,15 +2,11 @@ automl_ui <- function(id) {
   ns <- NS(id)
   tagList(
     h3("AutoML with PyCaret"),
-    numericInput(ns("session_id"), "Session ID", value = 123, min = 1),
-    selectInput(ns("analysis_type"), "Analysis type",
-                choices = c("Supervised" = "supervised", "Unsupervised" = "unsupervised")),
-    uiOutput(ns("target_selector")),
     # Update 
     numericInput(ns("n_models"), "No of models for comparison (AutoML)", value = 10, min = 1, max = 50),
     actionButton(ns("launch_automl"), "Launch AutoML"),
     br(), br(),
-    h4("Best models"),
+    h4("Train performance (Cross-validation)"),
     #br(), br(),
     DT::dataTableOutput(ns("automl_results")),
     ## New bloc 1 start 
@@ -32,7 +28,7 @@ automl_ui <- function(id) {
     br(), br(),
     #uiOutput(ns("model_plots")),
     #br(),
-    h4("Evaluation Results for Selected Model"),
+    h4("Test performance (Test set)"),
     DT::dataTableOutput(ns("evaluation_metrics")),
     # New bloc 2 end
     
@@ -44,9 +40,16 @@ automl_ui <- function(id) {
     uiOutput(ns("download_prediction_ui")),
     br(), br(),
     DTOutput(ns("leaderboard_train_table")),
-    DTOutput(ns("leaderboard_test_table"))
+    DTOutput(ns("leaderboard_test_table")),
+    DT::dataTableOutput(ns("deployed_predictions")),
+
+    # Deploy
     
     
     
+    #,h4("Train performance (Cross-validation)")
+    #,DT::dataTableOutput(ns("leaderboard_table"))
+    #,h4("Test performance (Holdout/Test set)")
+    #,DT::dataTableOutput(ns("evaluation_metrics_table"))
   )
 }
