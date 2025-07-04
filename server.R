@@ -88,6 +88,16 @@ function(input, output, session) {
 		, history = NULL
 	)
 
+	## Reactive values to stock AutoML leaderboard
+	rv_automl <- reactiveValues(
+	  leaderboard = NULL
+	)
+	
+	source("server/deploy_model_server.R")
+	source("ui/deploy_model_ui.R")
+	deploy_model_server("deploy_model_module", rv_automl)
+	
+	
   #### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
@@ -376,18 +386,26 @@ function(input, output, session) {
   ##### ----- Preprocessing ------------------- ####
   source("server/feature_engineering.R", local=TRUE)
 
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+  source("server/automl_server.R")
+  automl_server("automl_module", rv_current, rv_ml_ai)
+  
   #### ----- Modelling framework --------------------------------- ####
 
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
 
   ###### ----- Initialize recipe ------------------- ####
-#  setup_recipe_server()
+#setup_recipe_server()
   
   ###### ----- Impute missing values ------------------- ####
 #  impute_missing_server()
 
-
+# Pycaret
+#pycaret_feature_engineering_server("pycaret_module", rv_current, rv_ml_ai)
+#feature_engineering_server("feature_engineering_module", rv_current, rv_ml_ai)
+  
+  
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
@@ -401,7 +419,25 @@ function(input, output, session) {
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+
+  observe({
+    req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
+    
+    if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
+      output$automl_module_ui <- renderUI({
+        automl_ui("automl_module")
+      })
+    } else {
+      output$automl_module_ui <- renderUI({
+        h4("")
+      })
+    }
+  })
   
+  # Deployment
+  output$deploy_model_module_ui <- renderUI({
+    deploy_model_ui("deploy_model_module")
+  }) 
   
 }
 
