@@ -481,15 +481,6 @@ function(input, output, session) {
   ## Various components come before this
   source("server/resets.R", local = TRUE)
 
-
-  ##### ---- Reset on delete or language change ------------------- ####
-  reset_data_server()
-
-  #### ---- Activate required fields --------------------------------------####
-  iv$enable()
-  iv_url$enable()
-  iv_ml$enable()
-
   observe({
     req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
     
@@ -509,6 +500,15 @@ function(input, output, session) {
     deploy_model_ui("deploy_model_module")
   }) 
   
+
+  ##### ---- Reset on delete or language change ------------------- ####
+  reset_data_server()
+
+  #### ---- Activate required fields --------------------------------------####
+  iv$enable()
+  iv_url$enable()
+  iv_ml$enable()
+
 }
 
 
