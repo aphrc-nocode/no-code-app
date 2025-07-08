@@ -127,12 +127,18 @@ function(input, output, session) {
 		, train_metrics_df = NULL
 		, test_metrics_objs = NULL
 	)
+  
+	## Reactive values to stock AutoML leaderboard
+	rv_automl <- reactiveValues(
+	  leaderboard = NULL
+	)
 
 	#### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
   
   ###-------App Footer--------------------------
+  
   footer_language_translation()
   ###-------Menu Translate---------
   
@@ -422,7 +428,7 @@ function(input, output, session) {
   #### ------ Missing value imputation -------------------------- ####
   feature_engineering_recipe_server()
   feature_engineering_impute_missing_server()
-
+  
   #### ----- Modelling framework --------------------------------- ####
 
   source("server/modelling_framework.R", local=TRUE)
@@ -434,6 +440,7 @@ function(input, output, session) {
 
   #### ----- Caret models --------------------------------------- ####
   source("server/model_training_caret_models.R", local=TRUE)
+
   
   ## LM/GLM
   model_training_caret_models_ols_server()
@@ -459,6 +466,16 @@ function(input, output, session) {
   ## Model metrics
   model_training_caret_train_metrics_server()
 
+  #### ---- PyCaret Integration (API) ----------------------------------------------------
+
+	source("server/deploy_model_server.R", local=TRUE)
+	source("ui/deploy_model_ui.R", local=TRUE)
+	deploy_model_server("deploy_model_module", rv_automl)
+  
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+  source("server/automl_server.R", local=TRUE)
+  automl_server("automl_module", rv_current, rv_ml_ai)
+	
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
@@ -472,7 +489,25 @@ function(input, output, session) {
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+
+  observe({
+    req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
+    
+    if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
+      output$automl_module_ui <- renderUI({
+        automl_ui("automl_module")
+      })
+    } else {
+      output$automl_module_ui <- renderUI({
+        h4("")
+      })
+    }
+  })
   
+  # Deployment
+  output$deploy_model_module_ui <- renderUI({
+    deploy_model_ui("deploy_model_module")
+  }) 
   
 }
 

@@ -403,6 +403,10 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 									, uiOutput("feature_engineering_perform_upsample_steps")
 									, uiOutput("feature_engineering_perform_upsample_steps_choices")
 									, uiOutput("feature_engineering_apply")
+									, DT::DTOutput("pycaret_results_table")
+									, downloadButton("download_pycaret_results", "Download PyCaret results")
+									,br(), br(),
+                  uiOutput("automl_module_ui")  # AutoML UI here
 								)
 								, column(width=9
 									, uiOutput("feature_engineering_preprocessed_log_ui")
