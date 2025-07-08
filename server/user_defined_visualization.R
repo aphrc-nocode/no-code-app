@@ -219,9 +219,10 @@ observe({
         !is.null(input$cboBivariateFeatures) &&
         input$cboBivariateOutcome %in% names(rv_current$working_df) &&
         input$cboBivariateOutcome %in% input$cboBivariateFeatures) {
-          
+
           updateSelectInput(session, "cboBivariateFeatures", choices = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)],
-                            selected = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)]
+                            selected = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20][
+                              !is.na(names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20])]
                             )}
 })
 
@@ -259,7 +260,7 @@ observe({
               get_rv_labels("bivariate_outcome")
               ,":")
               , choices = temp_var
-              , selected = temp_var[1:20][!is.na(temp_var[1:20])]
+              , selected = temp_var[1]
               ,
             )
           })
@@ -333,7 +334,7 @@ observe({
         tryCatch({Rautoml::bivariate_plot(
         df = rv_current$working_df,
         outcome = input$cboBivariateOutcome,
-        features = c(input$cboBivariateFeatures),
+        features = input$cboBivariateFeatures,
         colorbrewer = input$cboColorBrewerBivariate,
         title = input$txtPlotBivariateTitle
         )}, error = function(e){
@@ -772,19 +773,7 @@ observe({
   })
   
   
-  observe({
-    req(input$btnChartType)
-    req(rv_current$working_df)
-    req(input$cboColorVar)
-    if((input$cboColorVar!="" & !is.null(input$cboColorVar) & input$btnChartType%in% c("Violin", "Boxplot", "Line", "Scatterplot", "Bar")) | input$btnChartType=="Pie"){
-      shinyjs::hide("cboColorSingle")
-      shinyjs::show("cboColorBrewer")
-    }else{
-      shinyjs::hide("cboColorBrewer")
-      shinyjs::show("cboColorSingle")
-    }
-  })
-  
+
   observeEvent(input$cboFacetVar,{
     
     if(isTRUE(!is.null(rv_current$working_df))){
@@ -872,6 +861,23 @@ observe({
     output$user_chart_type = NULL
   }
  
+  })
+  
+  
+  observe({
+    req(input$btnChartType)
+    
+    isColorVarValid <- !is.null(input$cboColorVar) && input$cboColorVar != ""
+    isChartTypeWithColor <- input$btnChartType %in% c("Violin", "Boxplot", "Line", "Scatterplot", "Bar")
+    isPieChart <- input$btnChartType == "Pie"
+    
+    if ((isColorVarValid && isChartTypeWithColor) || isPieChart) {
+      shinyjs::hide("cboColorSingle")
+      shinyjs::show("cboColorBrewer")
+    } else {
+      shinyjs::hide("cboColorBrewer")
+      shinyjs::show("cboColorSingle")
+    }
   })
   
   plt_temp <- reactiveValues(chart_type1 = NULL)
