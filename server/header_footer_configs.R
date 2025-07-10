@@ -60,17 +60,20 @@ menu_translation = function(){
                   menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("deploy_model_test"), "</span>")), tabName = "modelDeploy", icon = icon("server", lib = "font-awesome")),
                   menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
                 ),
-                menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book"))
+				
+				menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("deeplearning"), "</span>")), tabName = "deeplearning", icon = icon("gear")),
+
+                menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
+				
+				br(),
+				div(
+				  style="display: flex; justify-content: flex-start; gap: 10px; margin-top: 5px;",
+				  actionBttn("logoutID", label = get_rv_labels("logoutID"), class = "btn")
+				  #is_logged_in(
+				   # id = app_login_config$APP_ID,login::logout_button(id = "logout", label = "Sign out"))
+				)
     )
   })
   
   
 }
-
-
-
-
-
-
-
-
