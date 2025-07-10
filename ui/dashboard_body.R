@@ -420,12 +420,43 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						tabItem(tabName = "featureEngineering",
 							fluidRow(
 								column(width = 3
-									, uiOutput("impute_missing_options")
+									, uiOutput("modelling_framework_choices")
+									, uiOutput("feature_engineering_perform_partition")
+									, uiOutput("feature_engineering_perform_preprocess")
+									, uiOutput("feature_engineering_perform_missing_impute")
+									, uiOutput("feature_engineering_impute_missing_impute")
+									, uiOutput("feature_engineering_perform_fe_steps")
+									, uiOutput("feature_engineering_perform_corr_steps")
+									, uiOutput("feature_engineering_perform_corr_steps_value")
+									, uiOutput("feature_engineering_perform_pca_steps")
+									, uiOutput("feature_engineering_perform_upsample_steps")
+									, uiOutput("feature_engineering_perform_upsample_steps_choices")
+									, uiOutput("feature_engineering_apply")
+									, DT::DTOutput("pycaret_results_table")
+									, downloadButton("download_pycaret_results", "Download PyCaret results")
+									,br(), br(),
+                  uiOutput("automl_module_ui")  # AutoML UI here
+								)
+								, column(width=9
+									, uiOutput("feature_engineering_preprocessed_log_ui")
+									, verbatimTextOutput("feature_engineering_preprocessed_log")
 								)
 							)
 						),
 						tabItem(tabName = "trainModel",
-								  fluidRow()),
+								  fluidRow(
+									column(width = 12
+										, uiOutput("model_training_setup_presetup")
+
+									)
+								, column(width=12
+									, uiOutput("model_training_caret_models_ui")
+								)
+								, column(width=12
+									, uiOutput("model_training_caret_train_metrics")
+								)
+							)
+						),
 						tabItem(tabName = "validateDeployModel",
 								  fluidRow()),
 						tabItem(tabName = "predictClassify",

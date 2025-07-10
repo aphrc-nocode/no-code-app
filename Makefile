@@ -112,9 +112,20 @@ research_questions.Rout: server/research_questions.R
 ### Setup
 setup_models.Rout: server/setup_models.R
 
+### Modelling Framework
+modelling_framework.Rout: server/modelling_framework.R
+
 ### Feature engineering
 feature_engineering.Rout: server/feature_engineering.R
 
+### Training set up
+model_training_setup.Rout: server/model_training_setup.R
+
+### Caret models
+model_training_caret_models.Rout: server/model_training_caret_models.R
+
+### Compare trained models
+compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
 
 ### Reset inputs
 resets.Rout: server/resets.R

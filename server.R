@@ -132,18 +132,64 @@ function(input, output, session){
 		, analysis_type = NULL
 		, task = NULL
 		, outcome = NULL
+		, model_formula = NULL
 		, partition_ratio = NULL
 		, predictors = NULL
 		, excluded_predictors = NULL
 		, ml_ai_setup_result = NULL
 		, history = NULL
+		, split = NULL
+		, train_df = NULL
+		, test_df = NULL
+		, preprocessed = NULL
+		, feature_engineering_preprocessed_log = NULL
+		, at_least_one_model = FALSE
 	)
 
-  #### ---- App title ----------------------------------------------------
+	## RV to hold UIs
+	rv_ui_models = reactiveValues(
+	   model_training_caret_models_ols_check = NULL
+		, model_training_caret_models_ols_advance_control = NULL
+	)
+		
+	## Train control caret
+	rv_train_control_caret = reactiveValues(
+		method = "cv"
+		, number = 5
+		, repeats = NA
+		, search = "grid"
+		, verboseIter = FALSE
+		, savePredictions = FALSE
+		, classProbs = TRUE
+	)
+   
+	## Trained models
+	rv_training_models = reactiveValues(
+		ols_model = NULL
+		, ols_param = FALSE
+		, ols_name = NULL
+		, rf_model = NULL
+		, rf_param = FALSE
+		, rf_name = NULL
+	)
+	
+	rv_training_results = reactiveValues(
+		models = NULL
+		, train_metrics_df = NULL
+		, test_metrics_objs = NULL
+	)
+  
+	## Reactive values to stock AutoML leaderboard
+	rv_automl <- reactiveValues(
+	  leaderboard = NULL
+	)
+
+	#### ---- App title ----------------------------------------------------
   source("server/header_footer_configs.R", local=TRUE)
   app_title()
   
   ###-------App Footer--------------------------
+  
   footer_language_translation()
   ###-------Menu Translate---------
   
@@ -424,19 +470,89 @@ function(input, output, session){
   ##### ----- Preprocessing ------------------- ####
   source("server/feature_engineering.R", local=TRUE)
   
-  ###### ----- Initialize recipe ------------------- ####
-#  setup_recipe_server()
+  #### Preprocessing ------------------------------------------- ####
+  feature_engineering_perform_preprocess_server()
+
+  #### ------ Missing value imputation -------------------------- ####
+  feature_engineering_recipe_server()
+  feature_engineering_impute_missing_server()
   
-  ###### ----- Impute missing values ------------------- ####
-#  impute_missing_server()
+  #### ----- Modelling framework --------------------------------- ####
 
+  source("server/modelling_framework.R", local=TRUE)
+  modelling_framework_choices()
 
+  #### ----- Model setup ----------------------------------------- ####
+  source("server/model_training_setup.R", local=TRUE)
+  model_training_setup_server()
+
+  #### ----- Caret models --------------------------------------- ####
+  source("server/model_training_caret_models.R", local=TRUE)
+
+  
+  ## LM/GLM
+  model_training_caret_models_ols_server()
+
+  ## RF
+  model_training_caret_models_rf_server()
+
+  ## GBM
+  model_training_caret_models_gbm_server()
+
+  ## xgbTree
+  model_training_caret_models_xgbTree_server()
+
+  ## xgbLinear
+  model_training_caret_models_xgbLinear_server()
+
+  ## svmRadial
+  model_training_caret_models_svmRadial_server()
+
+  ## Train all models
+  model_training_caret_train_all_server()
+
+  ## Model metrics
+  model_training_caret_train_metrics_server()
+
+  #### ---- PyCaret Integration (API) ----------------------------------------------------
+
+	source("server/deploy_model_server.R", local=TRUE)
+	source("ui/deploy_model_ui.R", local=TRUE)
+	deploy_model_server("deploy_model_module", rv_automl)
+  
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+  source("server/automl_server.R", local=TRUE)
+  automl_server("automl_module", rv_current, rv_ml_ai)
+
+  observe({
+    req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
+    
+    if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
+      output$automl_module_ui <- renderUI({
+        automl_ui("automl_module")
+      })
+    } else {
+      output$automl_module_ui <- renderUI({
+        h4("")
+      })
+    }
+  })
+  
+  # Deployment
+  output$deploy_model_module_ui <- renderUI({
+    deploy_model_ui("deploy_model_module")
+  }) 
+  
+  
+  #### ---- Deep Learning Server ----- ###
+  source("server/deep_learning.R", local=TRUE)
+  deep_learning()
+	
 
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
-
-
+  
   ##### ---- Reset on delete or language change ------------------- ####
   reset_data_server()
 
@@ -445,11 +561,6 @@ function(input, output, session){
   iv_url$enable()
   iv_ml$enable()
 
-  #### ---- Deep Learning Server ----- ###
-  source("server/deep_learning.R", local=TRUE)
-  deep_learning()
-  
-  
 }
 
 
