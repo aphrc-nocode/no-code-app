@@ -22,7 +22,6 @@ libraries <- c(
   , "countries"
   , "plotly"
   , "ggplot2"
-  , "DBI"
   , "RPostgreSQL"
   , "DT"
   , "bslib"
@@ -38,6 +37,9 @@ libraries <- c(
   ,"sjmisc"
   ,"DBI"
   ,"RMySQL"
+  , "remotes"
+  ,"Achilles"
+  , "DatabaseConnector"
 )
 
 
@@ -50,3 +52,20 @@ for(lib in libraries){
 }
 
 st_options(footnote=NA, headings = FALSE)
+
+
+
+install_github_if_missing <- function(pkg, repo) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    remotes::install_github(repo)
+    library(pkg)
+  }
+}
+
+install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
+
+
+
+
+
+

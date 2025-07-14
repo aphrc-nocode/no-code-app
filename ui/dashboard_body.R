@@ -443,6 +443,24 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								)
 							)
 						),
+			      tabItem(
+			        tabName = "evidenceQuality",
+			        fluidRow( 
+			          p("OMOP Data Quality Check and Characterization"),
+			          uiOutput("omop_connection")
+			          , uiOutput("existing_connection")
+			          , uiOutput("omop_quality_type")
+			          , uiOutput("schemas")
+			          , uiOutput("generate_dqd")
+			          ,verbatimTextOutput("stderr_log")
+			          ,uiOutput("view_dqd")
+			          ,br()
+			          ,uiOutput("open_link")
+			        )
+			      ), 
+			     tabItem(tabName = "cohortConstruction",
+			          fluidRow()),
+			  
 						tabItem(tabName = "trainModel",
 								  fluidRow(
 									column(width = 12
@@ -639,7 +657,361 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                         )
                     )
                   )),
-						tabItem(tabName = "addResources",
-								  fluidRow())
-					  )
-)
+
+            tabItem(
+              tabName = "CohortConstructor",
+              
+              # --- DATABASE CONNECTION ---
+              box(
+                title = "Database Connection",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = FALSE,
+                fluidRow(
+                  column(4, uiOutput("dbmsID")),
+                  column(4, uiOutput("dbmsServerID")),
+                  column(4, uiOutput("cohort_db_port"))
+                ),
+                fluidRow(
+                  column(4, uiOutput("cohort_db_name")),
+                  column(4, uiOutput("UserID")),
+                  column(4, uiOutput("UserPswdID"))
+                  #column(2, offset = 2, 
+                         #br(),uiOutput("ConnectCohortID"), align="right")
+                ),
+                fluidRow(
+                   column(2, offset = 9, uiOutput("ConnectCohortID"))
+                 )
+              ),
+              
+              # --- CDM REFERENCE CREATION ---
+              box(
+                title = "CDM Reference",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                 # column(4, uiOutput("CDMConn")),
+                  column(4, uiOutput("CDMConnName")),
+                  column(4, uiOutput("CDMSchemaName")),
+                  column(4, uiOutput("ResultSchemaName"))
+                  
+                ),
+                fluidRow(
+                  # column(4, uiOutput("ResultSchemaName")),
+                  # column(4, uiOutput("achillesSchemaName")),
+                  #column(4, uiOutput("achillesSchemaName")),
+                  column(3, offset = 9, br(), uiOutput("CreateCDMID"), align="right")
+                )
+                # ,fluidRow(
+                #   column(6, uiOutput("tableDropdown1UI")),
+                #   column(6, uiOutput("tableDropdown2UI"))
+                # )
+              )
+              , # --- COHORT CREATION ---
+              box(
+                title = "Cohort Creation",
+                width = 12,
+                status = "success",
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                fluidRow(
+                  #column(4, uiOutput("CohortcreationName")),
+                  column(4, uiOutput("ConceptKeyword")),
+                  column(4, uiOutput("CohortNameID")),
+                  column(4, uiOutput("CohortDateID")
+                ),
+                fluidRow(
+                 # column(4, uiOutput("CohortDateID")),
+                  column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align="right")
+                ),
+                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
+                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
+                box(
+                  title = "Cohort Summary",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = TRUE,
+                  tableOutput("cohort_summary"),
+                  uiOutput("cohort_demographics")
+                ),
+                
+                # --- INTERACTIVE PLOTS ---
+                box(
+                  title = "Cohort Plots",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  fluidRow(
+                    column(6, plotlyOutput("Gender_plot")),
+                    column(6, plotlyOutput("age_group_plot"))
+                  ),
+                  fluidRow(
+                    column(6, plotlyOutput("Race_plot")),
+                    column(6, plotlyOutput("ethnicity_plot"))
+                  )#,
+                  
+                  #uiOutput("SelectCohortTable"),     # dropdown for cohort table name
+                  #uiOutput("ExtractFeaturesID"),     # extraction button
+                  #br(),
+                  #uiOutput("CovariateTableUI")       # table + download
+                )
+                
+                
+              )
+            )),
+
+                   
+            tabItem(
+             tabName = "achilles",
+             fluidRow(
+               box(
+                 title = "Create Connection Details",
+                 status = "success",
+                 solidHeader = TRUE,
+                 width = 12,
+                 collapsible = FALSE,
+                 fluidRow(
+                   column(4,
+                          uiOutput("cbodatabasetype")),
+                   column(4,
+                          uiOutput("cbodbhost")), 
+                   column(4,
+                          uiOutput("cbodbport"))
+                 ),
+                 fluidRow(
+                   column(4,
+                          uiOutput("cbodbname")),
+                   column(4,
+                          uiOutput("cbodbuser")),
+                   column(4,
+                          uiOutput("cbodbpass"))
+                          
+                 ),
+                 fluidRow(
+                   column(12,
+                          actionButton("achilles_db_connect",
+                                       "Connect",
+                                       icon = icon("plug"),
+                                       class = "btn btn-primary"))
+                 )
+               ),
+               
+             fluidRow(
+               box(
+                     title = "Schema Selection",
+                     status = "success",
+                     solidHeader = TRUE,
+                     width = 12,
+                     collapsible = FALSE,
+
+                     # Shown after connection
+                     uiOutput("schema_selectors"),
+                     uiOutput("run_achilles")
+                    )
+                  )
+                )
+              ), 
+              tabItem(
+								    tabName = "omop_visualizations",
+								    fluidRow(
+								      column(
+								        width = 3,
+								        box(
+								          title = "Database Connection",
+								          status = "success",
+								          solidHeader = TRUE,
+								          width = 12,
+								          collapsible = TRUE,
+								          column(12,
+								                 selectInput("omop_dbms", "Database Type", choices = c("postgresql", "mysql"), selected = "postgresql"),
+								                 textInput("omop_db_host", "Host", placeholder = "e.g., localhost or IP"),
+								                 numericInput("omop_db_port", "Port", value = 5432),
+								                 textInput("omop_db_name", "Database Name"),
+								                 textInput("omop_db_user", "Username"),
+								                 passwordInput("omop_db_pwd", "Password"),
+								                 actionButton("omop_db_connect", "Connect", icon = icon("plug"), class = "btn btn-primary")
+								          )
+								        ),
+								        box(
+								          title = "Schema & Version Selection",
+								          status = "success",
+								          solidHeader = TRUE,
+								          width = 12,
+								          collapsible = FALSE,
+								          uiOutput("omop_cdm_schema"),
+								          uiOutput("omop_results_schema"),
+								          uiOutput("omop_vocabulary_schema")
+								        ),
+								        box(
+								          title = "CDM Table Selection",
+								          status = "success",
+								          solidHeader = TRUE,
+								          width = 12,
+								          collapsible = FALSE,
+								          uiOutput("omop_cdm_tables"),
+								          actionButton("generate_summary",
+								                       "Generate Summary",
+								                       icon = icon("play"),
+								                       class = "btn btn-success")
+								        )
+								      ),
+								      column(
+								        width = 9,
+								        tabsetPanel(
+								          tabPanel("General",
+								                   box(
+								                     title = "OMOP Snapshot Summary",
+								                     status = "success",
+								                     solidHeader = TRUE,
+								                     width = 12,
+								                     collapsible = TRUE,
+								                     uiOutput("omop_snapshot_summary")
+								                   ),
+								                   box(
+								                     title = "CDM Table Record Counts",
+								                     status = "success",
+								                     solidHeader = TRUE,
+								                     width = 12,
+								                     collapsible = TRUE,
+								                     collapsed = TRUE,
+								                     DT::dataTableOutput("cdm_table_summaries")
+								                   )
+								          ),
+								          tabPanel("Table-specific Analysis",
+								                   conditionalPanel(
+								                     condition = "input.selected_cdm_table == 'person'",
+								                     fluidRow(
+								                       box(title = "Age Summary",
+								                           status = "info", 
+								                           solidHeader = TRUE,
+								                           width = 12,
+								                           tableOutput("age_summary"))
+								                     ),
+								                     fluidRow(
+								                       box(title = "Gender Distribution",
+								                           status = "primary",
+								                           solidHeader = TRUE,
+								                           width = 6,
+								                           plotlyOutput("gender_plot")),
+								                       box(title = "Race Distribution", 
+								                           status = "primary",
+								                           solidHeader = TRUE,
+								                           width = 6,
+								                           plotlyOutput("race_plot"))
+								                     )
+								                   ),
+								                   conditionalPanel(
+								                     condition = "input.selected_cdm_table == 'observation'",
+								                     fluidRow(
+								                       box(title = "Observation Concepts",
+								                           status = "info",
+								                           solidHeader = TRUE,
+								                           width = 12,
+								                           dataTableOutput("observation_table"))
+								                     )
+								                     ,fluidRow(
+								                       box(title = "Value as Concept Distribution",
+								                           status = "primary",
+								                           solidHeader = TRUE, 
+								                           width = 12,
+								                           uiOutput("observation_value_ui")
+								                           
+								                       )
+								                     )
+								                   ),
+								                   
+								                   conditionalPanel(
+								                     condition = "input.selected_cdm_table == 'condition_occurrence'",
+								                     fluidRow(
+								                       box(title = "Condition Concepts",
+								                           status = "info",
+								                           solidHeader = TRUE,
+								                           width = 12,
+								                           dataTableOutput("condition_table"))
+								                     )
+								                     ,fluidRow(
+								                       box(title = "Value as Concept Distribution",
+								                           status = "primary",
+								                           solidHeader = TRUE, 
+								                           width = 12,
+								                           uiOutput("condition_value_ui")
+								                           
+								                       )
+								                     )
+								                   )
+								          )
+								        )
+								      )
+								    )
+								  ),
+								  
+
+                tabItem(
+                  tabName = "FeatureExtraction",
+                  fluidPage(
+                    titlePanel("Feature Extraction Tool"),
+
+                    sidebarLayout(
+                      sidebarPanel(
+                        # --- DB connection info ---
+                        selectInput("dbmsID", "Database Type", 
+                                    choices = c("", "postgresql", "mysql"), 
+                                    selected = "postgresql"),
+                        textInput("dbmsServerID",
+                                  "Host",
+                                  placeholder = "e.g., localhost or IP"),
+                        numericInput("cohort_db_port",
+                                    "Port",
+                                     value = 5432),
+                        textInput("cohort_db_name",
+                                  "Database Name",
+                                  placeholder = "Required"),
+                        textInput("UserID",
+                                  "User",
+                                  placeholder = "Required"),
+                        passwordInput("UserPswdID",
+                                      "Password",
+                                      placeholder = "Required"),
+                        #textInput("jdbc_path", "Path to JDBC Driver:", value = "/path/to/jdbc"),
+
+                        # --- Connect button ---
+                        actionButton("ConnectCohortID", "Connect to Database", class = "btn-primary"),
+                        tags$hr(),
+
+                        # --- Dynamic dropdowns populated after connection ---
+                        uiOutput("cdm_schema_ui"),
+                        uiOutput("results_schema_ui"),
+                        uiOutput("cohort_table_ui"),
+                        uiOutput("domain_choices_ui"),
+
+                        # --- Extraction settings ---
+                        numericInput("cohort_id", "Cohort ID:", value = ""),
+                        textInput("output_csv", "Output CSV Path:", value = "name.csv"),
+                        actionButton("extract_features", "Extract Features", class = "btn-success")
+                      ),
+
+                      mainPanel(
+                        h4("Instructions"),
+                        p("1. Enter DB details and click 'Connect to Database'."),
+                        p("2. Then select schema and cohort info."),
+                        p("3. Run feature extraction and download the CSV."),
+                        verbatimTextOutput("feature_extract_log")
+                      )
+                    )
+                  )
+              )
+         
+ #        			tabItem(tabName = "addResources",
+	#							  fluidRow()
+   #            )
+
+))

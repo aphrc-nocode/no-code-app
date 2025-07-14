@@ -117,8 +117,18 @@ function(input, output, session){
 		, df_table = data.frame()
 		, df_table_str = NULL
 		, query_table_name = NULL
+		, database_host = NULL
+		, database_name = NULL
+		, database_user = NULL
+		, database_pass = NULL
 	)
 
+	## ---
+	
+	rv_omop<- reactiveValues(
+	  url = NULL )
+	
+	
 	## LLM/GAI
 	rv_generative_ai = reactiveValues(
 		history = NULL
@@ -246,7 +256,16 @@ function(input, output, session){
   output$db_run_query = db_run_query
   output$db_port = db_port
   output$db_disconnect = db_disconnect
-  output$ db_tab_query = db_tab_query
+  output$db_tab_query = db_tab_query
+  output$existing_connection = existing_connection
+  
+  source("server/omop_analysis.R", local = TRUE)
+  omop_analysis_server()
+  
+  stderr_file_path <- file.path(getwd(), "output", "dq_stderr.txt")
+  
+  stderr_content<-create_log_reader(stderr_file_path)
+  
 
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
@@ -439,20 +458,36 @@ function(input, output, session){
   #### ---- Reset combine data --------------------------------####
   combine_data_reset()
   
-  #-----Control Custom visualizations
+  ##### ---- Control Custom visualizations ------------------ #####
   source("server/user_defined_visualization.R", local = TRUE)
   user_defined_server()
+  
+  ### ------- OMOP ------------------------------------------ #####
+  
+  #### ----- Cohort Constructor ---------#####
+  source("server/run_cohort_pipeline.R", local = TRUE)
+  run_cohort_pipeline()
+  
+  #### ----- Feature Extraction ---------#####
+  source("server/feature_extraction_pipeline.R", local = TRUE)
+  feature_extraction_pipeline()
+  
+  #### ---- Achilles Integration -------------------####
+  
+  source("server/run_achilles.R", local = TRUE)
+  achilles_integration_server()
+  
+  ### ---- OMOP CDM Summaries---------------------------####
+  source("server/omop_summaries.R", local = TRUE)
+  omopVizServer()
 
   #### ---- Generate Research Questions --------------------------------------####
   source("server/research_questions.R", local = TRUE)
-
   generate_research_questions_choices()
+  
 
   ##### ---- API Token ------------------ ####
-
   generate_research_questions_api_token()
-
-  ##### ----- Set API ------------------- ####
   generate_research_questions_api_store()
 
   #### ---- Addional prompts --------------- ####
@@ -481,14 +516,13 @@ function(input, output, session){
 
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
-
+  
   #### ----- Model setup ----------------------------------------- ####
   source("server/model_training_setup.R", local=TRUE)
   model_training_setup_server()
 
   #### ----- Caret models --------------------------------------- ####
   source("server/model_training_caret_models.R", local=TRUE)
-
   
   ## LM/GLM
   model_training_caret_models_ols_server()

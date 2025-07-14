@@ -150,11 +150,9 @@ user_defined_server <- function() {
 		  output$user_download_autoreport = NULL
 		  
 		  
+		  
 		}
 	})
-  
-  
-  ####Themes
   
   
 observe({

@@ -43,6 +43,7 @@ user_calc_var = renderUI({
 })
 
 
+
 user_row_var = renderUI({
   selectInput("cboColVar", paste(get_rv_labels("user_row_variable"),":"), "")
 })
