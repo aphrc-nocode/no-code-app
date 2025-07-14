@@ -60,7 +60,7 @@ The APP depends on some Python libraries :
 - FastAPI : Create API easily and fastly
 - Pycaret : Module for ML no-code
 - Uvicorn : It help to launch FastAPI
-- Python-multipart : 
+- Python-multipart
 
 To start the app, you would first need to have the package installed.
 
