@@ -35,10 +35,6 @@ devtools::install_github("aphrc-nocode/Rautoml")
 
 Clone the repo first :)
 
-### R studio
-
-Open either [server.R](./server.R) or [ui.R](./ui.R) from R Studio and then R the app.
-
 ### Python
 Prepare your Python environment (FastAPI + PyCaret)
 Step 1: Create a new virtual environment
@@ -73,6 +69,9 @@ Go to command line, move to py folder and run this following command to Launch F
 ```
 uvicorn main:app --reload
 ```
+### R studio
+
+Open either [server.R](./server.R) or [ui.R](./ui.R) from R Studio and then R the app.
 
 ### Makefile 
 
