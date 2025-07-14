@@ -1,6 +1,6 @@
 COMMENTS:
 
-** All **
+**All**
 
 - Make sure the codes are properly commented (Especially John)
 - Good format
@@ -33,13 +33,19 @@ COMMENTS:
 	- Mike: There are a few areas you need to clear
 
 
+**Mike, Pauline and Letisha**
+- All DB connection for all the OMOP stuff MUST be a single connection. The current setup with every OMOP having a connection box is weired. 
+- We agreed that all OMOP stuff should come just before Manage data.
+
 **Ouseman & Mike**
 - Fixe the DB options in `server/database_integration.R`
 
 **Ouseman**
+
 - Remove all the ChatGPT text as shown below
 - Remove hard coded stuff in the serve.R
 - Use the labelling file for all the text in the app
+- Provide a documentation on how to start the deep learning API on the README
 
 
 ```
@@ -181,11 +187,12 @@ Warning: Closing open result set, pending rows
 - The labeling is hard coded
 - Some items SHOULD only show when the connection is sucessful
 
-** Mike **
+**Mike**
 
 - What's the empty else in ui/upload_form.R
 
-** Elvis/Samson
+**Elvis/Samson**
 
 - Hard coded labeling 
+- Provide a documentation on how to start the deep learning API on the README
 
