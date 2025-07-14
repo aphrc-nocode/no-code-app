@@ -39,6 +39,41 @@ Clone the repo first :)
 
 Open either [server.R](./server.R) or [ui.R](./ui.R) from R Studio and then R the app.
 
+### Python
+Prepare your Python environment (FastAPI + PyCaret)
+Step 1: Create a new virtual environment
+- Create a new virtual environment
+```
+python -m venv env1
+```
+- Load virtual environment created on Windows
+```
+env1\Scripts\activate 
+```
+- Load virtual environment created on Linux
+```
+source env1/bin/activate
+```
+Step 2: Install libraries needed
+```
+pip install fastapi uvicorn pycaret pandas python-multipart shap
+```
+
+The APP depends on some Python libraries :
+- FastAPI : Create API easily and fastly
+- Pycaret : Module for ML no-code
+- Uvicorn : It help to launch FastAPI
+- Python-multipart : 
+
+To start the app, you would first need to have the package installed.
+
+## Launch FastAPI
+main.py file contains code to create an API with FastAPI and Pycaret.
+Go to command line, move to py folder and run this following command to Launch FastAPI.
+```
+uvicorn main:app --reload
+```
+
 ### Makefile 
 
 From the terminal, run:
