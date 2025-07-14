@@ -37,7 +37,8 @@ Clone the repo first :)
 
 ### Python
 Prepare your Python environment (FastAPI + PyCaret)
-Step 1: Create a new virtual environment
+
+Step 1: Set up a new virtual environment
 - Create a new virtual environment
 ```
 python -m venv env1
