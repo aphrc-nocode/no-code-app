@@ -1,13 +1,48 @@
 COMMENTS:
 
+** All **
+
+- Make sure the codes are properly commented (Especially John)
+- Good format
+
+```
+#### ----- Hearder 1 ------------------------------- ####
+##### ----- Hearder 2 ------------------------------- ####
+```
+
+- Proper code identation (Mike, Pauline & Letisha). Please make sure you have brackets in the right places
+- Good format
+
+```
+(
+	(
+		my code
+	)
+)
+```
+
+- Make sure there conditions for the UI to show only when necessary. E.g.,
+	- Plotting options should only show when the data is selected in the Manage Tab (John & Steve & Ouseman). Sam e applies to ML models relying on the data.
+	- All the OMOP options should show only when there's a connection to the BD, otherwise, we only need to see connect to DB ..... (Letisha/Mike/Pauline)
+	- Every about pycaret/AutoML should on show when the option is selected and refresh when other option is selected
+- **NO TEXT** should be hard coded in the R code e.g
+	- Letisha: The intructions you have in the UI
+	- Pauline: All the text you have in the viz section
+	- John: All select options have to be in the labelling file
+	- Alvis/Simon: Every text in your section
+	- Mike: There are a few areas you need to clear
+
+
 **Ouseman & Mike**
-- Fixe the DP options in server/database_integration.R
+- Fixe the DB options in `server/database_integration.R`
 
 **Ouseman**
-- Remove all the ChatGPT text
+- Remove all the ChatGPT text as shown below
 - Remove hard coded stuff in the serve.R
-- Use the labelling file
+- Use the labelling file for all the text in the app
 
+
+```
 Warning: Closing open result set, pending rows
 [1] "New dataset loaded : Reset PyCaret pipeline"
 Warning: call dbDisconnect() when finished working with a connection
@@ -37,6 +72,32 @@ Warning: Closing open result set, pending rows
 [1] "❌ Dossier 'models' non trouvé"
 [1] "📋 Modèles affichés dans le selectInput : "
 
+```
+
+- No `observe/observerEvent` code should be in `server.R`
+
+```
+  observe({
+    req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
+
+    if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
+      output$automl_module_ui <- renderUI({
+        automl_ui("automl_module")
+      })
+    } else {
+      output$automl_module_ui <- renderUI({
+        h4("")
+      })
+    }
+  })
+
+  # Deployment
+  output$deploy_model_module_ui <- renderUI({
+    deploy_model_ui("deploy_model_module")
+  })
+
+```
+
 **John***
 
 - AVOID writing hard codes on the server.R
@@ -45,6 +106,8 @@ Warning: Closing open result set, pending rows
 - Logout not working.
 - Weired splash on login
 
+
+```
   USER <- login::login_server(
     id = app_login_config$APP_ID,
     db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users.sqlite'),
@@ -108,6 +171,7 @@ Warning: Closing open result set, pending rows
   }else{
     output$user_ggthemes <- NULL
   }
+```
 
 
 **Mike/Pauline/Letisha**
@@ -118,7 +182,8 @@ Warning: Closing open result set, pending rows
 - Some items SHOULD only show when the connection is sucessful
 
 ** Mike **
- - What's the empty else in ui/upload_form.R
+
+- What's the empty else in ui/upload_form.R
 
 ** Elvis/Samson
 
