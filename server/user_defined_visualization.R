@@ -4,7 +4,6 @@ user_defined_server <- function() {
 		if (!is.null(rv_current$working_df)) {
 			#shinyjs::show("cboOutput")
 		  output$user_output_type = user_output_type
-		  output$user_chart_type = user_chart_type
 		  output$user_tab_options = user_tab_options
 		  output$user_calc_var = user_calc_var
 		 # output$user_strata_var = user_strata_var
@@ -69,19 +68,17 @@ user_defined_server <- function() {
 		  
 		  output$bivariate_header_label = bivariate_header_label
 		  output$corrplot_header_label = corrplot_header_label
-		  output$user_select_corr_features = user_select_corr_features
-		  output$user_select_Bivariate_features = user_select_Bivariate_features
 		  
-		  # output$user_select_bivariate_single_color = user_select_bivariate_single_color
-		  output$user_select_bivariate_outcome = user_select_bivariate_outcome
-		  #output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+		  output$user_select_bivariate_single_color = user_select_bivariate_single_color
+		  output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
 		  output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
 		  output$bivariate_plot_title = bivariate_plot_title
 		  output$corrplot_title = corrplot_title
+		  output$user_download_autoreport = user_download_autoreport
+		  
 		  
 		} else {
 		  output$user_output_type = NULL
-		  output$user_chart_type = NULL
 		  output$user_tab_options = NULL
 		  output$user_calc_var = NULL
 		  #output$user_strata_var = NULL
@@ -144,144 +141,213 @@ user_defined_server <- function() {
 		  output$bivariate_header_label = NULL
 		  output$corrplot_header_label = NULL
 		  output$user_select_corr_features = NULL
-		  output$user_select_Bivariate_features = NULL
 		  
-		  #output$user_select_bivariate_single_color = NULL
-		  output$user_select_bivariate_outcome = NULL
-		  #output$user_select_color_parlet_bivariate = NULL
+		  output$user_select_bivariate_single_color = NULL
+		  output$user_select_color_parlet_bivariate = NULL
 		  output$user_select_color_parlet_corrplot = NULL
 		  output$bivariate_plot_title = NULL
 		  output$corrplot_title = NULL
+		  output$user_download_autoreport = NULL
+		  
 		  
 		  
 		}
 	})
   
-  ## Temporary file
   
-  # observe({
-  #   if(isTRUE(!is.null(rv_current$working_df))){
-  #     output$user_temp_var = renderUI({
-  #       selectInput("cbotempVar", paste(get_rv_labels("user_temp_var"),":"),
-  #                   choices = names(rv_current$working_df),
-  #                   selected = names(rv_current$working_df)[1],
-  #                   multiple = FALSE)
-  #     })
-  #   }else{
-  #     updateSelectInput(session = session, inputId = "cbotempVar", choices = "", selected = "")
-  #     output$user_temp_var=NULL
-  #   }
-  # 
-  #  })
-  
-  
-  
-  observe({
-    #if(isTRUE(!is.null(rv_current$working_df))){
-      output$user_temp_var = renderUI({
-        selectInput("cbotempVar", paste(get_rv_labels("user_temp_var"),":"),
-                    choices = names(rv_current$working_df),
-                    selected = names(rv_current$working_df)[1],
-                    multiple = FALSE)
-      })
+observe({
+      
+  if(isTRUE(!is.null(rv_current$working_df))){
+    output$user_ggthemes <- renderUI({
+      selectInput("ggplot_theme", "Choose ggplot2 theme:",
+                  choices = theme_choices <- c(
+                    "Default (theme_grey)" = "theme_grey",
+                    "Black & White (theme_bw)" = "theme_bw",
+                    "Classic (theme_classic)" = "theme_classic",
+                    "Minimal (theme_minimal)" = "theme_minimal",
+                    "Light (theme_light)" = "theme_light",
+                    "Dark (theme_dark)" = "theme_dark",
+                    "Linedraw (theme_linedraw)" = "theme_linedraw",
+                    "Void (theme_void)" = "theme_void",
+                    "Test (theme_test)" = "theme_test"
+                  ), selected = "Minimal (theme_minimal)")
+    })
+  }else{
+    output$user_ggthemes <- NULL
   }
-    # }else{
-    #   updateSelectInput(session = session, inputId = "cbotempVar", choices = "", selected = "")
-    #   output$user_temp_var=NULL
-    # }
-    
-  )
+    })
   
 
+  observe({
+    if(isTRUE(!is.null(rv_current$working_df))){
+      shinyjs::showElement("DivvisualizationMenu")
+      shinyjs::showElement("Divcustomvisiz")
+      
+    }else{
+      shinyjs::hide("DivvisualizationMenu")
+      shinyjs::showElement("Divcustomvisiz")
+    }
+  })
   
-  # temp_plot <- eventReactive(input$cbotempVar, {
-  #   if(isTRUE(!is.null(rv_current$working_df))){
-  #     if(is.numeric(rv_current$working_df[[input$cbotempVar]])){
-  #       return(hist(rv_current$working_df[[input$cbotempVar]]))
-  #     }else{
-  #       return(barplot.default(table(rv_current$working_df[[input$cbotempVar]])))
-  #     }
-  #     
-  #   }else{
-  #     return(ggplot()+theme_void())
-  #   }
-  # }
-  #   
-  # )
-  # 
-  # output$tempplot <- renderPlot({temp_plot()})
   
+
   
   ################Automatic visualization
   
   observe({
-    req(rv_current$working_df)
-    req(input$cboBivariateOutcome)
-    
-    if (is.numeric(rv_current$working_df[[input$cboBivariateOutcome]])) {
-      output$user_select_bivariate_single_color = user_select_bivariate_single_color
-      output$user_select_color_parlet_bivariate = NULL
-      #shinyjs::show("cboBivariateColor")
-      # shinyjs::hide("cboColorBrewerBivariate")
+    if (isTRUE(!is.null(rv_current$working_df)) &&
+        !is.null(input$cboBivariateOutcome) &&
+        input$cboBivariateOutcome != "" && !is.null(input$cboBivariateOutcome) &&
+        input$cboBivariateOutcome %in% names(rv_current$working_df)) {
+      
+      if (is.numeric(rv_current$working_df[[input$cboBivariateOutcome]])) {
+        output$user_select_color_parlet_bivariate <- NULL
+      } else {
+        output$user_select_color_parlet_bivariate <- user_select_color_parlet_bivariate
+      }
+      
     } else {
-      #shinyjs::hide("cboBivariateColor")
-      # shinyjs::show("cboColorBrewerBivariate")
-      output$user_select_bivariate_single_color = NULL
-      output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
+      output$user_select_color_parlet_bivariate <- NULL
     }
   })
   
-  
-  # When features are chosen, update outcome (exclude features)
   observe({
-    req(rv_current$working_df)
-    req(input$cboBivariateFeatures)
-    if(!all(is.null(input$cboBivariateFeatures)) & !all(is.null(input$cboBivariateOutcome)) & any(input$cboBivariateOutcome%in%input$cboBivariateFeatures)){
-      other_cols <- setdiff(names(rv_current$working_df), input$cboBivariateFeatures)
-      updateSelectInput(session, "cboBivariateOutcome", choices = other_cols, selected = character(0))
-    }
-    
-  })
-  
-  
-  
-observe({
-    req(rv_current$working_df)
-    req(input$cboBivariateOutcome)
-    if(!all(is.null(input$cboBivariateFeatures)) & !all(is.null(input$cboBivariateOutcome)) & any(input$cboBivariateOutcome%in%input$cboBivariateFeatures)){
-      other_cols <- setdiff(names(rv_current$working_df), input$cboBivariateOutcome)
-      updateSelectInput(session, "cboBivariateFeatures", choices = other_cols, selected = character(0))
-    }
-    
-  })
-  
+    if (isTRUE(!is.null(rv_current$working_df)) &&
+        !is.null(input$cboBivariateOutcome) && input$cboBivariateOutcome != "" &&
+        !is.null(input$cboBivariateFeatures) &&
+        input$cboBivariateOutcome %in% names(rv_current$working_df) &&
+        input$cboBivariateOutcome %in% input$cboBivariateFeatures) {
+
+          updateSelectInput(session, "cboBivariateFeatures", choices = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)],
+                            selected = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20][
+                              !is.na(names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20])]
+                            )}
+})
+
   # General population of select inputs
   observe({
+    if(isTRUE(!is.null(rv_current$working_df))){
+      temp_nummeric <- names(sapply(rv_current$working_df, is.numeric)>0)
+      if (isTRUE(!is.null(temp_nummeric))&& length(temp_nummeric) > 0) {
+        output$user_select_corr_features=renderUI({
+          selectInput("cboCorrFeatures", paste0(
+            get_rv_labels("corr_numeric_variables")
+            ,":")
+            , choices = temp_nummeric
+              , selected = temp_nummeric[1:20][!is.na(temp_nummeric[1:20])]
+            , multiple = TRUE)
+        })
+      } else {
+        output$user_select_corr_features = NULL
+        updateSelectInput(session, "cboCorrFeatures", choices = NULL)
+      }
+    } else {
+      output$user_select_corr_features = NULL
+      updateSelectInput(session, "cboCorrFeatures", choices = NULL)
+    }
+    
+  })
+  
+  
+  observe({
     req(rv_current$working_df)
-    updateSelectInput(session, "cboCorrFeatures", choices = names(numeric_df(rv_current$working_df)), selected = names(numeric_df(rv_current$working_df)))
-    updateSelectInput(session, "cboBivariateFeatures", choices = names(rv_current$working_df), selected = character(0))
-    updateSelectInput(session, "cboBivariateOutcome", choices = names(rv_current$working_df), selected = character(0))
+    if(isTRUE(!is.null(rv_current$working_df))){
+      temp_var<-names(rv_current$working_df)
+      output$user_select_bivariate_outcome=renderUI({
+            selectInput("cboBivariateOutcome", paste0(
+              get_rv_labels("bivariate_outcome")
+              ,":")
+              , choices = temp_var
+              , selected = temp_var[1]
+              ,
+            )
+          })
+    } else {
+      output$user_select_bivariate_outcome = NULL
+      updateSelectInput(session, "cboBivariateOutcome", choices = NULL)
+    }
+    
+  })
+  
+  observe({
+    req(rv_current$working_df)
+    if(isTRUE(!is.null(rv_current$working_df))){
+      temp_var<-names(rv_current$working_df)
+      
+      output$user_select_Bivariate_features =renderUI({
+        selectInput("cboBivariateFeatures", paste0(
+          get_rv_labels("bivariate_features")
+          ,":")
+          , choices = temp_var
+          , selected = temp_var[1:20][!is.na(temp_var[1:20])]
+          ,multiple = TRUE
+        )
+      })
+      
+    } else {
+      output$user_select_Bivariate_features = NULL
+      updateSelectInput(session, "cboBivariateFeatures", choices = NULL)
+    }
+    
   })
   
   # Reactive correlation plot
-  plot_corr <- eventReactive(c(input$cboCorrFeatures, input$cboColorBrewerCorrplot), {
-    req(rv_current$working_df)
-    Rautoml::custom_corrplot(
+  observe({
+  req(rv_current$working_df)
+  if(sum(input$cboCorrFeatures != "")>0 && isTRUE(!is.null(rv_current$working_df))){
+    rv_current$plot_corr <- 
+      
+      tryCatch({Rautoml::custom_corrplot(
       df = rv_current$working_df,
-      features = input$cboCorrFeatures,
+      features = c(input$cboCorrFeatures),
       colorbrewer = input$cboColorBrewerCorrplot
-    )
+      )}, error = function(e){
+        ggplot2::ggplot()+ggplot2::theme_minimal()
+    })
+  }else{
+    rv_current$plot_corr<- ggplot2::ggplot()+theme_void()
+  }
   })
   
   output$CorrPlotOutput <- renderPlot({
-    plot_corr()
+    rv_current$plot_corr
   })
   
   
+    observe({
+      req(input$cboBivariateFeatures)
+      req(input$cboBivariateOutcome)
+      req(rv_current$working_df)
+      showModal(modalDialog(
+        title = "Processing...",
+        HTML("<center><img src='https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif' width='100'><br>
+           <h4 style='color: #7bc148;'>", get_rv_labels("waiting_time"), "</h4>
+           <h5 style='color: #7bc148;'>", get_rv_labels("load_bivariate"), "</h5></center>"),
+        footer = NULL,
+        easyClose = FALSE
+      ))
+      if(!(input$cboBivariateOutcome %in% input$cboBivariateFeatures) && isTRUE(!is.null(rv_current$working_df))){
+      rv_current$plot_bivariate_auto <- 
+        
+        tryCatch({Rautoml::bivariate_plot(
+        df = rv_current$working_df,
+        outcome = input$cboBivariateOutcome,
+        features = input$cboBivariateFeatures,
+        colorbrewer = input$cboColorBrewerBivariate,
+        title = input$txtPlotBivariateTitle
+        )}, error = function(e){
+         ggplot2::ggplot()+ggplot2::theme_minimal()
+      })
+    }else{
+      rv_current$plot_bivariate_auto <- ggplot2::ggplot()+theme_void()
+    }
+      removeModal()
+  })
   
+  output$BivariatePlotOutput <- renderPlot({
+    rv_current$plot_bivariate_auto
+  })
   
-  
-
   output$dfPreview <- DT::renderDataTable({
     req(rv_current$working_df)
     data.table::data.table(head(rv_current$working_df,n=10))
@@ -312,33 +378,22 @@ observe({
       }
     
   })
-  
-
-  
-  observeEvent(c(input$cboOutput, input$btnChartType), {
-    
-    output$tabSummaries = NULL
-    output$GeneratedPlot = NULL
-    rv_current$plot_rv = NULL
-    rv_current$tab_rv = NULL
-    
-  })
-  
-  #c(input$cboOutput, input$btnchartOut,input$btnChartType),
+  # 
+  #,
   observe({
-    if(isTRUE(is.null(rv_current$plot_rv))){
+    if(isTRUE(is.null(plots_sec_rv$plot_rv))){
       updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("user_create"))
       shinyjs::disable("btnchartDown")
     }else{
       updateActionButton(session = session, inputId = "btnchartOut", label = get_rv_labels("update_chart_button"))
       shinyjs::enable("btnchartDown")
     }
-    
+
   })
 
   
   observe({
-    if(isTRUE(is.null(rv_current$tab_rv))){
+    if(isTRUE(is.null(plots_sec_rv$tab_rv))){
       updateActionButton(session = session, inputId = "btnCreatetable", label = get_rv_labels("usr_create_cross_tab"))
       shinyjs::disable("btnDownloadTable")
     }else{
@@ -367,8 +422,8 @@ observe({
   
   # observeEvent(c(input$cboXVar,input$cboYVar,input$cboColorVar,input$cboFacetVar,input$btnChartType,
   #                input$manage_data_apply,input$tabs,input$change_language),{
-  #                  
-  # if(isTRUE(!is.null(rv_current$tab_rv))){                 
+  # 
+  # if(isTRUE(!is.null(plots_sec_rv$tab_rv))){
   #   if(input$cboXVar==""|is.null(input$cboXVar)){
   #     shinyjs::disable("btnchartOut")
   #   }else{
@@ -377,7 +432,7 @@ observe({
   #   }else{
   #     shinyjs::disable("btnchartOut")
   #   }
-  #   
+  # 
   # })
   
   observeEvent(input$cboOutput, {
@@ -385,6 +440,8 @@ observe({
       shinyjs::hide("btnChartType")
       shinyjs::hide("graphOutputs")
       shinyjs::show("tabOutputs")
+      shinyjs::show("tabSummaries")
+      shinyjs::hide("GeneratedPlot")
       updateSwitchInput(session = session, inputId = "graphmore", value = 0)
       shinyjs::hide("graphmore")
       shinyjs::show("tabmore")
@@ -392,8 +449,10 @@ observe({
       shinyjs::show("btnChartType")
       shinyjs::show("graphOutputs")
       shinyjs::hide("tabOutputs")
+      shinyjs::hide("tabSummaries")
       updateSwitchInput(session = session, inputId = "tabmore", value = 0)
       shinyjs::show("graphmore")
+      shinyjs::show("GeneratedPlot")
       shinyjs::hide("tabmore")
     } else {
       shinyjs::hide("btnChartType")
@@ -408,7 +467,8 @@ observe({
   })
 
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType == "Pie") {
       shinyjs::show("cboFacetVar")
       shinyjs::hide("cboColorVar")
@@ -433,7 +493,8 @@ observe({
     
   })
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType == "Bar") {
       shinyjs::show("numBarWidth")
       shinyjs::show("rdoStacked")
@@ -443,7 +504,7 @@ observe({
     }
   })
   
-  observeEvent(c(input$btnChartType,input$rdoAddLineType), {
+  observeEvent(input$rdoAddLineType, {
     if (input$btnChartType == "Line") {
       shinyjs::show("numLineSize")
       shinyjs::show("cboLineJoin")
@@ -476,16 +537,17 @@ observe({
   )
 
   
-  observeEvent(input$btnChartType,
-               {
-                 if (input$btnChartType %in% c("Pie", "Histogram", "Line", "Scatterplot")) {
+  observe({
+    req(input$btnChartType!="")
+    if(input$btnChartType %in% c("Pie", "Histogram", "Line", "Scatterplot")) {
                    shinyjs::hide("rdoPltOrientation")
                  } else{
                    shinyjs::show("rdoPltOrientation")
                  }
                })
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType %in% c("Pie", "Histogram")) {
       shinyjs::hide("cboYVar")
     } else{
@@ -493,7 +555,8 @@ observe({
     }
   })
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType %in% c("Pie", "Histogram")) {
       shinyjs::hide("cboYVar")
     } else{
@@ -501,7 +564,8 @@ observe({
     }
   })
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType == "Histogram") {
       shinyjs::show("numBinWidth")
       shinyjs::show("rdoDensityOnly")
@@ -527,7 +591,8 @@ observe({
     }
   })
   
-  observeEvent(input$btnChartType, {
+  observe({
+    req(input$btnChartType!="")
     if (input$btnChartType == "Scatterplot") {
       shinyjs::show("rdoAddShapes")
       shinyjs::show("numLineSize")
@@ -575,6 +640,7 @@ observe({
   observe({
     if (isTRUE(!is.null(rv_current$working_df))) {
       nams <- names(rv_current$working_df)
+      numnams <- 
       updateSelectInput(inputId = "cboSelectDataset",
                         choices = nams,
                         selected = nams[1])
@@ -590,7 +656,7 @@ observe({
     }
   })
   
-  
+
   
   observeEvent(input$cboOutput,{
     if(isTRUE(!is.null(rv_current$working_df))){
@@ -617,7 +683,8 @@ observe({
   
   
   
-  observeEvent(input$btnChartType, {
+  observeEvent(input$cboYVar,{
+    req(input$btnChartType!="")
     if (isTRUE(!is.null(rv_current$working_df))) {
       if (input$btnChartType %in% c("Bar", "Pie", "Boxplot", "Violin")) {
         updateSelectInput(session,
@@ -637,7 +704,6 @@ observe({
     }
     
   })
-  
   
   
   observeEvent(input$cboXVar,{
@@ -705,6 +771,7 @@ observe({
   })
   
   
+
   observeEvent(input$cboFacetVar,{
     
     if(isTRUE(!is.null(rv_current$working_df))){
@@ -759,137 +826,207 @@ observe({
   })
   
 
+  # observeEvent(input$btnChartType, {
+  #   output$tabSummaries <- NULL
+  #   output$GeneratedPlot <- NULL
+  #   plots_sec_rv$plot_rv <- NULL
+  #   plots_sec_rv$tab_rv <- NULL
+  # })
+  
+  
+  
+  
+  observe({
+  if(isTRUE(!is.null(rv_current$working_df))){
+    output$user_chart_type = renderUI({
+      radioGroupButtons(
+        inputId = "btnChartType",
+        justified = TRUE,
+        choices = list(
+          "Barplot" = "Bar",
+          "Histogram" = "Histogram",
+          "Scatterplot" = "Scatterplot",
+          "Boxplot" = "Boxplot",
+          "Lineplot" = "Line",
+          "Violin plot" = "Violin",
+          "Pie" = "Pie"
+        ),
+        status="success",
+        selected = "Bar"
+      )
+    })
+  }else{
+    output$user_chart_type = NULL
+  }
+ 
+  })
+  
+  
+  observe({
+    req(input$btnChartType)
+    
+    isColorVarValid <- !is.null(input$cboColorVar) && input$cboColorVar != ""
+    isChartTypeWithColor <- input$btnChartType %in% c("Violin", "Boxplot", "Line", "Scatterplot", "Bar")
+    isPieChart <- input$btnChartType == "Pie"
+    
+    if ((isColorVarValid && isChartTypeWithColor) || isPieChart) {
+      shinyjs::hide("cboColorSingle")
+      shinyjs::show("cboColorBrewer")
+    } else {
+      shinyjs::hide("cboColorBrewer")
+      shinyjs::show("cboColorSingle")
+    }
+  })
+  
+  plt_temp <- reactiveValues(chart_type1 = NULL)
+  
+  observeEvent(input$btnChartType,{
+    req(input$btnChartType!="")
+    plt_temp$chart_type1 = input$btnChartType
+  }
+    
+  )
+
   observeEvent(input$btnchartOut,
                {
-                 shinyalert::shinyalert(
-                   html = TRUE,
-                   title =paste0("<span style='color:#7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
-                   text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
-                   closeOnClickOutside = FALSE,
-                   showConfirmButton = FALSE,
-                   showCancelButton = FALSE,
-                   imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
-                   closeOnEsc = FALSE)
-                 
-              
                  if(isTRUE(!is.null(rv_current$working_df))){
+                   req(input$cboXVar!="")
+                   shinyalert::shinyalert(
+                     html = TRUE,
+                     title =paste0("<span style='color:#7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+                     text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("plot_loading"),"</h5></span>"),
+                     closeOnClickOutside = FALSE,
+                     showConfirmButton = FALSE,
+                     showCancelButton = FALSE,
+                     imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                     closeOnEsc = FALSE)
                    
-                   if(!is.null(input$cboXVar)&& input$cboXVar!=""){
-                     if(input$btnChartType == "Boxplot"){
-                       plt<- Rautoml::custom_boxplot(df = rv_current$working_df,
-                                                     xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                                     ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                                     vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
-                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                     axistext_angle = input$xaxistextangle,
-                                                     legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
-                       )
-                       rv_current$plot_rv=plt
-                     } else if(input$btnChartType == "Violin"){
-                       plt<- Rautoml::custom_violin(df = rv_current$working_df,
-                                                    xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                                    ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                                    vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
-                                                    title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                    axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                    axistext_angle = input$xaxistextangle,
-                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
-                       )
-                       rv_current$plot_rv=plt
-                       
-                     } else if(input$btnChartType == "Histogram"){
-                       plt<- Rautoml::custom_histogram(df = rv_current$working_df,
-                                                       variable = input$cboXVar, 
-                                                       xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
-                                                       title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                       axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                       axistext_angle = input$xaxistextangle,
-                                                       bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity, 
-                                                       density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
-                       )
-                       rv_current$plot_rv=plt
-                       
-                     }else if(input$btnChartType == "Line"){
-                       plt<- Rautoml::custom_linegraph(df = rv_current$working_df,
-                                                       xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                                       ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
-                                                       line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
-                                                       title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                       axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                       addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
-                                                       legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
-                       )
-                       rv_current$plot_rv=plt
-                       
-                       
-                     }else if(input$btnChartType == "Scatterplot"){
-                       plt<- Rautoml::custom_scatterplot(df = rv_current$working_df,
-                                                         xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                                         ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
-                                                         line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
-                                                         title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                         axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                         addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle,
-                                                         legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
-                                                         confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
-                       )
-                       rv_current$plot_rv=plt
-                       
-                     }else if(input$btnChartType == "Bar"){
-                       plt<- Rautoml::custom_barplot(df = rv_current$working_df,
-                                                     xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
-                                                     ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
-                                                     vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
-                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
-                                                     data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
-                                                     legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
-                       )
-                       rv_current$plot_rv=plt
-                     }else if(input$btnChartType == "Pie"){
-                       plt<- Rautoml::custom_piechart(df = rv_current$working_df,
-                                                      xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
-                                                      facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
-                                                      title_pos = input$numplotposition, title_size= input$numplottitlesize,
-                                                      data_label_size = input$numDataLabelSize,
-                                                      legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer
-                       )
-                       }else{
-                         plt<-NULL
-                   }
-                     }else{
-                     plt<-NULL
-                   } 
                    
-                    rv_current$plot_rv=plt
-                   
-                   output$GeneratedPlot <- renderPlot({plot(plt)})
-                   shinyalert::closeAlert()
-                   #shinyjs::show("btnUpdatePlot")
-                   output$btnchartDown <- downloadHandler(
-                     
-                     filename = function() {
-                       paste(input$btnChartType,format(Sys.time(), "%B %d %Y %H:%M:%S"), ".jpeg")
-                     },
-                     
-                     content = function(file) {
-                       ggsave(file, plot = plt, device = "jpeg", width = 16, height = 9)
-                       
+                   plt <- NULL
+                   chart_type <- plt_temp$chart_type1
+                   if(chart_type == "Boxplot"){
+                     plt<- tryCatch({Rautoml::custom_boxplot(df = rv_current$working_df,
+                                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                   ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                   vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
+                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                   axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
+                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                       )}, error = function(e){
+                        ggplot2::ggplot()+ggplot2::theme_minimal()
                      })
+    
+                   } else if(chart_type == "Violin" & input$cboYVar!=""){
+                     plt<- 
+                       tryCatch({
+                       Rautoml::custom_violin(df = rv_current$working_df,
+                                                  xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                  ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                  vertical = input$rdoPltOrientation, colorVar =  input$cboColorVar,
+                                                  title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                  axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                  axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
+                                                  legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     )}, error = function(e){
+                       ggplot2::ggplot()+ggplot2::theme_minimal()
+                     })
+                     
+ 
+                   } else if(chart_type =="Histogram"){
+                     plt<- 
+                       tryCatch({
+                     Rautoml::custom_histogram(df = rv_current$working_df,
+                                                     variable = input$cboXVar,
+                                                     xlab = input$txtXlab, ylab = input$txtYlab, plot_title = input$txtPlotTitle,
+                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                     axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
+                                                     bin_width = input$numBinWidth, overlayDensisty = input$rdoOverlayDensity,
+                                                     density_only = input$rdoDensityOnly, fill_color = input$cboColorSingle
+                     )}, error = function(e){
+                       ggplot2::ggplot()+ggplot2::theme_minimal()
+                     })
+
+                   }else if(chart_type =="Line" & input$cboYVar!=""){
+                     plt<- Rautoml::custom_linegraph(df = rv_current$working_df,
+                                                     xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                     ylab = input$txtYlab, line_type = input$cboLineType, plot_title = input$txtPlotTitle,
+                                                     line_size= input$numLineSize, line_join = input$cboLineJoin, colorVar =  input$cboColorVar,
+                                                     title_pos = input$numplotposition, title_size= input$numplottitlesize, custom_theme = match.fun(input$ggplot_theme)(),
+                                                     axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                     addlinetype = input$rdoAddLineType, axistext_angle = input$xaxistextangle, default_col = input$cboColorSingle,
+                                                     legend_title = input$txtLegend,addpoints = input$rdoAddPoints, summary_type = input$rdoSummaryTye, colorbrewer = input$cboColorBrewer
+                     )
+                     
+                   }else if(chart_type == "Scatterplot" & input$cboYVar!=""){
+                     plt<- 
+                       tryCatch({
+                       Rautoml::custom_scatterplot(df = rv_current$working_df,
+                                                       xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                       ylab = input$txtYlab, addshape = as.logical(input$rdoAddShapes), plot_title = input$txtPlotTitle,
+                                                       line_size= input$numLineSize, shapes = as.integer(input$cboShapes), colorVar =  input$cboColorVar,
+                                                       title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                       axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                       addsmooth = input$cboAddSmooth, axistext_angle = input$xaxistextangle, custom_theme = match.fun(input$ggplot_theme)(),
+                                                       legend_title = input$txtLegend, seval =as.logical(input$rdoDisplaySeVal),
+                                                       confelev = input$numConfInt, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     )}, error = function(e){
+                       ggplot2::ggplot()+ggplot2::theme_minimal()
+                     })
+           
+                   }else if(chart_type == "Bar" ){
+                     plt<- 
+                       tryCatch({
+                       Rautoml::custom_barplot(df = rv_current$working_df,
+                                                   xvar = input$cboXVar,  yvar = input$cboYVar, xlab = input$txtXlab,
+                                                   ylab = input$txtYlab, bar_width = input$numBarWidth, plot_title = input$txtPlotTitle,
+                                                   vertical = input$rdoPltOrientation, stackedtype = input$rdoStacked, colorVar =  input$cboColorVar,
+                                                   title_pos = input$numplotposition, title_size= input$numplottitlesize, custom_theme = match.fun(input$ggplot_theme)(),
+                                                   axis_title_size = input$numaxisTitleSize, axis_text_size = input$numAxistextSize,
+                                                   data_label_size = input$numDataLabelSize, axistext_angle = input$xaxistextangle,
+                                                   legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer, default_col = input$cboColorSingle
+                     )}, error = function(e){
+                       ggplot2::ggplot()+ggplot2::theme_minimal()
+                     })
+             
+                   }else if(chart_type == "Pie"){
+                     plt<- 
+                       tryCatch({
+                       Rautoml::custom_piechart(df = rv_current$working_df,
+                                                    xvar = input$cboXVar,plot_title = input$txtPlotTitle,transform_to_doughnut = input$rdoTransformToDoug,
+                                                    facet_var = input$cboFacetVar, facet_title_size = input$numfacettitlesize,
+                                                    title_pos = input$numplotposition, title_size= input$numplottitlesize,
+                                                    data_label_size = input$numDataLabelSize, custom_theme = match.fun(input$ggplot_theme)(),
+                                                    legend_title = input$txtLegend, colorbrewer = input$cboColorBrewer
+                       )}, error = function(e){
+                         ggplot2::ggplot()+ggplot2::theme_minimal()
+                       })
+                     
+                   }
+                   
+                 }else{
+                   plt <- NULL
                  }
-                
-                 
+                  
+                  plots_sec_rv$plot_rv <- plt
+                  shinyalert::closeAlert()
                })
   
-  # observe({
-  #   if(is.null(input$cboXVar)||is.null(input$cboXVar=="")){
-  #     shinyjs::disable("btnchartOut")
-  #     }else{
-  #       shinyjs::enable("btnchartOut")
-  #     }
-  #   
-  # })
+  
+  output$GeneratedPlot <- renderPlot({plots_sec_rv$plot_rv})
+  
+  
+  output$btnchartDown <- downloadHandler(
+    filename = function() {
+      paste(input$btnChartType,format(Sys.time(), "%B %d %Y %H:%M:%S"), ".jpeg")
+    },
+    
+    content = function(file) {
+      ggsave(file, plot = plots_sec_rv$plot_rv, device = "jpeg", width = 16, height = 9)
+      
+    })
+  
   
   
   observe({
@@ -949,7 +1086,7 @@ observe({
         }else{
           tab = NULL
         }
-    rv_current$tab_rv = tab
+    plots_sec_rv$tab_rv = tab
     
     output$tabSummaries <- renderUI({
       div(
@@ -972,6 +1109,51 @@ observe({
     )
     
   })
+  
+  auto_report <- observeEvent(input$btnDownloadReportAuto, {
+    if(isTRUE(!is.null(rv_current$working_df))){
+      shinyalert::shinyalert(
+        html = TRUE,
+        title =paste0("<span style='color: #7bc148;'><h4>", get_rv_labels("waiting_time"), "</h4></span>"),
+        text = paste0("<span style='color: #7bc148;'><h5>",get_rv_labels("downloading_report"),"</h5></span>"),
+        closeOnClickOutside = FALSE,
+        showConfirmButton = FALSE,
+        showCancelButton = FALSE,
+        imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+        closeOnEsc = TRUE)
+      config <- list(
+        "introduce" = list(),
+        "plot_intro" = list(),
+        "plot_str" = list(
+          "type" = "diagonal",
+          "fontSize" = 35,
+          "width" = 1000,
+          "margin" = list("left" = 350, "right" = 250)
+        ),
+        "plot_missing" = list(),
+        "plot_histogram" = list(),
+        "plot_density" = list(),
+        "plot_qq" = list(),
+        "plot_bar" = list(),
+        "plot_correlation" = list("cor_args" = list("use" = "pairwise.complete.obs")),
+        "plot_prcomp" = list(),
+        "plot_boxplot" = list(),
+        "plot_scatterplot" = list()
+      )
+      temp_dir <- tempdir()
+      DataExplorer::create_report(
+        rv_current$working_df,
+        output_file = "visualization_report.html",
+        output_dir = temp_dir,
+        output_format = "html_document",
+        config = config,
+        report_title = "Automatic Visualization Report"
+      )
+      shinyalert::closeAlert()
+    }
+  })
+  
+
   
   
 }

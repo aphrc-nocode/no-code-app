@@ -15,6 +15,11 @@ input[type="radio"] {
 }
 
 
+.box.box-success > .box-header {
+    background-color:   #bde0a3   !important;  /* lighter green header */
+  }
+
+
 .footer {
         background-color: #7bc148;
         color: white;
@@ -172,6 +177,55 @@ td {
  color: #7bc148;
  width: 100%;
 }
-    
+
+
+.auth-container {
+  max-width: 400px;
+  margin: 6% auto;
+  padding: 30px 25px;
+  border-color:#7bc148;
+  border-radius: 15px;
+  border-width:2px;
+  background-color: #fff;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+}
+
+.auth-title {
+  font-weight: 600;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.toggle-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.toggle-buttons button {
+  margin: 0 5px;
+  background-color: #7bc148;
+}
+
+#logoutID {
+  background-color: white;
+  color: gray;
+  font-size: 18px;
+  border: 2px solid gray;
+  cursor: pointer;
+
+  /* Center icon */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+#logoutBtn:hover {
+    background-color: #c82333;
+  }
+
+
+
 
 

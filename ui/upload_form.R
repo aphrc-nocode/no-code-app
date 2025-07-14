@@ -69,11 +69,19 @@ db_connect <- renderUI({
 
 ### ----------OMOP Schema Views---------------------------------------####
 db_schema_list <- renderUI({
-  if (isTRUE(input$upload_type == "Database connection")) {
+  if (!is.null(input$db_type) &&  isTRUE(input$upload_type == "Database connection") && input$db_type == "PostgreSQL") { #U1
     if(!is.null(rv_database$conn) && !is.null(input$option_picked) &&  input$option_picked == "use a table"){
       selectInput("db_schema_list", get_rv_labels("db_schema_list"), choices = NULL, multiple = FALSE)
     }
-    
+  }
+  else {#U2
+    NULL
+  }
+})
+#U for checking
+observe({
+  if (!is.null(rv_database$table_list)) {
+    message(">>> Tables availables : ", paste(rv_database$table_list, collapse = ", "))
   }
 })
 
@@ -81,11 +89,30 @@ db_schema_list <- renderUI({
 ### ----------OMOP Table Views---------------------------------------####
 db_table_list <- renderUI({
   if (!is.null(rv_database$conn) && isTRUE(input$upload_type == "Database connection")) {
-    if(!is.null(input$option_picked) && input$option_picked == "use a table"){
-      selectInput("db_table_list", get_rv_labels("db_table_list"), choices = NULL, multiple = FALSE)
+    if (!is.null(input$option_picked) && input$option_picked == "use a table") {
+      
+      # Maj Force to Convert into vector
+      choices <- rv_database$table_list
+      if (is.data.frame(choices)) {
+        choices <- choices[[1]]
+      }
+      
+      if (!is.null(choices) && length(choices) > 0) {
+        # Maj Label : Fix get_rv_labels()
+        label_raw <- get_rv_labels("db_table_list")
+        label_txt <- if (is.null(label_raw)) {
+          "Choose a table"
+        } else if (length(label_raw) > 1) {
+          paste(label_raw, collapse = " ")  # concatenation if there contains several text
+        } else {
+          as.character(label_raw)
+        }
+        
+        return(selectInput("db_table_list", label = label_txt, choices = choices, multiple = FALSE))
+      }
     }
-    
   }
+  return(NULL)
 })
 
 
@@ -97,7 +124,6 @@ db_type <- renderUI({
       selectInput("db_type", get_rv_labels("db_type"), choices = c("PostgreSQL","MySQL"), selected = "PostgreSQL" , multiple = FALSE)
     }
   })
-
 
 ### --- Database host ---###
 db_host <- renderUI({
