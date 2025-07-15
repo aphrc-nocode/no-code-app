@@ -544,6 +544,12 @@ function(input, output, session){
   
   ## svmLinear
   model_training_caret_models_svmLinear_server()
+  
+  ## svmPoly
+  model_training_caret_models_svmPoly_server()
+
+  ## glmnet
+  model_training_caret_models_glmnet_server()
 
   #### ----- Train all models ----------------------------------- ####
   source("server/train_caret_models.R", local=TRUE)
