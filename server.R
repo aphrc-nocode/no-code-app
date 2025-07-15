@@ -541,11 +541,16 @@ function(input, output, session){
 
   ## svmRadial
   model_training_caret_models_svmRadial_server()
+  
+  ## svmLinear
+  model_training_caret_models_svmLinear_server()
 
-  ## Train all models
+  #### ----- Train all models ----------------------------------- ####
+  source("server/train_caret_models.R", local=TRUE)
   model_training_caret_train_all_server()
 
-  ## Model metrics
+  #### ----- Compare trained models ------------------------------ ####
+  source("server/compare_trained_caret_models.R", local=TRUE)
   model_training_caret_train_metrics_server()
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------

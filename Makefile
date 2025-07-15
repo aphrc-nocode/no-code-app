@@ -124,6 +124,9 @@ model_training_setup.Rout: server/model_training_setup.R
 ### Caret models
 model_training_caret_models.Rout: server/model_training_caret_models.R
 
+### Train caret models
+train_caret_models.Rout: server/train_caret_models.R
+
 ### Compare trained models
 compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
 

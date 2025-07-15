@@ -40,6 +40,8 @@ libraries <- c(
   , "remotes"
   ,"Achilles"
   , "DatabaseConnector"
+  , "doParallel"
+  , "doParallel"
 )
 
 
