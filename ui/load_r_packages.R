@@ -21,7 +21,6 @@ libraries <- c(
   , "summarytools"
   , "countries"
   , "plotly"
-  , "ggplot2"
   , "RPostgreSQL"
   , "DT"
   , "bslib"
@@ -30,6 +29,7 @@ libraries <- c(
   , "gtsummary"
   , "webshot"
   , "webshot2"
+  , "ggplot2"
   , "shinyFiles"
   , "flextable"
   , "RSQLite"
@@ -41,6 +41,7 @@ libraries <- c(
   , "DatabaseConnector"
   , "doParallel"
   , "doParallel"
+  , "DataExplorer"
 )
 
 
