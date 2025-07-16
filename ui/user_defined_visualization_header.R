@@ -681,6 +681,16 @@ user_download_autoreport = renderUI({
 })
 
 
+user_generatebivriate = renderUI({
+  actionBttn(inputId = "btnGenerateBivariate", get_rv_labels("user_generatebivriate"),
+             size = "md",
+             inline = TRUE,
+             block = FALSE,
+             color = "success"
+  )
+})
+
+
     
 
 

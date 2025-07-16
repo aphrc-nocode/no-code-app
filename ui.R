@@ -32,12 +32,12 @@ aphrcSiderbar <- dashboardSidebar(
 
 fluidPage(
   useShinyjs(),
-  is_logged_in(
+  login::is_logged_in(
     id = app_login_config$APP_ID, header),
   
   aphrcHeader <- dashboardHeader(disable = TRUE),
   
-  is_not_logged_in(
+  login::is_not_logged_in(
     id = app_login_config$APP_ID,
   div(class = "auth-container",
       br(),
@@ -64,9 +64,9 @@ fluidPage(
       login::reset_password_ui(id = app_login_config$APP_ID)
   ))),
   
-  is_logged_in(
+  login::is_logged_in(
     id = app_login_config$APP_ID, dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody,skin = "green")),
   
-  is_logged_in(
+  login::is_logged_in(
     id = app_login_config$APP_ID, footer)
 )

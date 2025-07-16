@@ -75,10 +75,12 @@ user_defined_server <- function() {
 		  output$bivariate_plot_title = bivariate_plot_title
 		  output$corrplot_title = corrplot_title
 		  output$user_download_autoreport = user_download_autoreport
+		  output$user_generatebivriate = user_generatebivriate
 		  
 		  
 		} else {
 		  output$user_output_type = NULL
+		  output$user_generatebivriate = NULL
 		  output$user_tab_options = NULL
 		  output$user_calc_var = NULL
 		  #output$user_strata_var = NULL
@@ -159,18 +161,8 @@ observe({
       
   if(isTRUE(!is.null(rv_current$working_df))){
     output$user_ggthemes <- renderUI({
-      selectInput("ggplot_theme", "Choose ggplot2 theme:",
-                  choices = theme_choices <- c(
-                    "Default (theme_grey)" = "theme_grey",
-                    "Black & White (theme_bw)" = "theme_bw",
-                    "Classic (theme_classic)" = "theme_classic",
-                    "Minimal (theme_minimal)" = "theme_minimal",
-                    "Light (theme_light)" = "theme_light",
-                    "Dark (theme_dark)" = "theme_dark",
-                    "Linedraw (theme_linedraw)" = "theme_linedraw",
-                    "Void (theme_void)" = "theme_void",
-                    "Test (theme_test)" = "theme_test"
-                  ), selected = "Minimal (theme_minimal)")
+      selectInput("ggplot_theme", get_rv_labels("user_ggthemes"),
+                  choices =  get_named_choices(input_choices_file, input$change_language,"user_ggthemes"), selected = "theme_grey")
     })
   }else{
     output$user_ggthemes <- NULL
@@ -295,7 +287,7 @@ observe({
   observe({
   req(rv_current$working_df)
   if(sum(input$cboCorrFeatures != "")>0 && isTRUE(!is.null(rv_current$working_df))){
-    rv_current$plot_corr <- 
+    plots_sec_rv$plot_corr <- 
       
       tryCatch({Rautoml::custom_corrplot(
       df = rv_current$working_df,
@@ -305,47 +297,48 @@ observe({
         ggplot2::ggplot()+ggplot2::theme_minimal()
     })
   }else{
-    rv_current$plot_corr<- ggplot2::ggplot()+theme_void()
+    plots_sec_rv$plot_corr<- ggplot2::ggplot()+theme_void()
   }
   })
   
   output$CorrPlotOutput <- renderPlot({
-    rv_current$plot_corr
+    plots_sec_rv$plot_corr
   })
   
-  
-    observe({
+  observeEvent(input$btnGenerateBivariate, {
       req(input$cboBivariateFeatures)
       req(input$cboBivariateOutcome)
       req(rv_current$working_df)
-      showModal(modalDialog(
-        title = "Processing...",
-        HTML("<center><img src='https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif' width='100'><br>
-           <h4 style='color: #7bc148;'>", get_rv_labels("waiting_time"), "</h4>
-           <h5 style='color: #7bc148;'>", get_rv_labels("load_bivariate"), "</h5></center>"),
-        footer = NULL,
-        easyClose = FALSE
-      ))
-      if(!(input$cboBivariateOutcome %in% input$cboBivariateFeatures) && isTRUE(!is.null(rv_current$working_df))){
-      rv_current$plot_bivariate_auto <- 
-        
-        tryCatch({Rautoml::bivariate_plot(
+
+      showModal(modalDialog("Bivariate plot is being generated... Please wait.", footer = NULL))
+      if(isTRUE(!is.null(rv_current$working_df))){
+      plt <- tryCatch({Rautoml::bivariate_plot(
         df = rv_current$working_df,
         outcome = input$cboBivariateOutcome,
-        features = input$cboBivariateFeatures,
+        features = c(input$cboBivariateFeatures),
         colorbrewer = input$cboColorBrewerBivariate,
         title = input$txtPlotBivariateTitle
-        )}, error = function(e){
-         ggplot2::ggplot()+ggplot2::theme_minimal()
+        )
+        shinyalert::shinyalert("Success", "Bivariate plot creation successfully!", type = "success")
+          }, error = function(e){
+        ggplot2::ggplot()+ggplot2::theme_minimal()
+          shinyalert::shinyalert("Error", e$message, type = "error")
+      },
+      finally = {
+        removeModal()
       })
+
+      plots_sec_rv$plot_bivariate_auto <- plt
     }else{
-      rv_current$plot_bivariate_auto <- ggplot2::ggplot()+theme_void()
+      plt <- ggplot2::ggplot()+theme_minimal()
     }
-      removeModal()
+
   })
+
   
   output$BivariatePlotOutput <- renderPlot({
-    rv_current$plot_bivariate_auto
+    req(plots_sec_rv$plot_bivariate_auto)
+    plots_sec_rv$plot_bivariate_auto
   })
   
   output$dfPreview <- DT::renderDataTable({

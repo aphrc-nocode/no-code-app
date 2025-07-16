@@ -6,7 +6,7 @@ header = tags$div(
     column(6, uiOutput("app_title", align="right")),
     column(2, uiOutput("change_language")),
     column(2,align="right",
-           is_logged_in(
+           login::is_logged_in(
              id = app_login_config$APP_ID,
              style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;",
              
