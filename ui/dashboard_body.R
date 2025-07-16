@@ -252,11 +252,12 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			            uiOutput("user_select_Bivariate_features"),
 			            uiOutput("user_select_color_parlet_bivariate"),
 			            #uiOutput("user_select_bivariate_single_color"),
-			            htmlOutput("bivariate_plot_title")
+			            htmlOutput("bivariate_plot_title"),
+			            uiOutput("user_generatebivriate")
 			          ),
 			          column(
 			            width = 9,
-			            plotOutput("BivariatePlotOutput")
+			            plotOutput("BivariatePlotOutput", height = "600px")
 			          ))),
 			          br(),
 			          box(

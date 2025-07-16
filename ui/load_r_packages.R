@@ -32,7 +32,6 @@ libraries <- c(
   , "webshot2"
   , "shinyFiles"
   , "flextable"
-  , "login"
   , "RSQLite"
   ,"sjmisc"
   ,"DBI"
@@ -65,6 +64,8 @@ install_github_if_missing <- function(pkg, repo) {
 }
 
 install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
+install_github_if_missing("login", "jbryer/login")
+
 
 
 
