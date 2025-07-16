@@ -245,7 +245,7 @@ model_training_caret_models_xgbTree_server = function() {
 							, get_rv_labels("model_training_caret_models_xgbTree_advance_eta")
 							, min = 0
 							, max = 1
-							, value = c(0, 1)
+							, value = c(0.001, 0.9999)
 						)
 						, selectInput("model_training_caret_models_xgbTree_advance_gamma"
 							, get_rv_labels("model_training_caret_models_xgbTree_advance_gamma")
@@ -342,7 +342,7 @@ model_training_caret_models_xgbLinear_server = function() {
 							, get_rv_labels("model_training_caret_models_xgbLinear_advance_eta")
 							, min = 0
 							, max = 1
-							, value = c(0, 1)
+							, value = c(0.001, 0.9999)
 						)
 						, actionButton("xgbLinear_advance_control_apply_save"
 							, get_rv_labels("customize_train_control_apply_save") 
@@ -471,4 +471,128 @@ model_training_caret_models_svmLinear_server = function() {
 	})
 	
 }
+
+
+
+#### ---- svmPoly --------------------------------- ####
+model_training_caret_models_svmPoly_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+				output$model_training_caret_models_svmPoly_check = renderUI({
+					if (isTRUE(!is.null(rv_current$working_df))) {
+						if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+								temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_svmPoly")
+								rv_training_models$svmPoly_name = temp_label 
+								prettyCheckbox(
+									"model_training_caret_models_svmPoly_check"
+									, label = names(temp_label)
+									, status = "success"
+									, outline = FALSE
+									, inline = TRUE
+									, value=FALSE
+								)
+							}
+						}
+				 })
+	})
+	
+	
+	## svmPoly Model parameters
+	output$model_training_caret_models_svmPoly_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_svmPoly_check)) {
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_svmPoly_advance_degree"
+							, get_rv_labels("model_training_caret_models_svmPoly_advance_degree")
+							, choices =  1:10 
+							, selected = 1
+							, multiple = TRUE
+						)
+	  					, sliderInput("model_training_caret_models_svmPoly_advance_scale"
+							, get_rv_labels("model_training_caret_models_svmPoly_advance_scale")
+							, min = 0
+							, max = 1
+							, value = c(0.001, 0.9999)
+						)
+						, selectInput("model_training_caret_models_svmPoly_advance_C"
+							, get_rv_labels("model_training_caret_models_svmPoly_advance_C")
+							, choices =  2^(-2:7) 
+							, selected = 1
+							, multiple = TRUE
+						)
+						, actionButton("svmPoly_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+	
+}
+
+
+#### ---- glmnet --------------------------------- ####
+model_training_caret_models_glmnet_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+				output$model_training_caret_models_glmnet_check = renderUI({
+					if (isTRUE(!is.null(rv_current$working_df))) {
+						if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+								temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_glmnet")
+								rv_training_models$glmnet_name = temp_label 
+								prettyCheckbox(
+									"model_training_caret_models_glmnet_check"
+									, label = names(temp_label)
+									, status = "success"
+									, outline = FALSE
+									, inline = TRUE
+									, value=FALSE
+								)
+							}
+						}
+				 })
+	})
+	
+	
+	## glmnet Model parameters
+	output$model_training_caret_models_glmnet_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_glmnet_check)) {
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_glmnet_advance_alpha"
+							, get_rv_labels("model_training_caret_models_glmnet_advance_alpha")
+							, choices = seq(0.1, 1, length.out=10) 
+							, selected = 1
+							, multiple = TRUE
+						)
+						, actionButton("glmnet_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+	
+}
+
+
+
+
+
 
