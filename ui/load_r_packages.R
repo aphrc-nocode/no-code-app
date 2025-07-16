@@ -21,7 +21,6 @@ libraries <- c(
   , "summarytools"
   , "countries"
   , "plotly"
-  , "ggplot2"
   , "RPostgreSQL"
   , "DT"
   , "bslib"
@@ -30,9 +29,9 @@ libraries <- c(
   , "gtsummary"
   , "webshot"
   , "webshot2"
+  , "ggplot2"
   , "shinyFiles"
   , "flextable"
-  , "login"
   , "RSQLite"
   ,"sjmisc"
   ,"DBI"
@@ -42,6 +41,7 @@ libraries <- c(
   , "DatabaseConnector"
   , "doParallel"
   , "doParallel"
+  , "DataExplorer"
 )
 
 
@@ -65,6 +65,8 @@ install_github_if_missing <- function(pkg, repo) {
 }
 
 install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
+install_github_if_missing("login", "jbryer/login")
+
 
 
 
