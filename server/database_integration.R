@@ -8,8 +8,8 @@ database_integration_server <- function(){
     database_pass <- input$db_pwd
     #db_port <- "5432" ## FIXME: Transfer to UI
     db_port <- input$db_port
-    #drv <- RPostgres::Postgres()
-    #drv <- dbDriver("PostgreSQL") #U1
+    drv <- RPostgres::Postgres()
+    #drv <- dbDriver("PostgreSQL")
     
     if(input$db_type == "PostgreSQL"){
       tryCatch({
