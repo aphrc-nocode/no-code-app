@@ -16,7 +16,9 @@ import matplotlib.pyplot as plt
 import tempfile, os
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 import math
-
+#from pycaret.classification import load_model
+import tempfile
+import os
  
 from pycaret.classification import (
     compare_models as clf_compare,
@@ -28,6 +30,7 @@ from pycaret.classification import (
     predict_model,
     save_model,
     get_config,
+    load_model,
     interpret_model
 )
 
@@ -36,9 +39,6 @@ from pycaret.classification import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
 MODELS_DIR = os.path.join(BASE_DIR, "..", "models")
 MODELS_DIR = os.path.abspath(MODELS_DIR)
-
-
-
 
 def read_csv_flexible(path):
     """Try to read fole with comma (,) or semi comma(;) if one column was detected """
@@ -309,7 +309,7 @@ async def evaluate_model(
 
     # Chemin final du modèle
     model_path = os.path.join(MODELS_DIR, model_name)
-    print("Dossier modèles absolu :", MODELS_DIR)
+    print("Models folder :", MODELS_DIR)
     save_model(model, model_path)
 
 
@@ -391,13 +391,6 @@ async def run_prediction(
     
     
 
-from pycaret.classification import load_model, predict_model
-import csv
-import pandas as pd
-import tempfile
-import os
-from fastapi import UploadFile, File
-from pycaret.classification import load_model, predict_model
 
 @app.post("/predict_deployed_model")
 async def predict_deployed_model(file: UploadFile = File(...)):
@@ -422,7 +415,7 @@ async def predict_deployed_model(file: UploadFile = File(...)):
         df = pd.read_csv(tmp_path, sep=sep)
         os.remove(tmp_path)
     except Exception as e:
-        return {"error": f"Erreur lecture fichier CSV : {str(e)}"}
+        return {"error": f"CSV file read error : {str(e)}"}
 
     # Charger le modèle
     try:
@@ -431,7 +424,7 @@ async def predict_deployed_model(file: UploadFile = File(...)):
         return predictions.to_json(orient="records")
     except Exception as e:
         return {
-            "error": f"Erreur lors de la prédiction : {str(e)}",
+            "error": f"Prediction error : {str(e)}",
             "columns_received": df.columns.tolist()
         }
 
@@ -445,9 +438,9 @@ async def deploy_model(model_id: str = Form(...)):
 
     # Vérification existence
     if not os.path.exists(model_source_path):
-        return {"error": f"Modèle '{model_id}' non trouvé. Avez-vous bien évalué ce modèle ?"}
+        return {"error": f"Model '{model_id}' not found. Have you properly assessed this model?"}
 
     # Copier le fichier vers le modèle déployé
     shutil.copyfile(model_source_path, model_dest_path)
 
-    return {"message": f"✅ Modèle '{model_id}' déployé avec succès."}
+    return {"message": f"Model '{model_id}' successfully deployed."}

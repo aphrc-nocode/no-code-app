@@ -278,6 +278,11 @@ function(input, output, session) {
   output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
   output$bivariate_plot_title = bivariate_plot_title
   output$corrplot_title = corrplot_title
+  
+  # Deployment
+  output$deploy_model_module_ui <- renderUI({
+    deploy_model_ui("deploy_model_module")
+  }) 
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -401,12 +406,6 @@ function(input, output, session) {
   ###### ----- Impute missing values ------------------- ####
 #  impute_missing_server()
 
-# Pycaret
-#pycaret_feature_engineering_server("pycaret_module", rv_current, rv_ml_ai)
-#feature_engineering_server("feature_engineering_module", rv_current, rv_ml_ai)
-  
-  
-
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
@@ -419,25 +418,6 @@ function(input, output, session) {
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
-
-  observe({
-    req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
-    
-    if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
-      output$automl_module_ui <- renderUI({
-        automl_ui("automl_module")
-      })
-    } else {
-      output$automl_module_ui <- renderUI({
-        h4("")
-      })
-    }
-  })
-  
-  # Deployment
-  output$deploy_model_module_ui <- renderUI({
-    deploy_model_ui("deploy_model_module")
-  }) 
   
 }
 

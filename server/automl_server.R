@@ -462,7 +462,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
         )
       )
       
-      showNotification("Modèle déployé avec succès !", type = "message")
+      showNotification("Model successfully deployed !", type = "message")
     })
     
     actionButton(ns("predict_with_deployed"), "Prédire via modèle déployé")
