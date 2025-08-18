@@ -44,4 +44,5 @@ user_auth <- function(input, output, session) {
     shinyjs::show("reset_form")
     output$form_title <- renderText("Reset Password")
   })
+  
 }

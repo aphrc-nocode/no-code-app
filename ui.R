@@ -1,10 +1,11 @@
 #Only UI files and R packages should be included
+#Load R packages
+source(paste0(getwd(), "/ui/load_r_packages.R"))
+source(paste0(getwd(), "/server/maskedpassinput.R"))
 # U1 Add this line of code to call automl_UI from UI folder
 source("ui/automl_ui.R")
 # Load UI function before deploy_model_ui()
 source("ui/deploy_model_ui.R")
-#Load R packages
-source(paste0(getwd(), "/ui/load_r_packages.R"))
 #Load Headertag
 source(paste0(getwd(), "/ui/login_credentials.R"))
 
@@ -17,7 +18,6 @@ source(paste0(getwd(), "/ui/header.R"))
 source(paste0(getwd(), "/ui/footer.R"))
 
 source("ui/dashboard_body.R")
-
 
 #Sidebar
 aphrcSiderbar <- dashboardSidebar(

@@ -86,7 +86,7 @@ generate_research_questions_api_token = function() {
 						hr()
 						, HTML(paste0("<b>", get_rv_labels("generate_research_questions_api_token"), "</b>"))
 						, helpText(paste0(get_rv_labels("generate_research_questions_api_token_ht")), " ", a(get_rv_labels("generate_research_questions_api_token_ht_h"), href="https://aistudio.google.com/app/apikey", target="_blank"))
-						, passwordInput("generate_research_questions_api_token"
+						, maskedPasswordInput("generate_research_questions_api_token"
 							, label = NULL 
 							, value = ""
 							, width = "100%"

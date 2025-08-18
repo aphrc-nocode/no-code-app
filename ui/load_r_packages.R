@@ -41,6 +41,9 @@ libraries <- c(
   , "DatabaseConnector"
   , "doParallel"
   , "doParallel"
+  ,"GGally"
+  ,"DataExplorer"
+  ,"htmltools"
 )
 
 
