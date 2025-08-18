@@ -39,4 +39,5 @@ datasets
 
 *.html
 .env
+static_files/
 

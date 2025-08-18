@@ -10,6 +10,9 @@ function(input, output, session){
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   ###-------User Login--------_##
+  session$onFlushed(function() {
+    runjs("document.getElementById('login_pwd')?.classList.add('hash-allowed');")
+  }, once = TRUE)
   source("server/auth.R")
   user_auth(input, output, session)
   #### ---- Placeholder for reactive values ------------------------------------
@@ -49,7 +52,7 @@ function(input, output, session){
   )
   
   #####------------------Plots Reactive-------------------
-  
+
   plots_sec_rv <- reactiveValues(
     plot_rv=NULL
     ,tab_rv=NULL
