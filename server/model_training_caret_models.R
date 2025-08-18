@@ -35,6 +35,7 @@ model_training_caret_models_ols_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_ols_check)) {
+					rv_training_models$ols_trained_model = rv_training_models$ols_name
 					if (rv_ml_ai$task=="Regression") {
 						box(title = get_rv_labels("model_training_caret_models_advance_options")
 							, status = "teal"
@@ -54,7 +55,6 @@ model_training_caret_models_ols_server = function() {
 						)		
 						
 					}
-					
 				}
 			}
 		}
@@ -92,6 +92,7 @@ model_training_caret_models_rf_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_rf_check)) {
+					rv_training_models$rf_trained_model = rv_training_models$rf_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -107,7 +108,7 @@ model_training_caret_models_rf_server = function() {
 						, actionButton("rf_advance_control_apply_save"
 							, get_rv_labels("customize_train_control_apply_save") 
 						)
-					)			
+					)
 				}
 			}
 		}
