@@ -139,9 +139,12 @@ function(input, output, session){
 		ols_model = NULL
 		, ols_param = FALSE
 		, ols_name = NULL
+		, ols_trained_model = NULL
 		, rf_model = NULL
 		, rf_param = FALSE
 		, rf_name = NULL
+		, rf_trained_model = NULL
+		, all_trained_models = NULL
 	)
 	
 	rv_training_results = reactiveValues(
