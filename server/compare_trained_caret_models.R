@@ -65,11 +65,28 @@ model_training_caret_train_metrics_server = function() {
 						  ) %>%
 							 DT::formatRound(columns = c("lower", "estimate", "upper"), digits = 4)
 						})
+						
+						rv_training_models$all_trained_models = get_rv_objects(pattern="_trained_model$", rv_training_models)
+		  
+					  ## More options
+					  output$model_training_caret_more_options = renderUI({
+							prettyRadioButtons(
+								inputId = "model_training_caret_more_options_check"
+									, label = get_rv_labels("model_training_caret_more_options_check")
+									, choices = get_named_choices(input_choices_file, input$change_language, "model_training_caret_more_options_check")
+									, inline = TRUE
+									, status = "success"
+							)
+					  })
+					
 					} else {
 						output$model_training_caret_test_metrics_plot_specifics = NULL
 						output$model_training_caret_test_metrics_plot_all = NULL
 						output$model_training_caret_test_metrics_plot_roc = NULL
 						output$model_training_caret_test_metrics_df = NULL
+						
+						rv_training_models$all_trained_models = NULL
+						output$model_training_caret_more_options = NULL
 					}
 
 				} else {
@@ -80,6 +97,9 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_test_metrics_plot_all = NULL
 					output$model_training_caret_test_metrics_plot_roc = NULL
 					output$model_training_caret_test_metrics_df = NULL
+						
+					rv_training_models$all_trained_models = NULL
+					output$model_training_caret_more_options = NULL
 				}
 			} else {
 				output$model_training_caret_train_metrics_plot = NULL
@@ -89,6 +109,9 @@ model_training_caret_train_metrics_server = function() {
 				output$model_training_caret_test_metrics_plot_all = NULL
 				output$model_training_caret_test_metrics_plot_roc = NULL
 				output$model_training_caret_test_metrics_df = NULL
+					
+				rv_training_models$all_trained_models = NULL
+				output$model_training_caret_more_options = NULL
 			}
 		} else {
 			output$model_training_caret_train_metrics_plot = NULL
@@ -98,9 +121,29 @@ model_training_caret_train_metrics_server = function() {
 			output$model_training_caret_test_metrics_plot_all = NULL
 			output$model_training_caret_test_metrics_plot_roc = NULL
 			output$model_training_caret_test_metrics_df = NULL
+				
+			rv_training_models$all_trained_models = NULL
+			output$model_training_caret_more_options = NULL
+		}
+
+	})
+
+	output$model_training_caret_test_metrics_trained_models = renderUI({
+		if (isTRUE(!is.null(rv_training_models$all_trained_models))) {
+			if (isTRUE(input$model_training_caret_more_options_check=="Select models")) {
+				temp_models = rv_training_models$all_trained_models
+				empty_lab = ""
+				names(empty_lab) = get_rv_labels("model_training_caret_test_metrics_trained_models_ph") 
+				selectInput("model_training_caret_test_metrics_trained_models"
+					, label = NULL
+					, selected = NULL
+					, choices = c(empty_lab , temp_models)
+					, multiple=TRUE
+					, width="100%"
+				)
+			}
 		}
 	})
-	
 	
 	output$model_training_caret_train_metrics = renderUI({
 		if (isTRUE(!is.null(rv_current$working_df))) {
@@ -161,6 +204,24 @@ model_training_caret_train_metrics_server = function() {
 											, fluidRow(
 												column(width=12
 													, plotOutput("model_training_caret_test_metrics_plot_roc")
+												)
+											)
+										)
+									)
+								)
+								, tabPanel("More metrics"
+									, p(
+										br()
+										, box(title = NULL
+											, status = "success"
+											, solidHeader = TRUE
+											, collapsible = TRUE
+											, collapsed = FALSE
+											, width = 12
+											, fluidRow(
+												column(width=4
+													, uiOutput("model_training_caret_more_options")
+													, uiOutput("model_training_caret_test_metrics_trained_models")
 												)
 											)
 										)
