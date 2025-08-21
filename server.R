@@ -3,18 +3,17 @@ options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
 
 function(input, output, session){
-  
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   ###-------User Login--------_##
-  session$onFlushed(function() {
-    runjs("document.getElementById('login_pwd')?.classList.add('hash-allowed');")
-  }, once = TRUE)
+
+  # Once the first UI flush happens, hide the loader.
   source("server/auth.R")
   user_auth(input, output, session)
+  
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(

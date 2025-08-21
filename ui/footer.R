@@ -1,5 +1,4 @@
-footer =
-  customFooter <- tags$div(
+footer <- tags$div(
     class = "custom-footer",
     style = "background-color: #7BC148; color: white; padding: 10px;",
     br(),

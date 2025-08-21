@@ -26,7 +26,7 @@ aphrcSiderbar <- dashboardSidebar(
   sidebarMenuOutput("dynamic_meinu_aphrc")
   #menuItem("AutoML", tabName = "automl_tab", icon = icon("robot"))
   
-  )
+)
 
 #Body
 
@@ -39,30 +39,30 @@ fluidPage(
   
   login::is_not_logged_in(
     id = app_login_config$APP_ID,
-  div(class = "auth-container",
-      br(),
-      div(class = "auth-title text-center",
-          tags$img(src = "aphrc.png", height = "80px", style = "margin-bottom: 15px;"),
-          h3("Welcome to Nocode Platform")
-      ),
-      
-      div(class = "toggle-buttons",
-          actionButton("show_login", "Login", class = "btn btn-outline-success"),
-          actionButton("show_signup", "Sign Up", class = "btn btn-outline-success"),
-          actionButton("show_reset", "Reset Password", class = "btn btn-outline-success")
-      ),
-      
-      div(id = "login_form",
-          login::login_ui(id = app_login_config$APP_ID)
-      ),
-      
-      div(id = "signup_form", style = "display: none;",
-          login::new_user_ui(id = app_login_config$APP_ID)
-  ),
-  
-  div(id = "reset_form", style = "display: none;",
-      login::reset_password_ui(id = app_login_config$APP_ID)
-  ))),
+    div(class = "auth-container",
+        br(),
+        div(class = "auth-title text-center",
+            tags$img(src = "aphrc.png", height = "80px", style = "margin-bottom: 15px;"),
+            h3("Welcome to Nocode Platform")
+        ),
+        
+        div(class = "toggle-buttons",
+            actionButton("show_login", "Login", class = "btn btn-outline-success"),
+            actionButton("show_signup", "Sign Up", class = "btn btn-outline-success"),
+            actionButton("show_reset", "Reset Password", class = "btn btn-outline-success")
+        ),
+        
+        div(id = "login_form",
+            login::login_ui(id = app_login_config$APP_ID)
+        ),
+        
+        div(id = "signup_form", style = "display: none;",
+            login::new_user_ui(id = app_login_config$APP_ID)
+        ),
+        
+        div(id = "reset_form", style = "display: none;",
+            login::reset_password_ui(id = app_login_config$APP_ID)
+        ))),
   
   login::is_logged_in(
     id = app_login_config$APP_ID, dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody,skin = "green")),

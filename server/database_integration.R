@@ -8,12 +8,13 @@ database_integration_server <- function(){
     database_pass <- input$db_pwd
     #db_port <- "5432" ## FIXME: Transfer to UI
     db_port <- input$db_port
-    drv <- RPostgres::Postgres()
+    #drv <- RPostgres::Postgres()
     #drv <- dbDriver("PostgreSQL")
     
     if(input$db_type == "PostgreSQL"){
       tryCatch({
-        drv <- dbDriver("PostgreSQL") #U2
+        #drv <- dbDriver("PostgreSQL") #U2
+        drv <- RPostgres::Postgres()
         conn <- dbConnect(drv, 
                           dbname = database_name,
                           host = database_host, 
@@ -58,7 +59,6 @@ database_integration_server <- function(){
         shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
       })
     } # U3 end
-    
     
   })
   
