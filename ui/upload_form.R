@@ -174,10 +174,11 @@ db_user <- renderUI({
 db_pwd <- renderUI({
   if (isTRUE(input$upload_type == "Database connection")) {
     if(is.null(rv_database$conn)){  
-      maskedPasswordInput("db_pwd",
+       maskedPasswordInput("db_pwd",
                     label = get_rv_labels("db_pwd")
-                    , placeholder = get_rv_labels("db_pwd_placeholder")
-                    , width = "50%", class="nothashed"
+                    , placeholder = get_rv_labels("db_pwd_placeholder"),
+                    width="50%"
+                    
       )
     }
   } else {
