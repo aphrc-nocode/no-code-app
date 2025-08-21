@@ -209,7 +209,7 @@ model_training_caret_train_metrics_server = function() {
 										)
 									)
 								)
-								, tabPanel("More metrics"
+								, tabPanel(get_rv_labels("model_training_caret_more_metrics")
 									, p(
 										br()
 										, box(title = NULL
