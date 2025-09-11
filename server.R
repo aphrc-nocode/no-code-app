@@ -81,6 +81,7 @@ function(input, output, session){
 		, database_name = NULL
 		, database_user = NULL
 		, database_pass = NULL
+		, details = NULL
 	)
 
 	## ---
