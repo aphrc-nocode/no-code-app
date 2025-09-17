@@ -269,64 +269,64 @@ db_tab_query <- renderUI({
 
 # -- New database connection
 
-output$omop_connection <- renderUI({
-  radioButtons(
-    inputId = "omop_db",
-    label = "Database Connect:",
-    choices = c("New Connection", "Existing Connection"),
-    selected = "Existing Connection"
-  )
-})
+# output$omop_connection <- renderUI({
+#   radioButtons(
+#     inputId = "omop_db",
+#     label = "Database Connect:",
+#     choices = c("New Connection", "Existing Connection"),
+#     selected = "Existing Connection"
+#   )
+# })
 
 
 
 
 
 existing_connection <- renderUI({
-  if (!is.null(rv_database$conn) && isTRUE(input$omop_db == "Existing Connection")) {
+  if (!is.null(rv_database$conn) ) {
       selectInput("existed_conn", "Use Connection", choices = "Postgres Connection", multiple = FALSE)
   
-  }
-})
-  
-
-
-output$omop_quality_type <- renderUI({
-  if (isTRUE(input$omop_db == "Existing Connection")) {
-    if(!is.null(rv_database$conn)){
-      radioButtons(
-        inputId = "omop_quality",
-        label = "",
-        choices = c("Data Quality Dashboard", "ACHILLES"),
-        selected = "Data Quality Dashboard"
-      )
-    }else{
-      shinyalert("", "Please create a connection using Source data page", type = "info")
-    }
+  }else{ 
+    #shinyalert("", "Please create a connection using Source data Menu", type = "info")
     
-  }else{
-    shinyalert("", "Please create a connection using Source data page", type = "info")
-  }
-  
+    }
 })
+  
+
+
+# output$omop_quality_type <- renderUI({
+#   if (isTRUE(input$omop_db == "Existing Connection")) {
+#     if(!is.null(rv_database$conn)){
+#       radioButtons(
+#         inputId = "omop_quality",
+#         label = "",
+#         choices = c("Data Quality Dashboard", "ACHILLES"),
+#         selected = "Data Quality Dashboard"
+#       )
+#     }else{
+#       shinyalert("", "Please create a connection using Source data page", type = "info")
+#     }
+#     
+#   }else{
+#     shinyalert("", "Please create a connection using Source data page", type = "info")
+#   }
+#   
+# })
 
 
 output$schemas <- renderUI({
-  if (!is.null(rv_database$conn) && input$omop_quality == "Data Quality Dashboard") {
+  if (!is.null(rv_database$conn)) {
     tagList(
       selectInput("cdm_schema", "CDM schema", choices = "demo_cdm", multiple = FALSE),
       selectInput("results_schema", "Results schema", choices = "demo_cdm_results", multiple = FALSE),
       textInput("cdmSourceName", "CDM Source Name", placeholder = "NO-CODE CDM", width = "50%")
     )
-  } else {
-    NULL
-  }
+  } 
 })
   
   
 output$generate_dqd <- renderUI({
-  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
-    
+
     if(isTRUE(!is.null(rv_database$conn))){
       
       actionBttn("generate_dqd",
@@ -336,17 +336,16 @@ output$generate_dqd <- renderUI({
                  , color = "success" 
       )
       
-    } else {  NULL }
+    }
     
-  }else{ NULL }
+  
     
   
 })
 
 
 output$view_dqd <- renderUI({
-  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
-    
+
     if(isTRUE(!is.null(rv_database$conn))){
       
       actionBttn("view_dqd",
@@ -356,24 +355,20 @@ output$view_dqd <- renderUI({
                  , color = "success" 
       )
       
-    } else {  NULL }
+    }
     
-  }else{ NULL }
-  
+
   
 })
 
 
 output$stderr_log <- renderText({
   
-  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
-    
+
     if(isTRUE(!is.null(rv_database$conn))){
       stderr_content()
     }
 
-}
-  
 
 
 })
@@ -381,8 +376,7 @@ output$stderr_log <- renderText({
 
 output$open_link <- renderUI({
   
-  if (isTRUE(input$omop_quality == "Data Quality Dashboard")) {
-    
+
     if(isTRUE(!is.null(rv_database$conn))){
       url <- rv_omop$url  # Assuming this is a reactive value
       
@@ -392,10 +386,7 @@ output$open_link <- renderUI({
       } else {
         tags$span("No valid URL yet.")
       }
-    }else {
-  
-}
-  }else{}
-  
+    }
+
 })
 
