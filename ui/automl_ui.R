@@ -1,7 +1,9 @@
 automl_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    h3("AutoML with PyCaret"),
+    #h3(get_rv_labels("automl_title")),
+    h3("AutoML with Pycaret"),
+    
     # Update 
     numericInput(ns("n_models"), "No of models for comparison (AutoML)", value = 10, min = 1, max = 50),
     actionButton(ns("launch_automl"), "Launch AutoML"),

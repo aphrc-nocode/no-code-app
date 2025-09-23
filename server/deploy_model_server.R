@@ -1,30 +1,30 @@
 deploy_model_server <- function(id, rv_automl) {
   moduleServer(id, function(input, output, session) {
-    print("✅ Module deploy_model_server lancé")  # Debug
+    print("Module deploy_model_server launched")  # Debug
     ns <- session$ns
     
-    # Fonction pour lister les modèles disponibles
+    # Function to list available models
     get_saved_models <- function(models_dir = "models") {
-      print(paste("🔍 getwd():", getwd()))
+      print(paste("getwd():", getwd()))
       if (!dir.exists(models_dir)) {
-        print("❌ Dossier 'models' non trouvé")
+        print("Folder 'models' not found")
         return(character(0))
       }
       files <- list.files(models_dir, pattern = "\\.pkl$", full.names = FALSE)
-      print(paste("📂 Fichiers modèles détectés :", toString(files)))
-      model_names <- gsub("\\.pkl$", "", files)  # Retirer l'extension
+      print(paste("Models folder detected :", toString(files)))
+      model_names <- gsub("\\.pkl$", "", files)  # Remove extension
       return(model_names)
     }
     
-    # Mise à jour dynamique de la liste
+    # Dynamic list update
     observeEvent(1, {
       models <- get_saved_models()
-      print(paste("📋 Modèles affichés dans le selectInput :", toString(models)))
+      print(paste("Models showed :", toString(models)))
       updateSelectInput(session, "selected_model_for_deploy", choices = models)
     }, once = TRUE)
     
     
-    # Action bouton "Déployer"
+    # Deploy button action
     observeEvent(input$deploy_model, {
       req(input$selected_model_for_deploy)
       
@@ -36,10 +36,10 @@ deploy_model_server <- function(id, rv_automl) {
       showNotification(msg$message %||% msg$error, type = if (!is.null(msg$error)) "error" else "message")
     })
     
-    # Rechargement manuel via bouton
+    # Manual reload via button
     observeEvent(input$reload_models, {
       models <- get_saved_models()
-      print(paste("🔁 Rechargement manuel - modèles :", toString(models)))
+      print(paste("Manual reloading - models :", toString(models)))
       updateSelectInput(session, "selected_model_for_deploy", choices = models)
     })
     

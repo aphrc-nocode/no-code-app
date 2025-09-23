@@ -350,5 +350,19 @@ observeEvent(input$modelling_framework_choices, {
 	})
 	
 
+observe({
+  req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
+  
+  if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
+    output$automl_module_ui <- renderUI({
+      automl_ui("automl_module")
+    })
+  } else {
+    output$automl_module_ui <- renderUI({
+      h4("")
+    })
+  }
+})
+
 }
 
