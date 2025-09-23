@@ -70,6 +70,42 @@ Go to command line, move to py folder and run this following command to Launch F
 ```
 uvicorn main:app --reload
 ```
+### Linux (Ubuntu) — Recommended Installation
+
+For better performance on Linux, especially with PyCaret and ML models, we recommend using **Miniconda** with Python 3.10.
+
+#### 1. Install system dependencies
+```
+bash
+sudo apt update
+sudo apt install -y software-properties-common build-essential cmake libboost-dev
+```
+#### 2. Install Miniconda
+```
+cd ~
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+source ~/.bashrc
+conda --version
+```
+
+#### 3. . Create environment with Python 3.10
+```
+conda create -n fastapi-ml python=3.10 -y
+conda activate fastapi-ml
+```
+
+#### 4. Install required Python packages
+```
+conda install -c conda-forge lightgbm
+pip install --upgrade pip
+pip install fastapi uvicorn python-multipart shap pycaret
+```
+### 5. Run FastAPI server
+```
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
 ### R studio
 
 Open either [server.R](./server.R) or [ui.R](./ui.R) from R Studio and then R the app.
