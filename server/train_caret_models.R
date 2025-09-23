@@ -402,7 +402,7 @@ model_training_caret_train_all_server = function() {
 							, metric=input$model_training_setup_eval_metric
 						)
 					}
-					rv_training_results$train_metrics_df=Rautoml::extract_summary(rv_training_results$models)
+					rv_training_results$train_metrics_df=Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
 
 						rv_training_results$test_metrics_objs=Rautoml::boot_estimates_multiple(
 							models=rv_training_results$models
@@ -413,7 +413,7 @@ model_training_caret_train_all_server = function() {
 							, model_name=NULL
 							, type="prob"
 							, report= input$model_training_setup_eval_metric
-							, summary_fun=Rautoml::quantile_summary
+							, summary_fun=Rautoml::student_t_summary
 						)
 
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)

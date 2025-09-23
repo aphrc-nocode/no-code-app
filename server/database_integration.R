@@ -8,24 +8,33 @@ database_integration_server <- function(){
     database_pass <- input$db_pwd
     #db_port <- "5432" ## FIXME: Transfer to UI
     db_port <- input$db_port
-    drv <- RPostgres::Postgres()
-    #drv <- dbDriver("PostgreSQL")
+
     
     if(input$db_type == "PostgreSQL"){
       tryCatch({
-        drv <- dbDriver("PostgreSQL") #U2
-        conn <- dbConnect(drv, 
-                          dbname = database_name,
-                          host = database_host, 
-                          port = db_port,
-                          user = database_user, 
-                          password = database_pass)
+        # pg_conn <- reactiveValues(details = NULL,
+        #                           conn = NULL,
+        #                           schemas = NULL)
+        
+        rv_database$details <- DatabaseConnector::createConnectionDetails(
+          dbms = tolower(input$db_type),
+          server = paste0(input$db_host, "/", input$db_name),
+          port = input$db_port,
+          user = input$db_user,
+          password = input$db_pwd,
+          pathToDriver = "./static_files"
+        )
+        
+        conn <- DatabaseConnector::connect(rv_database$details)
+        
+        #pg_conn$conn <- conn
         
         rv_database$conn <- conn
+        
         shinyalert("", get_rv_labels("db_connect_success"), type = "success")
         query_schemas <-"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema') AND schema_name NOT LIKE 'pg_%' "
-        schemas <- dbGetQuery(conn, query_schemas)
-        schema_list <- c(schemas)
+        schemas <- DatabaseConnector::querySql(conn, query_schemas)$SCHEMA_NAME
+        schema_list <- schemas
         rv_database$schema_list <- schema_list
         updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       }, 
@@ -58,7 +67,6 @@ database_integration_server <- function(){
         shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
       })
     } # U3 end
-    
     
   })
   
@@ -180,6 +188,7 @@ database_integration_server <- function(){
   })
   
   observeEvent(input$db_disconnect, {
+    DatabaseConnector::disconnect(rv_database$conn)
     dbDisconnect(rv_database$conn)
     rv_database$conn = NULL
     rv_database$schema_list = NULL

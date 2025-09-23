@@ -2,7 +2,7 @@ user_auth <- function(input, output, session) {
   USER <- login::login_server(
     id = app_login_config$APP_ID,
     db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users.sqlite'),
-    emailer = emayili_emailer(
+    emailer = login::emayili_emailer(
       email_host = app_login_config$email_host,
       email_port = app_login_config$email_port,
       email_username = app_login_config$email_username,
@@ -44,4 +44,5 @@ user_auth <- function(input, output, session) {
     shinyjs::show("reset_form")
     output$form_title <- renderText("Reset Password")
   })
+  
 }

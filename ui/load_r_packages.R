@@ -40,8 +40,9 @@ libraries <- c(
   ,"Achilles"
   , "DatabaseConnector"
   , "doParallel"
-  , "doParallel"
-  , "DataExplorer"
+  ,"GGally"
+  ,"DataExplorer"
+  ,"htmltools"
 )
 
 

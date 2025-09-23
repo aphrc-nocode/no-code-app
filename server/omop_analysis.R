@@ -26,16 +26,16 @@ omop_analysis_server <- function(){
   database_user <- isolate(rv_database$database_user)
   database_pass <- isolate(rv_database$database_pass)
   
-  
+  connectionDetails <- rv_database$details  #Call to earlier connection details with persistent con
 
-  connectionDetails <- createConnectionDetails(
-    dbms = "postgresql",
-    server = paste(database_host, database_name, sep="/"),
-    user = database_user,
-    password = database_pass,
-    pathToDriver = file_path
-  )
-  
+  # connectionDetails <- createConnectionDetails(
+  #   dbms = "postgresql",
+  #   server = paste(database_host, database_name, sep="/"),
+  #   user = database_user,
+  #   password = database_pass,
+  #   pathToDriver = file_path
+  # )
+  # 
 
   
   
@@ -192,8 +192,8 @@ omop_analysis_server <- function(){
 
   })
   
-  observeEvent(input$omop_quality, {
-    if(input$omop_quality == "Data Quality Dashboard"){
+  observeEvent(input$existed_conn, {
+    if(input$existed_conn == "Postgres Connection"){
       updateSelectInput(session,inputId = "cdm_schema", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       updateSelectInput(session,inputId = "results_schema", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       

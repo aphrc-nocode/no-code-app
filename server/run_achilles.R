@@ -26,7 +26,7 @@ achilles_integration_server <- function() {
                                             get_rv_labels("achilles_db_user"),
                                             placeholder = "Required"))
       
-      output$cbodbpass<- renderUI(passwordInput("achilles_db_pwd",
+      output$cbodbpass<- renderUI(maskedPasswordInput("achilles_db_pwd",
                                                 get_rv_labels("achilles_db_pwd"),
                                                 placeholder = "Required"))
      

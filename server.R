@@ -3,15 +3,17 @@ options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
 
 function(input, output, session){
-  
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   ###-------User Login--------_##
+
+  # Once the first UI flush happens, hide the loader.
   source("server/auth.R")
   user_auth(input, output, session)
+  
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
@@ -49,7 +51,7 @@ function(input, output, session){
   )
   
   #####------------------Plots Reactive-------------------
-  
+
   plots_sec_rv <- reactiveValues(
     plot_rv=NULL
     ,tab_rv=NULL
@@ -79,6 +81,7 @@ function(input, output, session){
 		, database_name = NULL
 		, database_user = NULL
 		, database_pass = NULL
+		, details = NULL
 	)
 
 	## ---
@@ -136,9 +139,12 @@ function(input, output, session){
 		ols_model = NULL
 		, ols_param = FALSE
 		, ols_name = NULL
+		, ols_trained_model = NULL
 		, rf_model = NULL
 		, rf_param = FALSE
 		, rf_name = NULL
+		, rf_trained_model = NULL
+		, all_trained_models = NULL
 	)
 	
 	rv_training_results = reactiveValues(

@@ -30,7 +30,7 @@ run_cohort_pipeline <- function() {
                                         get_rv_labels("cohort_db_user"),
                                         placeholder = "Required"))
   
-  output$UserPswdID<- renderUI(passwordInput("UserPswdID",
+  output$UserPswdID<- renderUI(maskedPasswordInput("UserPswdID",
                                             get_rv_labels("cohort_db_pwd"),
                                             placeholder = "Required"))
   

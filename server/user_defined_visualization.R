@@ -306,38 +306,34 @@ observe({
   })
   
   observeEvent(input$btnGenerateBivariate, {
-      req(input$cboBivariateFeatures)
-      req(input$cboBivariateOutcome)
-      req(rv_current$working_df)
-
-      showModal(modalDialog("Bivariate plot is being generated... Please wait.", footer = NULL))
-      if(isTRUE(!is.null(rv_current$working_df))){
-      plt <- tryCatch({Rautoml::bivariate_plot(
+    req(rv_current$working_df)
+    req(input$cboBivariateFeatures)
+    req(input$cboBivariateOutcome)
+    
+    showModal(modalDialog("Bivariate plot is being generated... Please wait.", footer = NULL))
+    
+    plt <- tryCatch({
+      Rautoml::bivariate_plot(
         df = rv_current$working_df,
         outcome = input$cboBivariateOutcome,
-        features = c(input$cboBivariateFeatures),
+        features = input$cboBivariateFeatures,
         colorbrewer = input$cboColorBrewerBivariate,
         title = input$txtPlotBivariateTitle
-        )
-        shinyalert::shinyalert("Success", "Bivariate plot creation successfully!", type = "success")
-          }, error = function(e){
-        ggplot2::ggplot()+ggplot2::theme_minimal()
-          shinyalert::shinyalert("Error", e$message, type = "error")
-      },
-      finally = {
-        removeModal()
-      })
-
-      plots_sec_rv$plot_bivariate_auto <- plt
-    }else{
-      plt <- ggplot2::ggplot()+theme_minimal()
-    }
-
+      )
+      shinyalert::shinyalert("Success", "Bivariate plot created successfully!", type = "success")
+    }, error = function(e) {
+      shinyalert::shinyalert("Error", e$message, type = "error")
+      return(ggplot2::ggplot() + ggplot2::theme_minimal())
+    }, finally = {
+      removeModal()
+    })
+    
+    plots_sec_rv$plot_bivariate_auto <- plt
   })
-
   
+
   output$BivariatePlotOutput <- renderPlot({
-    req(plots_sec_rv$plot_bivariate_auto)
+    req( plots_sec_rv$plot_bivariate_auto)
     plots_sec_rv$plot_bivariate_auto
   })
   
@@ -1133,7 +1129,7 @@ observe({
         "plot_boxplot" = list(),
         "plot_scatterplot" = list()
       )
-      temp_dir <- tempdir()
+      temp_dir <- paste0(getwd(), "/outputs")
       DataExplorer::create_report(
         rv_current$working_df,
         output_file = "visualization_report.html",

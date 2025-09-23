@@ -43,7 +43,7 @@ automl_ui <- function(id) {
     br(), br(),
     DTOutput(ns("leaderboard_train_table")),
     DTOutput(ns("leaderboard_test_table")),
-    DT::dataTableOutput(ns("deployed_predictions")),
+    DT::dataTableOutput(ns("deployed_predictions"))
 
     # Deploy
     
