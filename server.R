@@ -344,9 +344,6 @@ function(input, output, session){
   output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
   output$bivariate_plot_title = bivariate_plot_title
   output$corrplot_title = corrplot_title
-  output$user_download_autoreport = user_download_autoreport
-  output$user_generatebivriate = user_generatebivriate
-
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -482,58 +479,31 @@ function(input, output, session){
 
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
+
+  ###### ----- Initialize recipe ------------------- ####
+#setup_recipe_server()
   
-  #### ----- Model setup ----------------------------------------- ####
-  source("server/model_training_setup.R", local=TRUE)
-  model_training_setup_server()
+  ###### ----- Impute missing values ------------------- ####
+#  impute_missing_server()
 
-  #### ----- Caret models --------------------------------------- ####
-  source("server/model_training_caret_models.R", local=TRUE)
+# Pycaret
+#pycaret_feature_engineering_server("pycaret_module", rv_current, rv_ml_ai)
+#feature_engineering_server("feature_engineering_module", rv_current, rv_ml_ai)
   
-  ## LM/GLM
-  model_training_caret_models_ols_server()
-
-  ## RF
-  model_training_caret_models_rf_server()
-
-  ## GBM
-  model_training_caret_models_gbm_server()
-
-  ## xgbTree
-  model_training_caret_models_xgbTree_server()
-
-  ## xgbLinear
-  model_training_caret_models_xgbLinear_server()
-
-  ## svmRadial
-  model_training_caret_models_svmRadial_server()
   
-  ## svmLinear
-  model_training_caret_models_svmLinear_server()
 
-  ## svmPoly
-  model_training_caret_models_svmPoly_server()
+  #### ---- Reset various components --------------------------------------####
+  ## Various components come before this
+  source("server/resets.R", local = TRUE)
 
-  ## glmnet
-  model_training_caret_models_glmnet_server()
-  
-  #### ----- Train all models ----------------------------------- ####
-  source("server/train_caret_models.R", local=TRUE)
-  model_training_caret_train_all_server()
 
-  #### ----- Compare trained models ------------------------------ ####
-  source("server/compare_trained_caret_models.R", local=TRUE)
-  model_training_caret_train_metrics_server()
+  ##### ---- Reset on delete or language change ------------------- ####
+  reset_data_server()
 
-  #### ---- PyCaret Integration (API) ----------------------------------------------------
-
-	source("server/deploy_model_server.R", local=TRUE)
-	source("ui/deploy_model_ui.R", local=TRUE)
-	deploy_model_server("deploy_model_module", rv_automl)
-  
-  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
-  source("server/automl_server.R", local=TRUE)
-  automl_server("automl_module", rv_current, rv_ml_ai)
+  #### ---- Activate required fields --------------------------------------####
+  iv$enable()
+  iv_url$enable()
+  iv_ml$enable()
 
   observe({
     req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist

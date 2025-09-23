@@ -45,13 +45,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "..", "models")
 MODELS_DIR = os.path.abspath(MODELS_DIR)
 
-# Exécuteur pour déporter les tâches CPU (entraîne/predict lourds)
-EXECUTOR = ThreadPoolExecutor(max_workers=1)
 
-# (optionnel) limiter le nombre de threads BLAS pour éviter la sursaturation CPU
-import os as _os
-_os.environ.setdefault("OMP_NUM_THREADS", "4")
-_os.environ.setdefault("OPENBLAS_NUM_THREADS", "4")
 
 
 def read_csv_flexible(path):
@@ -225,10 +219,19 @@ async def evaluate_model(
     except Exception:
         shap_values_json = []
 
-    # Sauvegarde modèle entraîné
-    save_model(model, os.path.join(MODELS_DIR, model_name))
+    # Step 10 : Save model on py folder
+    #model_path = f"models/{model_name}"
+    #os.makedirs("models", exist_ok=True)
+    #save_model(model, model_path)
 
-    return clean_json({
+    # Chemin final du modèle
+    model_path = os.path.join(MODELS_DIR, model_name)
+    print("Dossier modèles absolu :", MODELS_DIR)
+    save_model(model, model_path)
+
+
+    # Step 11 : Clean and return
+    result = {
         "model_name": str(model),
         "metrics": metrics,
         "plots_data": {
@@ -265,20 +268,17 @@ async def run_prediction(
         to_load = model_name if model_name else os.path.join(MODELS_DIR, "deployed_model")
         model = load_model(to_load)  # PyCaret accepte le chemin sans .pkl
     except Exception as e:
-        return {"error": f"Model load error: {str(e)}"}
-
-    # Retirer la cible si présente
-    if target and target in df_test.columns:
-        df_test = df_test.drop(columns=[target])
-
-    pred = predict_model(model, data=df_test)
-
-    # Retourner un CSV
-    out = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
-    pred.to_csv(out.name, index=False)
-    return FileResponse(path=out.name, media_type="text/csv", filename="predictions.csv")
-
+        return {"error": f"Error API (predict_model) : {str(e)}"}
     
+    
+
+from pycaret.classification import load_model, predict_model
+import csv
+import pandas as pd
+import tempfile
+import os
+from fastapi import UploadFile, File
+from pycaret.classification import load_model, predict_model
 
 @app.post("/predict_deployed_model")
 async def predict_deployed_model(file: UploadFile = File(...)):
@@ -320,9 +320,16 @@ async def predict_deployed_model(file: UploadFile = File(...)):
 @app.post("/deploy_model")
 async def deploy_model(model_id: str = Form(...)):
     import shutil
-    src = os.path.join(MODELS_DIR, f"{model_id}.pkl")
-    dst = os.path.join(MODELS_DIR, "deployed_model.pkl")
-    if not os.path.exists(src):
-        return {"error": f"Model '{model_id}' not found in {MODELS_DIR}."}
-    shutil.copyfile(src, dst)
-    return {"message": f"Model '{model_id}' successfully deployed to deployed_model.pkl."}
+    import os
+    # Chemins des modèles
+    model_source_path = f"models/{model_id}.pkl"
+    model_dest_path = "deployed_model.pkl"
+
+    # Vérification existence
+    if not os.path.exists(model_source_path):
+        return {"error": f"Modèle '{model_id}' non trouvé. Avez-vous bien évalué ce modèle ?"}
+
+    # Copier le fichier vers le modèle déployé
+    shutil.copyfile(model_source_path, model_dest_path)
+
+    return {"message": f"✅ Modèle '{model_id}' déployé avec succès."}
