@@ -417,6 +417,17 @@ model_training_caret_train_all_server = function() {
 						, summary_fun=Rautoml::student_t_summary
 					)
 
+					## Generate logs
+					Rautoml::create_model_logs(
+						df_name=rv_ml_ai$dataset_id
+						, session_name=rv_ml_ai$session_id
+						, outcome=rv_ml_ai$outcome
+						, framework=input$modelling_framework_choices
+						, train_result=rv_training_results$test_metrics_objs$all
+						, timestamp=Sys.time()
+						, path=".log_files"
+					)
+
 					## More metrics 
 					### Post metrics
 					rv_training_results$post_model_metrics_objs=Rautoml::post_model_metrics(

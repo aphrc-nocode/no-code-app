@@ -477,7 +477,12 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 							)
 						),
 						tabItem(tabName = "validateDeployModel",
-								  fluidRow()),
+						  fluidRow(
+							column(width=12
+								, uiOutput("deploy_trained_caret_models_box_ui")
+							)
+						  )
+						),
 						tabItem(tabName = "predictClassify",
 								  fluidRow()),
             tabItem(tabName = "deeplearning",

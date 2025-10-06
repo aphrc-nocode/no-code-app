@@ -130,6 +130,9 @@ train_caret_models.Rout: server/train_caret_models.R
 ### Compare trained models
 compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
 
+### Deploy trained models
+deploy_trained_caret_models.Rout: server/deploy_trained_caret_models.R
+
 ### Reset inputs
 resets.Rout: server/resets.R
 
