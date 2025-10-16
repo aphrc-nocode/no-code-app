@@ -657,117 +657,100 @@ tabItems(tabItem(tabName = "homePage",class = "active",
                         )
                     )
                   )),
-
-            tabItem(
-              tabName = "CohortConstructor",
-              
-              # --- DATABASE CONNECTION ---
-              box(
-                title = "Database Connection",
-                width = 12,
-                status = "success",
-                solidHeader = TRUE,
-                collapsible = FALSE,
-                fluidRow(
-                  column(4, uiOutput("dbmsID")),
-                  column(4, uiOutput("dbmsServerID")),
-                  column(4, uiOutput("cohort_db_port"))
-                ),
-                fluidRow(
-                  column(4, uiOutput("cohort_db_name")),
-                  column(4, uiOutput("UserID")),
-                  column(4, uiOutput("UserPswdID"))
-                  #column(2, offset = 2, 
-                         #br(),uiOutput("ConnectCohortID"), align="right")
-                ),
-                fluidRow(
-                   column(2, offset = 9, uiOutput("ConnectCohortID"))
-                 )
-              ),
-              
-              # --- CDM REFERENCE CREATION ---
-              box(
-                title = "CDM Reference",
-                width = 12,
-                status = "success",
-                solidHeader = TRUE,
-                collapsible = TRUE,
-                collapsed = TRUE,
-                fluidRow(
-                 # column(4, uiOutput("CDMConn")),
-                  column(4, uiOutput("CDMConnName")),
-                  column(4, uiOutput("CDMSchemaName")),
-                  column(4, uiOutput("ResultSchemaName"))
-                  
-                ),
-                fluidRow(
-                  # column(4, uiOutput("ResultSchemaName")),
-                  # column(4, uiOutput("achillesSchemaName")),
-                  #column(4, uiOutput("achillesSchemaName")),
-                  column(3, offset = 9, br(), uiOutput("CreateCDMID"), align="right")
-                )
-                # ,fluidRow(
-                #   column(6, uiOutput("tableDropdown1UI")),
-                #   column(6, uiOutput("tableDropdown2UI"))
-                # )
-              )
-              , # --- COHORT CREATION ---
-              box(
-                title = "Cohort Creation",
-                width = 12,
-                status = "success",
-                solidHeader = TRUE,
-                collapsible = TRUE,
-                collapsed = TRUE,
-                fluidRow(
-                  #column(4, uiOutput("CohortcreationName")),
-                  column(4, uiOutput("ConceptKeyword")),
-                  column(4, uiOutput("CohortNameID")),
-                  column(4, uiOutput("CohortDateID")
-                ),
-                fluidRow(
-                 # column(4, uiOutput("CohortDateID")),
-                  column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align="right")
-                ),
-                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
-                # --- OUTPUT: COHORT SUMMARY & DEMOGRAPHICS ---
-                box(
-                  title = "Cohort Summary",
-                  width = 12,
-                  status = "success",
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  tableOutput("cohort_summary"),
-                  uiOutput("cohort_demographics")
-                ),
-                
-                # --- INTERACTIVE PLOTS ---
-                box(
-                  title = "Cohort Plots",
-                  width = 12,
-                  status = "success",
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = FALSE,
-                  fluidRow(
-                    column(6, plotlyOutput("Gender_plot")),
-                    column(6, plotlyOutput("age_group_plot"))
-                  ),
-                  fluidRow(
-                    column(6, plotlyOutput("Race_plot")),
-                    column(6, plotlyOutput("ethnicity_plot"))
-                  )#,
-                  
-                  #uiOutput("SelectCohortTable"),     # dropdown for cohort table name
-                  #uiOutput("ExtractFeaturesID"),     # extraction button
-                  #br(),
-                  #uiOutput("CovariateTableUI")       # table + download
-                )
-                
-                
-              )
-            )),
+			  tabItem(
+			    tabName = "CohortConstructor",
+			    
+			    # --- PAGE HEADER ---
+			    fluidRow(
+			      box(
+			        width = 12,
+			        status = "success",
+			        solidHeader = TRUE,
+			        title = tagList(icon("database"), "Cohort Construction Workflow"),
+			        h4("Create a CDM reference, generate a cohort, and visualize its composition."),
+			        style = "background-color:#f8fff8;"
+			      )
+			    ),
+			    
+			    # --- STEP 1: CDM REFERENCE CREATION ---
+			    box(
+			      title = tagList(icon("server"), "CDM Reference"),
+			      width = 12,
+			      status = "success",
+			      solidHeader = TRUE,
+			      collapsible = TRUE,
+			      collapsed = TRUE,
+			      
+			      fluidRow(
+			        column(4, uiOutput("CDMConnName")),
+			        column(4, uiOutput("CDMSchemaName")),
+			        column(4, uiOutput("ResultSchemaName"))
+			      ),
+			      
+			      fluidRow(column(3, offset = 9, br(), uiOutput("CreateCDMID"), align = "right"))
+			    ),
+			    
+			    # --- STEP 2: COHORT CREATION ---
+			    box(
+			      title = tagList(icon("users"), "Cohort Creation"),
+			      width = 12,
+			      status = "success",
+			      solidHeader = TRUE,
+			      collapsible = TRUE,
+			      collapsed = TRUE,
+			      
+			      fluidRow(
+			        column(4, uiOutput("ConceptKeyword")),
+			        column(4, uiOutput("CohortNameID")),
+			        column(4, uiOutput("CohortDateID"))
+			      ),
+			      
+			      fluidRow(column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align = "right")),
+			      
+			      hr(),
+			      h4("Cohort Summary"),
+			      box(
+			        title = "Cohort Summary Table",
+			        width = 12,
+			        status = "success",
+			        solidHeader = TRUE,
+			        collapsible = TRUE,
+			        collapsed = TRUE,
+			        downloadButton("download_summary", "Download Summary (CSV)"),
+			        tags$style(HTML("
+  #cohort_summary thead th {
+    background-color: #28a745;  /* Green shade (Bootstrap success color) */
+    color: white;               /* White text for contrast */
+    text-align: center;
+  }
+")),
+			        
+			        DT::dataTableOutput("cohort_summary")
+			      ),
+			      
+			      # --- STEP 3: INTERACTIVE PLOTS ---
+			      box(
+			        title = tagList(icon("chart-bar"), "Cohort Plots"),
+			        width = 12,
+			        status = "success",
+			        solidHeader = TRUE,
+			        collapsible = TRUE,
+			        collapsed = FALSE,
+			        downloadButton("download_plots", "Download Plots (ZIP)"),
+			        
+			        fluidRow(
+			          column(6, plotlyOutput("Gender_plot", height = "300px")),
+			          column(6, plotlyOutput("age_group_plot", height = "300px"))
+			        ),
+			        fluidRow(
+			          column(6, plotlyOutput("Race_plot", height = "300px")),
+			          column(6, plotlyOutput("Ethnicity_plot", height = "300px"))
+			        )
+			      )
+			    )
+			  )
+			  
+			  ,
 
                    
             tabItem(
@@ -953,62 +936,55 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								      )
 								    )
 								  ),
-								  
-
-                tabItem(
-                  tabName = "FeatureExtraction",
-                  fluidPage(
-                    titlePanel("Feature Extraction Tool"),
-
-                    sidebarLayout(
-                      sidebarPanel(
-                        # --- DB connection info ---
-                        selectInput("dbmsID", "Database Type", 
-                                    choices = c("", "postgresql", "mysql"), 
-                                    selected = "postgresql"),
-                        textInput("dbmsServerID",
-                                  "Host",
-                                  placeholder = "e.g., localhost or IP"),
-                        numericInput("cohort_db_port",
-                                    "Port",
-                                     value = 5432),
-                        textInput("cohort_db_name",
-                                  "Database Name",
-                                  placeholder = "Required"),
-                        textInput("UserID",
-                                  "User",
-                                  placeholder = "Required"),
-                        maskedPasswordInput("UserPswdID",
-                                      "Password",
-                                      placeholder = "Required"),
-                        #textInput("jdbc_path", "Path to JDBC Driver:", value = "/path/to/jdbc"),
-
-                        # --- Connect button ---
-                        actionButton("ConnectCohortID", "Connect to Database", class = "btn-primary"),
-                        tags$hr(),
-
-                        # --- Dynamic dropdowns populated after connection ---
-                        uiOutput("cdm_schema_ui"),
-                        uiOutput("results_schema_ui"),
-                        uiOutput("cohort_table_ui"),
-                        uiOutput("domain_choices_ui"),
-
-                        # --- Extraction settings ---
-                        numericInput("cohort_id", "Cohort ID:", value = ""),
-                        textInput("output_csv", "Output CSV Path:", value = "name.csv"),
-                        actionButton("extract_features", "Extract Features", class = "btn-success")
-                      ),
-
-                      mainPanel(
-                        h4("Instructions"),
-                        p("1. Enter DB details and click 'Connect to Database'."),
-                        p("2. Then select schema and cohort info."),
-                        p("3. Run feature extraction and download the CSV."),
-                        verbatimTextOutput("feature_extract_log")
-                      )
-                    )
-                  )
-              )
+			  tabItem(
+			    tabName = "FeatureExtraction",
+			    fluidPage(
+			      tags$style(HTML("
+      table thead tr th {
+        background-color: #4CAF50;
+        color: white;
+      }
+      .btn-success {
+        background-color: #228B22 !important;
+        border-color: #228B22 !important;
+        color: white !important;
+        font-weight: bold;
+      }
+    ")),
+			      
+			      titlePanel("Feature Extraction Tool"),
+			      
+			      sidebarLayout(
+			        sidebarPanel(
+			          uiOutput("cdm_schema_ui"),
+			          uiOutput("results_schema_ui"),
+			          uiOutput("cohort_table_ui"),
+			          uiOutput("domain_choices_ui"),
+			          
+			          textInput("output_csv", "Output CSV Path:", 
+			                    placeholder = "Enter file name, e.g. features.csv"),
+			          actionButton("extract_features", "Extract Features", class = "btn-success")
+			        ),
+			        
+			        mainPanel(
+			          h4("Instructions"),
+			          p("1. Select schema and cohort info (connection already established)."),
+			          p("2. Run feature extraction and download the CSV."),
+			          
+			          h4("CDM Table Record Summary"),
+			          downloadButton("download_cdm_summary", "Download CSV", class = "btn-success"),
+			          br(), br(),
+			          DT::dataTableOutput("domain_summary"),
+			          
+			          verbatimTextOutput("feature_extract_log")
+			        )
+			      )
+			    )
+			  )
+			  
+			  
+			  
+			  
          
  #        			tabItem(tabName = "addResources",
 	#							  fluidRow()
