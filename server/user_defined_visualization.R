@@ -209,10 +209,14 @@ observe({
         !is.null(input$cboBivariateFeatures) &&
         input$cboBivariateOutcome %in% names(rv_current$working_df) &&
         input$cboBivariateOutcome %in% input$cboBivariateFeatures) {
+        
+        null_cols <- names(colSums(is.na(rv_current$working_df))[colSums(is.na(rv_current$working_df))==nrow(rv_current$working_df)])
+        df <- rv_current$working_df[, !names(rv_current$working_df)%in%null_cols]
+        
 
-          updateSelectInput(session, "cboBivariateFeatures", choices = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)],
-                            selected = names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20][
-                              !is.na(names(rv_current$working_df)[which(names(rv_current$working_df)!=input$cboBivariateOutcome)][1:20])]
+          updateSelectInput(session, "cboBivariateFeatures", choices = names(df)[which(names(df)!=input$cboBivariateOutcome)],
+                            selected = names(df)[which(names(df)!=input$cboBivariateOutcome)][1:10][
+                              !is.na(names(df)[which(names(df)!=input$cboBivariateOutcome)][1:10])]
                             )}
 })
 
@@ -313,27 +317,38 @@ observe({
     showModal(modalDialog("Bivariate plot is being generated... Please wait.", footer = NULL))
     
     plt <- tryCatch({
-      Rautoml::bivariate_plot(
-        df = rv_current$working_df,
-        outcome = input$cboBivariateOutcome,
-        features = input$cboBivariateFeatures,
-        colorbrewer = input$cboColorBrewerBivariate,
-        title = input$txtPlotBivariateTitle
+      # Validate inputs
+      req(input$cboBivariateOutcome, input$cboBivariateFeatures)
+      if (!length(input$cboBivariateFeatures)) stop("Select at least one feature.")
+      
+      # Ensure a character vector is passed to the function
+      feats <- as.character(input$cboBivariateFeatures)
+      
+      # CREATE and return the plot
+      p <- Rautoml::bivariate_plot(
+        df         = rv_current$working_df,
+        outcome    = input$cboBivariateOutcome,
+        features   = feats,   
+        colorbrewer= input$cboColorBrewerBivariate,
+        title      = input$txtPlotBivariateTitle
       )
+      
       shinyalert::shinyalert("Success", "Bivariate plot created successfully!", type = "success")
+      p  # return the plot
     }, error = function(e) {
-      shinyalert::shinyalert("Error", e$message, type = "error")
-      return(ggplot2::ggplot() + ggplot2::theme_minimal())
+      shinyalert::shinyalert("Error", paste0(e$message, "\nCheck number of levels in categorical columns"), type = "error")
+      ggplot2::ggplot() + ggplot2::theme_minimal()
     }, finally = {
       removeModal()
     })
+    
     
     plots_sec_rv$plot_bivariate_auto <- plt
   })
   
 
   output$BivariatePlotOutput <- renderPlot({
-    req( plots_sec_rv$plot_bivariate_auto)
+    #req( plots_sec_rv$plot_bivariate_auto)
     plots_sec_rv$plot_bivariate_auto
   })
   
