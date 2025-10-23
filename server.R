@@ -8,12 +8,13 @@ function(input, output, session){
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
+  # Hide loading overlay and show login form
+  shinyjs::hide("loading_screen")
+  shinyjs::show("login_form")
   ###-------User Login--------_##
-
   # Once the first UI flush happens, hide the loader.
   source("server/auth.R")
   user_auth(input, output, session)
-  
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
