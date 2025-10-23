@@ -415,6 +415,8 @@ model_training_caret_train_all_server = function() {
 						, type="prob"
 						, report= input$model_training_setup_eval_metric
 						, summary_fun=Rautoml::student_t_summary
+						, save_model = TRUE
+						, model_folder = "models"
 					)
 
 					## Generate logs

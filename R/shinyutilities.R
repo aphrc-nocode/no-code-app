@@ -138,3 +138,27 @@ transform_data_handle_missing_values_categoricalUI = function(label, value="", p
 	return(transform_data_handle_missing_values_new_category)
 }
 
+
+# small helper to render icons
+render_status_icon = function(s) {
+ if (s == "Deployed") {
+	'<span style="color:green;font-weight:bold;">🟢 Deployed</span>'
+ } else {
+	'<span style="color:red;font-weight:bold;">🔴 Stopped</span>'
+ }
+}
+
+# ---- Helper Function to Generate Action Buttons ----
+generate_action_buttons = function(display) {
+  vapply(seq_len(nrow(display)), function(i) {
+    label <- if (isTRUE(display$status[i] == "Deployed")) "Stop" else "Resume"
+    cls <- if (label == "Stop") "btn btn-sm btn-warning" else "btn btn-sm btn-success"
+    id_js <- gsub("'", "\\\\'", display$model_id[i])
+    sprintf(
+      '<button type="button" class="%s"
+        onclick="Shiny.setInputValue(\'btn_click\',
+          {id: \'%s\', action: \'%s\', nonce: Math.random()})">%s</button>',
+      cls, id_js, label, label
+    )
+  }, FUN.VALUE = character(1))
+}

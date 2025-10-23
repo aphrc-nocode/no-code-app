@@ -153,6 +153,9 @@ function(input, output, session){
 	rv_deploy_models = reactiveValues(
 		trained_models_table = NULL
 	)
+
+	## Deployed models
+	rv_deployed_models = reactiveValues()
   
 	## Reactive values to stock AutoML leaderboard
 	rv_automl <- reactiveValues(
@@ -526,9 +529,12 @@ function(input, output, session){
   source("server/compare_trained_caret_models.R", local=TRUE)
   model_training_caret_train_metrics_server()
 
-  #### ----- Compare trained models ------------------------------ ####
+  #### ----- Deploy trained models ------------------------------- ####
   source("server/deploy_trained_caret_models.R", local=TRUE)
+
+  ## Setup
   deploy_trained_caret_models()
+
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
