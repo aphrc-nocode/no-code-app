@@ -445,9 +445,10 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						),
 			      tabItem(
 			        tabName = "evidenceQuality",
-			        fluidRow( 
+			         fluidRow( 
 			          p("OMOP Data Quality Check and Characterization"),
-			          uiOutput("omop_connection")
+			          uiOutput ("global_source_redirect")
+			          , uiOutput("omop_connection")
 			          , uiOutput("existing_connection")
 			          , uiOutput("omop_quality_type")
 			          , uiOutput("schemas")
@@ -751,191 +752,20 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			  )
 			  
 			  ,
-
                    
             tabItem(
-             tabName = "achilles",
-             fluidRow(
-               box(
-                 title = "Create Connection Details",
-                 status = "success",
-                 solidHeader = TRUE,
-                 width = 12,
-                 collapsible = FALSE,
-                 fluidRow(
-                   column(4,
-                          uiOutput("cbodatabasetype")),
-                   column(4,
-                          uiOutput("cbodbhost")), 
-                   column(4,
-                          uiOutput("cbodbport"))
-                 ),
-                 fluidRow(
-                   column(4,
-                          uiOutput("cbodbname")),
-                   column(4,
-                          uiOutput("cbodbuser")),
-                   column(4,
-                          uiOutput("cbodbpass"))
-                          
-                 ),
-                 fluidRow(
-                   column(12,
-                          actionButton("achilles_db_connect",
-                                       "Connect",
-                                       icon = icon("plug"),
-                                       class = "btn btn-primary"))
-                 )
-               ),
-               
-             fluidRow(
-               box(
-                     title = "Schema Selection",
-                     status = "success",
-                     solidHeader = TRUE,
-                     width = 12,
-                     collapsible = FALSE,
-
-                     # Shown after connection
-                     uiOutput("schema_selectors"),
-                     uiOutput("run_achilles")
+                tabName = "achilles",
+                fluidRow(
+                  box(title = "Schema Selection"
+                      ,status = "success"
+                      ,solidHeader = TRUE
+                      ,width = 12
+                      ,collapsible = FALSE
+                      ,uiOutput("schema_selectors")
+                      ,uiOutput("run_achilles"))
                     )
-                  )
-                )
-              ), 
-              tabItem(
-								    tabName = "omop_visualizations",
-								    fluidRow(
-								      column(
-								        width = 3,
-								        box(
-								          title = "Database Connection",
-								          status = "success",
-								          solidHeader = TRUE,
-								          width = 12,
-								          collapsible = TRUE,
-								          column(12,
-								                 selectInput("omop_dbms", "Database Type", choices = c("postgresql", "mysql"), selected = "postgresql"),
-								                 textInput("omop_db_host", "Host", placeholder = "e.g., localhost or IP"),
-								                 numericInput("omop_db_port", "Port", value = 5432),
-								                 textInput("omop_db_name", "Database Name"),
-								                 textInput("omop_db_user", "Username"),
-								                 maskedPasswordInput("omop_db_pwd", "Password"),
-								                 actionButton("omop_db_connect", "Connect", icon = icon("plug"), class = "btn btn-primary")
-								          )
-								        ),
-								        box(
-								          title = "Schema & Version Selection",
-								          status = "success",
-								          solidHeader = TRUE,
-								          width = 12,
-								          collapsible = FALSE,
-								          uiOutput("omop_cdm_schema"),
-								          uiOutput("omop_results_schema"),
-								          uiOutput("omop_vocabulary_schema")
-								        ),
-								        box(
-								          title = "CDM Table Selection",
-								          status = "success",
-								          solidHeader = TRUE,
-								          width = 12,
-								          collapsible = FALSE,
-								          uiOutput("omop_cdm_tables"),
-								          actionButton("generate_summary",
-								                       "Generate Summary",
-								                       icon = icon("play"),
-								                       class = "btn btn-success")
-								        )
-								      ),
-								      column(
-								        width = 9,
-								        tabsetPanel(
-								          tabPanel("General",
-								                   box(
-								                     title = "OMOP Snapshot Summary",
-								                     status = "success",
-								                     solidHeader = TRUE,
-								                     width = 12,
-								                     collapsible = TRUE,
-								                     uiOutput("omop_snapshot_summary")
-								                   ),
-								                   box(
-								                     title = "CDM Table Record Counts",
-								                     status = "success",
-								                     solidHeader = TRUE,
-								                     width = 12,
-								                     collapsible = TRUE,
-								                     collapsed = TRUE,
-								                     DT::dataTableOutput("cdm_table_summaries")
-								                   )
-								          ),
-								          tabPanel("Table-specific Analysis",
-								                   conditionalPanel(
-								                     condition = "input.selected_cdm_table == 'person'",
-								                     fluidRow(
-								                       box(title = "Age Summary",
-								                           status = "info", 
-								                           solidHeader = TRUE,
-								                           width = 12,
-								                           tableOutput("age_summary"))
-								                     ),
-								                     fluidRow(
-								                       box(title = "Gender Distribution",
-								                           status = "primary",
-								                           solidHeader = TRUE,
-								                           width = 6,
-								                           plotlyOutput("gender_plot")),
-								                       box(title = "Race Distribution", 
-								                           status = "primary",
-								                           solidHeader = TRUE,
-								                           width = 6,
-								                           plotlyOutput("race_plot"))
-								                     )
-								                   ),
-								                   conditionalPanel(
-								                     condition = "input.selected_cdm_table == 'observation'",
-								                     fluidRow(
-								                       box(title = "Observation Concepts",
-								                           status = "info",
-								                           solidHeader = TRUE,
-								                           width = 12,
-								                           dataTableOutput("observation_table"))
-								                     )
-								                     ,fluidRow(
-								                       box(title = "Value as Concept Distribution",
-								                           status = "primary",
-								                           solidHeader = TRUE, 
-								                           width = 12,
-								                           uiOutput("observation_value_ui")
-								                           
-								                       )
-								                     )
-								                   ),
-								                   
-								                   conditionalPanel(
-								                     condition = "input.selected_cdm_table == 'condition_occurrence'",
-								                     fluidRow(
-								                       box(title = "Condition Concepts",
-								                           status = "info",
-								                           solidHeader = TRUE,
-								                           width = 12,
-								                           dataTableOutput("condition_table"))
-								                     )
-								                     ,fluidRow(
-								                       box(title = "Value as Concept Distribution",
-								                           status = "primary",
-								                           solidHeader = TRUE, 
-								                           width = 12,
-								                           uiOutput("condition_value_ui")
-								                           
-								                       )
-								                     )
-								                   )
-								          )
-								        )
-								      )
-								    )
-								  ),
+                  ), 
+
 			  tabItem(
 			    tabName = "FeatureExtraction",
 			    fluidPage(
@@ -980,14 +810,256 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			        )
 			      )
 			    )
-			  )
+			  ),
 			  
+  			  tabItem(
+  			    tabName = "omop_visualizations",
+  			    
+  			    # ===== Row 1: Schema & Version Selection =====
+  			    fluidRow(
+  			      box(
+  			        title = "Schema & Version Selection"
+  			        ,status = "success"
+  			        ,solidHeader = TRUE
+  			        ,width = 12
+  			        ,collapsible = TRUE
+  			        ,uiOutput("schema_selection")
+  			        ,uiOutput("generate_summaries")
+  			      )
+  			    ),
+  			    
+  			    # ===== Row 2: General Summaries =====
+  			    
+  			    fluidRow(
+  			      box(
+  			        title = "Summary Dashboard",
+  			        status = "success",
+  			        solidHeader = TRUE,
+  			        width = 12,
+  			        collapsible = TRUE,
+  			        tabsetPanel(
+  			          
+  			          tabPanel("General Info",
+  			                   fluidRow(
+  			                     box(title = "CDM Source Info",
+  			                         width = 9,
+  			                         uiOutput("cdm_source_info")
+  			                         )
+  			                     )
+  			                   ),
+  			          
+  			          tabPanel("Record Counts",
+  			                   fluidRow(
+  			                     box(title = "CDM Table Record Counts",
+  			                         width = 12,
+  			                         DTOutput("cdm_table_summaries")
+  			                         )
+  			                     )
+  			                   ),
+  			          
+  			          tabPanel("Unmapped Concepts",
+  			                   fluidRow(box(title = "Unmapped / Non-standard Concepts",
+  			                                width = 12,
+  			                                DTOutput("nonstandard_concepts")
+  			                                )
+  			                            )
+  			                   ),
+  			          
+  			          tabPanel("Domain Distribution",
+  			                   fluidRow(
+  			                     box(title = "Concept Domain Distribution",
+  			                         width = 12,
+  			                         plotlyOutput("domain_distribution")
+  			                         )
+  			                     )
+  			                   )
+  			          )
+  			        )
+  			      ),
+	    
+  			    # ===== Row 3: Table-specific Summaries =====
+  			    fluidRow(
+  			      column(width = 3,
+  			             box(title = "CDM Table Selection",
+  			                 status = "success",
+          			         solidHeader = TRUE,
+          			         width = 12,
+          			         collapsible = TRUE,
+          			         uiOutput("omop_cdm_tables")
+  			                 )
+  			             ),
+  			      
+  			       column(width = 9,
+  			             tabsetPanel(
+  			               tabPanel("Table-specific Analysis",
+  			                        # Person table analysis----
+  			                        
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'person'",
+  			                                         fluidRow(
+  			                                           box(title = "Age Summary",
+  			                                               status = "info", 
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         tableOutput("age_summary")
+  			                                               )
+  			                                           ),
+  			                                         
+  			                                         fluidRow(
+  			                                           box(title = "Gender Distribution",
+  			                                               status = "primary",
+                        			                         solidHeader = TRUE,
+                        			                         width = 6,
+                        			                         plotlyOutput("gender_plot")
+  			                                               ),
+  			                                           box(title = "Race Distribution",
+  			                                               status = "primary",
+                        			                         solidHeader = TRUE,
+                        			                         width = 6,
+                        			                         plotlyOutput("race_plot")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'location'",
+  			                                         fluidRow(
+  			                                           box(title = "Location Summary",
+  			                                               status = "info",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         dataTableOutput("location_table")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        # Care site table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'care_site'",
+  			                                         fluidRow(
+  			                                           box(title = "Care Site Summary",
+  			                                               status = "info",
+  			                                               solidHeader = TRUE,
+  			                                               width = 12,
+  			                                               dataTableOutput("care_table")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        # Visit occurrence table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'visit_occurrence'",
+  			                                         fluidRow(
+  			                                           box(title = "Visit Occurrence Summary",
+  			                                               status = "info",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         dataTableOutput("summary_table")
+  			                                               )
+  			                                           ),
+  			                                         fluidRow(
+  			                                           box(title = "Visits Over Time",
+  			                                               status = "primary",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         plotlyOutput("visit_time_plot")
+  			                                               )
+  			                                           ),
+  			                                         fluidRow(
+  			                                           box(title = "Visits by Type",
+  			                                               status = "primary",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         plotlyOutput("visit_type_plot")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        # Provider table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'provider'",
+  			                                         fluidRow(
+  			                                           box(title = "Provider Summary",
+  			                                               status = "info",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         dataTableOutput("summary_table")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        # Observation table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'observation'",
+  			                                         fluidRow(
+  			                                           box(title = "Observation Concepts",
+  			                                               status = "info",
+  			                                               solidHeader = TRUE,
+  			                                               width = 12,
+  			                                               dataTableOutput("observation_table")
+  			                                               )
+  			                                           ),
+  			                                         fluidRow(
+  			                                           box(title = "Value as Concept Distribution",
+  			                                               status = "primary",
+  			                                               solidHeader = TRUE,
+  			                                               width = 12,
+  			                                               uiOutput("observation_value_ui")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        # Measurement table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'measurement'",
+  			                                         fluidRow(
+  			                                           box(title = "Measurement Concepts",
+  			                                               status = "info",
+  			                                               solidHeader = TRUE,
+                        			                         width = 12,
+                        			                         dataTableOutput("measurement_table")
+  			                                               )
+  			                                           ),
+  			                                         fluidRow(
+  			                                           box(title = "Value as Concept Distribution",
+  			                                               status = "primary",
+                        			                         solidHeader = TRUE, 
+                        			                         width = 12,
+                        			                         uiOutput("measurement_value_ui")
+  			                                               )
+  			                                           )
+  			                                         ),
+  			                        
+  			                        # Condition occurrence table analysis
+  			                        conditionalPanel(condition = "input.selected_cdm_table == 'condition_occurrence'",
+  			                                         fluidRow(
+  			                                           box(title = "Condition Concepts",
+  			                                               status = "info",
+                        			                         solidHeader = TRUE,
+                        			                         width = 12,
+  			                                               
+  			                                               # Gender filter
+  			                                               fluidRow(
+  			                                                 column(width = 4,
+  			                                                        uiOutput("gender_filter_ui")
+  			                                                        )
+  			                                                 ),
+  			                                               dataTableOutput("condition_table")
+  			                                               )
+  			                                           ),
+  			                                         fluidRow(
+  			                                           box(title = "Value as Concept Distribution",
+  			                                               status = "primary",
+  			                                               solidHeader = TRUE,
+  			                                               width = 12,
+  			                                               uiOutput("condition_value_ui")
+  			                                               )
+  			                                           )
+  			                                         )
+  			                        )
+  			               )
+  			             )
+  			      )
+  			  )
+  			      
 			  
-			  
-			  
+
          
  #        			tabItem(tabName = "addResources",
 	#							  fluidRow()
    #            )
 
-))
+)
+)
