@@ -861,7 +861,7 @@ tabItems(tabItem(tabName = "homePage",class = "active",
   			                 )
   			             ),
   			      
-  			      column(width = 9,
+  			       column(width = 9,
   			             tabsetPanel(
   			               tabPanel("Table-specific Analysis",
   			                        # Person table analysis----
@@ -1024,7 +1024,8 @@ tabItems(tabItem(tabName = "homePage",class = "active",
   			               )
   			             )
   			      )
-  			    )  
+  			  )
+  			      
 			  ,
                 tabItem(
                   tabName = "FeatureExtraction",
@@ -1085,4 +1086,5 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 	#							  fluidRow()
    #            )
 
-))
+)
+)
