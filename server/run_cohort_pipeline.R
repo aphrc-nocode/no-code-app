@@ -12,7 +12,6 @@ run_cohort_pipeline <- function() {
   library(zip)
   library(DT)
   
-  
   cohort_conn <- reactiveValues(
     schema_names   = NULL,
     cdm            = NULL,
@@ -39,6 +38,21 @@ run_cohort_pipeline <- function() {
       shinyalert::shinyalert("Error", e$message, type = "error")
     })
   })
+  
+  #-------- Redirection to source ------------------#
+  output$schema_cohort <- renderUI({
+    if (is.null(rv_database$conn)) {
+      actionButton("go_to_source_global",
+                   "Click to connect to a database in the Source page first",
+                   style = "background-color: #7bc148",
+                   icon = icon("arrow-right"))
+    }
+  })
+  
+  observeEvent(input$go_to_source_global, {
+    updateTabItems(session, "tabs", "sourcedata")
+  })
+  #-------------------------------------------------#
   
   # --- 2. Create CDM reference ---
   observeEvent(input$CreateCDMID, {
@@ -133,7 +147,7 @@ run_cohort_pipeline <- function() {
       
       cohort_conn$person_summary <- cohort_full
       
-      # --- SUMMARY STATS (VERTICAL TABLE) ---
+      # --- SUMMARY STATS ---
       stats_list <- list(
         "Total N" = nrow(cohort_full),
         "Mean Age" = mean(cohort_full$age, na.rm = TRUE),
@@ -187,15 +201,14 @@ run_cohort_pipeline <- function() {
     datatable(
       cohort_conn$summary_stats,
       options = list(
-        pageLength = 10,          # show 10 rows at a time
-        scrollX = TRUE,           # horizontal scrolling
-        scrollY = "400px",        # vertical scroll height
-        dom = 't<"bottom"lip>'    # show table, info, and pagination below
+        pageLength = 10,
+        scrollX = TRUE,
+        scrollY = "400px",
+        dom = 't<"bottom"lip>'
       ),
       rownames = FALSE
     )
   })
-  
   
   # --- 6. Render interactive cohort plots ---
   output$Gender_plot <- renderPlotly({
@@ -231,8 +244,6 @@ run_cohort_pipeline <- function() {
   })
   
   # --- 7. DOWNLOAD HANDLERS ---
-  
-  # Download summary table
   output$download_summary <- downloadHandler(
     filename = function() {
       paste0("cohort_summary_", Sys.Date(), ".csv")
@@ -242,21 +253,6 @@ run_cohort_pipeline <- function() {
     }
   )
   
-  # Download plots as ZIP (PNG)
-  # --- 7. DOWNLOAD HANDLERS ---
-  
-  # Download summary table
-  output$download_summary <- downloadHandler(
-    filename = function() {
-      paste0("cohort_summary_", Sys.Date(), ".csv")
-    },
-    content = function(file) {
-      write.csv(cohort_conn$summary_stats, file, row.names = FALSE)
-    }
-  )
-  
-  # Download plots as ZIP (using webshot2 instead of orca)
-  # Download plots as ZIP (using webshot2 safely)
   output$download_plots <- downloadHandler(
     filename = function() {
       paste0("cohort_plots_", Sys.Date(), ".zip")
@@ -270,28 +266,23 @@ run_cohort_pipeline <- function() {
       tmpdir <- tempdir()
       setwd(tmpdir)
       
-      # Rebuild the same plots from data
       df <- cohort_conn$person_summary
       
-      # 1. Gender plot
       gender_plot <- plot_ly(df, x = ~gender_source_value, type = "histogram", marker = list(color = 'green')) %>%
         layout(title = "Gender Distribution", xaxis = list(title = "Gender"), yaxis = list(title = "Count"))
       htmlwidgets::saveWidget(gender_plot, "Gender_plot.html", selfcontained = TRUE)
       webshot2::webshot("Gender_plot.html", "Gender_plot.png", vwidth = 1200, vheight = 800)
       
-      # 2. Age group plot
       age_plot <- plot_ly(df, x = ~age_group, type = "histogram", marker = list(color = 'green')) %>%
         layout(title = "Age Group Distribution", xaxis = list(title = "Age Group"), yaxis = list(title = "Count"))
       htmlwidgets::saveWidget(age_plot, "Age_group_plot.html", selfcontained = TRUE)
       webshot2::webshot("Age_group_plot.html", "Age_group_plot.png", vwidth = 1200, vheight = 800)
       
-      # 3. Race plot
       race_plot <- plot_ly(df, x = ~race_source_value, type = "histogram", marker = list(color = 'green')) %>%
         layout(title = "Race Distribution", xaxis = list(title = "Race"), yaxis = list(title = "Count"))
       htmlwidgets::saveWidget(race_plot, "Race_plot.html", selfcontained = TRUE)
       webshot2::webshot("Race_plot.html", "Race_plot.png", vwidth = 1200, vheight = 800)
       
-      # 4. Ethnicity plot
       ethnicity_counts <- df %>% count(ethnicity_source_value) %>%
         mutate(ethnicity_group = ifelse(n < 100, "Other", ethnicity_source_value))
       ethnicity_plot <- plot_ly(ethnicity_counts, x = ~ethnicity_group, y = ~n, type = 'bar',
@@ -300,11 +291,24 @@ run_cohort_pipeline <- function() {
       htmlwidgets::saveWidget(ethnicity_plot, "Ethnicity_plot.html", selfcontained = TRUE)
       webshot2::webshot("Ethnicity_plot.html", "Ethnicity_plot.png", vwidth = 1200, vheight = 800)
       
-      # Zip all PNGs
       zip::zip(file, c("Gender_plot.png", "Age_group_plot.png", "Race_plot.png", "Ethnicity_plot.png"))
     }
   )
   
+  # --- 8. REACTIVE FLAGS FOR CONDITIONAL PANELS ---
+  output$cdmCreated <- reactive({
+    !is.null(cohort_conn$cdm)
+  })
+  outputOptions(output, "cdmCreated", suspendWhenHidden = FALSE)
+  
+  output$summaryAvailable <- reactive({
+    !is.null(cohort_conn$summary_stats)
+  })
+  outputOptions(output, "summaryAvailable", suspendWhenHidden = FALSE)
+  
+  output$plotsAvailable <- reactive({
+    !is.null(cohort_conn$person_summary)
+  })
+  outputOptions(output, "plotsAvailable", suspendWhenHidden = FALSE)
   
 }
-

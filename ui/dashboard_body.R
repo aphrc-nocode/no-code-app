@@ -661,95 +661,89 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 			  tabItem(
 			    tabName = "CohortConstructor",
 			    
-			    # --- PAGE HEADER ---
-			    fluidRow(
-			      box(
-			        width = 12,
-			        status = "success",
-			        solidHeader = TRUE,
-			        title = tagList(icon("database"), "Cohort Construction Workflow"),
-			        h4("Create a CDM reference, generate a cohort, and visualize its composition."),
-			        style = "background-color:#f8fff8;"
-			      )
-			    ),
-			    
 			    # --- STEP 1: CDM REFERENCE CREATION ---
 			    box(
 			      title = tagList(icon("server"), "CDM Reference"),
 			      width = 12,
 			      status = "success",
 			      solidHeader = TRUE,
-			      collapsible = TRUE,
-			      collapsed = TRUE,
-			      
+			      collapsible = FALSE,  # not collapsible
+			      uiOutput("schema_cohort"),
 			      fluidRow(
 			        column(4, uiOutput("CDMConnName")),
 			        column(4, uiOutput("CDMSchemaName")),
 			        column(4, uiOutput("ResultSchemaName"))
 			      ),
-			      
 			      fluidRow(column(3, offset = 9, br(), uiOutput("CreateCDMID"), align = "right"))
 			    ),
 			    
-			    # --- STEP 2: COHORT CREATION ---
-			    box(
-			      title = tagList(icon("users"), "Cohort Creation"),
-			      width = 12,
-			      status = "success",
-			      solidHeader = TRUE,
-			      collapsible = TRUE,
-			      collapsed = TRUE,
-			      
-			      fluidRow(
-			        column(4, uiOutput("ConceptKeyword")),
-			        column(4, uiOutput("CohortNameID")),
-			        column(4, uiOutput("CohortDateID"))
-			      ),
-			      
-			      fluidRow(column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align = "right")),
-			      
-			      hr(),
-			      h4("Cohort Summary"),
+			    # --- STEP 2: COHORT CREATION (Hidden until CDM reference created) ---
+			    conditionalPanel(
+			      condition = "output.cdmCreated == true",
 			      box(
-			        title = "Cohort Summary Table",
-			        width = 12,
-			        status = "success",
-			        solidHeader = TRUE,
-			        collapsible = TRUE,
-			        collapsed = TRUE,
-			        downloadButton("download_summary", "Download Summary (CSV)"),
-			        tags$style(HTML("
-  #cohort_summary thead th {
-    background-color: #28a745;  /* Green shade (Bootstrap success color) */
-    color: white;               /* White text for contrast */
-    text-align: center;
-  }
-")),
-			        
-			        DT::dataTableOutput("cohort_summary")
-			      ),
-			      
-			      # --- STEP 3: INTERACTIVE PLOTS ---
-			      box(
-			        title = tagList(icon("chart-bar"), "Cohort Plots"),
+			        title = tagList(icon("users"), "Cohort Creation (The vocabulary table should be under the cdm schema)"),
 			        width = 12,
 			        status = "success",
 			        solidHeader = TRUE,
 			        collapsible = TRUE,
 			        collapsed = FALSE,
-			        downloadButton("download_plots", "Download Plots (ZIP)"),
 			        
 			        fluidRow(
-			          column(6, plotlyOutput("Gender_plot", height = "300px")),
-			          column(6, plotlyOutput("age_group_plot", height = "300px"))
+			          column(4, uiOutput("ConceptKeyword")),
+			          column(4, uiOutput("CohortNameID")),
+			          column(4, uiOutput("CohortDateID"))
 			        ),
-			        fluidRow(
-			          column(6, plotlyOutput("Race_plot", height = "300px")),
-			          column(6, plotlyOutput("Ethnicity_plot", height = "300px"))
+			        
+			        fluidRow(column(4, offset = 8, br(), uiOutput("GenerateCohortID"), br(), align = "right")),
+			        
+			        hr(),
+			        h4("Cohort Summary"),
+			        box(
+			          title = "Cohort Summary Table",
+			          width = 12,
+			          status = "success",
+			          solidHeader = TRUE,
+			          collapsible = TRUE,
+			          collapsed = TRUE,
+			          conditionalPanel(
+			            condition = "output.summaryAvailable == true",
+			            downloadButton("download_summary", "Download Summary (CSV)")
+			          ),
+			          tags$style(HTML("
+          #cohort_summary thead th {
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+          }
+        ")),
+			          DT::dataTableOutput("cohort_summary")
+			        ),
+			        
+			        # --- STEP 3: INTERACTIVE PLOTS ---
+			        box(
+			          title = tagList(icon("chart-bar"), "Cohort Plots"),
+			          width = 12,
+			          status = "success",
+			          solidHeader = TRUE,
+			          collapsible = TRUE,
+			          collapsed = FALSE,
+			          conditionalPanel(
+			            condition = "output.plotsAvailable == true",
+			            downloadButton("download_plots", "Download Plots (ZIP)")
+			          ),
+			          fluidRow(
+			            column(6, plotlyOutput("Gender_plot", height = "300px")),
+			            column(6, plotlyOutput("age_group_plot", height = "300px"))
+			          ),
+			          fluidRow(
+			            column(6, plotlyOutput("Race_plot", height = "300px")),
+			            column(6, plotlyOutput("Ethnicity_plot", height = "300px"))
+			          )
 			        )
 			      )
 			    )
 			  )
+			  
 			  
 			  ,
                    
@@ -782,35 +776,54 @@ tabItems(tabItem(tabName = "homePage",class = "active",
       }
     ")),
 			      
+			      # --- PAGE TITLE ---
 			      titlePanel("Feature Extraction Tool"),
 			      
-			      sidebarLayout(
-			        sidebarPanel(
-			          uiOutput("cdm_schema_ui"),
-			          uiOutput("results_schema_ui"),
-			          uiOutput("cohort_table_ui"),
-			          uiOutput("domain_choices_ui"),
-			          
-			          textInput("output_csv", "Output CSV Path:", 
-			                    placeholder = "Enter file name, e.g. features.csv"),
-			          actionButton("extract_features", "Extract Features", class = "btn-success")
-			        ),
+			      # --- "Click to connect" message just below the title ---
+			      conditionalPanel(
+			        condition = "output.dbConnected == false",
+			        uiOutput("schema_feature")  # this renders the button if not connected
+			      ),
+			      
+			      # --- MAIN CONTENT (shown only when connected) ---
+			      conditionalPanel(
+			        condition = "output.dbConnected == true",
 			        
-			        mainPanel(
-			          h4("Instructions"),
-			          p("1. Select schema and cohort info (connection already established)."),
-			          p("2. Run feature extraction and download the CSV."),
+			        sidebarLayout(
+			          sidebarPanel(
+			            uiOutput("cdm_schema_ui"),
+			            uiOutput("results_schema_ui"),
+			            uiOutput("cohort_table_ui"),
+			            uiOutput("domain_choices_ui"),
+			            
+			            textInput("output_csv", "Output CSV Path:",
+			                      placeholder = "Enter file name, e.g. features.csv"),
+			            actionButton("extract_features", "Extract Features", class = "btn-success")
+			          ),
 			          
-			          h4("CDM Table Record Summary"),
-			          downloadButton("download_cdm_summary", "Download CSV", class = "btn-success"),
-			          br(), br(),
-			          DT::dataTableOutput("domain_summary"),
-			          
-			          verbatimTextOutput("feature_extract_log")
+			          mainPanel(
+			            h4("Instructions"),
+			            p("1. Select schema and cohort info (connection already established)."),
+			            p("2. Run feature extraction and download the CSV."),
+			            
+			            h4("CDM Table Record Summary"),
+			            
+			            # Download button only appears when summary is generated
+			            conditionalPanel(
+			              condition = "output.summaryAvailable == true",
+			              downloadButton("download_cdm_summary", "Download CSV", class = "btn-success")
+			            ),
+			            
+			            br(), br(),
+			            DT::dataTableOutput("domain_summary"),
+			            verbatimTextOutput("feature_extract_log")
+			          )
 			        )
 			      )
 			    )
-			  ),
+			  )
+			  
+			  ,
 			  
   			  tabItem(
   			    tabName = "omop_visualizations",
