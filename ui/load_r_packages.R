@@ -43,6 +43,8 @@ libraries <- c(
   ,"GGally"
   ,"DataExplorer"
   ,"htmltools"
+  ,"promises"
+  ,"future"
 )
 
 

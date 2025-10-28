@@ -441,10 +441,12 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 
     conditionalPanel(
       condition = "input.modelling_framework_choices == 'Pycaret'",
-      DT::DTOutput("pycaret_results_table"),
-      downloadButton("download_pycaret_results", "Download PyCaret results"),
+      #DT::DTOutput("pycaret_results_table"),
+      uiOutput("automl_module_ui"),
+      #downloadButton("download_pycaret_results", "Download PyCaret results"),
       br(), br(),
-      uiOutput("automl_module_ui")
+      #uiOutput("automl_module_ui")
+      #automl_controls_ui("automl_controls")
     )
   ),
   column(width = 9,
@@ -485,10 +487,19 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 								, column(width=12
 									, uiOutput("model_training_caret_train_metrics")
 								)
+
+                , column(width=12
+                  , train_model_ui("train_model")
+                )
+
 							)
 						),
 						tabItem(tabName = "validateDeployModel",
-								  fluidRow()),
+								  fluidRow(column(width = 12,
+      deployment_ui("deploy")
+    ))
+                  ),
+
 						tabItem(tabName = "predictClassify",
 								  fluidRow()),
             tabItem(tabName = "deeplearning",

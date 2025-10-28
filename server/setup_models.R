@@ -272,6 +272,14 @@ setup_models_ui = function() {
 			rv_ml_ai$dataset_id = rv_current$dataset_id
 			rv_ml_ai$analysis_type = input$setup_models_analysis_type
 			rv_ml_ai$outcome = input$setup_models_analysis_target_variable
+
+			# Pycaret way
+			rv_ml_ai$status <- NULL        # "Running...", "Finished", "Failed: ..."
+			rv_ml_ai$leaderboard <- NULL   # table CV (train) renvoyée par /automl
+			rv_ml_ai$models <- NULL        # nom/id des modèles pour la sélection
+			rv_ml_ai$eval_metrics <- NULL  # résultats test d’un modèle
+			rv_ml_ai$eval_plots <- NULL    # images base64 (ROC, confusion, etc.)
+
 			
 			if (isTRUE(any(rv_ml_ai$outcome %in% rv_current$vartype_all$categorical))) {
 				rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_classification")

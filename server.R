@@ -1,6 +1,30 @@
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
+source("R/utils_logging.R")
+
+
+library(DT)
+library(httr)
+library(jsonlite)
+#library(promises)
+#library(future)
+#future::plan(future::multisession)  # important pour ne pas bloquer l’UI
+#source("ui/automl_controls_ui.R")
+#source("ui/train_model_ui.R")
+
+# ----- FastAPI base URL -----
+# En local natif (FastAPI lancé sur ta machine) :
+api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+
+source("server/automl_controls_server.R")
+source("server/train_model_server.R")
+
+source("R/utils_api.R")
+
+source("server/deploy_model_server.R")
+
 
 function(input, output, session){
   #### ---- Input validators ---------------------------------------------------
@@ -510,7 +534,8 @@ function(input, output, session){
     
     if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
       output$automl_module_ui <- renderUI({
-        automl_ui("automl_module")
+        #automl_ui("automl_module")
+        automl_controls_ui("automl_controls")
       })
     } else {
       output$automl_module_ui <- renderUI({
@@ -540,6 +565,11 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+
+  automl_controls_server("automl_controls", rv_current, rv_ml_ai, api_base)
+  train_model_server("train_model", rv_ml_ai, rv_current, api_base)
+  deployment_server("deploy", rv_ml_ai = rv_ml_ai, rv_current = rv_current, api_base = api_base)
+
 
 }
 

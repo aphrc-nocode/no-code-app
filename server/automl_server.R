@@ -158,8 +158,6 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       tmpfile <- tempfile(fileext = ".csv")
       write.csv(rv_current$working_df, tmpfile, row.names = FALSE)
       
-      #print("Launch AutoML button")
-      print(paste("No of models :", input$n_models))
       print(paste("Task:", rv_ml_ai$task))
       
       res <- httr::POST(
@@ -173,7 +171,6 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
             "unsupervised"
           },
           file = upload_file(tmpfile),
-          n_models = input$n_models
         ),
         encode = "multipart"
       )
