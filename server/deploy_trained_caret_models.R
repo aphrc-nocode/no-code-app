@@ -12,10 +12,11 @@ deploy_trained_caret_models = function() {
 			, var = "dataset_id"
 			, what = rv_current$dataset_id 
 		)
-
+		
 		## Session name
 		output$deploy_trained_caret_models_select_session = renderUI({
 			req(isTRUE(check_trained_data))
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			temp_session_labels = Rautoml::extract_value_labels(rv_deploy_models$trained_models_table, "session_name")
 			n_selected = min(length(temp_session_labels), 2)
 			selectInput("deploy_trained_caret_models_select_session"
@@ -30,6 +31,7 @@ deploy_trained_caret_models = function() {
 		## Model metrics
 		output$deploy_trained_caret_models_select_metrics = renderUI({
 			req(isTRUE(check_trained_data))
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			selectInput("deploy_trained_caret_models_select_metrics"
 				, label = get_rv_labels("deploy_trained_caret_models_select_metrics")
 				, choices = Rautoml::extract_value_labels(rv_deploy_models$trained_models_table, "metric")
@@ -40,6 +42,7 @@ deploy_trained_caret_models = function() {
 		## Models in summary table
 		output$deploy_trained_caret_models_select_model = renderUI({
 			req(isTRUE(check_trained_data))
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			temp_model_labels = Rautoml::extract_value_labels(rv_deploy_models$trained_models_table, "model")
 			selectInput("deploy_trained_caret_models_select_model"
 				, label = get_rv_labels("deploy_trained_caret_models_select_model")
@@ -55,6 +58,7 @@ deploy_trained_caret_models = function() {
 			req(input$deploy_trained_caret_models_select_metrics)
 			req(input$deploy_trained_caret_models_select_model)
 			req(!is.null(rv_deploy_models$trained_models_table))
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			df = Rautoml::filter_session_metric(rv_deploy_models$trained_models_table
 				, metric_name=input$deploy_trained_caret_models_select_metrics
 				, session_name_=input$deploy_trained_caret_models_select_session
@@ -79,10 +83,11 @@ deploy_trained_caret_models = function() {
 		
 		## Models to deploy
 		output$deploy_trained_caret_models_select_deploy = renderUI({
-			req(input$deploy_trained_caret_models_select_session)
-			req(input$deploy_trained_caret_models_select_metrics)
-			req(input$deploy_trained_caret_models_select_model)
-			req(input$deploy_trained_caret_models_table_rows_selected)
+			req(!is.null(input$deploy_trained_caret_models_select_session))
+			req(!is.null(input$deploy_trained_caret_models_select_metrics))
+			req(!is.null(input$deploy_trained_caret_models_select_model))
+			req(!is.null(input$deploy_trained_caret_models_table_rows_selected))
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			selected_rows = input$deploy_trained_caret_models_table_rows_selected
 			temp_model_labels = rv_deploy_models$trained_models_table_filtered$model_id[selected_rows]
 			selectInput("deploy_trained_caret_models_select_deploy"
@@ -100,6 +105,7 @@ deploy_trained_caret_models = function() {
 			req(input$deploy_trained_caret_models_select_metrics)
 			req(input$deploy_trained_caret_models_select_model)
 			req(input$deploy_trained_caret_models_table_rows_selected)
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			req(input$deploy_trained_caret_models_select_deploy)
 			textInput("deploy_trained_caret_models_hostname"
 				, "Enter Hostname or IP:"
@@ -113,6 +119,7 @@ deploy_trained_caret_models = function() {
 			req(input$deploy_trained_caret_models_select_metrics)
 			req(input$deploy_trained_caret_models_select_model)
 			req(input$deploy_trained_caret_models_table_rows_selected)
+			req(NROW(rv_deploy_models$trained_models_table)>0)
 			req(input$deploy_trained_caret_models_select_deploy)
 			actionBttn("deploy_trained_caret_models_select_deploy_apply"
 				, inline=TRUE
@@ -125,6 +132,7 @@ deploy_trained_caret_models = function() {
 		observeEvent(input$deploy_trained_caret_models_select_deploy_apply, {
 			req(input$deploy_trained_caret_models_select_deploy)
 			req(input$deploy_trained_caret_models_hostname)
+		   req(NROW(rv_deploy_models$trained_models_table)>0)
 			deployed_df = list()
 			for (m in input$deploy_trained_caret_models_select_deploy) {
 				m_check = rv_deployed_models[[m]]
@@ -189,6 +197,7 @@ deploy_trained_caret_models = function() {
 
 		# ---- Independent Observer for Button Clicks ----
 		observeEvent(input$btn_click, {
+		  req(NROW(rv_deploy_models$trained_models_table)>0)
 		  info <- input$btn_click
 		  req(info$id, info$action)
 
@@ -242,6 +251,7 @@ deploy_trained_caret_models = function() {
 		  # Re-render Table
 		  output$deploy_trained_caret_models_select_deployed_table <- renderDT({
 			 req(rv_deploy_models$deployed_models_table)
+		    req(NROW(rv_deploy_models$trained_models_table)>0)
 			 DT::datatable(
 				(rv_deploy_models$deployed_models_table
 					|> dplyr::mutate_at("status", function(x){vapply(x, render_status_icon, FUN.VALUE = character(1))})
@@ -255,6 +265,7 @@ deploy_trained_caret_models = function() {
 
 		## Output objects
 		output$deploy_trained_caret_models_box_ui = renderUI({
+		   req(NROW(rv_deploy_models$trained_models_table)>0)
 			p(
 				box(title = get_rv_labels("deploy_trained_caret_models_box_ui_options") 
 					, status = "success"

@@ -417,6 +417,7 @@ model_training_caret_train_all_server = function() {
 						, summary_fun=Rautoml::student_t_summary
 						, save_model = TRUE
 						, model_folder = "models"
+						, preprocesses = rv_ml_ai$preprocessed
 					)
 
 					## Generate logs

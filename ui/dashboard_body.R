@@ -484,7 +484,12 @@ tabItems(tabItem(tabName = "homePage",class = "active",
 						  )
 						),
 						tabItem(tabName = "predictClassify",
-								  fluidRow()),
+							fluidRow(
+								column(width=12
+									, uiOutput("predict_trained_caret_models_box_ui")
+								)
+							)
+						),
             tabItem(tabName = "deeplearning",
 								  fluidRow(
                     column(width=4, 

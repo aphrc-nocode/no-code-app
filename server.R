@@ -531,10 +531,11 @@ function(input, output, session){
 
   #### ----- Deploy trained models ------------------------------- ####
   source("server/deploy_trained_caret_models.R", local=TRUE)
-
-  ## Setup
   deploy_trained_caret_models()
 
+  #### ---- Predict using no-code models ------------------------ ####
+  source("server/predict_trained_caret_models.R", local=TRUE)
+  predict_trained_caret_models()
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
