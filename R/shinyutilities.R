@@ -162,3 +162,19 @@ generate_action_buttons = function(display) {
     )
   }, FUN.VALUE = character(1))
 }
+
+# ---- Create form prototypes ------------------------
+create_form_prototype = function(prototype) {
+  x = lapply(names(prototype), function(var) {
+    f = prototype[[var]]
+    type = Rautoml::get_type(f)
+    if (type=="numeric") {
+      numericInput(var, paste0("Enter ", var), value=f)
+    } else if (any(type %in% c("logical", "character", "factor"))) {
+      selectInput(var, paste0("Select ", var), choices = f)
+    } else {
+      textInput(var, paste0("Enter ", var), placeholder = f)
+    }
+  })
+  return(x)
+}
