@@ -63,7 +63,7 @@ st_options(footnote=NA, headings = FALSE)
 install_github_if_missing <- function(pkg, repo) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     remotes::install_github(repo)
-    library(pkg)
+    library(pkg, character.only = TRUE)
   }
 }
 
