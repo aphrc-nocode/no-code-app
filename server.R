@@ -1,17 +1,10 @@
+<<<<<<< HEAD
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
 source("R/utils_logging.R")
 
 
-library(DT)
-library(httr)
-library(jsonlite)
-#library(promises)
-#library(future)
-#future::plan(future::multisession)  # important pour ne pas bloquer l’UI
-#source("ui/automl_controls_ui.R")
-#source("ui/train_model_ui.R")
 
 # ----- FastAPI base URL -----
 # En local natif (FastAPI lancé sur ta machine) :
@@ -26,18 +19,20 @@ source("R/utils_api.R")
 source("server/deploy_model_server.R")
 
 
+
 function(input, output, session){
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
+  # Hide loading overlay and show login form
+  shinyjs::hide("loading_screen")
+  shinyjs::show("login_form")
   ###-------User Login--------_##
-
   # Once the first UI flush happens, hide the loader.
   source("server/auth.R")
   user_auth(input, output, session)
-  
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
@@ -368,6 +363,9 @@ function(input, output, session){
   output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
   output$bivariate_plot_title = bivariate_plot_title
   output$corrplot_title = corrplot_title
+  output$user_download_autoreport = user_download_autoreport
+  output$user_generatebivriate = user_generatebivriate
+
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -503,39 +501,65 @@ function(input, output, session){
 
   source("server/modelling_framework.R", local=TRUE)
   modelling_framework_choices()
-
-  ###### ----- Initialize recipe ------------------- ####
-#setup_recipe_server()
   
-  ###### ----- Impute missing values ------------------- ####
-#  impute_missing_server()
+  #### ----- Model setup ----------------------------------------- ####
+  source("server/model_training_setup.R", local=TRUE)
+  model_training_setup_server()
 
-# Pycaret
-#pycaret_feature_engineering_server("pycaret_module", rv_current, rv_ml_ai)
-#feature_engineering_server("feature_engineering_module", rv_current, rv_ml_ai)
+  #### ----- Caret models --------------------------------------- ####
+  source("server/model_training_caret_models.R", local=TRUE)
   
+  ## LM/GLM
+  model_training_caret_models_ols_server()
+
+  ## RF
+  model_training_caret_models_rf_server()
+
+  ## GBM
+  model_training_caret_models_gbm_server()
+
+  ## xgbTree
+  model_training_caret_models_xgbTree_server()
+
+  ## xgbLinear
+  model_training_caret_models_xgbLinear_server()
+
+  ## svmRadial
+  model_training_caret_models_svmRadial_server()
   
+  ## svmLinear
+  model_training_caret_models_svmLinear_server()
 
-  #### ---- Reset various components --------------------------------------####
-  ## Various components come before this
-  source("server/resets.R", local = TRUE)
+  ## svmPoly
+  model_training_caret_models_svmPoly_server()
 
+  ## glmnet
+  model_training_caret_models_glmnet_server()
+  
+  #### ----- Train all models ----------------------------------- ####
+  source("server/train_caret_models.R", local=TRUE)
+  model_training_caret_train_all_server()
 
-  ##### ---- Reset on delete or language change ------------------- ####
-  reset_data_server()
+  #### ----- Compare trained models ------------------------------ ####
+  source("server/compare_trained_caret_models.R", local=TRUE)
+  model_training_caret_train_metrics_server()
 
-  #### ---- Activate required fields --------------------------------------####
-  iv$enable()
-  iv_url$enable()
-  iv_ml$enable()
+  #### ---- PyCaret Integration (API) ----------------------------------------------------
+
+  source("server/deploy_model_server.R", local=TRUE)
+  source("ui/deploy_model_ui.R", local=TRUE)
+  deploy_model_server("deploy_model_module", rv_automl)
+
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+  source("server/automl_server.R", local=TRUE)
+  automl_server("automl_module", rv_current, rv_ml_ai)
 
   observe({
     req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
     
     if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
       output$automl_module_ui <- renderUI({
-        #automl_ui("automl_module")
-        automl_controls_ui("automl_controls")
+        automl_ui("automl_module")
       })
     } else {
       output$automl_module_ui <- renderUI({
@@ -566,10 +590,4 @@ function(input, output, session){
   iv_url$enable()
   iv_ml$enable()
 
-  automl_controls_server("automl_controls", rv_current, rv_ml_ai, api_base)
-  train_model_server("train_model", rv_ml_ai, rv_current, api_base)
-  deployment_server("deploy", rv_ml_ai = rv_ml_ai, rv_current = rv_current, api_base = api_base)
-
-
 }
-

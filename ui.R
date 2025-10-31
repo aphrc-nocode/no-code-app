@@ -34,9 +34,11 @@ aphrcSiderbar <- dashboardSidebar(
 )
 
 #Body
-
 fluidPage(
   useShinyjs(),
+  # Loading screen (will hide once everything loads)
+  div(id = "loading_screen", "Loading Nocode Platform..."),
+  
   login::is_logged_in(
     id = app_login_config$APP_ID, header),
   
