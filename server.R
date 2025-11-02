@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
