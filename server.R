@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
@@ -548,7 +547,7 @@ function(input, output, session){
 
   source("server/deploy_model_server.R", local=TRUE)
   source("ui/deploy_model_ui.R", local=TRUE)
-  deploy_model_server("deploy_model_module", rv_automl)
+  deployment_server("deploy_model_module", rv_automl)
 
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
