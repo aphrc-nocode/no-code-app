@@ -1,123 +1,124 @@
-#### ---- Achilles Integration ----###
-
+### ---- Achilles Integration ---- ###
 achilles_integration_server <- function() {
   
-  achilles_conn <- reactiveValues(details = NULL,
-                                  conn = NULL,
-                                  schemas = NULL)
+  achilles_conn <- reactiveValues(
+    details = NULL,
+    conn = NULL,
+    schemas = NULL,
+    is_connected = FALSE
+  )
   
-      output$cbodatabasetype <-  renderUI(selectInput("achilles_dbms", get_rv_labels("achilles_dbms"), 
-                                                        choices = c("", "postgresql", "mysql"), 
-                                                        selected = "postgresql"))
+  # Reactive to track connection from rv_database
+  observe({
+    if (!is.null(rv_database$conn) && DBI::dbIsValid(rv_database$conn) && !achilles_conn$is_connected) {
+      tryCatch({
+        # Reuse the existing connection
+        achilles_conn$conn <- rv_database$conn
+        achilles_conn$details <- rv_database$details
+        achilles_conn$is_connected <- TRUE
         
-      output$cbodbhost<- renderUI(textInput("achilles_db_host",
-                                            get_rv_labels("achilles_db_host"),
-                                            placeholder = "e.g., localhost or IP"))
+        # Get available schemas
+        schema_query <- "
+          SELECT schema_name 
+          FROM information_schema.schemata 
+          WHERE schema_name NOT IN ('pg_catalog', 'information_schema') 
+          AND schema_name NOT LIKE 'pg_%'"
         
-      output$cbodbport <- renderUI(numericInput("achilles_db_port",
-                                                 get_rv_labels("achilles_db_port"),
-                                                 value = 5432))
-       
-      output$cbodbname<- renderUI(textInput("achilles_db_name",
-                                             get_rv_labels("achilles_db_name"),
-                                             placeholder = "Required"))
-      
-      output$cbodbuser<- renderUI(textInput("achilles_db_user",
-                                            get_rv_labels("achilles_db_user"),
-                                            placeholder = "Required"))
-      
-      output$cbodbpass<- renderUI(passwordInput("achilles_db_pwd",
-                                                get_rv_labels("achilles_db_pwd"),
-                                                placeholder = "Required"))
-     
-  observeEvent(input$achilles_db_connect, {
-    req(input$achilles_dbms,
-        input$achilles_db_host,
-        input$achilles_db_port,
-        input$achilles_db_name,
-        input$achilles_db_user,
-        input$achilles_db_pwd)
-    
-    tryCatch({
-      achilles_conn$details <- DatabaseConnector::createConnectionDetails(
-        dbms = input$achilles_dbms,
-        server = paste0(input$achilles_db_host, "/", input$achilles_db_name),
-        port = input$achilles_db_port,
-        user = input$achilles_db_user,
-        password = input$achilles_db_pwd,
-        pathToDriver = "./static_files"
-      )
-      
-      # Try connecting
-      conn <- DatabaseConnector::connect(achilles_conn$details)
-      
-      # Get schemas
-      schema_query <- ("SELECT schema_name FROM information_schema.schemata 
-                       WHERE schema_name NOT LIKE 'pg_%' AND schema_name <> 'information_schema'")
-      
-      achilles_conn$schemas <- DatabaseConnector::querySql(conn, schema_query)$SCHEMA_NAME
-      
-      DatabaseConnector::disconnect(conn)
-      
-      shinyalert("Success", "Connected successfully!", type = "success")
-      
-      
-      # Populate schema dropdowns
-      
-      output$schema_selectors <- renderUI({
-        tagList(
-          selectInput("cdm_schema",
-                      get_rv_labels("cdm_schema"),
-                      choices = achilles_conn$schemas),
-          
-          selectInput("results_schema",
-                      get_rv_labels("results_schema"),
-                      choices = achilles_conn$schemas),
-          
-          selectInput("vocab_schema",
-                      get_rv_labels("vocab_schema"),
-                      choices = c("", achilles_conn$schemas)),
-          
-          selectInput("cdm_version",
-                      get_rv_labels("cdm_version"),
-                      choices = c("5.3", "5.4"),
-                      selected = "5.4")
-        )
+        schemas <- DatabaseConnector::querySql(achilles_conn$conn, schema_query)$SCHEMA_NAME
+        achilles_conn$schemas <- schemas
+        
+        # Update UI with schema selectors
+        output$schema_selectors <- renderUI({
+          tagList(
+            selectInput("cdm_schema",
+                        get_rv_labels("cdm_schema"),
+                        choices = schemas,
+                        selected = ""),
+            
+            selectInput("results_schema",
+                        get_rv_labels("results_schema"),
+                        choices = schemas,
+                        selected =""),
+            
+            selectInput("vocab_schema",
+                        get_rv_labels("vocab_schema"),
+                        choices = c("", achilles_conn$schemas),
+                        selected = ""),
+            
+            selectInput("cdm_version",
+                        get_rv_labels("cdm_version"),
+                        choices = c("5.3", "5.4"),
+                        selected = "5.4")
+          )
+        })
+        
+        # Enable Achilles run button
+        output$run_achilles <- renderUI({
+          actionButton("run_achilles",
+                       get_rv_labels("run_achilles"),
+                       class = "btn-success")
+        })
+        
+
+        
+      }, error = function(e) {
+        achilles_conn$is_connected <- FALSE
+        shinyalert("Connection Error", 
+                   paste("Failed to use connection:", e$message), 
+                   type = "error")
       })
-      
-      
-      
-      output$run_achilles <- renderUI({
-        actionButton("run_achilles",
-                     get_rv_labels("run_achilles"),
-                     class = "btn-success")
-        
-      })
-      
-    }, error = function(e) {
-      shinyalert("Connection Error", e$message, type = "error")
-    })
+    }
   })
   
+  
+  #-------- Redirection to source ------------------#
+  
+  output$schema_selectors <- renderUI({
+    if (!achilles_conn$is_connected) {
+      actionButton("go_to_source",
+                   "Click to connect to a database in the Source page first",
+                   style = "background-color: #7bc148",
+                   icon = icon("arrow-right"))
+    }
+  })
+  
+  # Navigate to source page
+  observeEvent(input$go_to_source, {
+    updateTabItems(session, "tabs", "sourcedata")
+  })
+  
+  #-------------------------------------------------#
+  
+  
+  # Run Achilles analysis
   observeEvent(input$run_achilles, {
-    req(achilles_conn$details,
-        input$cdm_schema,
-        input$results_schema)
+    req(achilles_conn$conn, 
+        input$cdm_schema, 
+        input$results_schema,
+        achilles_conn$is_connected)
     
     tryCatch({
       showModal(modalDialog("Running Achilles... Please wait.", footer = NULL))
       
+      # Determine vocab schema
+      vocab_schema <- if (nzchar(input$vocab_schema)) {
+        input$vocab_schema
+      } else {
+        input$cdm_schema
+      }
+      
+      # Execute Achilles using rv_database connection details
       Achilles::achilles(
         connectionDetails = achilles_conn$details,
         cdmDatabaseSchema = input$cdm_schema,
         resultsDatabaseSchema = input$results_schema,
-        vocabDatabaseSchema = ifelse(input$vocab_schema == "", input$cdm_schema, input$vocab_schema),
+        vocabDatabaseSchema = vocab_schema,
         cdmVersion = input$cdm_version,
         createTable = TRUE,
         outputFolder = tempdir(),
         numThreads = 1,
         createIndices = FALSE,
-        smallCellCount = 0
+        smallCellCount = 5
       )
       
       removeModal()
@@ -125,7 +126,7 @@ achilles_integration_server <- function() {
       
     }, error = function(e) {
       removeModal()
-      shinyalert("Achilles Error", e$message, type = "error")
+      shinyalert("Error", paste("Achilles failed:", e$message), type = "error")
     })
   })
 }

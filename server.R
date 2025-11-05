@@ -1,15 +1,35 @@
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
+source("R/utils_logging.R")
+
+
+
+# ----- FastAPI base URL -----
+# En local natif (FastAPI lancé sur ta machine) :
+api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+
+source("server/automl_controls_server.R")
+source("server/train_model_server.R")
+
+source("R/utils_api.R")
+
+source("server/deploy_model_server.R")
+
+
 
 function(input, output, session){
-  
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
+  # Hide loading overlay and show login form
+  shinyjs::hide("loading_screen")
+  shinyjs::show("login_form")
   ###-------User Login--------_##
+  # Once the first UI flush happens, hide the loader.
   source("server/auth.R")
   user_auth(input, output, session)
   #### ---- Placeholder for reactive values ------------------------------------
@@ -49,7 +69,7 @@ function(input, output, session){
   )
   
   #####------------------Plots Reactive-------------------
-  
+
   plots_sec_rv <- reactiveValues(
     plot_rv=NULL
     ,tab_rv=NULL
@@ -79,6 +99,7 @@ function(input, output, session){
 		, database_name = NULL
 		, database_user = NULL
 		, database_pass = NULL
+		, details = NULL
 	)
 
 	## ---
@@ -539,10 +560,10 @@ function(input, output, session){
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
-	source("server/deploy_model_server.R", local=TRUE)
-	source("ui/deploy_model_ui.R", local=TRUE)
-	deploy_model_server("deploy_model_module", rv_automl)
-  
+  source("server/deploy_model_server.R", local=TRUE)
+  source("ui/deploy_model_ui.R", local=TRUE)
+  deployment_server("deploy_model_module", rv_automl)
+
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
   automl_server("automl_module", rv_current, rv_ml_ai)
@@ -584,4 +605,3 @@ function(input, output, session){
   iv_ml$enable()
 
 }
-

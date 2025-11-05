@@ -24,6 +24,9 @@ Sources += $(wildcard static_files/*.*)
 Sources += LICENSE
 
 Ignore += datasets/*
+Ignore += logs/*
+Ignore += *.RData*
+Ignore += output/*
 
 ######################################################################
 
@@ -44,7 +47,19 @@ appTheme.Rout: ui/appTheme.R
 header.Rout: ui/header.R
 footer.Rout: ui/footer.R
 headertag.Rout: ui/headertag.R
+
 dashboard_body.Rout: ui/dashboard_body.R
+sourcedata_ui.Rout: ui/sourcedata_ui.R
+overview_ui.Rout: ui/overview_ui.R
+explore_ui.Rout: ui/explore_ui.R
+transform_ui.Rout: ui/transform_ui.R
+combinedata_ui.Rout: ui/combinedata_ui.R
+summarize_automatic_ui.Rout: ui/summarize_automatic_ui.R
+summarize_custom_ui.Rout: ui/summarize_custom_ui.R
+research_questions_ui.Rout: ui/research_questions_ui.R
+setup_models_ui.Rout: ui/setup_models_ui.R
+feature_engineering_ui.Rout: ui/feature_engineering_ui.R
+evidence_quality_ui.Rout: ui/evidence_quality_ui.R
 
 ######################################################################
 
