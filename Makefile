@@ -60,6 +60,8 @@ research_questions_ui.Rout: ui/research_questions_ui.R
 setup_models_ui.Rout: ui/setup_models_ui.R
 feature_engineering_ui.Rout: ui/feature_engineering_ui.R
 evidence_quality_ui.Rout: ui/evidence_quality_ui.R
+cohort_construction_ui.Rout: ui/cohort_construction_ui.R
+train_all_model_ui.Rout: ui/train_all_model_ui.R
 
 ######################################################################
 
