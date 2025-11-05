@@ -45,6 +45,9 @@ libraries <- c(
   ,"htmltools"
   ,"promises"
   ,"future"
+  , "CodelistGenerator"
+  , "CDMConnector"
+  , "CohortConstructor"
 )
 
 
