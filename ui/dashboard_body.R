@@ -9,6 +9,7 @@ source("ui/summarize_custom_ui.R")
 source("ui/research_questions_ui.R")
 source("ui/setup_models_ui.R")
 source("ui/feature_engineering_ui.R")
+source("ui/evidence_quality_ui.R")
 
 
 aphrcBody <- dashboardBody(
@@ -50,23 +51,11 @@ tabItems(tabItem(tabName = "homePage"
 
 	## Feature engineering
 	, feature_engineering_ui()
-						
-			      , tabItem(
-			        tabName = "evidenceQuality",
-			         fluidRow( 
-			          p("OMOP Data Quality Check and Characterization"),
-			          uiOutput ("global_source_redirect")
-			          , uiOutput("omop_connection")
-			          , uiOutput("existing_connection")
-			          , uiOutput("omop_quality_type")
-			          , uiOutput("schemas")
-			          , uiOutput("generate_dqd")
-			          ,verbatimTextOutput("stderr_log")
-			          ,uiOutput("view_dqd")
-			          ,br()
-			          ,uiOutput("open_link")
-			        )
-			      ), 
+
+	## Evidence quality
+	, evidence_quality_ui()
+					
+	, 
 			     tabItem(tabName = "cohortConstruction",
 			          fluidRow()),
 			  

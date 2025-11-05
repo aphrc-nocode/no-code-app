@@ -56,6 +56,7 @@ summarize_custom_ui.Rout: ui/summarize_custom_ui.R
 research_questions_ui.Rout: ui/research_questions_ui.R
 setup_models_ui.Rout: ui/setup_models.R
 feature_engineering_ui.Rout: ui/feature_engineering_ui.R
+evidence_quality_ui.Rout: ui/evidence_quality_ui.R
 
 ######################################################################
 
