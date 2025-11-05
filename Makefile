@@ -60,8 +60,15 @@ research_questions_ui.Rout: ui/research_questions_ui.R
 setup_models_ui.Rout: ui/setup_models_ui.R
 feature_engineering_ui.Rout: ui/feature_engineering_ui.R
 evidence_quality_ui.Rout: ui/evidence_quality_ui.R
-cohort_construction_ui.Rout: ui/cohort_construction_ui.R
 train_all_model_ui.Rout: ui/train_all_model_ui.R
+validate_deploy_model_ui.Rout: ui/validate_deploy_model_ui.R
+predict_classify_ui.Rout: ui/predict_classify_ui.R
+deeplearning_ui.Rout: ui/deeplearning_ui.R
+cohort_constructor_ui.Rout: ui/cohort_constructor_ui.R
+achilles_ui.Rout: ui/achilles_ui.R
+feature_extraction_ui.Rout: ui/feature_extraction_ui.R
+omop_visualizations_ui.Rout: ui/omop_visualizations_ui.R
+add_resources_ui.Rout: ui/add_resources_ui.R
 
 ######################################################################
 
