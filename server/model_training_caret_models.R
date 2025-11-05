@@ -148,6 +148,7 @@ model_training_caret_models_gbm_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_gbm_check)) {
+					rv_training_models$gbm_trained_model = rv_training_models$gbm_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -223,6 +224,7 @@ model_training_caret_models_xgbTree_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_xgbTree_check)) {
+					rv_training_models$xgbTree_trained_model = rv_training_models$xgbTree_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -315,6 +317,7 @@ model_training_caret_models_xgbLinear_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_xgbLinear_check)) {
+					rv_training_models$xgbLinear_trained_model = rv_training_models$xgbLinear_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -388,6 +391,7 @@ model_training_caret_models_svmRadial_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_svmRadial_check)) {
+					rv_training_models$svmRadial_trained_model = rv_training_models$svmRadial_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -449,6 +453,7 @@ model_training_caret_models_svmLinear_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_svmLinear_check)) {
+					rv_training_models$svmLinear_trained_model = rv_training_models$svmLinear_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -504,6 +509,7 @@ model_training_caret_models_svmPoly_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_svmPoly_check)) {
+					rv_training_models$svmPoly_trained_model = rv_training_models$svmPoly_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE
@@ -569,6 +575,7 @@ model_training_caret_models_glmnet_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_glmnet_check)) {
+					rv_training_models$glmnet_trained_model = rv_training_models$glmnet_name
 					box(title = get_rv_labels("model_training_caret_models_advance_options")
 						, status = "teal"
 						, solidHeader = TRUE

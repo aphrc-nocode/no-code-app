@@ -24,6 +24,9 @@ Sources += $(wildcard static_files/*.*)
 Sources += LICENSE
 
 Ignore += datasets/*
+Ignore += logs/*
+Ignore += *.RData*
+Ignore += output/*
 
 ######################################################################
 
@@ -54,7 +57,7 @@ combinedata_ui.Rout: ui/combinedata_ui.R
 summarize_automatic_ui.Rout: ui/summarize_automatic_ui.R
 summarize_custom_ui.Rout: ui/summarize_custom_ui.R
 research_questions_ui.Rout: ui/research_questions_ui.R
-setup_models_ui.Rout: ui/setup_models.R
+setup_models_ui.Rout: ui/setup_models_ui.R
 feature_engineering_ui.Rout: ui/feature_engineering_ui.R
 evidence_quality_ui.Rout: ui/evidence_quality_ui.R
 
@@ -141,6 +144,13 @@ train_caret_models.Rout: server/train_caret_models.R
 
 ### Compare trained models
 compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
+
+### Deploy trained models
+deploy_trained_caret_models.Rout: server/deploy_trained_caret_models.R
+
+### Predict using trained models
+predict_trained_caret_models.Rout: server/predict_trained_caret_models.R
+
 
 ### Reset inputs
 resets.Rout: server/resets.R

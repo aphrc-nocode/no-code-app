@@ -404,17 +404,42 @@ model_training_caret_train_all_server = function() {
 					}
 					rv_training_results$train_metrics_df=Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
 
-						rv_training_results$test_metrics_objs=Rautoml::boot_estimates_multiple(
-							models=rv_training_results$models
-							, df=rv_ml_ai$preprocessed$test_df
-							, outcome_var=rv_ml_ai$outcome
-							, problem_type=rv_ml_ai$task
-							, nreps=100
-							, model_name=NULL
-							, type="prob"
-							, report= input$model_training_setup_eval_metric
-							, summary_fun=Rautoml::student_t_summary
-						)
+					## Test metrics
+					rv_training_results$test_metrics_objs=Rautoml::boot_estimates_multiple(
+						models=rv_training_results$models
+						, df=rv_ml_ai$preprocessed$test_df
+						, outcome_var=rv_ml_ai$outcome
+						, problem_type=rv_ml_ai$task
+						, nreps=100
+						, model_name=NULL
+						, type="prob"
+						, report= input$model_training_setup_eval_metric
+						, summary_fun=Rautoml::student_t_summary
+						, save_model = TRUE
+						, model_folder = "models"
+						, preprocesses = rv_ml_ai$preprocessed
+					)
+
+					## Generate logs
+					Rautoml::create_model_logs(
+						df_name=rv_ml_ai$dataset_id
+						, session_name=rv_ml_ai$session_id
+						, outcome=rv_ml_ai$outcome
+						, framework=input$modelling_framework_choices
+						, train_result=rv_training_results$test_metrics_objs$all
+						, timestamp=Sys.time()
+						, path=".log_files"
+					)
+
+					## More metrics 
+					### Post metrics
+					rv_training_results$post_model_metrics_objs=Rautoml::post_model_metrics(
+						models=rv_training_results$models
+						, outcome=rv_ml_ai$outcome
+						, df=rv_ml_ai$preprocessed$test_df
+						, task=rv_ml_ai$task
+					)
+
 
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_rf_check", value=FALSE)
@@ -448,16 +473,19 @@ model_training_caret_train_all_server = function() {
 					rv_training_results$models = NULL
 					rv_training_results$train_metrics_df = NULL
 					rv_training_results$test_metrics_objs = NULL
+					rv_training_results$post_model_metrics_objs = NULL
 				}
 			} else {
 				rv_training_results$models = NULL
 				rv_training_results$train_metrics_df = NULL
 				rv_training_results$test_metrics_objs = NULL
+				rv_training_results$post_model_metrics_objs = NULL
 			}
 		} else {
 			rv_training_results$models = NULL
 			rv_training_results$train_metrics_df = NULL
 			rv_training_results$test_metrics_objs = NULL
+			rv_training_results$post_model_metrics_objs = NULL
 		}
 	})	
 }

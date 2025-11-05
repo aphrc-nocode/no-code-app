@@ -79,13 +79,23 @@ tabItems(tabItem(tabName = "homePage"
 							)
 						),
 						tabItem(tabName = "validateDeployModel",
-								  fluidRow(column(width = 12,
-      deployment_ui("deploy")
-    ))
-                  ),
+						  fluidRow(
+							column(width=12
+								, uiOutput("deploy_trained_caret_models_box_ui")
+							)
+							, column(width=12,
+								deployment_ui("deploy")
+							)
+						  )
+						),
 
 						tabItem(tabName = "predictClassify",
-								  fluidRow()),
+							fluidRow(
+								column(width=12
+									, uiOutput("predict_trained_caret_models_box_ui")
+								)
+							)
+						),
             tabItem(tabName = "deeplearning",
 								  fluidRow(
                     column(width=4, 
