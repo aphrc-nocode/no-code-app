@@ -51,4 +51,6 @@ py/__pycache__
 *.html
 .env
 static_files/
+../env1
+logs.log
 
