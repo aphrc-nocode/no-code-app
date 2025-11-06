@@ -1,18 +1,14 @@
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
-source("R/shinyutilities.R")
+
 source("R/utils_logging.R")
-
-
 
 # ----- FastAPI base URL -----
 # En local natif (FastAPI lancé sur ta machine) :
 api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
 
-
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")
-
 source("R/utils_api.R")
 
 source("server/deploy_model_server.R")
@@ -195,13 +191,13 @@ function(input, output, session){
   menu_translation()
 
   #### ---- Change language ----------------------------------------------------
-  source("server/change_language.R", local = TRUE)
+##   source("server/change_language.R", local = TRUE)
   output$change_language = change_language
   
   #### Extracts language specific labels
-  get_rv_labels = function(var) {
-    get_rv_labels_base(rv_lang$labelling_file_df, var)
-  }
+##   get_rv_labels = function(var) {
+##     get_rv_labels_base(rv_lang$labelling_file_df, var)
+##   }
   
   #### ---- Upload data UI --------------------------------------------
   source("ui/upload_data.R", local = TRUE)
