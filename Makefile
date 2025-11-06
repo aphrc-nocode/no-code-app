@@ -24,6 +24,9 @@ Sources += $(wildcard static_files/*.*)
 Sources += LICENSE
 
 Ignore += datasets/*
+Ignore += logs/*
+Ignore += *.RData*
+Ignore += output/*
 
 ######################################################################
 
@@ -44,7 +47,28 @@ appTheme.Rout: ui/appTheme.R
 header.Rout: ui/header.R
 footer.Rout: ui/footer.R
 headertag.Rout: ui/headertag.R
+
 dashboard_body.Rout: ui/dashboard_body.R
+sourcedata_ui.Rout: ui/sourcedata_ui.R
+overview_ui.Rout: ui/overview_ui.R
+explore_ui.Rout: ui/explore_ui.R
+transform_ui.Rout: ui/transform_ui.R
+combinedata_ui.Rout: ui/combinedata_ui.R
+summarize_automatic_ui.Rout: ui/summarize_automatic_ui.R
+summarize_custom_ui.Rout: ui/summarize_custom_ui.R
+research_questions_ui.Rout: ui/research_questions_ui.R
+setup_models_ui.Rout: ui/setup_models_ui.R
+feature_engineering_ui.Rout: ui/feature_engineering_ui.R
+evidence_quality_ui.Rout: ui/evidence_quality_ui.R
+train_all_model_ui.Rout: ui/train_all_model_ui.R
+validate_deploy_model_ui.Rout: ui/validate_deploy_model_ui.R
+predict_classify_ui.Rout: ui/predict_classify_ui.R
+deeplearning_ui.Rout: ui/deeplearning_ui.R
+cohort_constructor_ui.Rout: ui/cohort_constructor_ui.R
+achilles_ui.Rout: ui/achilles_ui.R
+feature_extraction_ui.Rout: ui/feature_extraction_ui.R
+omop_visualizations_ui.Rout: ui/omop_visualizations_ui.R
+add_resources_ui.Rout: ui/add_resources_ui.R
 
 ######################################################################
 
@@ -129,6 +153,13 @@ train_caret_models.Rout: server/train_caret_models.R
 
 ### Compare trained models
 compare_trained_caret_models.Rout: server/compare_trained_caret_models.R
+
+### Deploy trained models
+deploy_trained_caret_models.Rout: server/deploy_trained_caret_models.R
+
+### Predict using trained models
+predict_trained_caret_models.Rout: server/predict_trained_caret_models.R
+
 
 ### Reset inputs
 resets.Rout: server/resets.R

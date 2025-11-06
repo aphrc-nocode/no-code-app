@@ -1,6 +1,23 @@
 library(Rautoml)
 options(shiny.maxRequestSize=300*1024^2)
 source("R/shinyutilities.R")
+source("R/utils_logging.R")
+
+
+
+# ----- FastAPI base URL -----
+# En local natif (FastAPI lancé sur ta machine) :
+api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+
+source("server/automl_controls_server.R")
+source("server/train_model_server.R")
+
+source("R/utils_api.R")
+
+source("server/deploy_model_server.R")
+
+
 
 function(input, output, session){
   #### ---- Input validators ---------------------------------------------------
@@ -153,6 +170,13 @@ function(input, output, session){
 		, train_metrics_df = NULL
 		, test_metrics_objs = NULL
 	)
+
+	rv_deploy_models = reactiveValues(
+		trained_models_table = NULL
+	)
+
+	## Deployed models
+	rv_deployed_models = reactiveValues()
   
 	## Reactive values to stock AutoML leaderboard
 	rv_automl <- reactiveValues(
@@ -526,12 +550,20 @@ function(input, output, session){
   source("server/compare_trained_caret_models.R", local=TRUE)
   model_training_caret_train_metrics_server()
 
+  #### ----- Deploy trained models ------------------------------- ####
+  source("server/deploy_trained_caret_models.R", local=TRUE)
+  deploy_trained_caret_models()
+
+  #### ---- Predict using no-code models ------------------------ ####
+  source("server/predict_trained_caret_models.R", local=TRUE)
+  predict_trained_caret_models()
+
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
-	source("server/deploy_model_server.R", local=TRUE)
-	source("ui/deploy_model_ui.R", local=TRUE)
-	deploy_model_server("deploy_model_module", rv_automl)
-  
+  source("server/deploy_model_server.R", local=TRUE)
+  source("ui/deploy_model_ui.R", local=TRUE)
+  deployment_server("deploy_model_module", rv_automl)
+
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
   automl_server("automl_module", rv_current, rv_ml_ai)
@@ -573,4 +605,3 @@ function(input, output, session){
   iv_ml$enable()
 
 }
-

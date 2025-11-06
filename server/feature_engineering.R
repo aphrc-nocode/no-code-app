@@ -77,7 +77,7 @@ feature_engineering_impute_missing_server = function() {
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					
 					## Missing values input
-					rv_current$missing_prop_impute = missing_prop(rv_current$working_df, return_exact=TRUE)
+					rv_current$missing_prop_impute = missing_prop(rv_current$working_df)#, return_exact=TRUE)
 					if (isTRUE(NROW(rv_current$missing_prop_impute)>0)) {
 						output$feature_engineering_perform_missing_impute = renderUI({
 							materialSwitch(

@@ -8,7 +8,7 @@ database_integration_server <- function(){
     database_pass <- input$db_pwd
     #db_port <- "5432" ## FIXME: Transfer to UI
     db_port <- input$db_port
-
+    
     
     if(input$db_type == "PostgreSQL"){
       tryCatch({
@@ -70,10 +70,30 @@ database_integration_server <- function(){
     
   })
   
+  
+  # ================================#
+  # Redirection to Source Page
+  # ================================#
+
+  output$global_source_redirect <- renderUI({
+    if (is.null(rv_database$conn)) {
+      actionButton("go_to_source_global",
+                   "Click to connect to a database in the Source page first",
+                    style = "background-color: #7bc148",
+                    icon = icon("arrow-right"))
+    }
+  })
+  
+  observeEvent(input$go_to_source_global, {
+    updateTabItems(session, "tabs", "sourcedata")
+  })
+  
+  # ================================#
+  
   observeEvent(input$option_picked, {
     if(input$option_picked == "use a table" && input$db_type == "PostgreSQL"){ #U4
       updateSelectInput(session,inputId = "db_schema_list", 
-      choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
+                        choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
     }
     
   })  
@@ -116,15 +136,15 @@ database_integration_server <- function(){
     df_table_str <- dbGetQuery(conn, query_table_data)
     rv_database$df_table_str <- df_table_str
     
-
-
+    
+    
   })
   
   output$db_table_str <- renderPrint({ 
     if(!is.null(rv_database$df_table_str)){
       if(input$option_picked == "use a table"){
         str(rv_database$df_table_str)
-
+        
       }else{
         rv_database$df_table_str = NULL
       }
@@ -144,7 +164,7 @@ database_integration_server <- function(){
     }else{
       rv_database$df_table = NULL
     }
-
+    
     
     
     

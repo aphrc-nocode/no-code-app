@@ -2,7 +2,8 @@
 .Rhistory
 .Rapp.history
 # Session Data files
-.RData
+*.RData*
+.RDataTmp
 .RDataTmp
 # User-specific files
 .Ruserdata
@@ -36,8 +37,20 @@ rsconnect/
 no-code-app.Rproj
 .log_files
 datasets
-
+logs/*
+output/*
+recipes/*
+py/pycaret/*
+models/*
+errorReportSql.txt
+*.swp
+*.pkl
+py/*.pkl
+py/logs/*
+py/__pycache__
 *.html
 .env
 static_files/
+../env1
+logs.log
 
