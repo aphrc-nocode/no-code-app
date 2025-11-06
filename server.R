@@ -15,7 +15,7 @@ source("server/train_model_server.R")
 
 source("R/utils_api.R")
 
-source("server/deploy_model_server.R")
+#source("server/deploy_model_server.R")
 
 
 
@@ -560,9 +560,22 @@ function(input, output, session){
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
+  # S’assurer que ces RV existent
+  rv_ml_ai   <- rv_ml_ai   %||% reactiveValues(target = NULL, outcome = NULL)
+  rv_current <- rv_current %||% reactiveValues(target = NULL)
+
+  deployment_server(
+    id         = "deployment",
+    rv_ml_ai   = rv_ml_ai,
+    rv_current = rv_current,
+    api_base   = api_base  # "http://127.0.0.1:8000" ou ta valeur
+  )
+
+
+
   source("server/deploy_model_server.R", local=TRUE)
   source("ui/deploy_model_ui.R", local=TRUE)
-  deployment_server("deploy_model_module", rv_automl)
+  #deployment_server("deploy_model_module", rv_automl)
 
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
