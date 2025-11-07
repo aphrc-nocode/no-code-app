@@ -48,6 +48,7 @@ libraries <- c(
   , "CodelistGenerator"
   , "CDMConnector"
   , "CohortConstructor"
+  , "waiter"
 )
 
 
