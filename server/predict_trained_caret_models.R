@@ -73,7 +73,7 @@ predict_trained_caret_models = function() {
 				downloadButton("predict_trained_caret_models_download_template", get_rv_labels("predict_trained_caret_models_download_template"), class = "btn btn-success")
 			
 			} else if (input$predict_trained_caret_models_prediction_type_choices=="use_form") {
-				actionButton("predict_trained_caret_models_upload_form", "➕ Open Data Entry Form", class = "btn btn-primary")
+				actionButton("predict_trained_caret_models_upload_form", paste0("➕ ", get_rv_labels("predict_trained_caret_models_upload_form")), class = "btn btn-primary")
 			}
 
 		})
@@ -98,7 +98,7 @@ predict_trained_caret_models = function() {
 				prediction_df = Rautoml::upload_data(df_path)
 				Rautoml::check_columns(rv_deploy_models$endpoint_objects$template, prediction_df)
 			}, error = function(e) {
-				shinyalert("Error: ", paste0("Unmatched input data. Download prediction template. \n", e$message), type = "error")
+				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_upload_data_apply_error"), "\n", e$message), type = "error")
 				return(list(check = FALSE, df = NULL))
 		 	})
 			rv_deploy_models$prediction_df = preds_obs$df
@@ -122,12 +122,12 @@ predict_trained_caret_models = function() {
 				form_ui = create_form_prototype(rv_deploy_models$endpoint_objects$prototype)
 				rv_deploy_models$prediction_df = data.frame()
 				 showModal(modalDialog(
-					title = "🧾 Enter Data for Prediction",
+					title = paste0("🧾 ", get_rv_labels("predict_trained_caret_models_prediction_type_choices_form")),
 					create_form_prototype(rv_deploy_models$endpoint_objects$prototype),
 					footer = tagList(
-					  modalButton("Cancel"),
-					  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", "Save Entry", class = "btn btn-success"),
-					  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", "Finish", class = "btn btn-primary")
+					  modalButton(get_rv_labels("predict_trained_caret_models_upload_form_apply_cancel")),
+					  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_save_entry"), class = "btn btn-success"),
+					  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_finish_entry"), class = "btn btn-primary")
 					),
 					easyClose = TRUE
 				 ))
@@ -154,12 +154,12 @@ predict_trained_caret_models = function() {
 		 # Reset form inputs inside modal for next entry
 		 removeModal()
 		 showModal(modalDialog(
-			title = "🧾 Add anothe entry",
+			title = paste0("🧾 ", get_rv_labels("predict_trained_caret_models_prediction_type_choices_form_another_entry")),
 			create_form_prototype(rv_deploy_models$endpoint_objects$prototype),
 			footer = tagList(
-			  modalButton("Cancel"),
-			  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", "Save Entry", class = "btn btn-success"),
-			  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", "Finish", class = "btn btn-primary")
+			  modalButton(get_rv_labels("predict_trained_caret_models_upload_form_apply_cancel")),
+			  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_save_entry"), class = "btn btn-success"),
+			  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_finish_entry"), class = "btn btn-primary")
 			),
 			easyClose = TRUE
 		 ))
@@ -206,7 +206,7 @@ predict_trained_caret_models = function() {
 					, model_name = n
 				)	
 			}, error = function(e) {
-				shinyalert("Error: ", paste0("Prediction API error. Try again: \n", e$message), type = "error")
+				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_predict_apply_error", "\n"), e$message), type = "error")
 				return(NULL)
 			})
 

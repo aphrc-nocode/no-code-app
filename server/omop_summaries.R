@@ -9,6 +9,7 @@ omopVizServer <- function() {
   
   #------------ Reuse existing connection if available ------------------------#
   observe({
+  	req(isTRUE(!is.null(rv_database$conn)), DBI::dbIsValid(rv_database$conn), isTRUE(is.null(omop_conn$conn)))
     if (!is.null(rv_database$conn) && DBI::dbIsValid(rv_database$conn) && is.null(omop_conn$conn)) {
       tryCatch({
         omop_conn$conn <- rv_database$conn

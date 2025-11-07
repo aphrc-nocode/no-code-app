@@ -191,13 +191,10 @@ function(input, output, session){
   menu_translation()
 
   #### ---- Change language ----------------------------------------------------
-##   source("server/change_language.R", local = TRUE)
   output$change_language = change_language
-  
-  #### Extracts language specific labels
-##   get_rv_labels = function(var) {
-##     get_rv_labels_base(rv_lang$labelling_file_df, var)
-##   }
+
+  source("server/change_language_update.R", local = TRUE)
+  change_language_update() 
   
   #### ---- Upload data UI --------------------------------------------
   source("ui/upload_data.R", local = TRUE)
