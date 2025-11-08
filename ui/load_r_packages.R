@@ -75,11 +75,14 @@ libraries <- c(
    , "scales"
    , "themis"
    , "vetiver"
+	, "waiter"
 )
 
 # Install missing CRAN packages
 missing <- setdiff(libraries, rownames(installed.packages()))
 if (length(missing) > 0) install.packages(missing, repos='https://cloud.r-project.org', dependencies = TRUE)
+
+invisible(lapply(libraries, library, character.only = TRUE))
 
 st_options(footnote=NA, headings = FALSE)
 
