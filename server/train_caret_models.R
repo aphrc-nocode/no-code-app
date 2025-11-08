@@ -398,8 +398,13 @@ model_training_caret_train_all_server = function() {
 						)
 					}, error = function(e) {
 						shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
+						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
+						close_progress_bar(att_new_obj=att_new_obj)
 						return(NULL)
 					})
+					
+					if (isTRUE(is.null(rv_training_results$models))) return()
+					
 					if (isTRUE(input$model_training_setup_start_clusters_check)) {
 						Rautoml::stop_cluster()
 					}
@@ -412,10 +417,23 @@ model_training_caret_train_all_server = function() {
 							)
 						}, error = function(e) {
 							shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
+							close_progress_bar(att_new_obj=att_new_obj)
 							return(NULL)
 						})
+						print(rv_training_results$models)
 					}
-					rv_training_results$train_metrics_df=Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
+					
+					if (isTRUE(is.null(rv_training_results$models))) return()
+					
+					rv_training_results$train_metrics_df=tryCatch({
+						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
+					}, error = function(e) {
+						shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=att_new_obj)
+						return(NULL)
+					})
+
+					if (is.null(rv_training_results$train_metrics_df)) return()
 
 					## Test metrics
 					rv_training_results$test_metrics_objs=tryCatch({
@@ -434,9 +452,12 @@ model_training_caret_train_all_server = function() {
 							, preprocesses = rv_ml_ai$preprocessed
 						)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_metrics_error"), "\n", e$message), type = "error")
+						shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=att_new_obj)
 						return(NULL)
 					})
+
+					if (is.null(rv_training_results$test_metrics_objs)) return()
 
 					## Generate logs
 					Rautoml::create_model_logs(
@@ -452,16 +473,19 @@ model_training_caret_train_all_server = function() {
 					## More metrics 
 					### Post metrics
 					rv_training_results$post_model_metrics_objs=tryCatch({
-					Rautoml::post_model_metrics(
-						models=rv_training_results$models
-						, outcome=rv_ml_ai$outcome
-						, df=rv_ml_ai$preprocessed$test_df
-						, task=rv_ml_ai$task
-					)
+						Rautoml::post_model_metrics(
+							models=rv_training_results$models
+							, outcome=rv_ml_ai$outcome
+							, df=rv_ml_ai$preprocessed$test_df
+							, task=rv_ml_ai$task
+						)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_metrics_error"), "\n", e$message), type = "error")
+						shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=att_new_obj)
 						return(NULL)
 					})
+
+					if (is.null(rv_training_results$post_model_metrics_objs)) return()
 
 
 					updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)
