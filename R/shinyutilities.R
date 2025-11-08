@@ -178,3 +178,30 @@ create_form_prototype = function(prototype) {
   })
   return(x)
 }
+
+# ---- Progress bars ----------------------------------
+
+start_progress_bar = function(att_new_obj, text="Running ...") {
+	showModal(
+		modalDialog(
+		  size = "s",
+		  attendantBar(
+			 "progress-bar",
+			 class = "top-progress",
+			 text = text,
+			 striped = TRUE,
+			 animated = TRUE
+		  ),
+		  footer = NULL
+		)
+	)
+	att_new_obj$auto()
+}
+
+
+close_progress_bar = function(att_new_obj) {
+	on.exit({
+		att_new_obj$done()
+		removeModal()
+	})
+}

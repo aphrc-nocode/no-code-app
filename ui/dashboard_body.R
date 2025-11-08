@@ -32,6 +32,7 @@ get_rv_labels = function(var) {
 aphrcBody <- dashboardBody(
 	headertag,
 	useShinyjs(),
+	useAttendant(),
 	# useWaiter(), #FIXME: Use better one
 	theme = appTheme,
 	tabItems(

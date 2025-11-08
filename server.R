@@ -16,6 +16,7 @@ source("server/deploy_model_server.R")
 
 
 function(input, output, session){
+  att_new_obj = Attendant$new("progress-bar", hide_on_max = TRUE)
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 
