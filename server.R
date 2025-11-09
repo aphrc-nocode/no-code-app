@@ -187,6 +187,24 @@ function(input, output, session){
 		, test_metrics_objs = NULL
 	)
 
+  # Update training results when a new model is trained
+  
+  automl_controls_server(
+    id         = "automl_controls",
+    rv_current = rv_current,
+    rv_ml_ai   = rv_ml_ai,
+    api_base   = api_base
+  )
+
+  train_model_server(  # ou le nom de ton module d’évaluation/plots
+    id         = "train_model",
+    rv_current = rv_current,
+    rv_ml_ai   = rv_ml_ai,
+    api_base   = api_base
+  )
+
+  # End update training
+
 	rv_deploy_models = reactiveValues(
 		trained_models_table = NULL
 	)
@@ -575,7 +593,21 @@ function(input, output, session){
 
   source("server/deploy_model_server.R", local=TRUE)
   source("ui/deploy_model_ui.R", local=TRUE)
-  deployment_server("deploy_model_module", rv_automl)
+  #deployment_server("deploy_model_module", rv_automl)
+  # S’assurer que ces RV existent (tu as déjà rv_ml_ai et rv_current plus haut
+
+  # New ADD
+  rv_ml_ai   <- rv_ml_ai   %||% reactiveValues(target = NULL, outcome = NULL)
+  rv_current <- rv_current %||% reactiveValues(target = NULL)
+
+  deployment_server(
+    id         = "deploy_model_module",  # ← même id que dans deploy_model_ui("deploy_model_module")
+    rv_ml_ai   = rv_ml_ai,
+    rv_current = rv_current,
+    api_base   = api_base
+  )
+
+  # END NEW ADD
 
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
