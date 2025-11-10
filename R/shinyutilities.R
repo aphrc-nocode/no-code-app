@@ -171,7 +171,7 @@ create_form_prototype = function(prototype) {
     if (type=="numeric") {
       numericInput(var, paste0("Enter ", var), value=f)
     } else if (any(type %in% c("logical", "character", "factor"))) {
-      selectInput(var, paste0("Select ", var), choices = as.character(f))
+      selectInput(var, paste0("Select ", var), choices = f, selected=f[[1]])
     } else {
       textInput(var, paste0("Enter ", var), placeholder = f)
     }
