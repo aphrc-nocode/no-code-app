@@ -222,6 +222,7 @@ predict_trained_caret_models = function() {
 					, new_data = rv_deploy_models$prediction_df
 					, recipes = r
 					, model_name = n
+					, update_skip=FALSE
 				)	
 			}, error = function(e) {
 				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_predict_apply_error"), "\n", e$message), type = "error")

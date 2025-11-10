@@ -166,7 +166,7 @@ generate_action_buttons = function(display) {
 # ---- Create form prototypes ------------------------
 create_form_prototype = function(prototype) {
   x = lapply(names(prototype), function(var) {
-    f = prototype[[var]]
+    f = unlist(prototype[[var]])
     type = Rautoml::get_type(f)
     if (type=="numeric") {
       numericInput(var, paste0("Enter ", var), value=f)
