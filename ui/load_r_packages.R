@@ -75,7 +75,7 @@ libraries <- c(
    , "scales"
    , "themis"
    , "vetiver"
-	, "waiter"
+   , "waiter"
 )
 
 # Install missing CRAN packages

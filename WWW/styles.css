@@ -237,6 +237,11 @@ td {
     font-size: 40px;
     color: #7bc148;
   }
+  
+  
+#loader svg circle {
+    stroke-width: 20px !important;  /* increase this for a thicker ring */
+  }
 
 
 

@@ -38,11 +38,34 @@ aphrcSiderbar <- dashboardSidebar(
   
 )
 
+thick_circle_svg <- '
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle 
+    cx="50" cy="50" r="40"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="10"  <!-- thickness here -->
+    stroke-linecap="round"
+  />
+</svg>'
+
 #Body
 fluidPage(
   useShinyjs(),
-  # Loading screen (will hide once everything loads)
-  div(id = "loading_screen", "Loading Nocode Platform..."),
+  
+  useWaiter(),
+  useHostess(),
+ 
+  waiterShowOnLoad(
+    color = "#f7fff7",
+    hostess_loader(
+      "loader", 
+      preset = "circle", 
+      text_color = "#00BFC4",
+      class = "label-center",
+      center_page = TRUE
+    )
+  ),
   
   login::is_logged_in(
     id = app_login_config$APP_ID, header),
