@@ -16,7 +16,12 @@ source("server/deploy_model_server.R")
 
 
 function(input, output, session){
-  att_new_obj = Attendant$new("progress-bar", hide_on_max = TRUE)
+  model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
+  model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
+  deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
+  predict_models_caret_pb = Attendant$new("predict_models_caret_pb", hide_on_max = TRUE)
+  predict_endpoint_models_caret_pb = Attendant$new("predict_endpoint_models_caret_pb", hide_on_max = TRUE)
+  
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
 

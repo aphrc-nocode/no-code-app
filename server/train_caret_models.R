@@ -372,7 +372,7 @@ model_training_caret_train_all_server = function() {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(rv_ml_ai$at_least_one_model)) {
 
-					start_progress_bar(att_new_obj=att_new_obj, text=get_rv_labels("model_training_apply_progress_bar"))
+					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
 
 					all_model_params = c(rv_training_models$ols_model
 						, rv_training_models$rf_model
@@ -399,7 +399,7 @@ model_training_caret_train_all_server = function() {
 					}, error = function(e) {
 						shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
 						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
-						close_progress_bar(att_new_obj=att_new_obj)
+						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
 					
@@ -417,7 +417,7 @@ model_training_caret_train_all_server = function() {
 							)
 						}, error = function(e) {
 							shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-							close_progress_bar(att_new_obj=att_new_obj)
+							close_progress_bar(att_new_obj=model_training_caret_pb)
 							return(NULL)
 						})
 						print(rv_training_results$models)
@@ -429,7 +429,7 @@ model_training_caret_train_all_server = function() {
 						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
 					}, error = function(e) {
 						shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=att_new_obj)
+						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
 
@@ -453,7 +453,7 @@ model_training_caret_train_all_server = function() {
 						)
 					}, error = function(e) {
 						shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=att_new_obj)
+						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
 
@@ -481,7 +481,7 @@ model_training_caret_train_all_server = function() {
 						)
 					}, error = function(e) {
 						shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=att_new_obj)
+						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
 
@@ -516,7 +516,7 @@ model_training_caret_train_all_server = function() {
 					rv_train_control_caret$savePredictions = FALSE
 					rv_train_control_caret$classProbs = TRUE
 				
-					close_progress_bar(att_new_obj=att_new_obj)
+					close_progress_bar(att_new_obj=model_training_caret_pb)
 				} else {
 					rv_training_results$models = NULL
 					rv_training_results$train_metrics_df = NULL

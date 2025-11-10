@@ -334,7 +334,7 @@ model_training_caret_train_metrics_server = function() {
 							}
 						
 							if (isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
-								start_progress_bar(att_new_obj=att_new_obj, text=get_rv_labels("model_training_apply_progress_bar"))
+								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
 								rv_training_results$test_metrics_objs_shap = tryCatch({
 									Rautoml::compute_shap(
 										models=rv_training_results$models
@@ -349,13 +349,13 @@ model_training_caret_train_metrics_server = function() {
 									)
 								}, error = function(e) {
 									shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
-									close_progress_bar(att_new_obj=att_new_obj)
+									close_progress_bar(att_new_obj=model_metrics_caret_pb)
 									return(NULL)
 								})
 
 								if (is.null(rv_training_results$test_metrics_objs_shap)) return()
 								
-								close_progress_bar(att_new_obj=att_new_obj)
+								close_progress_bar(att_new_obj=model_metrics_caret_pb)
 								shap_plots = plot(rv_training_results$test_metrics_objs_shap)
 								
 								## Variable importance

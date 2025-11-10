@@ -133,49 +133,62 @@ deploy_trained_caret_models = function() {
 			req(input$deploy_trained_caret_models_select_deploy)
 			req(input$deploy_trained_caret_models_hostname)
 		   req(NROW(rv_deploy_models$trained_models_table)>0)
-			deployed_df = list()
-			for (m in input$deploy_trained_caret_models_select_deploy) {
-				m_check = rv_deployed_models[[m]]
-				if (isTRUE(is.null(m_check))) {
-					rv_deployed_models[[m]] = m
-					rv_deployed_models[[m]] = Rautoml::start_model_api(
-						folder="models"
-						, model_name=m
-						, host=input$deploy_trained_caret_models_hostname
+
+			start_progress_bar(id="deploy_models_caret_pb", att_new_obj=deploy_models_caret_pb, text=get_rv_labels("deploy_models_caret_pb"))
+
+			display = tryCatch({
+				deployed_df = list()
+				for (m in input$deploy_trained_caret_models_select_deploy) {
+					m_check = rv_deployed_models[[m]]
+					if (isTRUE(is.null(m_check))) {
+						rv_deployed_models[[m]] = m
+						rv_deployed_models[[m]] = Rautoml::start_model_api(
+							folder="models"
+							, model_name=m
+							, host=input$deploy_trained_caret_models_hostname
+						)
+					} 
+					df = filter_deployed_models(
+						df = rv_deploy_models$trained_models_table_filtered
+						, model_ids = m
 					)
-				} 
-				df = filter_deployed_models(
-					df = rv_deploy_models$trained_models_table_filtered
-					, model_ids = m
-				)
-				d_check = try(rv_deployed_models[[m]]$process$is_alive())
-				if (isTRUE(d_check)) {
-					u = rv_deployed_models[[m]]$url
-					d = rv_deployed_models[[m]]$docs
-					if (Rautoml::check_api_connection(d)) {
-						df$url = u 
-						df$api = d 
-						df$status = "Deployed" 
-					} else {
-						Sys.sleep(3)
+					d_check = try(rv_deployed_models[[m]]$process$is_alive())
+					if (isTRUE(d_check)) {
+						u = rv_deployed_models[[m]]$url
+						d = rv_deployed_models[[m]]$docs
 						if (Rautoml::check_api_connection(d)) {
 							df$url = u 
 							df$api = d 
 							df$status = "Deployed" 
 						} else {
-							df$url = "" 
-							df$api = "" 
-							df$status = "Stopped" 
+							Sys.sleep(3)
+							if (Rautoml::check_api_connection(d)) {
+								df$url = u 
+								df$api = d 
+								df$status = "Deployed" 
+							} else {
+								df$url = "" 
+								df$api = "" 
+								df$status = "Stopped" 
+							}
 						}
+					} else {
+						df$url = "" 
+						df$api = "" 
+						df$status = "Stopped" 
 					}
-				} else {
-					df$url = "" 
-					df$api = "" 
-					df$status = "Stopped" 
+					deployed_df[[m]] = df
 				}
-				deployed_df[[m]] = df
-			}
-			display = do.call("rbind", deployed_df)
+				do.call("rbind", deployed_df)
+			}, error = function(e) {
+				shinyalert("Error: ", paste0(get_rv_labels("deploy_models_caret_error"), "\n", e$message), type = "error")
+				close_progress_bar(att_new_obj=deploy_models_caret_pb)
+				return(NULL)
+			})
+									
+			if (is.null(display)) return()
+
+			close_progress_bar(att_new_obj=deploy_models_caret_pb)
 
 		  display$action = generate_action_buttons(display)
 
@@ -310,11 +323,11 @@ deploy_trained_caret_models = function() {
 				, hr()
 				, br()
 				, br()
-				, box(title = "Deployed models"#get_rv_labels("deploy_trained_caret_models_box_ui_ouput")
+				, box(title = get_rv_labels("deploy_trained_caret_models_select_deployed_table")
 					, status = "success"
 					, solidHeader = TRUE
 					, collapsible = TRUE
-					, collapsed = TRUE
+					, collapsed = FALSE
 					, width = 12
 					, fluidRow(
 						column(width=12
