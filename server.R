@@ -14,8 +14,12 @@ source("R/utils_api.R")
 source("server/deploy_model_server.R")
 
 
-
 function(input, output, session){
+  #Load very time app loads and sign out happens
+  hostess <- Hostess$new("loader", infinite = TRUE)
+  hostess$start()
+  
+  # ... computation here ... # 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
@@ -28,7 +32,8 @@ function(input, output, session){
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
   # Hide loading overlay and show login form
-  shinyjs::hide("loading_screen")
+ # shinyjs::hide("loading_screen")
+
   shinyjs::show("login_form")
   ###-------User Login--------_##
   # Once the first UI flush happens, hide the loader.
@@ -602,5 +607,8 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+  
+  hostess$close()
+  waiter_hide()
 
 }
