@@ -45,11 +45,24 @@ predict_trained_caret_models = function() {
 		observeEvent(input$predict_trained_caret_models_prediction_type_choices, {
 			req(length(input$predict_trained_caret_models_prediction_type_choices)>0)
 			req(!is.null(input$predict_trained_caret_models_select_model), input$predict_trained_caret_models_select_model!="")
-			rv_deploy_models$endpoint_objects = Rautoml::get_endpoint_data(
-				url = unname(input$predict_trained_caret_models_select_model[1])
-				, endpoint = "metadata"
-			)
 			
+			start_progress_bar(id="predict_endpoint_models_caret_pb", att_new_obj=predict_endpoint_models_caret_pb, text=get_rv_labels("predict_endpoint_models_caret_pb"))
+			
+			rv_deploy_models$endpoint_objects = tryCatch({
+				Rautoml::get_endpoint_data(
+					url = unname(input$predict_trained_caret_models_select_model[1])
+					, endpoint = "metadata"
+				)
+			}, error=function(e){
+				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_prediction_type_choices_error"), "\n", e$message), type = "error")
+				close_progress_bar(att_new_obj=predict_endpoint_models_caret_pb)
+				return(NULL)
+			})
+			
+			if (is.null(rv_deploy_models$endpoint_objects)) return()
+			
+			close_progress_bar(att_new_obj=predict_endpoint_models_caret_pb)
+
 			## Download template
 			req(input$predict_trained_caret_models_prediction_type_choices=="upload_file")
 			output$predict_trained_caret_models_download_template = downloadHandler(
@@ -73,7 +86,7 @@ predict_trained_caret_models = function() {
 				downloadButton("predict_trained_caret_models_download_template", get_rv_labels("predict_trained_caret_models_download_template"), class = "btn btn-success")
 			
 			} else if (input$predict_trained_caret_models_prediction_type_choices=="use_form") {
-				actionButton("predict_trained_caret_models_upload_form", "➕ Open Data Entry Form", class = "btn btn-primary")
+				actionButton("predict_trained_caret_models_upload_form", paste0("➕ ", get_rv_labels("predict_trained_caret_models_upload_form")), class = "btn btn-primary")
 			}
 
 		})
@@ -98,13 +111,15 @@ predict_trained_caret_models = function() {
 				prediction_df = Rautoml::upload_data(df_path)
 				Rautoml::check_columns(rv_deploy_models$endpoint_objects$template, prediction_df)
 			}, error = function(e) {
-				shinyalert("Error: ", paste0("Unmatched input data. Download prediction template. \n", e$message), type = "error")
+				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_upload_data_apply_error"), "\n", e$message), type = "error")
 				return(list(check = FALSE, df = NULL))
 		 	})
 			rv_deploy_models$prediction_df = preds_obs$df
 			if (!isTRUE(preds_obs$check)) {
 				rv_deploy_models$prediction_df = NULL
 			}
+			if (!preds_obs$check) return()
+
 			req(isTRUE(preds_obs$check))
 			actionBttn("predict_trained_caret_models_upload_data_apply"
 				, inline=TRUE
@@ -122,12 +137,12 @@ predict_trained_caret_models = function() {
 				form_ui = create_form_prototype(rv_deploy_models$endpoint_objects$prototype)
 				rv_deploy_models$prediction_df = data.frame()
 				 showModal(modalDialog(
-					title = "🧾 Enter Data for Prediction",
+					title = paste0("🧾 ", get_rv_labels("predict_trained_caret_models_prediction_type_choices_form")),
 					create_form_prototype(rv_deploy_models$endpoint_objects$prototype),
 					footer = tagList(
-					  modalButton("Cancel"),
-					  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", "Save Entry", class = "btn btn-success"),
-					  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", "Finish", class = "btn btn-primary")
+					  modalButton(get_rv_labels("predict_trained_caret_models_upload_form_apply_cancel")),
+					  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_save_entry"), class = "btn btn-success"),
+					  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_finish_entry"), class = "btn btn-primary")
 					),
 					easyClose = TRUE
 				 ))
@@ -154,12 +169,12 @@ predict_trained_caret_models = function() {
 		 # Reset form inputs inside modal for next entry
 		 removeModal()
 		 showModal(modalDialog(
-			title = "🧾 Add anothe entry",
+			title = paste0("🧾 ", get_rv_labels("predict_trained_caret_models_prediction_type_choices_form_another_entry")),
 			create_form_prototype(rv_deploy_models$endpoint_objects$prototype),
 			footer = tagList(
-			  modalButton("Cancel"),
-			  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", "Save Entry", class = "btn btn-success"),
-			  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", "Finish", class = "btn btn-primary")
+			  modalButton(get_rv_labels("predict_trained_caret_models_upload_form_apply_cancel")),
+			  actionButton("predict_trained_caret_models_upload_form_apply_save_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_save_entry"), class = "btn btn-success"),
+			  actionButton("predict_trained_caret_models_upload_form_apply_finish_entry", get_rv_labels("predict_trained_caret_models_upload_form_apply_finish_entry"), class = "btn btn-primary")
 			),
 			easyClose = TRUE
 		 ))
@@ -191,6 +206,9 @@ predict_trained_caret_models = function() {
 		## Prediction output
 		observeEvent(input$predict_trained_caret_models_predict_apply, {
 			req(!is.null(rv_deploy_models$prediction_df), NROW(rv_deploy_models$prediction_df)>0)
+			
+			start_progress_bar(id="predict_models_caret_pb", att_new_obj=predict_models_caret_pb, text=get_rv_labels("predict_models_caret_pb"))
+			
 			req(!is.null(rv_deploy_models$endpoint_objects))
 			r = rv_deploy_models$endpoint_objects$recipes
 			r = Rautoml::get_recipes(name=r, folder="recipes")
@@ -206,9 +224,12 @@ predict_trained_caret_models = function() {
 					, model_name = n
 				)	
 			}, error = function(e) {
-				shinyalert("Error: ", paste0("Prediction API error. Try again: \n", e$message), type = "error")
+				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_predict_apply_error"), "\n", e$message), type = "error")
+				close_progress_bar(att_new_obj=predict_models_caret_pb)
 				return(NULL)
 			})
+
+			if (is.null(rv_deploy_models$predicted_df)) return()
 
 			output$predict_trained_caret_models_predicted_values_table = renderDT({
 				req(!is.null(rv_deploy_models$predicted_df), is.data.frame(rv_deploy_models$predicted_df)) 
@@ -221,6 +242,31 @@ predict_trained_caret_models = function() {
 			output$predict_trained_caret_models_predicted_values_plot = renderPlot({
 				req(!is.null(rv_deploy_models$predicted_df), is.data.frame(rv_deploy_models$predicted_df)) 
 				 Rautoml::viz_pred(rv_deploy_models$predicted_df)
+			})
+			
+			close_progress_bar(att_new_obj=predict_models_caret_pb)
+
+			output$predict_trained_caret_models_predicted_values_ui = renderUI({
+				p(
+					br()
+					, hr()
+					, br()
+					, box(title = "Predictions"
+						, status = "success"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 12
+						, fluidRow(
+							column(width = 6
+								, DT::DTOutput("predict_trained_caret_models_predicted_values_table")
+							)
+							, column(width = 6
+								, plotOutput("predict_trained_caret_models_predicted_values_plot")
+							)
+						)
+					)
+				)
 			})
 		})
 	
@@ -240,24 +286,7 @@ predict_trained_caret_models = function() {
 						, uiOutput("predict_trained_caret_models_upload_data")
 						, uiOutput("predict_trained_caret_models_upload_data_apply")
 					)
-				)
-				, br()
-				, hr()
-				, br()
-				, box(title = "Predictions"
-					, status = "success"
-					, solidHeader = TRUE
-					, collapsible = TRUE
-					, collapsed = TRUE
-					, width = 12
-					, fluidRow(
-						column(width = 6
-							, DT::DTOutput("predict_trained_caret_models_predicted_values_table")
-						)
-						, column(width = 6
-							, plotOutput("predict_trained_caret_models_predicted_values_plot")
-						)
-					)
+					, uiOutput("predict_trained_caret_models_predicted_values_ui")
 				)
 			)
 		})

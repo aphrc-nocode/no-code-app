@@ -171,10 +171,37 @@ create_form_prototype = function(prototype) {
     if (type=="numeric") {
       numericInput(var, paste0("Enter ", var), value=f)
     } else if (any(type %in% c("logical", "character", "factor"))) {
-      selectInput(var, paste0("Select ", var), choices = f)
+      selectInput(var, paste0("Select ", var), choices = as.character(f))
     } else {
       textInput(var, paste0("Enter ", var), placeholder = f)
     }
   })
   return(x)
+}
+
+# ---- Progress bars ----------------------------------
+
+start_progress_bar = function(id="progress-bar", att_new_obj, text="Running ...") {
+	showModal(
+		modalDialog(
+		  size = "s",
+		  attendantBar(
+			 id,
+			 class = "top-progress",
+			 text = text,
+			 striped = TRUE,
+			 animated = TRUE
+		  ),
+		  footer = NULL
+		)
+	)
+	att_new_obj$auto()
+}
+
+
+close_progress_bar = function(att_new_obj) {
+	on.exit({
+		att_new_obj$done()
+		removeModal()
+	})
 }

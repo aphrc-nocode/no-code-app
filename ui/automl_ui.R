@@ -3,7 +3,7 @@ automl_ui <- function(id) {
   tagList(
     br(), br(),
     br(), br(),
-    h4("Test performance (Test set)"),
+    h4(get_rv_labels("test_performance_evaluation_pycaret")),
     
     h4("Upload new data for prediction"),
     fileInput(ns("predict_file"), "Upload test dataset (.csv)"),

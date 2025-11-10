@@ -20,9 +20,19 @@ source("ui/feature_extraction_ui.R")
 source("ui/omop_visualizations_ui.R")
 source("ui/add_resources_ui.R")
 
+#### ---- Change language --------------------------------------------
+source("server/change_language.R", local = TRUE)
+
+#### Extracts language specific labels
+get_rv_labels = function(var) {
+ get_rv_labels_base(rv_lang$labelling_file_df, var)
+}
+
+
 aphrcBody <- dashboardBody(
 	headertag,
 	useShinyjs(),
+	useAttendant(),
 	# useWaiter(), #FIXME: Use better one
 	theme = appTheme,
 	tabItems(
