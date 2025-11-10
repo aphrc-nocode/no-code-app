@@ -12,6 +12,7 @@ train_all_model_ui = function() {
 				)
 				, column(width=12
 					, uiOutput("model_training_caret_train_metrics")
+					, uiOutput("model_training_caret_train_metrics_shap_values")
 				)
 			),
 			conditionalPanel(

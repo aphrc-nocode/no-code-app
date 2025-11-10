@@ -355,16 +355,25 @@ model_training_caret_train_metrics_server = function() {
 
 								if (is.null(rv_training_results$test_metrics_objs_shap)) return()
 								
+								
+								rv_training_results$shap_plots = tryCatch({
+									plot(rv_training_results$test_metrics_objs_shap)
+								}, error=function(e){
+									shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
+									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									return(NULL)
+								})
+								
+								if (is.null(rv_training_results$shap_plots)) return()
+
 								close_progress_bar(att_new_obj=model_metrics_caret_pb)
-								shap_plots = plot(rv_training_results$test_metrics_objs_shap)
 								
 								## Variable importance
 								output$model_training_caret_test_metrics_shap_values_varimp = renderPlot({
-									shap_plots$varimp
+									rv_training_results$shap_plots$varimp
 								})
 
 								output$model_training_caret_test_metrics_shap_values_varimp_ui = renderUI({
-									req(!is.null(shap_plots$varimp))
 									p(
 										br()
 										, hr()
@@ -379,11 +388,10 @@ model_training_caret_train_metrics_server = function() {
 
 								## Most frequent variables
 								output$model_training_caret_test_metrics_shap_values_varfreq = renderPlot({
-									shap_plots$varfreq
+									rv_training_results$shap_plots$varfreq
 								})
 
 								output$model_training_caret_test_metrics_shap_values_varfreq_ui = renderUI({
-									req(!is.null(shap_plots$varfreq))
 									p(
 										hr()
 										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_varfreq"), ":</b> <br/>"))
@@ -397,11 +405,10 @@ model_training_caret_train_metrics_server = function() {
 
 								## Variable dependency
 								output$model_training_caret_test_metrics_shap_values_vardep = renderPlot({
-									shap_plots$vardep
+									rv_training_results$shap_plots$vardep
 								})
 
 								output$model_training_caret_test_metrics_shap_values_vardep_ui = renderUI({
-									req(!is.null(shap_plots$vardep))
 									p(
 										hr()
 										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_vardep"), ":</b> <br/>"))
@@ -415,57 +422,19 @@ model_training_caret_train_metrics_server = function() {
 								
 								## Beeswarm plot
 								output$model_training_caret_test_metrics_shap_values_beeswarm = renderPlot({
-									shap_plots$beeswarm
+									rv_training_results$shap_plots$beeswarm
 								})
 
-								output$model_training_caret_test_metrics_shap_values_beeswarm_ui = renderUI({
-									req(!is.null(shap_plots$beeswarm))
-									p(
-										hr()
-										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_beeswarm"), ":</b> <br/>"))
-										, fluidRow(
-											column(width=12
-												, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px")
-											)
-										)
-									)
-								})
-								
 								## Waterfall plot
 								output$model_training_caret_test_metrics_shap_values_waterfall = renderPlot({
-									shap_plots$waterfall
-								})
-
-								output$model_training_caret_test_metrics_shap_values_waterfall_ui = renderUI({
-									req(!is.null(shap_plots$waterfall))
-									p(
-										hr()
-										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_waterfall"), ":</b> <br/>"))
-										, fluidRow(
-											column(width=12
-												, plotOutput("model_training_caret_test_metrics_shap_values_waterfall", height = "1000px")
-											)
-										)
-									)
+									rv_training_results$shap_plots$waterfall
 								})
 
 								## Force plots
 								output$model_training_caret_test_metrics_shap_values_force = renderPlot({
-									shap_plots$force
+									rv_training_results$shap_plots$force
 								})
 
-								output$model_training_caret_test_metrics_shap_values_force_ui = renderUI({
-									req(!is.null(shap_plots$force))
-									p(
-										hr()
-										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_force"), ":</b> <br/>"))
-										, fluidRow(
-											column(width=12
-												, plotOutput("model_training_caret_test_metrics_shap_values_force", height = "1000px")
-											)
-										)
-									)
-								})
 								
 							} else {
 								rv_training_results$test_metrics_objs_shap = NULL		
@@ -482,6 +451,8 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_force_ui = NULL
+								
+								output$model_training_caret_train_metrics_shap_values = NULL
 							}
 						} else {
 							rv_training_results$test_metrics_objs_filtered = NULL
@@ -503,6 +474,8 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_force_ui = NULL
+						
+							output$model_training_caret_train_metrics_shap_values = NULL
 						}
 					})
 
@@ -542,6 +515,8 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_force_ui = NULL
+					
+					output$model_training_caret_train_metrics_shap_values = NULL
 				}
 			} else {
 				output$model_training_caret_train_metrics_plot = NULL
@@ -579,6 +554,8 @@ model_training_caret_train_metrics_server = function() {
 				output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_force_ui = NULL
+				
+				output$model_training_caret_train_metrics_shap_values = NULL
 			}
 		} else {
 			output$model_training_caret_train_metrics_plot = NULL
@@ -616,6 +593,7 @@ model_training_caret_train_metrics_server = function() {
 			output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_force_ui = NULL
+			output$model_training_caret_train_metrics_shap_values = NULL
 		}
 
 	})
@@ -724,16 +702,10 @@ model_training_caret_train_metrics_server = function() {
 											  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_all_filtered_ui")),
 											  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_roc_filtered_ui"))
 											)
-#											, uiOutput("model_training_caret_test_metrics_plot_all_filtered_ui")
-#											, uiOutput("model_training_caret_test_metrics_plot_roc_filtered_ui")
 											, uiOutput("model_training_caret_test_metrics_shap_values_varimp_ui")
 											, uiOutput("model_training_caret_test_metrics_shap_values_varfreq_ui")
 											, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
 											, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_beeswarm_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_waterfall_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_force_ui")
-
 										)
 									)
 								)
@@ -746,7 +718,39 @@ model_training_caret_train_metrics_server = function() {
 			}
 		}
 	})
+	
+	
+	output$model_training_caret_train_metrics_shap_values = renderUI({
+		req(!is.null(rv_current$working_df))
+		req(!is.null(rv_ml_ai$preprocessed))
+		req(!is.null(rv_training_results$shap_plots))
+		p(
 
+			hr()
+			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_beeswarm"), ":</b> <br/>"))
+			, fluidRow(
+				column(width=12
+					, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px")
+				)
+			)
+			
+			, hr()
+			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_waterfall"), ":</b> <br/>"))
+			, fluidRow(
+				column(width=12
+					, plotOutput("model_training_caret_test_metrics_shap_values_waterfall", height = "1000px")
+				)
+			)
 
+			, hr()
+			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_force"), ":</b> <br/>"))
+			, fluidRow(
+				column(width=12
+					, plotOutput("model_training_caret_test_metrics_shap_values_force", height = "1000px")
+				)
+			)
+		)
+		
+	})
 	 
 }
