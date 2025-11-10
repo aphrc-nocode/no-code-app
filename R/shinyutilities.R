@@ -171,7 +171,7 @@ create_form_prototype = function(prototype) {
     if (type=="numeric") {
       numericInput(var, paste0("Enter ", var), value=f)
     } else if (any(type %in% c("logical", "character", "factor"))) {
-      selectInput(var, paste0("Select ", var), choices = f)
+      selectInput(var, paste0("Select ", var), choices = as.character(f))
     } else {
       textInput(var, paste0("Enter ", var), placeholder = f)
     }
@@ -181,12 +181,12 @@ create_form_prototype = function(prototype) {
 
 # ---- Progress bars ----------------------------------
 
-start_progress_bar = function(att_new_obj, text="Running ...") {
+start_progress_bar = function(id="progress-bar", att_new_obj, text="Running ...") {
 	showModal(
 		modalDialog(
 		  size = "s",
 		  attendantBar(
-			 "progress-bar",
+			 id,
 			 class = "top-progress",
 			 text = text,
 			 striped = TRUE,

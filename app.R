@@ -1,1 +1,0 @@
-auth0::shinyAppAuth0(ui, server)
