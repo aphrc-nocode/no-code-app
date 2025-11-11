@@ -15,7 +15,7 @@ source("server/deploy_model_server.R")
 
 function(input, output, session){
   showPageSpinner(
-    size = 1.2, 
+    size = 0.6, 
     type = 3, 
     color = "#28a745", 
     color.background = "#FFF", 
