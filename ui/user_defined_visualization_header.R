@@ -1,4 +1,3 @@
-
 #This Function only returns non numeric dataframe
 non_numric_df <- function(df){
   final_df <- df[,sapply(df, FUN =  function(x){is.character(x)||is.factor(x)||is.logical(x)||is.Date(x)})]
@@ -49,21 +48,21 @@ user_row_var = renderUI({
 })
 
 usr_create_cross_tab = renderUI({
-      actionBttn(
-        inputId = "btnCreatetable", 
-        label = get_rv_labels("usr_create_cross_tab"), 
-        size = "md",
-        inline = TRUE,
-        block = FALSE,
-        color = "success"
-      
+  actionBttn(
+    inputId = "btnCreatetable", 
+    label = get_rv_labels("usr_create_cross_tab"), 
+    size = "md",
+    inline = TRUE,
+    block = FALSE,
+    color = "success"
+    
   )
 })
 
 user_download_table = renderUI({
-      downloadBttn("btnDownloadTable", get_rv_labels("user_download_table")
-                   , block = FALSE , size = "md"
-                   , color = "success" )
+  downloadBttn("btnDownloadTable", get_rv_labels("user_download_table")
+               , block = FALSE , size = "md"
+               , color = "success" )
 })
 
 user_table_options =renderUI({
@@ -87,13 +86,13 @@ user_report_numeric <- renderUI({
 
 user_numeric_summary <- renderUI({
   radioButtons(
-  "chkNumericSummary",
-  label = paste0(get_rv_labels("user_numeric_summary"), ":"),
-  choices = c("sd", "min-max"),
-  selected = "sd",
-  inline = FALSE ,
-  width = "100%",
-)})
+    "chkNumericSummary",
+    label = paste0(get_rv_labels("user_numeric_summary"), ":"),
+    choices = c("sd", "min-max"),
+    selected = "sd",
+    inline = FALSE ,
+    width = "100%",
+  )})
 
 user_add_p_value <- renderUI({radioButtons(
   "rdoAddTabPValue",
@@ -125,7 +124,7 @@ user_table_caption <- renderUI({
 
 user_plot_options =renderUI({
   h3(get_rv_labels("user_plot_options"))
-  })
+})
 
 user_select_variable_on_x_axis =renderUI({
   selectInput("cboXVar", paste0(
@@ -151,13 +150,13 @@ user_y_axis_label =renderUI({
 })
 
 user_create =renderUI({
-      actionBttn(
-        inputId = "btnchartOut", 
-        label = get_rv_labels("user_create"), 
-        size = "md",
-        inline = TRUE,
-        block = FALSE,
-        color = "success"
+  actionBttn(
+    inputId = "btnchartOut", 
+    label = get_rv_labels("user_create"), 
+    size = "md",
+    inline = TRUE,
+    block = FALSE,
+    color = "success"
   )
 })
 
@@ -175,19 +174,19 @@ user_more_plot_options =renderUI({
 
 user_transform_to_doughnut =renderUI({
   radioButtons(
-  "rdoTransformToDoug",
-  label = get_rv_labels("user_transform_to_doughnut"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = TRUE,
-  inline = TRUE
-)
-  })
+    "rdoTransformToDoug",
+    label = get_rv_labels("user_transform_to_doughnut"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = TRUE,
+    inline = TRUE
+  )
+})
 
 user_select_color_variable =renderUI({
   selectInput("cboColorVar", 
-    paste0(
-      get_rv_labels("user_select_color_variable"),
-  ":"), "", selected = NULL)
+              paste0(
+                get_rv_labels("user_select_color_variable"),
+                ":"), "", selected = NULL)
 })
 user_select_group_variable =renderUI({
   selectInput("cboFacetVar",  paste0(
@@ -197,138 +196,138 @@ user_select_group_variable =renderUI({
 
 user_visual_orientation =renderUI({
   radioButtons(
-  "rdoPltOrientation",
-  label = get_rv_labels("user_visual_orientation"),
-  choices = c("Vertical" = TRUE, "Horizontal" = FALSE),
-  selected = TRUE,
-  inline = FALSE
-)
+    "rdoPltOrientation",
+    label = get_rv_labels("user_visual_orientation"),
+    choices = c("Vertical" = TRUE, "Horizontal" = FALSE),
+    selected = TRUE,
+    inline = FALSE
+  )
 })
 
 user_bar_width =renderUI({
   numericInput(
-  inputId = "numBarWidth",
-  label = get_rv_labels("user_bar_width"),
-  value = 0.6
-)})
+    inputId = "numBarWidth",
+    label = get_rv_labels("user_bar_width"),
+    value = 0.6
+  )})
 
 user_bin_width =renderUI({
   numericInput(
-  inputId = "numBinWidth",
-  label = get_rv_labels("user_bin_width"),
-  value = 10
-)})
+    inputId = "numBinWidth",
+    label = get_rv_labels("user_bin_width"),
+    value = 10
+  )})
 
 user_line_size = renderUI({
   numericInput(
-  inputId = "numLineSize",
-  label = get_rv_labels("user_line_size"),
-  value = 1
-)
+    inputId = "numLineSize",
+    label = get_rv_labels("user_line_size"),
+    value = 1
+  )
 })
 
 user_select_line_type =renderUI({
   selectInput(
-  "cboLineType",
-  paste0(
-    get_rv_labels("user_select_line_type")
-    ,
-  ":"),
-  choices =
-    c(
-      "blank",
-      "solid",
-      "dashed",
-      "dotted",
-      "dotdash",
-      "longdash",
-      "twodash",
-      "1F",
-      "F1",
-      "4C88C488",
-      "12345678"
-    ),
-  selected = "solid"
-)
+    "cboLineType",
+    paste0(
+      get_rv_labels("user_select_line_type")
+      ,
+      ":"),
+    choices =
+      c(
+        "blank",
+        "solid",
+        "dashed",
+        "dotted",
+        "dotdash",
+        "longdash",
+        "twodash",
+        "1F",
+        "F1",
+        "4C88C488",
+        "12345678"
+      ),
+    selected = "solid"
+  )
 })
 
 user_add_shapes =renderUI({
   radioButtons(
-  "rdoAddShapes",
-  label = get_rv_labels("user_add_shapes"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = TRUE,
-  inline = TRUE
-)})
+    "rdoAddShapes",
+    label = get_rv_labels("user_add_shapes"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = TRUE,
+    inline = TRUE
+  )})
 
 user_select_shape =renderUI({
   selectInput(
-  "cboShapes",
-  paste0(
-    get_rv_labels("user_select_shape")
+    "cboShapes",
+    paste0(
+      get_rv_labels("user_select_shape")
+      ,
+      ":")
     ,
-    ":")
-  ,
-  choices =
-    c(
-      "square" = 0,
-      "circle" = 1,
-      "triangle point up" = 2,
-      "plus" = 3,
-      "cross" = 4,
-      "diamond" = 5,
-      "triangle point down" = 6,
-      "square cross" = 7,
-      "star" = 8,
-      "diamond plus" = 9,
-      "circle plus" = 10,
-      "triangles up and down" = 11,
-      "square plus" = 12,
-      "circle cross" = 13,
-      "square and triangle down" = 14,
-      "filled square" = 15,
-      "filled circle" = 16,
-      "filled triangle point-up" = 17,
-      "filled diamond" = 18,
-      "solid circle" = 19,
-      "bullet (smaller circle)" = 20,
-      "filled circle blue" = 21,
-      "filled square blue" = 22,
-      "filled diamond blue" = 23,
-      "filled triangle point-up blue" = 24,
-      "filled triangle point down blue" = 25
-    ),
-  selected = 1
-)
+    choices =
+      c(
+        "square" = 0,
+        "circle" = 1,
+        "triangle point up" = 2,
+        "plus" = 3,
+        "cross" = 4,
+        "diamond" = 5,
+        "triangle point down" = 6,
+        "square cross" = 7,
+        "star" = 8,
+        "diamond plus" = 9,
+        "circle plus" = 10,
+        "triangles up and down" = 11,
+        "square plus" = 12,
+        "circle cross" = 13,
+        "square and triangle down" = 14,
+        "filled square" = 15,
+        "filled circle" = 16,
+        "filled triangle point-up" = 17,
+        "filled diamond" = 18,
+        "solid circle" = 19,
+        "bullet (smaller circle)" = 20,
+        "filled circle blue" = 21,
+        "filled square blue" = 22,
+        "filled diamond blue" = 23,
+        "filled triangle point-up blue" = 24,
+        "filled triangle point down blue" = 25
+      ),
+    selected = 1
+  )
 })
 
 user_add_smooth = renderUI({
   selectInput(
-  "cboAddSmooth",
-  paste0(
-    get_rv_labels("user_add_smooth")
-    ,
-    ":"),
-  choices =
-    c("none"="none", "auto"= "loess", "lm"="lm", "glm"="glm", "loess" = "loess", "gam"="gam", "rlm" = "rlm"),
-  selected = "auto"
-)})
+    "cboAddSmooth",
+    paste0(
+      get_rv_labels("user_add_smooth")
+      ,
+      ":"),
+    choices =
+      c("none"="none", "auto"= "loess", "lm"="lm", "glm"="glm", "loess" = "loess", "gam"="gam", "rlm" = "rlm"),
+    selected = "auto"
+  )})
 
 user_display_confidence_interval =renderUI({
   radioButtons(
-  "rdoDisplaySeVal",
-  label = get_rv_labels("user_display_confidence_interval"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = TRUE,
-  inline = FALSE
-)})
+    "rdoDisplaySeVal",
+    label = get_rv_labels("user_display_confidence_interval"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = TRUE,
+    inline = FALSE
+  )})
 
 user_level_of_confidence_interval=renderUI({
   numericInput(
-  inputId = "numConfInt",
-  label = get_rv_labels("user_level_of_confidence_interval"),
-  value = 0.95
-)})
+    inputId = "numConfInt",
+    label = get_rv_labels("user_level_of_confidence_interval"),
+    value = 0.95
+  )})
 
 user_tab_more_out=renderUI({
   switchInput(
@@ -355,100 +354,100 @@ user_graph_more_out=renderUI({
 
 user_select_line_join =renderUI({
   selectInput(
-  "cboLineJoin",
-  paste0(
-    get_rv_labels("user_select_line_join")
-    ,
-    ":"),
-  choices =
-    c("round", "mitre", "bevel"),
-  selected = "round"
-)})
+    "cboLineJoin",
+    paste0(
+      get_rv_labels("user_select_line_join")
+      ,
+      ":"),
+    choices =
+      c("round", "mitre", "bevel"),
+    selected = "round"
+  )})
 
 user_add_line_type =renderUI({
   radioButtons(
-  "rdoAddLineType",
-  label = get_rv_labels("user_add_line_type"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = FALSE,
-  inline = TRUE
-)
+    "rdoAddLineType",
+    label = get_rv_labels("user_add_line_type"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = FALSE,
+    inline = TRUE
+  )
 })
 
 user_add_points =renderUI({
   radioButtons(
-  "rdoAddPoints",
-  label = get_rv_labels("user_add_points"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = FALSE,
-  inline = TRUE
-)
+    "rdoAddPoints",
+    label = get_rv_labels("user_add_points"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = FALSE,
+    inline = TRUE
+  )
 })
 
 user_y_variable_summary_type =renderUI({
   radioButtons(
-  "rdoSummaryTye",
-  label = get_rv_labels("user_y_variable_summary_type"),
-  choices = c("Total" = "Total", "Average" = "Average"),
-  selected = "Total",
-  inline = TRUE
-)
-  })
+    "rdoSummaryTye",
+    label = get_rv_labels("user_y_variable_summary_type"),
+    choices = c("Total" = "Total", "Average" = "Average"),
+    selected = "Total",
+    inline = TRUE
+  )
+})
 
 user_title_position =renderUI({
   numericInput(
-  inputId= "numplotposition",
-  label = get_rv_labels("user_title_position"),
-  value = 0.5
-)
+    inputId= "numplotposition",
+    label = get_rv_labels("user_title_position"),
+    value = 0.5
+  )
 })
 
 user_size_of_plot_title =renderUI({
   numericInput(
-  inputId = "numplottitlesize",
-  label =  get_rv_labels("user_size_of_plot_title"),
-  value = 24
-)
+    inputId = "numplottitlesize",
+    label =  get_rv_labels("user_size_of_plot_title"),
+    value = 24
+  )
 })
 
 user_axis_title_size = renderUI({
   numericInput(
-  inputId = "numaxisTitleSize",
-  label = get_rv_labels("user_axis_title_size"),
-  value = 20
-)
+    inputId = "numaxisTitleSize",
+    label = get_rv_labels("user_axis_title_size"),
+    value = 20
+  )
 })
 
 user_facet_title_size =renderUI({
   numericInput(
-  inputId = "numfacettitlesize",
-  label = get_rv_labels("user_facet_title_size"),
-  value = 20
-)
+    inputId = "numfacettitlesize",
+    label = get_rv_labels("user_facet_title_size"),
+    value = 20
+  )
 })
 
 user_axis_text_size =renderUI({
   numericInput(
-  inputId = "numAxistextSize",
-  label = get_rv_labels("user_axis_text_size"),
-  value = 18
-)
+    inputId = "numAxistextSize",
+    label = get_rv_labels("user_axis_text_size"),
+    value = 18
+  )
 })
 
 user_data_label_size =renderUI({
   numericInput(
-  inputId = "numDataLabelSize",
-  label = get_rv_labels("user_data_label_size"),
-  value = 6
-)
+    inputId = "numDataLabelSize",
+    label = get_rv_labels("user_data_label_size"),
+    value = 6
+  )
 })
 
 user_x_axis_text_angle =renderUI({
   numericInput(
-  inputId = "xaxistextangle",
-  label = get_rv_labels("user_x_axis_text_angle"),
-  value = 0
-)
+    inputId = "xaxistextangle",
+    label = get_rv_labels("user_x_axis_text_angle"),
+    value = 0
+  )
 })
 
 user_legend_title =renderUI({
@@ -459,36 +458,36 @@ user_legend_title =renderUI({
 
 user_stacked =renderUI({
   radioButtons(
-  "rdoStacked",
-  label = get_rv_labels("user_stacked"),
-  choices = c("Yes" = TRUE, "No" = FALSE),
-  selected = TRUE,
-  inline = TRUE
-)
+    "rdoStacked",
+    label = get_rv_labels("user_stacked"),
+    choices = c("Yes" = TRUE, "No" = FALSE),
+    selected = TRUE,
+    inline = TRUE
+  )
 })
 
 user_add_density =renderUI({
   prettySwitch(
-  "rdoOverlayDensity",
-  label = get_rv_labels("user_add_density"),
-  value = FALSE
-)
+    "rdoOverlayDensity",
+    label = get_rv_labels("user_add_density"),
+    value = FALSE
+  )
 })
 
 user_remove_histogram =renderUI({
   prettySwitch(
-  "rdoDensityOnly",
-  label = get_rv_labels("user_remove_histogram"),
-  value = FALSE
-)})
+    "rdoDensityOnly",
+    label = get_rv_labels("user_remove_histogram"),
+    value = FALSE
+  )})
 
 
 user_select_color_variable_single =renderUI({
   selectInput(
-  "cboColorSingle",
-  get_rv_labels("color_single"),
-  choices = colors(),
-  selected = "blue")
+    "cboColorSingle",
+    get_rv_labels("color_single"),
+    choices = colors(),
+    selected = "blue")
 })
 
 user_select_color_parlet =renderUI({
@@ -536,101 +535,101 @@ user_select_color_parlet =renderUI({
     selected = "Dark2"
   )
 })
+
+user_select_color_parlet_corrplot =renderUI({
+  selectInput(
+    "cboColorBrewerCorrplot",
+    paste0(get_rv_labels("user_select_color_parlet"), ":"),
+    choices =
+      c(
+        "Accent",
+        "Dark2",
+        "Paired",
+        "Pastel1",
+        "Pastel2",
+        "Set1",
+        "Set2",
+        "Set3",
+        "BrBG",
+        "PiYG",
+        "PRGn",
+        "PuOr",
+        "RdBu",
+        "RdGy",
+        "RdYlBu",
+        "RdYlGn",
+        "Spectral",
+        "Blues",
+        "BuGn",
+        "BuPu",
+        "GnBu",
+        "Greens",
+        "Greys",
+        "Oranges",
+        "OrRd",
+        "PuBu",
+        "PuBuGn",
+        "PuRd",
+        "Purples",
+        "RdPu",
+        "Reds",
+        "YlGn",
+        "YlGnBu",
+        "YlOrBr",
+        "YlOrRd"
+      ),
+    selected = "Dark2"
+  )
   
-  user_select_color_parlet_corrplot =renderUI({
-    selectInput(
-      "cboColorBrewerCorrplot",
-      paste0(get_rv_labels("user_select_color_parlet"), ":"),
-      choices =
-        c(
-          "Accent",
-          "Dark2",
-          "Paired",
-          "Pastel1",
-          "Pastel2",
-          "Set1",
-          "Set2",
-          "Set3",
-          "BrBG",
-          "PiYG",
-          "PRGn",
-          "PuOr",
-          "RdBu",
-          "RdGy",
-          "RdYlBu",
-          "RdYlGn",
-          "Spectral",
-          "Blues",
-          "BuGn",
-          "BuPu",
-          "GnBu",
-          "Greens",
-          "Greys",
-          "Oranges",
-          "OrRd",
-          "PuBu",
-          "PuBuGn",
-          "PuRd",
-          "Purples",
-          "RdPu",
-          "Reds",
-          "YlGn",
-          "YlGnBu",
-          "YlOrBr",
-          "YlOrRd"
-        ),
-      selected = "Dark2"
-    )
-    
-  })
-    
-    
-    user_select_color_parlet_bivariate =renderUI({
-      selectInput(
-        "cboColorBrewerBivariate",
-        paste0(get_rv_labels("user_select_color_parlet"), ":"),
-        choices =
-          c(
-            "Accent",
-            "Dark2",
-            "Paired",
-            "Pastel1",
-            "Pastel2",
-            "Set1",
-            "Set2",
-            "Set3",
-            "BrBG",
-            "PiYG",
-            "PRGn",
-            "PuOr",
-            "RdBu",
-            "RdGy",
-            "RdYlBu",
-            "RdYlGn",
-            "Spectral",
-            "Blues",
-            "BuGn",
-            "BuPu",
-            "GnBu",
-            "Greens",
-            "Greys",
-            "Oranges",
-            "OrRd",
-            "PuBu",
-            "PuBuGn",
-            "PuRd",
-            "Purples",
-            "RdPu",
-            "Reds",
-            "YlGn",
-            "YlGnBu",
-            "YlOrBr",
-            "YlOrRd"
-          ),
-        selected = "Dark2"
-      )
 })
-    
+
+
+user_select_color_parlet_bivariate =renderUI({
+  selectInput(
+    "cboColorBrewerBivariate",
+    paste0(get_rv_labels("user_select_color_parlet"), ":"),
+    choices =
+      c(
+        "Accent",
+        "Dark2",
+        "Paired",
+        "Pastel1",
+        "Pastel2",
+        "Set1",
+        "Set2",
+        "Set3",
+        "BrBG",
+        "PiYG",
+        "PRGn",
+        "PuOr",
+        "RdBu",
+        "RdGy",
+        "RdYlBu",
+        "RdYlGn",
+        "Spectral",
+        "Blues",
+        "BuGn",
+        "BuPu",
+        "GnBu",
+        "Greens",
+        "Greys",
+        "Oranges",
+        "OrRd",
+        "PuBu",
+        "PuBuGn",
+        "PuRd",
+        "Purples",
+        "RdPu",
+        "Reds",
+        "YlGn",
+        "YlGnBu",
+        "YlOrBr",
+        "YlOrRd"
+      ),
+    selected = "Dark2"
+  )
+})
+
 user_select_bivariate_single_color =renderUI({
   selectInput("cboBivariateColor", paste0(
     get_rv_labels("bivariate_single_color")
@@ -689,11 +688,3 @@ user_generatebivriate = renderUI({
              color = "success"
   )
 })
-
-
-    
-
-
-
-
-    
