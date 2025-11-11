@@ -206,7 +206,7 @@ feature_extraction_pipeline <- function() {
         refresh_uploaded_data()
       }
       
-      shinyalert("", "✅ Feature-extracted dataset saved and added to uploads!", type = "success")
+      shinyalert::shinyalert("", "✅ Feature-extracted dataset saved and added to uploads!", type = "success")
       
     }, error = function(e) {
       showNotification(paste("\u274c Error during extraction:", e$message), type = "error")

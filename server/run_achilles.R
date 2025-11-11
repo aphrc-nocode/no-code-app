@@ -63,7 +63,7 @@ achilles_integration_server <- function() {
         
       }, error = function(e) {
         achilles_conn$is_connected <- FALSE
-        shinyalert("Connection Error", 
+        shinyalert::shinyalert("Connection Error", 
                    paste("Failed to use connection:", e$message), 
                    type = "error")
       })
@@ -122,11 +122,11 @@ achilles_integration_server <- function() {
       )
       
       removeModal()
-      shinyalert("Success", "Achilles analysis completed!", type = "success")
+      shinyalert::shinyalert("Success", "Achilles analysis completed!", type = "success")
       
     }, error = function(e) {
       removeModal()
-      shinyalert("Error", paste("Achilles failed:", e$message), type = "error")
+      shinyalert::shinyalert("Error", paste("Achilles failed:", e$message), type = "error")
     })
   })
 }

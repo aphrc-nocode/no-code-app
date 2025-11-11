@@ -56,7 +56,7 @@ omopVizServer <- function() {
             })
         
       }, error = function(e) {
-        shinyalert("Connection Error", e$message, type = "error")
+        shinyalert::shinyalert("Connection Error", e$message, type = "error")
       })
     }
   })
@@ -131,7 +131,7 @@ omopVizServer <- function() {
         dplyr::pull(Table)
 
     }, error = function(e) {
-      shinyalert("Record Count Error", e$message, type = "error")
+      shinyalert::shinyalert("Record Count Error", e$message, type = "error")
     })
   })
 
@@ -152,7 +152,7 @@ omopVizServer <- function() {
       })
 
     }, error = function(e) {
-      shinyalert("Table Load Error", e$message, type = "error")
+      shinyalert::shinyalert("Table Load Error", e$message, type = "error")
     })
   })
 

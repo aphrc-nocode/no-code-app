@@ -348,7 +348,7 @@ model_training_caret_train_metrics_server = function() {
 										, total_n_rank=50
 									)
 								}, error = function(e) {
-									shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
 									close_progress_bar(att_new_obj=model_metrics_caret_pb)
 									return(NULL)
 								})
@@ -359,7 +359,7 @@ model_training_caret_train_metrics_server = function() {
 								rv_training_results$shap_plots = tryCatch({
 									plot(rv_training_results$test_metrics_objs_shap)
 								}, error=function(e){
-									shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
 									close_progress_bar(att_new_obj=model_metrics_caret_pb)
 									return(NULL)
 								})
