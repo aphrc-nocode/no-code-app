@@ -54,8 +54,24 @@ combine_data_list_datasets = function() {
 	
 	observeEvent(input$combine_data_apply, {
 		if (isTRUE(!is.null(input$combine_data_list_datasets))) {
-			file_path = get_data_class(paste0("datasets/", input$combine_data_list_datasets))
-			combine_df = upload_data(file_path)
+			file_path = tryCatch({
+				get_data_class(paste0("datasets/", input$combine_data_list_datasets))
+			}, error=function(e) {
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+				return(NULL)
+			})
+						
+			if (is.null(file_path)) return()
+
+			combine_df = tryCatch({
+				upload_data(file_path)
+			}, error=function(e) {
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+				return(NULL)
+			})
+						
+			if (is.null(combine_df)) return()
+			
 			if (any(class(file_path) %in% c("spss", "dta"))) {
 				combine_df = (combine_df
 					|> as_factor()
@@ -285,9 +301,16 @@ combine_data_perform_variable_match = function() {
 
 	observeEvent(input$combine_data_manual_match_apply, {
 		
-		rv_current$combine_df = (rv_current$combine_df 
-			|> Rautoml::rename_vars(input$combine_data_new_vars, input$combine_data_base_vars)
-		)
+		rv_current$combine_df = tryCatch({
+			(rv_current$combine_df 
+				|> Rautoml::rename_vars(input$combine_data_new_vars, input$combine_data_base_vars)
+			)
+		}, error=function(e) {
+			shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+			return(NULL)
+		})
+					
+		if (is.null(rv_current$combine_df)) return()
 		
 		rv_current$combine_data_matched_vars = c(rv_current$combine_data_matched_vars, input$combine_data_base_vars) 
 		
@@ -377,11 +400,19 @@ combine_data_perform_merging = function() {
 	observeEvent(input$combine_data_perform_merging_apply, {
 		if (isTRUE(length(input$combine_data_type_choices)>0)) {
 			if (isTRUE(any(input$combine_data_type_choices %in% c("row", "column")))) {
-				temp_out = Rautoml::combine_data(rv_current$working_df
-					, rv_current$combine_df
-					, type = input$combine_data_type_choices
-					, id = input$combine_data_create_id_var_input
-				)
+				temp_out = tryCatch({
+					Rautoml::combine_data(rv_current$working_df
+						, rv_current$combine_df
+						, type = input$combine_data_type_choices
+						, id = input$combine_data_create_id_var_input
+					)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(temp_out)) return()
+
 				rv_current$working_df = temp_out$df
 				rv_current$selected_vars = colnames(rv_current$working_df)
 

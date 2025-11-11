@@ -34,7 +34,15 @@ model_training_caret_train_metrics_server = function() {
 					
 					if (isTRUE(!is.null(rv_training_results$test_metrics_objs))) {
 						## Test data
-						test_plots = plot(rv_training_results$test_metrics_objs)
+						test_plots = tryCatch({
+							plot(rv_training_results$test_metrics_objs)
+						}, error = function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+					
+						if (is.null(test_plots)) return()
+
 						output$model_training_caret_test_metrics_plot_specifics = renderPlot({
 							test_plots$specifics
 						})

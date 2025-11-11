@@ -366,7 +366,7 @@ setup_models_ui = function() {
 observeEvent(input$modelling_framework_choices, {
 	  req(input$modelling_framework_choices)
 	  rv_ml_ai$modelling_framework <- input$modelling_framework_choices
-	  message("Modelling framework sélectionné : ", rv_ml_ai$modelling_framework)
+#	  message("Modelling framework sélectionné : ", rv_ml_ai$modelling_framework)
 	})
 	
 

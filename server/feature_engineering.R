@@ -288,42 +288,66 @@ feature_engineering_impute_missing_server = function() {
 	observeEvent(input$feature_engineering_apply, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
-				partition_objs = Rautoml::train_test_split(
-					data=rv_current$working_df
-					, type = input$feature_engineering_perform_partition
-					, prop=rv_ml_ai$partition_ratio
-				)
+				partition_objs = tryCatch({
+					Rautoml::train_test_split(
+						data=rv_current$working_df
+						, type = input$feature_engineering_perform_partition
+						, prop=rv_ml_ai$partition_ratio
+					)
+				}, error = function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_partition_error"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+
+				if (is.null(partition_objs)) return()
+				
 				rv_ml_ai$split = partition_objs$split
 				rv_ml_ai$train_df = partition_objs$train_df
 				rv_ml_ai$test_df = partition_objs$test_df
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
-					rv_ml_ai$preprocessed = Rautoml::preprocess(
-						df = rv_ml_ai$train_df
-						, model_form = rv_ml_ai$model_formula
-						, outcome_var = rv_ml_ai$outcome
-						, corr = input$feature_engineering_perform_corr_steps_value
-						, impute = input$feature_engineering_perform_missing_impute_check
-						, impute_methods=input$feature_engineering_impute_missing_impute
-						, perform_fe = input$feature_engineering_perform_fe_steps_check
-						, perform_pca = input$feature_engineering_perform_pca_steps_check
-						, up_sample = input$feature_engineering_perform_upsample_steps_check
-						, up_sample_type = input$feature_engineering_perform_upsample_steps_choices
-						, task = rv_ml_ai$task
-						, df_test = rv_ml_ai$test_df
-					)
+					rv_ml_ai$preprocessed = tryCatch({
+						Rautoml::preprocess(
+							df = rv_ml_ai$train_df
+							, model_form = rv_ml_ai$model_formula
+							, outcome_var = rv_ml_ai$outcome
+							, corr = input$feature_engineering_perform_corr_steps_value
+							, impute = input$feature_engineering_perform_missing_impute_check
+							, impute_methods=input$feature_engineering_impute_missing_impute
+							, perform_fe = input$feature_engineering_perform_fe_steps_check
+							, perform_pca = input$feature_engineering_perform_pca_steps_check
+							, up_sample = input$feature_engineering_perform_upsample_steps_check
+							, up_sample_type = input$feature_engineering_perform_upsample_steps_choices
+							, task = rv_ml_ai$task
+							, df_test = rv_ml_ai$test_df
+						)
+					}, error = function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_preprocess_check_error"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+				
+					if (is.null(rv_ml_ai$preprocessed)) return()
+
 				} else {
-					rv_ml_ai$preprocessed = Rautoml::preprocess(
-						df = rv_ml_ai$train_df
-						, model_form = rv_ml_ai$model_formula
-						, outcome_var = rv_ml_ai$outcome
-						, corr = 0 
-						, impute = FALSE 
-						, perform_fe = FALSE 
-						, perform_pca = FALSE 
-						, up_sample = FALSE
-						, task = rv_ml_ai$task
-						, df_test = rv_ml_ai$test_df
-					)
+					rv_ml_ai$preprocessed = tryCatch({
+						Rautoml::preprocess(
+							df = rv_ml_ai$train_df
+							, model_form = rv_ml_ai$model_formula
+							, outcome_var = rv_ml_ai$outcome
+							, corr = 0 
+							, impute = FALSE 
+							, perform_fe = FALSE 
+							, perform_pca = FALSE 
+							, up_sample = FALSE
+							, task = rv_ml_ai$task
+							, df_test = rv_ml_ai$test_df
+						)
+					}, error = function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_preprocess_check_error"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+				
+					if (is.null(rv_ml_ai$preprocessed)) return()
+
 				} 
 				rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
 				output$feature_engineering_preprocessed_log_ui = renderUI({

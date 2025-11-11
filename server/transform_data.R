@@ -217,9 +217,17 @@ transform_data_rename_variables_server = function() {
 			output$transform_data_renamed_variable_log = renderPrint({
 				cat(rv_current$renamed_variable_log, sep="\n")
 			})
-			rv_current$working_df = (rv_current$working_df
-				|> Rautoml::rename_vars(input$transform_data_select_vars, input$transform_data_rename_variable_input)
-			)
+			rv_current$working_df = tryCatch({
+				(rv_current$working_df
+					|> Rautoml::rename_vars(input$transform_data_select_vars, input$transform_data_rename_variable_input)
+				)
+			}, error=function(e) {
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("transform_data_rename_variable_input_error"), "\n", e$message), type = "error")
+				return(NULL)
+			})
+
+			if (is.null(rv_current$working_df)) return()
+
 			rv_current$data = rv_current$working_df
 			rv_current$selected_var = input$transform_data_rename_variable_input
 			rv_current$selected_vars = colnames(rv_current$working_df)
@@ -292,15 +300,23 @@ transform_data_quick_explore_recode_server = function() {
 			output$transform_data_recoded_variable_labels_log = renderPrint({
 				cat(rv_current$recoded_variable_labels_log, sep="\n")
 			})
-			rv_current$working_df = (rv_current$working_df
-				|> mutate_at(rv_current$selected_var, function(x){
-					x = recode_value_labels(x
-						, old = input$transform_data_recode_variable_choices
-						, new = input$transform_data_recode_variable_input
-					)
-				})
-			)
-			rv_current$data = rv_current$working_df
+			rv_current$working_df = tryCatch({
+				(rv_current$working_df
+					|> mutate_at(rv_current$selected_var, function(x){
+						x = recode_value_labels(x
+							, old = input$transform_data_recode_variable_choices
+							, new = input$transform_data_recode_variable_input
+						)
+					})
+				)
+			}, error=function(e) {
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("transform_data_recode_variable_input_error"), "\n", e$message), type = "error")
+				return(NULL)
+			})
+
+			if (is.null(rv_current$working_df)) return()
+			
+			rv_currenr$data = rv_current$working_df
 			updateCheckboxInput(session = session, "transform_data_recode_variable_check", value = FALSE)
 			updateTextAreaInput(session=session, "transform_data_recode_variable_input", value=NULL)
 		}
@@ -489,19 +505,35 @@ transform_data_create_missing_values_server = function() {
 				if (isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
 					if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
 						current_var = rv_current$selected_var
-						rv_current$working_df = na_if_pattern(rv_current$working_df
-							, rv_current$selected_var
-							, pattern = input$transform_data_create_missing_values_input
-							, replacement = NA_character_
-						)
+						rv_current$working_df = tryCatch({
+							na_if_pattern(rv_current$working_df
+								, rv_current$selected_var
+								, pattern = input$transform_data_create_missing_values_input
+								, replacement = NA_character_
+							)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+
+						if (is.null(rv_current$working_df)) return()
+
 						recode_result = input$transform_data_create_missing_values_input
 					} else {
-						rv_current$working_df = na_if_pattern(rv_current$working_df
-							, rv_current$selected_var
-							, pattern = input$transform_data_create_missing_values_input
-							, replacement = NA_character_
-							, apply_all = TRUE
-						)
+						rv_current$working_df = tryCatch({
+							na_if_pattern(rv_current$working_df
+								, rv_current$selected_var
+								, pattern = input$transform_data_create_missing_values_input
+								, replacement = NA_character_
+								, apply_all = TRUE
+							)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+						
+						if (is.null(rv_current$working_df)) return()
+						
 						recode_result = input$transform_data_create_missing_values_input
 						current_var = colnames(rv_current$working_df)
 					}
@@ -510,18 +542,34 @@ transform_data_create_missing_values_server = function() {
 				if (isTRUE(!is.null(input$transform_data_create_missing_values_input))) {
 					if (isTRUE(input$transform_data_create_missing_values_choices=="For this variable")) {
 						current_var = rv_current$selected_var
-						rv_current$working_df = na_if_category_single(rv_current$working_df
-							, rv_current$selected_var
-							, input$transform_data_create_missing_values_input
-							, range = input$transform_data_create_missing_values_input_range
-						)
+						rv_current$working_df = tryCatch({
+							na_if_category_single(rv_current$working_df
+								, rv_current$selected_var
+								, input$transform_data_create_missing_values_input
+								, range = input$transform_data_create_missing_values_input_range
+							)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+						
+						if (is.null(rv_current$working_df)) return()
+						
 						recode_result = input$transform_data_create_missing_values_input
 					} else {
-						rv_current$working_df = na_if_category_multiple(rv_current$working_df
-							, numeric_labels = input$transform_data_create_missing_values_input_numeric
-							, categorical_labels = input$transform_data_create_missing_values_input
-							, range = isTRUE(input$transform_data_create_missing_values_input_range)
-						)
+						rv_current$working_df = tryCatch({
+							na_if_category_multiple(rv_current$working_df
+								, numeric_labels = input$transform_data_create_missing_values_input_numeric
+								, categorical_labels = input$transform_data_create_missing_values_input
+								, range = isTRUE(input$transform_data_create_missing_values_input_range)
+							)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+						
+						if (is.null(rv_current$working_df)) return()
+						
 						recode_result = paste0(input$transform_data_create_missing_values_input, "; ", input$transform_data_create_missing_values_input_numeric)
 						current_var = colnames(rv_current$working_df)
 					}
@@ -689,32 +737,56 @@ transform_data_identify_outliers_server = function() {
 
 	observeEvent(input$transform_data_apply, {
 		if (isTRUE(input$transform_data_handle_outliers_choices=="drop")) {
-			rv_current$working_df = (rv_current$working_df
-				|> handle_outliers(var=rv_current$selected_var
-					, outliers = rv_current$outlier_values
-					, action = input$transform_data_handle_outliers_choices
+			rv_current$working_df = tryCatch({
+				(rv_current$working_df
+					|> handle_outliers(var=rv_current$selected_var
+						, outliers = rv_current$outlier_values
+						, action = input$transform_data_handle_outliers_choices
+					)
 				)
-			)
+			}, error=function(e) {
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+				return(NULL)
+			})
+						
+			if (is.null(rv_current$working_df)) return()
+
 			outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_choices)
 		} else if (isTRUE(input$transform_data_handle_outliers_choices=="correct")) {
 			if (isTRUE(any(input$transform_data_handle_outliers_correct_options %in% c("mean", "median")))) {
-				rv_current$working_df = handle_outliers(rv_current$working_df
-					, var=rv_current$selected_var
-					, outliers = rv_current$outlier_values
-					, action = input$transform_data_handle_outliers_choices
-					, new_values = NULL
-					, fun = input$transform_data_handle_outliers_correct_options
-				)
-				outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_correct_options)
-			} else if (isTRUE(input$transform_data_handle_outliers_correct_options=="input value")) {
-				if (isTRUE(!is.null(input$transform_data_handle_outliers_correct_options_input))) {
-					rv_current$working_df = handle_outliers(rv_current$working_df
+				rv_current$working_df = tryCatch({
+					handle_outliers(rv_current$working_df
 						, var=rv_current$selected_var
 						, outliers = rv_current$outlier_values
 						, action = input$transform_data_handle_outliers_choices
-						, new_values = input$transform_data_handle_outliers_correct_options_input
-						, fun = NULL 
+						, new_values = NULL
+						, fun = input$transform_data_handle_outliers_correct_options
 					)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$working_df)) return()
+
+				outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_correct_options)
+			} else if (isTRUE(input$transform_data_handle_outliers_correct_options=="input value")) {
+				if (isTRUE(!is.null(input$transform_data_handle_outliers_correct_options_input))) {
+					rv_current$working_df = tryCatch({
+						handle_outliers(rv_current$working_df
+							, var=rv_current$selected_var
+							, outliers = rv_current$outlier_values
+							, action = input$transform_data_handle_outliers_choices
+							, new_values = input$transform_data_handle_outliers_correct_options_input
+							, fun = NULL 
+						)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+							
+					if (is.null(rv_current$working_df)) return()
+
 					outliers_result = paste0(rv_current$outlier_values, " ----> ", input$transform_data_handle_outliers_correct_options_input)
 				}
 			}
@@ -758,16 +830,32 @@ transform_data_handle_missing_values_server = function() {
 		if (isTRUE(!is.null(rv_current$selected_var)) & (isTRUE(!is.null(rv_current$working_df)))) {
 			
 			if (!isTRUE(input$explore_data_missingness_check)) {
-				rv_current$missing_prop = missing_prop(rv_current$working_df)
+				rv_current$missing_prop = tryCatch({
+					missing_prop(rv_current$working_df)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$missing_prop)) return()
+
 			}
 			
 			if (NROW(rv_current$missing_prop)) {
-				rv_current$missing_prop_df = (rv_current$missing_prop
-					|> filter_missing_values_df(column="missing"
-						, var_column="variable"
-						, var=rv_current$selected_var
+				rv_current$missing_prop_df = tryCatch({
+					(rv_current$missing_prop
+						|> filter_missing_values_df(column="missing"
+							, var_column="variable"
+							, var=rv_current$selected_var
+						)
 					)
-				)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$missing_prop_df)) return()
+
 			}
 		}
 	})
@@ -897,34 +985,58 @@ transform_data_handle_missing_values_server = function() {
 			
 				current_var = rv_current$selected_var
 				if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_category)) & isTRUE(input$transform_data_handle_missing_values_new_category!="") & (isTRUE(any(rv_current$vartype %in% recode_var_types)))) {
-					rv_current$working_df = (rv_current$working_df
-						|> Rautoml::na_to_values(var=rv_current$selected_var
-							, na_pattern = input$transform_data_handle_missing_values_options
-							, new_category = input$transform_data_handle_missing_values_new_category
-							, apply_all = FALSE
+					rv_current$working_df = tryCatch({
+						(rv_current$working_df
+							|> Rautoml::na_to_values(var=rv_current$selected_var
+								, na_pattern = input$transform_data_handle_missing_values_options
+								, new_category = input$transform_data_handle_missing_values_new_category
+								, apply_all = FALSE
+							)
 						)
-					)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+								
+					if (is.null(rv_current$working_df)) return()
+
 					recode_result = input$transform_data_handle_missing_values_new_category
 				} else if (isTRUE(!is.null(input$transform_data_handle_missing_values_new_numeric)) & isTRUE(input$transform_data_handle_missing_values_new_numeric!="") & (isTRUE(rv_current$vartype=="numeric"))) {
-					rv_current$working_df = (rv_current$working_df
-						|> Rautoml::na_to_values(var=rv_current$selected_var
-							, na_pattern = input$transform_data_handle_missing_values_options
-							, new_category = input$transform_data_handle_missing_values_new_numeric
-							, apply_all = FALSE
+					rv_current$working_df = tryCatch({
+						(rv_current$working_df
+							|> Rautoml::na_to_values(var=rv_current$selected_var
+								, na_pattern = input$transform_data_handle_missing_values_options
+								, new_category = input$transform_data_handle_missing_values_new_numeric
+								, apply_all = FALSE
+							)
 						)
-					)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+								
+					if (is.null(rv_current$working_df)) return()
+
 				recode_result = input$transform_data_handle_missing_values_new_numeric
 				}
 				
 			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Create new category (for all)")) {
-				rv_current$working_df = (rv_current$working_df
-					|> Rautoml::na_to_values(var=rv_current$selected_var
-						, na_pattern = input$transform_data_handle_missing_values_options
-						, new_category = input$transform_data_handle_missing_values_new_category
-						, new_numeric = input$transform_data_handle_missing_values_new_numeric
-						, apply_all = TRUE
+				rv_current$working_df = tryCatch({
+					(rv_current$working_df
+						|> Rautoml::na_to_values(var=rv_current$selected_var
+							, na_pattern = input$transform_data_handle_missing_values_options
+							, new_category = input$transform_data_handle_missing_values_new_category
+							, new_numeric = input$transform_data_handle_missing_values_new_numeric
+							, apply_all = TRUE
+						)
 					)
-				)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$working_df)) return()
+
 				recode_result = paste0("categorical: ", input$transform_data_handle_missing_values_new_category, "; ", "numeric: ", input$transform_data_handle_missing_values_new_numeric)
 				current_var = colnames(rv_current$working_df)
 			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Drop missing (for all)")) {
@@ -934,9 +1046,17 @@ transform_data_handle_missing_values_server = function() {
 				current_var = colnames(rv_current$working_df)
 				recode_result = input$transform_data_handle_missing_values_choices 
 			} else if (isTRUE(input$transform_data_handle_missing_values_choices=="Drop missing (for this)")) {
-				rv_current$working_df = (rv_current$working_df
-					|> Rautoml::drop_missing_values(rv_current$selected_var)
-				)
+				rv_current$working_df = tryCatch({
+					(rv_current$working_df
+						|> Rautoml::drop_missing_values(rv_current$selected_var)
+					)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$working_df)) return()
+
 				current_var = rv_current$selected_var 
 				recode_result = input$transform_data_handle_missing_values_choices 
 			}
@@ -1001,7 +1121,16 @@ transform_data_quick_explore_plot_server = function() {
 				output$transform_data_quick_explore_out = renderPrint({
 				 print(rv_current$transform_data_quick_explore_out)
 				})
-				rv_current$transform_data_quick_plot_out = ggunivariate(rv_current$transform_data_plot_df, rv_current$vartype)
+
+				rv_current$transform_data_quick_plot_out = tryCatch({
+					ggunivariate(rv_current$transform_data_plot_df, rv_current$vartype)
+				}, error=function(e) {
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+							
+				if (is.null(rv_current$transform_data_quick_plot_out)) return()
+
 				output$transform_data_quick_plot_out = renderPlotly({
 				 rv_current$transform_data_quick_plot_out
 				})
