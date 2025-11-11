@@ -31,7 +31,7 @@ database_integration_server <- function(){
         
         rv_database$conn <- conn
         
-        shinyalert("", get_rv_labels("db_connect_success"), type = "success")
+        shinyalert::shinyalert("", get_rv_labels("db_connect_success"), type = "success")
         query_schemas <-"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema') AND schema_name NOT LIKE 'pg_%' "
         schemas <- DatabaseConnector::querySql(conn, query_schemas)$SCHEMA_NAME
         schema_list <- schemas
@@ -39,7 +39,7 @@ database_integration_server <- function(){
         updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       }, 
       error = function(e){
-        shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
+        shinyalert::shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
         
       })
       
@@ -55,7 +55,7 @@ database_integration_server <- function(){
                           password = database_pass)
         
         rv_database$conn <- conn
-        shinyalert("", get_rv_labels("db_connect_success"), type = "success")
+        shinyalert::shinyalert("", get_rv_labels("db_connect_success"), type = "success")
         
         tables <- dbListTables(conn)
         rv_database$table_list <- tables
@@ -64,7 +64,7 @@ database_integration_server <- function(){
                           selected = tables[1])
         
       }, error = function(e) {
-        shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
+        shinyalert::shinyalert("", get_rv_labels("db_connect_failure"), type = "error")
       })
     } # U3 end
     
@@ -172,7 +172,7 @@ database_integration_server <- function(){
   
   observeEvent(input$db_run_query, {
     if (is.null(rv_database$conn)) {
-      shinyalert(
+      shinyalert::shinyalert(
         title = "",
         text = get_rv_labels("db_query_failure"),
         type = "error"
@@ -198,7 +198,7 @@ database_integration_server <- function(){
     })
     
     if(is.null(result)){
-      shinyalert(
+      shinyalert::shinyalert(
         title = "",
         text = get_rv_labels("db_sql_syntax"),
         type = "error"

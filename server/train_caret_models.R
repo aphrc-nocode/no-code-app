@@ -397,7 +397,7 @@ model_training_caret_train_all_server = function() {
 							, metric=input$model_training_setup_eval_metric
 						)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
 						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
@@ -416,7 +416,7 @@ model_training_caret_train_all_server = function() {
 								, metric=input$model_training_setup_eval_metric
 							)
 						}, error = function(e) {
-							shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
 							close_progress_bar(att_new_obj=model_training_caret_pb)
 							return(NULL)
 						})
@@ -428,7 +428,7 @@ model_training_caret_train_all_server = function() {
 					rv_training_results$train_metrics_df=tryCatch({
 						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
@@ -452,7 +452,7 @@ model_training_caret_train_all_server = function() {
 							, preprocesses = rv_ml_ai$preprocessed
 						)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
@@ -480,7 +480,7 @@ model_training_caret_train_all_server = function() {
 							, task=rv_ml_ai$task
 						)
 					}, error = function(e) {
-						shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})

@@ -181,7 +181,7 @@ deploy_trained_caret_models = function() {
 				}
 				do.call("rbind", deployed_df)
 			}, error = function(e) {
-				shinyalert("Error: ", paste0(get_rv_labels("deploy_models_caret_error"), "\n", e$message), type = "error")
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("deploy_models_caret_error"), "\n", e$message), type = "error")
 				close_progress_bar(att_new_obj=deploy_models_caret_pb)
 				return(NULL)
 			})

@@ -78,7 +78,7 @@ generate_research_questions_api_token = function() {
 	observe({
 		if (isTRUE(input$generate_research_questions_choices=="yes")) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
-			 	shinyalert("", get_rv_labels("api_stored_ok"), type = "success", inputId="api_stored_ok")
+			 	shinyalert::shinyalert("", get_rv_labels("api_stored_ok"), type = "success", inputId="api_stored_ok")
 				output$generate_research_questions_api_token = NULL
 			} else {
 				output$generate_research_questions_api_token = renderUI({
@@ -117,7 +117,7 @@ generate_research_questions_api_store = function() {
 		if (!isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 			if (isTRUE(input$generate_research_questions_api_token != "")) {
 				Rautoml::set_api("GEMINE_API_KEY", input$generate_research_questions_api_token)
-			 	shinyalert("", get_rv_labels("api_stored_success"), type = "success", inputId="api_stored_success")
+			 	shinyalert::shinyalert("", get_rv_labels("api_stored_success"), type = "success", inputId="api_stored_success")
 			}
 		}
 	})

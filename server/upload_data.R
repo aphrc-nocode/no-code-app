@@ -21,7 +21,7 @@ upload_data_server = function(){
 	     df = data.frame(rv_database$df_table_str)
 	     if(length(rv_database$df_table_str > 0)){
 	       write_data(file_path, df)
-	     }else{shinyalert("", "Table save failed.", type = "info")}
+	     }else{shinyalert::shinyalert("", "Table save failed.", type = "info")}
 	     
 	   }else{
 	     req(rv_database$df_table)
@@ -41,11 +41,11 @@ upload_data_server = function(){
 	 supported_files_temp = gsub("\\.", "", supported_files)
 	 
 	 if (input$upload_type=="URL" & tolower(file_ext) == "xls") {
-		shinyalert("", get_rv_labels("xls_error_msg"), type = "error", inputId="upload_error")
+		shinyalert::shinyalert("", get_rv_labels("xls_error_msg"), type = "error", inputId="upload_error")
 		reset("upload_form")
 	 } else {
 		if (any(!tolower(file_ext) %in% supported_files_temp)) {
-		  shinyalert("", get_rv_labels("supported_files_msg"), type = "error", inputId="upload_error")
+		  shinyalert::shinyalert("", get_rv_labels("supported_files_msg"), type = "error", inputId="upload_error")
 		  if (input$upload_type=="Local") {
 			 file.remove(input$files_with_ext$datapath)
 		  }
@@ -72,7 +72,7 @@ upload_data_server = function(){
 			 if (file.exists(file_path)) {
 				file.remove(file_path)
 			 }
-			 shinyalert("", get_rv_labels("uploaded_data_error_msg"), type = "error", inputId="data_error")
+			 shinyalert::shinyalert("", get_rv_labels("uploaded_data_error_msg"), type = "error", inputId="data_error")
 		  } else {
 			 
 			 if (input$upload_type=="URL") {
@@ -92,7 +92,7 @@ upload_data_server = function(){
 	 
 			 log_file_main = paste0(".log_files/", temp_name, "-upload.main.log")
 			 write.csv(meta_data, log_file_main, row.names = FALSE)
-			 shinyalert("", get_rv_labels("data_upload_successful_msg"), type = "success", inputId="upload_ok")
+			 shinyalert::shinyalert("", get_rv_labels("data_upload_successful_msg"), type = "success", inputId="upload_ok")
 		  }
 		}
 		reset("upload_form")

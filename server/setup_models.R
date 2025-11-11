@@ -286,14 +286,14 @@ setup_models_ui = function() {
 			} else if (isTRUE(any(rv_ml_ai$outcome %in% rv_current$vartype_all$numeric))) {
 				outcome_nlevels = Rautoml::get_nlevels(rv_current$working_df, rv_ml_ai$outcome)
 				if (isTRUE(outcome_nlevels<2)) {
-					shinyalert("Error: ", get_rv_labels("outcome_variable_level_error"), type = "error")
+					shinyalert::shinyalert("Error: ", get_rv_labels("outcome_variable_level_error"), type = "error")
 					return()
 				} else if (isTRUE(outcome_nlevels==2)) {
 					df_temp = rv_current$working_df
 					df_temp[[rv_ml_ai$outcome]] = Rautoml::numeric_factor(df_temp[[rv_ml_ai$outcome]])
 					rv_current$working_df = df_temp
 					rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_classification")
-					shinyalert("Info: ", get_rv_labels("outcome_variable_level_change_info"), type = "info")
+					shinyalert::shinyalert("Info: ", get_rv_labels("outcome_variable_level_change_info"), type = "info")
 				} else {
 					rv_ml_ai$task = get_named_choices(input_choices_file, input$change_language,"setup_models_analysis_type_supervised_regression")
 				}

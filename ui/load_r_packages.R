@@ -1,5 +1,6 @@
 libraries <- c(
-   "remotes"
+   "waiter"
+   , "remotes"
    , "gsheet"
    , "shiny"
    , "shinyjs"
@@ -75,7 +76,6 @@ libraries <- c(
    , "scales"
    , "themis"
    , "vetiver"
-   , "waiter"
 )
 
 # Install missing CRAN packages

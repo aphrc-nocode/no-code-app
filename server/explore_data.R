@@ -230,7 +230,7 @@ explore_data_current_filter_server = function() {
 		working_df = try(filter_data(rv_current$working_df, input$explore_data_filter_rules), silent = TRUE)
 		if (!is.data.frame(working_df) | is.null(working_df) | any(class(working_df) %in% "try-error") | !NROW(working_df)) {
 			rv_current$working_df = rv_current$working_df
-			shinyalert("", paste0(get_rv_labels("filter_data_error"), " <br><b>", input$explore_data_filter_rules, "</b></br>"), html=TRUE, type = "error", inputId="filter_data_error")
+			shinyalert::shinyalert("", paste0(get_rv_labels("filter_data_error"), " <br><b>", input$explore_data_filter_rules, "</b></br>"), html=TRUE, type = "error", inputId="filter_data_error")
 		} else {
 			rv_current$working_df = working_df
 			rv_current$current_filter = c(rv_current$current_filter, input$explore_data_filter_rules)
@@ -414,6 +414,6 @@ explore_data_update_data_server = function() {
 		write.table(rv_metadata$upload_logs, file=".log_files/.automl-shiny-upload.main.log", row.names = FALSE)
 		updateSelectInput(session=session, "manage_data_select_vars", choices=colnames(rv_current$data))
 		rv_current$current_filter_reset = TRUE
-		shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")
+		shinyalert::shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")
 	})
 }

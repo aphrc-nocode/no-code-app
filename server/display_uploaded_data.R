@@ -17,7 +17,7 @@ display_uploaded_data_server = function() {
 	 } else {
 		output$upload_info = NULL
 		output$upload_logs = NULL
-		shinyalert("", get_rv_labels("no_data_error_msg"), type = "error", inputId="non_data_ok")
+		shinyalert::shinyalert("", get_rv_labels("no_data_error_msg"), type = "error", inputId="non_data_ok")
 	 }
 	})
 }

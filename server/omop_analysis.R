@@ -1,7 +1,4 @@
 ### OMOP analysis - DQD ACHILLES CohortConstructor
-library(DataQualityDashboard)
-library(callr)
-
 omop_analysis_server <- function(){
   
   observe({
@@ -131,7 +128,7 @@ omop_analysis_server <- function(){
     
   },
   error = function(e){
-    shinyalert("", "Error running DQD", type = "error")
+    shinyalert::shinyalert("", "Error running DQD", type = "error")
   })
 
   

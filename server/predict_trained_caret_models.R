@@ -54,7 +54,7 @@ predict_trained_caret_models = function() {
 					, endpoint = "metadata"
 				)
 			}, error=function(e){
-				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_prediction_type_choices_error"), "\n", e$message), type = "error")
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_prediction_type_choices_error"), "\n", e$message), type = "error")
 				close_progress_bar(att_new_obj=predict_endpoint_models_caret_pb)
 				return(NULL)
 			})
@@ -111,7 +111,7 @@ predict_trained_caret_models = function() {
 				prediction_df = Rautoml::upload_data(df_path)
 				Rautoml::check_columns(rv_deploy_models$endpoint_objects$template, prediction_df)
 			}, error = function(e) {
-				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_upload_data_apply_error"), "\n", e$message), type = "error")
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_upload_data_apply_error"), "\n", e$message), type = "error")
 				return(list(check = FALSE, df = NULL))
 		 	})
 			rv_deploy_models$prediction_df = preds_obs$df
@@ -225,7 +225,7 @@ predict_trained_caret_models = function() {
 					, update_skip=FALSE
 				)	
 			}, error = function(e) {
-				shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_predict_apply_error"), "\n", e$message), type = "error")
+				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("predict_trained_caret_models_predict_apply_error"), "\n", e$message), type = "error")
 				close_progress_bar(att_new_obj=predict_models_caret_pb)
 				return(NULL)
 			})
