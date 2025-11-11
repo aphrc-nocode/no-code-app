@@ -1,4 +1,5 @@
 user_auth <- function(input, output, session) {
+  
   USER <- login::login_server(
     id = app_login_config$APP_ID,
     db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users.sqlite'),

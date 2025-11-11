@@ -38,34 +38,9 @@ aphrcSiderbar <- dashboardSidebar(
   
 )
 
-thick_circle_svg <- '
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <circle 
-    cx="50" cy="50" r="40"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="10"  <!-- thickness here -->
-    stroke-linecap="round"
-  />
-</svg>'
-
 #Body
 fluidPage(
   useShinyjs(),
-  
-  useWaiter(),
-  useHostess(),
- 
-  waiterShowOnLoad(
-    color = "#f7fff7",
-    hostess_loader(
-      "loader", 
-      preset = "circle", 
-      text_color = "#00BFC4",
-      class = "label-center",
-      center_page = TRUE
-    )
-  ),
   
   login::is_logged_in(
     id = app_login_config$APP_ID, header),
@@ -99,9 +74,16 @@ fluidPage(
             login::reset_password_ui(id = app_login_config$APP_ID)
         ))),
   
-  login::is_logged_in(
-    id = app_login_config$APP_ID, dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody,skin = "green")),
+
+    login::is_logged_in(
+      id = app_login_config$APP_ID,
+      div(dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody, skin = "green"))
+    ),
+
+
+    login::is_logged_in(
+      id = app_login_config$APP_ID,
+      div(footer)
+    )
   
-  login::is_logged_in(
-    id = app_login_config$APP_ID, footer)
 )
