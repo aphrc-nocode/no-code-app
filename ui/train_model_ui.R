@@ -15,19 +15,15 @@ train_model_ui <- function(id) {
         # Filter Top-N (for TRAIN & TEST)
         sliderInput(ns("top_n"), "Show top N models:", min = 1, max = 50, value = 10, step = 1),
         DT::dataTableOutput(ns("leaderboard_train_table")),
-
         br(),
         h4("Test performance"),
         DT::dataTableOutput(ns("test_leaderboard_table")),
-
         br(),
         h4("Select a model for detailed evaluation"),
         uiOutput(ns("model_selector")),
-
         br(),
         h4("Metrics (Test set)"),
         uiOutput(ns("metrics_table")),
-
         br(),
         h4("Evaluation plots"),
         tabsetPanel(
@@ -39,7 +35,6 @@ train_model_ui <- function(id) {
         )
       )
     ),
-
     # === Waiting screen until PyCaret/AutoML is ready ===
     conditionalPanel(
       condition = sprintf("output['%s'] != true", ns("train_ready")),

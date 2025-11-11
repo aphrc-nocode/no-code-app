@@ -11,7 +11,8 @@ validate_deploy_model_ui = function() {
 ## 		conditionalPanel(
 ## 			condition = "input.modelling_framework_choices == 'Pycaret'",
 			column(width=12,
-				deployment_ui("deploy")
+				#deployment_ui("deploy")
+        uiOutput("deploy_container")
 			)
 ## 		)
 	  )

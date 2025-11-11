@@ -24,7 +24,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
     }
     # When working dataset changed initialize the process
     observeEvent(rv_current$working_df, {
-      print("New dataset loaded : Reset PyCaret pipeline")
+      #print("New dataset loaded : Reset PyCaret pipeline")
       reset_pycaret_state()
     })
     
@@ -38,14 +38,23 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       
       tmpfile <- tempfile(fileext = ".csv")
       write.csv(rv_current$working_df, tmpfile, row.names = FALSE)
-      
+      dataset_id <- rv_current$dataset_id
+      #req(!is.null(dataset_id) && nzchar(dataset_id))
+      req(is.character(dataset_id) && nzchar(dataset_id))
+
+      session_name <- rv_ml_ai$session_name %||% paste0("session_", (rv_ml_ai$seed_value %||% 123))
+
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/evaluate_model",
+        #url = "http://127.0.0.1:8000/evaluate_model",
+        url = paste0(api_base, "/evaluate_model"),
         body = list(
-          file = upload_file(tmpfile),
-          target = rv_ml_ai$outcome,
-          model_name = model_code,
-          session_id = rv_ml_ai$seed_value
+        file        = upload_file(tmpfile),
+        target      = rv_ml_ai$outcome,
+        model_name  = model_code,
+        session_id  = rv_ml_ai$seed_value,
+        #session_name = session_name,
+        session_name = rv_ml_ai$session_id,        
+        dataset_id   = dataset_id
         ),
         encode = "multipart"
       )
@@ -185,7 +194,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
         
         if (tolower(rv_ml_ai$task) %in% c("classification", "regression") && !is.null(result_json$leaderboard)) {
           df <- as.data.frame(result_json$leaderboard)
-          print("▶️ Leaderboard of models :")
+          print("▶Leaderboard of models :")
           print(head(df))
           
           automl_results(df)
@@ -207,12 +216,15 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
           write.csv(rv_current$working_df, tmpfile_eval, row.names = FALSE)
           
           res_eval <- httr::POST(
-            url = "http://127.0.0.1:8000/evaluate_model",
+            url = paste0(api_base, "/evaluate_model"),
             body = list(
               file = upload_file(tmpfile_eval),
               target = rv_ml_ai$outcome,
               model_name = best_model,
-              session_id = rv_ml_ai$seed_value
+              session_id = rv_ml_ai$seed_value,
+              #session_name = session_name,
+              session_name = rv_ml_ai$session_id,
+              dataset_id   = dataset_id
             ),
             encode = "multipart"
           )
@@ -306,7 +318,6 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       }
     })
     # U4 end
-    # U5 start
     # U5 start
     output$model_plots <- renderUI({
       req(evaluation_raw_data())
@@ -452,7 +463,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       write.csv(rv_current$working_df, tmpfile, row.names = FALSE)
       
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/automl",  # ou un autre endpoint si tu veux faire un /deploy spécifique
+        url = "http://127.0.0.1:8000/automl",
         body = list(
           file = upload_file(tmpfile),
           target = input$target
@@ -462,7 +473,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       showNotification("Model successfully deployed !", type = "message")
     })
     
-    actionButton(ns("predict_with_deployed"), "Prédire via modèle déployé")
+    actionButton(ns("predict_with_deployed"), "Predict using deployed model")
     
     observeEvent(input$predict_with_deployed, {
       req(rv_current$working_df)
