@@ -13,13 +13,26 @@ source("R/utils_api.R")
 
 source("server/deploy_model_server.R")
 
-
 function(input, output, session){
-  #Load very time app loads and sign out happens
-  hostess <- Hostess$new("loader", infinite = TRUE)
-  hostess$start()
+  showPageSpinner(
+    size = 1.2, 
+    type = 3, 
+    color = "#28a745", 
+    color.background = "#FFF", 
+    id = "loadhomepage"
+  )
   
-  # ... computation here ... # 
+  source("server/auth.R")
+  
+  user_auth(input, output, session)
+  
+  session$onFlushed(function() {
+    shinyjs::delay(400, {
+      shinyjs::show("login_form", anim = TRUE, animType = "fade", time = 0.6)
+      #howler::removeSpinner("loadhomepage") # if using waiter: waiter_hide()
+    })
+  }, once = TRUE)
+  
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
@@ -28,17 +41,9 @@ function(input, output, session){
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
-
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
-  # Hide loading overlay and show login form
- # shinyjs::hide("loading_screen")
 
-  shinyjs::show("login_form")
-  ###-------User Login--------_##
-  # Once the first UI flush happens, hide the loader.
-  source("server/auth.R")
-  user_auth(input, output, session)
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
@@ -83,6 +88,8 @@ function(input, output, session){
     ,plot_bivariate_auto=NULL
     ,plot_corr = NULL
   )
+  
+
   
   ##### --------- Meta data ---------------------------------------------
   rv_metadata = reactiveValues(
@@ -302,7 +309,6 @@ function(input, output, session){
   explore_data_server()
   explore_data_subactions_server()
   
-
   ##----User Defined Visualization section-----------------------
   source("ui/user_defined_visualization_header.R", local = TRUE)
   output$user_output_type = user_output_type
@@ -376,6 +382,7 @@ function(input, output, session){
   output$user_download_autoreport = user_download_autoreport
   output$user_generatebivriate = user_generatebivriate
 
+  
 
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
@@ -452,7 +459,7 @@ function(input, output, session){
 
   #### ---- Reset combine data --------------------------------####
   combine_data_reset()
-  
+
   ##### ---- Control Custom visualizations ------------------ #####
   source("server/user_defined_visualization.R", local = TRUE)
   user_defined_server()
@@ -596,6 +603,8 @@ function(input, output, session){
   source("server/deep_learning.R", local=TRUE)
   deep_learning()
   
+
+  
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
@@ -608,7 +617,6 @@ function(input, output, session){
   iv_url$enable()
   iv_ml$enable()
   
-  hostess$close()
-  waiter_hide()
+  hidePageSpinner()
 
 }
