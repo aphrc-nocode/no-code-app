@@ -10,5 +10,5 @@ create_dir("models")
 ### Recipes
 create_dir("recipes")
 ### Create outputs
-create_dir("output")
+create_dir("outputs")
 
