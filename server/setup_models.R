@@ -328,6 +328,8 @@ setup_models_ui = function() {
 				, "<br>"
 				, "<b>", "Excluded Predictors: ", "</b>", paste0(rv_ml_ai$excluded_predictors, collapse=", ")
 			)
+			
+			shinyalert::shinyalert("Done!", get_rv_labels("setup_models_analysis_success"), type = "success")
 
 			output$setup_models_analysis_results = renderUI({
 				p(
