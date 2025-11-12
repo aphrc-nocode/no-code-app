@@ -13,7 +13,8 @@ collapsible_panel <- function(title, ..., open = FALSE) {
 ## Source data tab
 sourcedata_ui = function() {
 	tabItem(tabName = "sourcedata",
-		  fluidRow(
+		  
+	 fluidRow(class  = "aphrc-row",
 			 column(
 				width = 3
 				#Upload data types
@@ -63,7 +64,7 @@ sourcedata_ui = function() {
 			 , br()
 			 , uiOutput("upload_info")
 			 , hr()
-			 , div(
+			 , div(id  = "aphrc-row1",
 				style = "margin-top: 10px;"
 				, DT::DTOutput("upload_logs", width = "100%")
 			 )
