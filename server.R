@@ -4,14 +4,14 @@ options(shiny.maxRequestSize=300*1024^2)
 source("R/utils_logging.R")
 
 # ----- FastAPI base URL -----
-# En local natif (FastAPI lancé sur ta machine) :
 api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
 
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")
 source("R/utils_api.R")
-
-source("server/deploy_model_server.R")
+source("server/deploy_model_server.R", local=TRUE)
+source("ui/deploy_model_ui.R", local=TRUE)
+source("server/predict_pycaret_server.R", local = TRUE)
 
 function(input, output, session){
   waiter_show(
@@ -83,7 +83,6 @@ function(input, output, session){
   )
   
 
-  
   ##### --------- Meta data ---------------------------------------------
   rv_metadata = reactiveValues(
     upload_logs = NULL
@@ -178,6 +177,82 @@ function(input, output, session){
 		, test_metrics_objs = NULL
 	)
 
+  # Update training results when a new model is trained
+  automl_controls_server(
+    id         = "automl_controls",
+    rv_current = rv_current,
+    rv_ml_ai   = rv_ml_ai,
+    api_base   = api_base
+  )
+
+  train_model_server(
+    id         = "train_model",
+    rv_current = rv_current,
+    rv_ml_ai   = rv_ml_ai,
+    api_base   = api_base
+  )
+
+  # End update training
+  # ---- (A) Detect if a complete PyCaret run is available (leaderboard displayed) ----
+  .can_show_by_train <- reactive({
+    curr_ds <- rv_current$dataset_id %||% rv_ml_ai$dataset_id
+    isTRUE(rv_ml_ai$status %in% c("Finished","Finished_NoPlots")) &&
+    !is.null(rv_ml_ai$leaderboard) && NROW(rv_ml_ai$leaderboard) > 0 &&
+    isTRUE(nzchar(rv_ml_ai$trained_dataset_id)) &&
+    identical(rv_ml_ai$trained_dataset_id, curr_ds)
+  })
+
+  observeEvent(rv_current$dataset_id, {
+  # If we change the dataset, we clean up the transient state linked to the previous train.
+  if (!identical(rv_current$dataset_id, rv_ml_ai$trained_dataset_id)) {
+    rv_ml_ai$leaderboard <- NULL
+    rv_ml_ai$leaderboard_full <- NULL
+    rv_ml_ai$test_leaderboard <- NULL
+    rv_ml_ai$test_leaderboard_full <- NULL
+    rv_ml_ai$models <- NULL
+    rv_ml_ai$eval_metrics <- NULL
+    rv_ml_ai$eval_plots <- NULL
+    rv_ml_ai$status <- NULL
+  }
+}, ignoreInit = FALSE)
+
+
+
+# ---- (B) Datasets with pre-trained models (historical) ----
+  .get_models_index_csv <- function() file.path(getwd(), "logs", "models", "index.csv")
+  dataset_has_history <- reactive({
+    idx <- .get_models_index_csv()
+    if (!file.exists(idx)) return(FALSE)
+    df <- tryCatch(read.csv(idx, stringsAsFactors = FALSE), error = function(e) NULL)
+    if (is.null(df) || !"dataset_id" %in% names(df)) return(FALSE)
+    ds <- rv_ml_ai$dataset_id %||% rv_current$dataset_id
+    if (is.null(ds) || !nzchar(ds)) return(FALSE)
+    any(df$dataset_id == ds & (df$framework %in% c("PyCaret","pycaret","Pycaret")))
+  })
+
+  # Expose known datasets for the Deploy module (used in its selector)
+  observe({
+    idx <- .get_models_index_csv()
+    if (!file.exists(idx)) return(invisible(NULL))
+    df <- tryCatch(read.csv(idx, stringsAsFactors = FALSE), error = function(e) NULL)
+    if (is.null(df) || !"dataset_id" %in% names(df)) return(invisible(NULL))
+    rv_current$known_datasets <- sort(unique(df$dataset_id))
+  })
+  .can_show_deploy <- reactive({
+    isTRUE(.can_show_by_train()) || isTRUE(dataset_has_history())
+  })
+  # (keep this if you still use it on the JS side)
+  output$can_show_deploy <- reactive({ .can_show_deploy() })
+  outputOptions(output, "can_show_deploy", suspendWhenHidden = FALSE)
+
+  # ---- Deploy tab UI container ----
+  output$deploy_container <- renderUI({
+    if (!isTRUE(.can_show_deploy())) return(NULL)  # => onglet totalement vide
+    column(width = 12, deployment_ui("deploy"))
+  })
+
+  outputOptions(output, "can_show_deploy", suspendWhenHidden = FALSE)
+  ## Deployed models table
 	rv_deploy_models = reactiveValues(
 		trained_models_table = NULL
 	)
@@ -576,10 +651,14 @@ function(input, output, session){
 
   #### ---- PyCaret Integration (API) ----------------------------------------------------
 
-  source("server/deploy_model_server.R", local=TRUE)
-  source("ui/deploy_model_ui.R", local=TRUE)
-  deployment_server("deploy_model_module", rv_automl)
+  # New ADD
+  rv_ml_ai   <- rv_ml_ai   %||% reactiveValues(target = NULL, outcome = NULL)
+  rv_current <- rv_current %||% reactiveValues(target = NULL)
 
+  deployment_server(id="deploy",rv_ml_ai=rv_ml_ai,rv_current = rv_current,api_base=api_base)
+  predict_pycaret_server("predict_pycaret", api_base , rv_current, rv_ml_ai)
+
+  # END NEW ADD
   #### ---- Call current dataset for FastAPI ---------------------------------------------------  
   source("server/automl_server.R", local=TRUE)
   automl_server("automl_module", rv_current, rv_ml_ai)
@@ -598,22 +677,18 @@ function(input, output, session){
     }
   })
   
-  # Deployment
-  output$deploy_model_module_ui <- renderUI({
-    deploy_model_ui("deploy_model_module")
-  }) 
-  
+  observeEvent(input$modelling_framework_choices, {
+    rv_ml_ai$framework <- tolower(input$modelling_framework_choices %||% "")
+  }, ignoreInit = FALSE)
   
   #### ---- Deep Learning Server ----- ###
   source("server/deep_learning.R", local=TRUE)
   deep_learning()
   
-
-  
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
-  
+
   ##### ---- Reset on delete or language change ------------------- ####
   reset_data_server()
 

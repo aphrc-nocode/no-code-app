@@ -2,6 +2,13 @@
 
 display_selected_metadata_server = function() {
   observeEvent(input$manage_data_apply, {
+    .slugify <- function(s) {
+        s <- tolower(trimws(ifelse(is.null(s) || !length(s), "", s)))
+        s <- gsub("[^a-z0-9\\-]+", "_", s)
+        s <- gsub("_+", "_", s)
+        s <- gsub("^_|_$", "", s)
+        s
+      }
   	 rv_current$dataset_id = input$dataset_id
     metadata = rv_metadata$upload_logs[rv_metadata$upload_logs$file_name==rv_current$dataset_id, ,drop=FALSE]
     rv_current$metadata_id = list(study_name = paste0("<b>", get_rv_labels("study_name"),  ": </b>", metadata$study_name)

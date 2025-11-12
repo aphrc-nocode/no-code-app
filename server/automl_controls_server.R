@@ -3,6 +3,89 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
     ns <- session$ns
 
     # --- LOG HELPERS --------------------------------------------------------------
+
+    # --- Standardization of metric column names --------------------
+    # Converts session_name/seed -> stable integer for the API
+    # Converts session_name/seed -> stable integer for the API (without overflow)
+    .to_session_id_int <- function(session_name = NULL, seed_value = NULL, seed = NULL) {
+      # 1) if the user has entered an integer (or numeric string), it is respected
+      if (!is.null(session_name)) {
+        s_trim <- trimws(as.character(session_name))
+        if (grepl("^-?\\d+$", s_trim)) {
+          val <- suppressWarnings(as.numeric(s_trim))
+          if (is.finite(val)) return(as.integer(val %% 2147483647))
+        }
+      }
+      # 2) otherwise: light hash, calculated twice to avoid overflow
+      s <- as.character(session_name %||% seed_value %||% seed %||% "123")
+      bytes <- utf8ToInt(s)
+      if (!length(bytes)) return(123L)
+
+      h <- 0.0                          # <- duplicate (no overflow)
+      for (b in bytes) {
+        h <- (h * 131 + b) %% 2147483647
+      }
+      h_int <- as.integer(h)
+      if (is.na(h_int) || h_int == 0L) 123L else h_int
+    }
+
+
+    .std_metric_colnames <- function(df) {
+      if (is.null(df) || !is.data.frame(df)) return(df)
+      if (!length(names(df))) return(df)
+      nm <- names(df)
+
+      # alias table -> canonical name
+      norm_map <- c(
+        "auc"         = "AUC",
+        "roc_auc"     = "AUC",
+        "rocauc"      = "AUC",
+        "accuracy"    = "Accuracy",
+        "acc"         = "Accuracy",
+        "f1"          = "F1",
+        "f1_score"    = "F1",
+        "recall"      = "Recall",
+        "tpr"         = "Recall",
+        "sensitivity" = "Recall",
+        "prec"        = "Precision",
+        "prec."       = "Precision",
+        "precision"   = "Precision",
+        "specificity" = "Specificity",
+        "kappa"       = "Kappa",
+        "mcc"         = "MCC",
+        "r2"          = "R2",
+        "rmse"        = "RMSE",
+        "mae"         = "MAE",
+        "mape"        = "MAPE",
+        "rmsle"       = "RMSLE"
+      )
+
+      # normalization key: tolower + remove spaces/periods/underscores
+      keyize <- function(x) gsub("[\\s\\._]+", "", tolower(x))
+
+      keys <- keyize(nm)
+      for (i in seq_along(nm)) {
+        k <- keys[i]
+        if (k %in% names(norm_map)) nm[i] <- norm_map[[k]]
+      }
+      names(df) <- nm
+      df
+    }
+
+    # Select the first available metric from a list of options
+    .first_present_numeric <- function(df, candidates) {
+      for (m in candidates) {
+        if (m %in% names(df)) {
+          v <- suppressWarnings(as.numeric(df[[m]]))
+          if (any(is.finite(v))) return(m)
+        }
+      }
+       # fallback: first numeric column
+      num_cols <- names(df)[vapply(df, is.numeric, logical(1))]
+      if (length(num_cols)) return(num_cols[1])
+      NA_character_
+    }
+
         # --- Standardization of data frames for metrics ----------------------------
     .clean_colnames <- function(df) {
       if (is.null(df) || !is.data.frame(df)) return(df)
@@ -75,61 +158,77 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
       df[, nn, drop = FALSE]
     }
 
-    # --- UTILITAIRES DE MESURE ------------------------------------------------------------
+      # --- MEASURING TOOLS ------------------------------------------------------------
     .pick_primary_metric <- function(lb, task = "classification") {
       if (is.null(lb) || !NROW(lb)) return(list(name = NA_character_, value = NA_real_))
-      cand_cls <- c("AUC","Accuracy","F1","Recall","Prec.","Precision","Specificity","Kappa","MCC")
+
+      # standardize column names
+      lb <- .std_metric_colnames(lb)
+
+      cand_cls <- c("AUC","Accuracy","F1","Recall","Precision","Specificity","Kappa","MCC")
       cand_reg <- c("R2","RMSE","MAE","MAPE","RMSLE")
       cols <- if (tolower(task) %in% c("regression")) cand_reg else cand_cls
-      for (m in cols) {
-        v <- .col1(lb, m)
-        if (!is.null(v)) return(list(name = m, value = suppressWarnings(as.numeric(v[1]))))
-      }
-      num_cols <- names(lb)[vapply(lb, is.numeric, logical(1))]
-      if (length(num_cols)) {
-        v <- .col1(lb, num_cols[1])
-        return(list(name = num_cols[1], value = suppressWarnings(as.numeric(v[1]))))
-      }
-      list(name = NA_character_, value = NA_real_)
+
+      m <- .first_present_numeric(lb, cols)
+      if (is.na(m)) return(list(name = NA_character_, value = NA_real_))
+
+      v <- suppressWarnings(as.numeric(lb[[m]][1]))
+      list(name = m, value = v)
     }
+
 
     .metric_candidates <- function(df, task = "classification") {
       if (is.null(df) || !NROW(df)) return(character(0))
-      cand_cls <- c("AUC","Accuracy","F1","Recall","Prec.","Precision","Specificity","Kappa","MCC")
+      df <- .std_metric_colnames(df)
+
+      cand_cls <- c("AUC","Accuracy","F1","Recall","Precision","Specificity","Kappa","MCC")
       cand_reg <- c("R2","RMSE","MAE","MAPE","RMSLE")
-      num_cols <- names(df)[vapply(df, is.numeric, logical(1))]
+
+      # only display columns that are present and numeric
+      present_num <- names(df)[vapply(df, function(x) {
+        any(is.finite(suppressWarnings(as.numeric(x))))
+      }, logical(1))]
+
       if (tolower(task) %in% c("regression")) {
-        inter <- intersect(cand_reg, num_cols)
+        inter <- intersect(cand_reg, present_num)
         if (length(inter)) return(inter)
-        return(num_cols)
+        return(present_num)
       } else {
-        inter <- intersect(cand_cls, num_cols)
+        inter <- intersect(cand_cls, present_num)
         if (length(inter)) return(inter)
-        return(num_cols)
+        return(present_num)
       }
     }
 
-    write_model_log <- function(date_trained, dataset_id, outcome, session_name, framework,
-                                model_code, metric_name, estimate_value, path_model) {
-      idx <- .models_index_csv()
-      row <- data.frame(
-        date_trained = .safe_chr1(format(as.POSIXct(date_trained), "%Y-%m-%d %H:%M:%S")),
-        dataset_id   = .safe_chr1(dataset_id),
-        outcome      = .safe_chr1(outcome),
-        session_name = .safe_chr1(session_name),
-        framework    = .safe_chr1(framework, "PyCaret"),
-        model        = .safe_chr1(model_code),
-        metric       = .safe_chr1(metric_name),
-        estimate     = suppressWarnings(as.numeric(estimate_value)),
-        path_model   = .safe_chr1(path_model),
-        stringsAsFactors = FALSE
-      )
-      if (!file.exists(idx)) {
-        utils::write.csv(row, idx, row.names = FALSE)
-      } else {
-        utils::write.table(row, idx, sep = ",", row.names = FALSE, col.names = FALSE, append = TRUE)
+      write_model_log <- function(date_trained, dataset_id, outcome,
+                                  session_name = NA_character_, session_id = NA_integer_,
+                                  framework = "PyCaret",
+                                  model_code, model_label = NA_character_,
+                                  metric_name, estimate_value, path_model = NA_character_) {
+
+        idx <- .models_index_csv()
+        row <- data.frame(
+          date_trained = .safe_chr1(format(as.POSIXct(date_trained), "%Y-%m-%d %H:%M:%S")),
+          dataset_id   = .safe_chr1(dataset_id),
+          outcome      = .safe_chr1(outcome),
+          session_name = .safe_chr1(session_name),
+          session_id   = suppressWarnings(as.integer(session_id)),
+          framework    = .safe_chr1(framework, "PyCaret"),
+          model        = .safe_chr1(tolower(gsub("\\s+", "", model_code))),  # <-- still the CODE
+          model_label  = .safe_chr1(model_label),                            # <-- separate label
+          metric       = .safe_chr1(metric_name),
+          estimate     = suppressWarnings(as.numeric(estimate_value)),
+          path_model   = .safe_chr1(path_model),
+          stringsAsFactors = FALSE
+        )
+
+        if (!file.exists(idx)) {
+          utils::write.table(row, idx, sep = ",", row.names = FALSE, col.names = TRUE,  append = FALSE, qmethod = "double", na = "")
+        } else {
+          utils::write.table(row, idx, sep = ",", row.names = FALSE, col.names = FALSE, append = TRUE,  qmethod = "double", na = "")
+        }
       }
-    }
+
 
     `%||%` <- function(a, b) if (is.null(a)) b else a
 
@@ -208,12 +307,23 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
       # --- Settings
       df            <- rv_current$working_df
       outcome       <- rv_ml_ai$outcome
-      seed          <- rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123
+
+      # Current dataset for this run
+      dataset_id <- rv_current$dataset_id
+      req(!is.null(dataset_id) && nzchar(dataset_id))
+
+      # Memorize the dataset associated with the last PyCaret run
+      rv_ml_ai$trained_dataset_id <- dataset_id
+      #seed          <- rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123
+      seed          <- suppressWarnings(as.integer(rv_ml_ai$seed_value %||% rv_ml_ai$seed))
+      #session_name <- rv_ml_ai$session_name %||% paste0("session_", seed)
+      session_name  <- rv_ml_ai$session_name %||% paste0("session_", (rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123))
+      session_id_int <- .to_session_id_int(session_name, seed_value = rv_ml_ai$seed_value, seed = rv_ml_ai$seed)
       train_ratio   <- rv_ml_ai$train_size %||% rv_ml_ai$train_ratio %||% 0.8
       task_raw      <- tolower(as.character(rv_ml_ai$task %||% rv_ml_ai$analysis_type %||% "classification"))
       analysis_type <- if (task_raw %in% c("classification","regression","supervised")) "supervised" else "unsupervised"
 
-      # CSV temp (réutilisé ensuite)
+      # Temporary CSV (reused later)
       tmpfile <- tempfile(fileext = ".csv")
       on.exit(unlink(tmpfile), add = TRUE)
       utils::write.csv(df, tmpfile, row.names = FALSE)
@@ -228,7 +338,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
             body  = list(
               file          = httr::upload_file(tmpfile),
               target        = .scalar_chr_or_null(outcome),
-              session_id    = .scalar_chr_or_null(seed),
+              #session_id    = .scalar_chr_or_null(seed),
+              session_id    = .scalar_chr_or_null(session_id_int),
               train_size    = .scalar_chr_or_null(train_ratio),
               task          = .scalar_chr_or_null(task_raw),
               analysis_type = .scalar_chr_or_null(analysis_type)
@@ -258,6 +369,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
         }
         lb <- .parse_records_df(out$leaderboard)
         lb <- .normalize_metrics_df(lb)
+        lb <- .std_metric_colnames(lb)
 
         if (is.null(lb) || !NROW(lb)) {
           rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
@@ -299,7 +411,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
             body = list(
               file       = httr::upload_file(tmpfile, type = "text/csv"),
               target     = .scalar_chr_or_null(outcome),
-              session_id = .scalar_chr_or_null(seed),
+              #session_id = .scalar_chr_or_null(seed),
+              session_id = .scalar_chr_or_null(session_id_int),
               train_size = .scalar_chr_or_null(train_ratio),
               model_ids  = jsonlite::toJSON(all_ids, auto_unbox = FALSE)
             ),
@@ -328,6 +441,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
         tbl <- out_test$test_leaderboard %||% out_test$test_performance
         df_test <- if (!is.null(tbl) && length(tbl) > 0) .parse_records_df(tbl) else NULL
         df_test <- .normalize_metrics_df(df_test)
+        df_test <- .std_metric_colnames(df_test)
 
 
         df_test <- .rename_if(df_test, "model_name", "Model")
@@ -368,6 +482,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
       task_guess <- tolower(rv_ml_ai$task %||% rv_ml_ai$analysis_type %||% "classification")
       df_metrics_src <- rv_ml_ai$test_leaderboard_full %||% rv_ml_ai$leaderboard
       df_metrics_src <- .normalize_metrics_df(df_metrics_src)
+      df_metrics_src <- .std_metric_colnames(df_metrics_src)
 
       metric_choices <- .metric_candidates(df_metrics_src, task_guess)
       default_metric <- if ("Accuracy" %in% metric_choices) "Accuracy" else {
@@ -403,13 +518,31 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
           if (!is.na(cand) && nzchar(cand)) best_model_code <- cand
         }
 
+        # dataset/session to correctly name the model on the API side
+        slugify <- function(s) {
+          s <- tolower(trimws(s %||% ""))
+          s <- gsub("[^a-z0-9\\-]+", "_", s)
+          s <- gsub("_+", "_", s)
+          s <- gsub("^_|_$", "", s)
+          s
+        }
+        dataset_id <- rv_ml_ai$trained_dataset_id %||% rv_current$dataset_id
+        req(is.character(dataset_id) && nzchar(dataset_id))
+
+        #req(!is.null(dataset_id) && nzchar(dataset_id))
+
+        session_name <- rv_ml_ai$session_name %||% paste0("session_", (rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123))
+
         plots_ok <- FALSE
         if (isTRUE(nzchar(best_model_code))) {
           body_eval <- list(
             file       = httr::upload_file(tmpfile, type = "text/csv"),
             target     = .scalar_chr_or_null(outcome),
             model_id   = .scalar_chr_or_null(best_model_code),
-            session_id = .scalar_chr_or_null(seed)
+            #session_id = .scalar_chr_or_null(seed)
+            session_id = .scalar_chr_or_null(session_id_int),
+            session_name = .scalar_chr_or_null(session_name),
+            dataset_id   = .scalar_chr_or_null(dataset_id) 
           )
           nm <- .scalar_chr_or_null(best_model_label)
           if (!is.null(nm)) body_eval$model_name <- nm
@@ -430,6 +563,13 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
             if (!is.null(out_eval)) {
               rv_ml_ai$eval_metrics <- out_eval$metrics %||% NULL
               rv_ml_ai$eval_plots   <- out_eval$plots   %||% NULL
+               # -- expose aussi un cache "prefetch" pour l'onglet Train model --
+              rv_ml_ai$prefetch <- list(
+                best_id = best_model_code,
+                metrics = out_eval$metrics,
+                plots   = out_eval$plots,
+                extras  = out_eval$extras
+              )
               plots_ok <- TRUE
             }
           } else {
@@ -441,7 +581,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
         }
         rv_ml_ai$busy$eval <- FALSE
 
-        # ------------------------------ 4) Statut final ----------------------------
+        # ------------------------------ 4) Final status ----------------------------
         setProgress(1.0, detail = if (plots_ok) "Done" else "Done (no plots)")
         if (.all_idle(rv_ml_ai$busy)) {
           rv_ml_ai$status <- if (plots_ok) "Finished" else "Finished_NoPlots"
@@ -454,15 +594,68 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
           rv_ml_ai$status <- "Running"
         }
 
+        # ===== PREFETCH: calculate ROC/CM/FI/SHAP of the best model immediately =====
+        best_code <- NULL
+        lb <- rv_ml_ai$leaderboard
+        if (!is.null(lb) && NROW(lb) > 0) {
+          if ("id" %in% names(lb)) {
+            best_code <- tolower(trimws(lb$id[1]))
+          } else if ("Model" %in% names(lb)) {
+            best_code <- tolower(trimws(lb$Model[1]))
+          }
+        }
+        if (!is.null(best_code) && nzchar(best_code)) {
+          # 1) Current CSV
+          tmpfile <- file.path(tempdir(), "prefetch_eval.csv")
+          write.csv(isolate(rv_current$working_df %||% rv_current$dataset), tmpfile, row.names = FALSE)
+
+          # 2) canonical dataset_id (required on the API side)
+          ds_id <- isolate(rv_ml_ai$dataset_id %||% rv_current$dataset_id)
+          req(is.character(ds_id) && nzchar(ds_id))
+
+          # 3) body for /evaluate_model
+          body_eval <- list(
+            file         = httr::upload_file(tmpfile),
+            target       = isolate(rv_ml_ai$outcome),
+            model_id     = best_code,
+            session_id   = isolate(rv_ml_ai$seed_value),
+            session_name = isolate(rv_ml_ai$session_id),
+            train_size   = isolate(rv_ml_ai$train_size %||% 0.8),
+            dataset_id   = ds_id
+          )
+
+          # 4) synchronous call (calculated immediately)
+          res <- try(httr::POST(paste0(api_base, "/evaluate_model"),
+                                body = body_eval, encode = "multipart",
+                                httr::timeout(600)), silent = TRUE)
+          if (!inherits(res, "try-error") && !httr::http_error(res)) {
+            payload <- try(httr::content(res, as = "parsed"), silent = TRUE)
+            if (is.list(payload)) {
+                rv_ml_ai$prefetch <- list(
+                  best_id = best_code,
+                  metrics = payload$metrics,
+                  plots   = payload$plots,
+                  extras  = payload$extras
+                )
+            }
+          }
+        }
         # ---- LOG ---------------------------------------------------------------
         task_guess <- tolower(rv_ml_ai$task %||% rv_ml_ai$analysis_type %||% "classification")
         best_label <- .safe_chr1(rv_ml_ai$leaderboard$Model) %||% .safe_chr1(names(rv_ml_ai$models))
         best_code  <- if (!is.null(rv_ml_ai$models) && !is.null(best_label)) .get1(rv_ml_ai$models, best_label) else NA_character_
         pm <- .pick_primary_metric(rv_ml_ai$leaderboard, task_guess)
 
-        best_path <- NA_character_
+        best_path <- {
+          base <- file.path("models", paste0(tolower(best_code %||% gsub("[^a-z0-9]+","_", best_label)),
+                                            "__", slugify(dataset_id), ".pkl"))
+          if (file.exists(base)) base else NA_character_
+        }
 
-        dataset_id   <- rv_current$dataset_id %||% (rv_current$raw_filename %||% "dataset.csv")
+
+        #dataset_id   <- rv_current$dataset_id %||% (rv_current$raw_filename %||% "dataset.csv")
+        dataset_id <- rv_ml_ai$trained_dataset_id %||% rv_current$dataset_id
+        req(is.character(dataset_id) && nzchar(dataset_id))
         session_name <- rv_ml_ai$session_name %||% paste0("session_", (rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123))
 
         write_model_log(
@@ -470,8 +663,10 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
           dataset_id   = dataset_id,
           outcome      = rv_ml_ai$outcome,
           session_name = session_name,
+          session_id   = session_id_int,
           framework    = "PyCaret",
-          model        = best_code %||% best_label,
+          model_code   = best_code %||% tolower(gsub("[^a-z0-9]+","_", best_label)),
+          model_label  = best_label,
           metric       = pm$name,
           estimate     = pm$value,
           path_model   = best_path
@@ -495,6 +690,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
       df <- .deploy_metrics_df()
       req(!is.null(df), NROW(df) > 0)
 
+       df <- .std_metric_colnames(df)
+
       model_col <- if ("Model" %in% names(df)) "Model" else if ("model_name" %in% names(df)) "model_name" else NA_character_
       id_col    <- if ("id"    %in% names(df)) "id"    else if ("model_id"   %in% names(df)) "model_id"   else NA_character_
 
@@ -510,7 +707,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
 
       est <- if (!is.null(m) && (m %in% names(df))) suppressWarnings(as.numeric(df[[m]])) else rep(NA_real_, NROW(df))
 
-      dataset_id   <- rv_current$dataset_id %||% (rv_current$raw_filename %||% "dataset.csv")
+      dataset_id <- rv_current$dataset_id
+      req(!is.null(dataset_id) && nzchar(dataset_id))
       session_name <- rv_ml_ai$session_name %||% paste0("session_", (rv_ml_ai$seed_value %||% rv_ml_ai$seed %||% 123))
 
       out <- data.frame(
