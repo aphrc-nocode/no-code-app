@@ -168,10 +168,15 @@ model_training_caret_train_all_server = function() {
 				
 				## LM/GLM
 				if (isTRUE(input$model_training_caret_models_ols_check)) {
+					if (isTRUE(rv_ml_ai$preprocessed$outcome_nlevels>2)) {
+						param_set = list(intercept=as.numeric(input$model_training_caret_models_ols_advance_decay))
+					} else {
+						param_set=list(intercept=input$model_training_caret_models_ols_advance_intercept)
+					}
 					rv_training_models$ols_model = Rautoml::setup_caret( 
 						unname(rv_training_models$ols_name)
 						, param=rv_training_models$ols_param
-						, param_set=list(intercept=input$model_training_caret_models_ols_advance_intercept)
+						, param_set=param_set
 					)
 					rv_ml_ai$at_least_one_model = TRUE
 				} else {

@@ -19,6 +19,8 @@ source("ui/achilles_ui.R")
 source("ui/feature_extraction_ui.R")
 source("ui/omop_visualizations_ui.R")
 source("ui/add_resources_ui.R")
+source("ui/deploy_model_ui.R", local=TRUE)
+source("ui/predict_pycaret_ui.R", local = TRUE)
 
 #### ---- Change language --------------------------------------------
 source("server/change_language.R", local = TRUE)
@@ -35,10 +37,49 @@ aphrcBody <- dashboardBody(
 	useAttendant(),
 	# useWaiter(), #FIXME: Use better one
 	theme = appTheme,
+	# -- Handler JS pour capter les clics 'Deploy' dans la DataTable du module --
+	# dashboard_body (une seule fois, avant tabItems)
+	tags$head(
+		tags$script(HTML("
+		Shiny.addCustomMessageHandler('bindDeployBtn', function(msg) {
+			var ns = msg.ns;
+
+			// Nettoie d'abord les handlers (évite doublons)
+			$(document).off('click', '.action-deploy');
+			$(document).off('click', '.action-stop');
+
+			// ---- Deploy ----
+			$(document).on('click', '.action-deploy', function(){
+			var $btn = $(this);
+			var mid  = $btn.data('model');
+
+			// Feedback visuel immédiat
+			$btn.prop('disabled', true).text('Deploying...');
+
+			// Envoi à Shiny
+			Shiny.setInputValue(ns + 'deploy_model_id', mid, {priority: 'event'});
+			});
+
+			// ---- Stop ----
+			$(document).on('click', '.action-stop', function(){
+			var $btn = $(this);
+			var mid  = $btn.data('model');
+
+			$btn.prop('disabled', true).text('Stopping...');
+
+			Shiny.setInputValue(ns + 'stop_model_id', mid, {priority: 'event'});
+			});
+		});
+		Shiny.addCustomMessageHandler('openSwagger', function(msg) {
+		if (msg && msg.url) { window.open(msg.url, '_blank'); }
+		});
+		"))
+	),
+
 	tabItems(
 		tabItem(tabName = "homePage"
 			, class = "active"
-			, fluidRow()
+			, homepage()
 		)
 
 		## Source data

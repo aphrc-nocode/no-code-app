@@ -24,7 +24,7 @@ achilles_integration_server <- function() {
           WHERE schema_name NOT IN ('pg_catalog', 'information_schema') 
           AND schema_name NOT LIKE 'pg_%'"
         
-        schemas <- DatabaseConnector::querySql(achilles_conn$conn, schema_query)$SCHEMA_NAME
+        schemas <- DatabaseConnector::querySql(achilles_conn$conn, schema_query)$schema_name
         achilles_conn$schemas <- schemas
         
         # Update UI with schema selectors

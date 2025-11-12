@@ -243,7 +243,67 @@ td {
     stroke-width: 20px !important;  /* increase this for a thicker ring */
   }
 
+ /* APHRC palette */
+:root{
+  --aphrc-green: #7BC148;
+  --aphrc-cyan:  #00BFC4;
+  --aphrc-text:  #333333;
+  --aphrc-bg:    #FFFFFF;
+}
+/* Row container with shadow + border */
+.aphrc-row {
+  background: var(--aphrc-bg);
+  border: 2px solid var(--aphrc-green);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  padding: 14px 16px;        /* space around row contents */
+  margin: 16px auto;         /* vertical rhythm */
+}
+/* Optional subtle hover lift */
+.aphrc-row:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
+}
+
+.aphrc-row:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
+}
 
 
+
+#upload_form{
+  padding-left: 1.2em;
+  justify-content: left;
+  align-items: left;
+  background: var(--aphrc-bg);
+  border: 2px solid var(--aphrc-green);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  padding: 14px 16px;        /* space around row contents */
+  margin: 16px auto;         /* vertical rhythm */
+}
+
+.upload_form:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
+}
+
+
+
+#aphrc-row1:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
+}
+
+#aphrc-row1:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
+}
 
 
