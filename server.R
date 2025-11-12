@@ -14,25 +14,25 @@ source("R/utils_api.R")
 source("server/deploy_model_server.R")
 
 function(input, output, session){
+<<<<<<< HEAD
   showPageSpinner(
     size = 0.6, 
     type = 3, 
     color = "#28a745", 
     color.background = "#FFF", 
     id = "loadhomepage"
+=======
+  waiter_show(
+    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+    color = "#FFF"
+>>>>>>> 1a8df16 (UI  changes)
   )
   
+  shinyjs::show("login")
   source("server/auth.R")
-  
   user_auth(input, output, session)
-  
-  session$onFlushed(function() {
-    shinyjs::delay(400, {
-      shinyjs::show("login_form", anim = TRUE, animType = "fade", time = 0.6)
-      #howler::removeSpinner("loadhomepage") # if using waiter: waiter_hide()
-    })
-  }, once = TRUE)
-  
+
+
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
@@ -616,7 +616,8 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
-  
-  hidePageSpinner()
 
+  #hostess$close()
+  waiter_hide()
+  
 }
