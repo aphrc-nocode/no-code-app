@@ -21,7 +21,7 @@ omopVizServer <- function() {
           WHERE schema_name NOT LIKE 'pg_%' 
             AND schema_name <> 'information_schema'
         "
-        omop_conn$schemas <- DatabaseConnector::querySql(omop_conn$conn, schema_query)$SCHEMA_NAME
+        omop_conn$schemas <- DatabaseConnector::querySql(omop_conn$conn, schema_query)$schema_name
         
         output$schema_selection <- renderUI({
           tagList(
@@ -100,7 +100,7 @@ omopVizServer <- function() {
         FROM information_schema.tables
         WHERE table_schema = '{input$cdm_schema}'
       ")
-      table_list <- DatabaseConnector::querySql(omop_conn$conn, tables_query)$TABLE_NAME
+      table_list <- DatabaseConnector::querySql(omop_conn$conn, tables_query)$table_name
 
       output$cdm_table_summaries <- DT::renderDataTable({
         tbl_counts <- purrr::map_dfr(table_list, function(tbl) {
@@ -123,7 +123,7 @@ omopVizServer <- function() {
       tbl_counts <- purrr::map_dfr(table_list, function(tbl) {
         count_query <- glue::glue("SELECT COUNT(*) AS COUNT FROM {input$cdm_schema}.\"{tbl}\"")
         res <- tryCatch(DatabaseConnector::querySql(omop_conn$conn, count_query), error = function(e) NULL)
-        tibble::tibble(Table = tbl, Records = ifelse(is.null(res), 0, res$COUNT[1]))
+        tibble::tibble(Table = tbl, Records = ifelse(is.null(res), 0, res$count[1]))
       })
 
       omop_conn$cdm_tables <- tbl_counts |>
