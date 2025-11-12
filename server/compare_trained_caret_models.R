@@ -386,7 +386,7 @@ model_training_caret_train_metrics_server = function() {
 									close_progress_bar(att_new_obj=model_metrics_caret_pb)
 									return(NULL)
 								})
-								
+							
 								if (is.null(rv_training_results$shap_plots)) return()
 
 								

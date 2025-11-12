@@ -7,22 +7,28 @@ model_training_caret_models_ols_server = function() {
 					if (isTRUE(!is.null(rv_current$working_df))) {
 						if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 								if (isTRUE(any(rv_ml_ai$task %in% c("Classification", "Regression")))) {
-									if ((isTRUE(isTRUE(rv_ml_ai$task=="Classification")) & isTRUE(rv_ml_ai$preprocessed$outcome_nlevels==2)) | isTRUE(rv_ml_ai$task=="Regression")) {
-										if (isTRUE(rv_ml_ai$task=="Classification")) {
+
+									if (isTRUE(rv_ml_ai$task=="Classification")) {
+										if (isTRUE(rv_ml_ai$preprocessed$outcome_nlevels==2)) {
 											temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_ols_logistic")
 										} else {
-											temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_ols_linear")	
+											temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_ols_multinom")
 										}
-										rv_training_models$ols_name = temp_label 
-										prettyCheckbox(
-											"model_training_caret_models_ols_check"
-											, label = names(temp_label)
-											, status = "success"
-											, outline = FALSE
-											, inline = TRUE
-											, value=FALSE
-										)
+										
+									} else if (isTRUE(rv_ml_ai$task=="Regression")) {
+										temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_ols_linear")	
 									}
+
+									rv_training_models$ols_name = temp_label 
+									prettyCheckbox(
+										"model_training_caret_models_ols_check"
+										, label = names(temp_label)
+										, status = "success"
+										, outline = FALSE
+										, inline = TRUE
+										, value=FALSE
+									)
+
 								}
 							}
 						}
@@ -36,7 +42,7 @@ model_training_caret_models_ols_server = function() {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_ols_check)) {
 					rv_training_models$ols_trained_model = rv_training_models$ols_name
-					if (rv_ml_ai$task=="Regression") {
+					if (isTRUE(rv_ml_ai$task=="Regression")) {
 						box(title = get_rv_labels("model_training_caret_models_advance_options")
 							, status = "teal"
 							, solidHeader = TRUE
@@ -54,6 +60,26 @@ model_training_caret_models_ols_server = function() {
 							)
 						)		
 						
+					} else if (isTRUE(rv_ml_ai$task=="Classification")) {
+						if (isTRUE(rv_ml_ai$preprocessed$outcome_nlevels>2)) {
+						box(title = get_rv_labels("model_training_caret_models_advance_options")
+							, status = "teal"
+							, solidHeader = TRUE
+							, collapsible = TRUE
+							, collapsed = TRUE
+							, width = 6
+							, selectInput("model_training_caret_models_ols_advance_decay"
+								, get_rv_labels("model_training_caret_models_ols_advance_decay")
+								, choices = seq(0, 1, length.out=10) 
+								, selected = 0
+								, multiple = TRUE
+							)
+							, actionButton("ols_advance_control_apply_save"
+								, get_rv_labels("customize_train_control_apply_save") 
+							)
+						)		
+							
+						}
 					}
 				}
 			}
