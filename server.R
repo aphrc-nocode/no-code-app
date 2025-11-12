@@ -14,18 +14,9 @@ source("R/utils_api.R")
 source("server/deploy_model_server.R")
 
 function(input, output, session){
-<<<<<<< HEAD
-  showPageSpinner(
-    size = 0.6, 
-    type = 3, 
-    color = "#28a745", 
-    color.background = "#FFF", 
-    id = "loadhomepage"
-=======
   waiter_show(
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     color = "#FFF"
->>>>>>> 1a8df16 (UI  changes)
   )
   
   shinyjs::show("login")
@@ -617,7 +608,6 @@ function(input, output, session){
   iv_url$enable()
   iv_ml$enable()
 
-  #hostess$close()
   waiter_hide()
   
 }
