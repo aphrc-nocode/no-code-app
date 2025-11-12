@@ -341,6 +341,9 @@ user_defined_server <- function() {
       removeModal()
     })
     
+    if(is.null(plt)){
+      plt <- gplot2::ggplot() + ggplot2::theme_minimal()
+    }
     
     plots_sec_rv$plot_bivariate_auto <- plt
   })
@@ -362,25 +365,43 @@ user_defined_server <- function() {
   ), class = 'display nowrap')
   
   
-  observeEvent(input$cboOutput,{
+  observeEvent(input$cboOutput, {
     if (isTRUE(input$cboOutput == "Chart")) {
       
-      updateSelectInput(session, "cboXVar", choices = names(rv_current$working_df), selected = "")
+      updateSelectInput(
+        session, "cboXVar",
+        choices = names(rv_current$working_df)
+      )
       
-      updateSelectInput(session, "cboYVar", choices = names(numeric_df(rv_current$working_df)) , selected = "")
+      updateSelectInput(
+        session, "cboYVar",
+        choices = names(numeric_df(rv_current$working_df)
+      ))
       
-      updateSelectInput(session, "cboColorVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
-      updateSelectInput(session, "cboFacetVar", choices = names(non_numric_non_date_df(rv_current$working_df)), selected = "")
+      updateSelectInput(
+        session, "cboColorVar",
+        choices = names(non_numric_non_date_df(rv_current$working_df))
+      )
       
+      updateSelectInput(
+        session, "cboFacetVar",
+        choices = names(non_numric_non_date_df(rv_current$working_df))
+      )
       
-    } else if(input$cboOutput == "Table"){
+    } else if (input$cboOutput == "Table") {
       
-      updateSelectInput(session, "cboColVar", choices = names(rv_current$working_df), selected = "")
-      updateSelectInput(session, "cboCalcVar", choices = names(rv_current$working_df), selected = "")
+      updateSelectInput(
+        session, "cboColVar",
+        choices = names(rv_current$working_df)
+      )
       
+      updateSelectInput(
+        session, "cboCalcVar",
+        choices = names(rv_current$working_df)
+      )
     }
-    
   })
+  
   # 
   #,
   observe({
@@ -661,7 +682,7 @@ user_defined_server <- function() {
   
   
   
-  observeEvent(input$cboOutput,{
+  observeEvent(input$cboOutput, {
     if(isTRUE(!is.null(rv_current$working_df))){
       if (input$cboOutput == "Chart") {
         
@@ -892,7 +913,7 @@ user_defined_server <- function() {
                      closeOnClickOutside = FALSE,
                      showConfirmButton = FALSE,
                      showCancelButton = FALSE,
-                     imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+                     imageUrl = "gifimage.gif",
                      closeOnEsc = FALSE)
                    
                    
@@ -1063,7 +1084,7 @@ user_defined_server <- function() {
       closeOnClickOutside = FALSE,
       showConfirmButton = FALSE,
       showCancelButton = FALSE,
-      imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+      imageUrl = "gifimage.gif",
       closeOnEsc = FALSE)
     
     
@@ -1113,7 +1134,7 @@ user_defined_server <- function() {
         closeOnClickOutside = FALSE,
         showConfirmButton = FALSE,
         showCancelButton = FALSE,
-        imageUrl = "https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif",
+        imageUrl = "gifimage.gif",
         closeOnEsc = TRUE)
       config <- list(
         "introduce" = list(),
