@@ -545,7 +545,19 @@ function(input, output, session){
 
   ## glmnet
   model_training_caret_models_glmnet_server()
-  
+ 
+  ## LASSO
+  model_training_caret_models_lasso_server()
+
+  ## Ridge
+  model_training_caret_models_ridge_server()
+
+  ## KNN
+  model_training_caret_models_knn_server()
+
+  ## NNET
+  model_training_caret_models_nnet_server()
+
   #### ----- Train all models ----------------------------------- ####
   source("server/train_caret_models.R", local=TRUE)
   model_training_caret_train_all_server()

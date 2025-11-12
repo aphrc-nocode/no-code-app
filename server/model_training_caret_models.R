@@ -601,6 +601,224 @@ model_training_caret_models_glmnet_server = function() {
 
 
 
+#### ---- lasso --------------------------------- ####
+model_training_caret_models_lasso_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_lasso_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_lasso")
+							rv_training_models$lasso_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_lasso_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+	
+	## lasso Model parameters
+	output$model_training_caret_models_lasso_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_lasso_check)) {
+					rv_training_models$lasso_trained_model = rv_training_models$lasso_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_lasso_advance_alpha"
+							, get_rv_labels("model_training_caret_models_lasso_advance_alpha")
+							, choices = 1 # seq(0.1, 1, length.out=10) 
+							, selected = 1
+							, multiple = FALSE
+						)
+						, actionButton("lasso_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+	
+}
 
 
+#### ---- ridge --------------------------------- ####
+model_training_caret_models_ridge_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_ridge_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_ridge")
+							rv_training_models$ridge_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_ridge_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+	
+	## ridge Model parameters
+	output$model_training_caret_models_ridge_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_ridge_check)) {
+					rv_training_models$ridge_trained_model = rv_training_models$ridge_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_ridge_advance_alpha"
+							, get_rv_labels("model_training_caret_models_ridge_advance_alpha")
+							, choices = 0 # seq(0.1, 1, length.out=10) 
+							, selected = 1
+							, multiple = FALSE
+						)
+						, actionButton("ridge_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+
+#### ---- knn --------------------------------- ####
+model_training_caret_models_knn_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_knn_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_knn")
+							rv_training_models$knn_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_knn_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+	
+	## knn Model parameters
+	output$model_training_caret_models_knn_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_knn_check)) {
+					rv_training_models$knn_trained_model = rv_training_models$knn_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_knn_advance_k"
+							, get_rv_labels("model_training_caret_models_knn_advance_k")
+							, choices = floor(seq(1, 100, length.out=50))
+							, selected = 5
+							, multiple = TRUE
+						)
+						, actionButton("knn_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+
+#### ---- nnet --------------------------------- ####
+model_training_caret_models_nnet_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_nnet_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_nnet")
+							rv_training_models$nnet_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_nnet_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+	
+	## nnet Model parameters
+	output$model_training_caret_models_nnet_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_nnet_check)) {
+					rv_training_models$nnet_trained_model = rv_training_models$nnet_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_nnet_advance_size"
+							, get_rv_labels("model_training_caret_models_nnet_advance_size")
+							, choices = floor(seq(1, 100, length.out=50))
+							, selected = 5
+							, multiple = TRUE
+						)
+						, selectInput("model_training_caret_models_nnet_advance_decay"
+							, get_rv_labels("model_training_caret_models_nnet_advance_decay")
+							, choices = seq(0, 1, length.out=10) 
+							, selected = 0
+							, multiple = TRUE
+						)
+						, actionButton("nnet_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
 

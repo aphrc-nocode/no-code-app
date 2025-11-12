@@ -220,6 +220,8 @@ generate_research_questions_gemini = function() {
 						)
 					)
 				})
+				
+				close_progress_bar(att_new_obj=generate_research_questions_outcome_pb)
 				rv_generative_ai$history = research_question_chat$history
 				output$generate_research_questions_gemini = renderUI({
 					p(br()
@@ -229,7 +231,6 @@ generate_research_questions_gemini = function() {
 					)
 				})
 ## 				hidePageSpinner()
-				close_progress_bar(att_new_obj=generate_research_questions_outcome_pb)
 			}
 		}
 	})
