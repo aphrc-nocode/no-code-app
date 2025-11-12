@@ -75,7 +75,6 @@ model_training_caret_train_metrics_server = function() {
 						})
 						
 						rv_training_models$all_trained_models = Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
-		  
 					  ## More options: SHAP values
 					  output$model_training_caret_more_options_shap = renderUI({
 							prettyRadioButtons(
@@ -95,6 +94,15 @@ model_training_caret_train_metrics_server = function() {
 						
 						rv_training_models$all_trained_models = NULL
 						output$model_training_caret_more_options_shap = NULL
+			
+						output$model_training_caret_train_metrics_plot = NULL
+						output$model_training_caret_train_metrics_df = NULL
+							
+						output$model_training_caret_test_metrics_plot_specifics = NULL
+						output$model_training_caret_test_metrics_plot_all = NULL
+						output$model_training_caret_test_metrics_plot_roc = NULL
+						output$model_training_caret_test_metrics_df = NULL
+							
 					}
 
 					output$model_training_caret_post_model_metrics = renderUI({
@@ -181,27 +189,26 @@ model_training_caret_train_metrics_server = function() {
 
 					## Select trained models
 					output$model_training_caret_test_metrics_trained_models_shap = renderUI({
+						req(!is.null(input$model_training_caret_more_options_shap_check))
 						if (isTRUE(!is.null(rv_training_models$all_trained_models))) {
 							temp_models = rv_training_models$all_trained_models
+							temp_models = temp_models[temp_models %in% names(rv_training_results$models)]
+							temp_selected = temp_models
+							temp_labs = get_rv_labels("model_training_caret_test_metrics_trained_models_shap_ph")
 							if (isTRUE(input$model_training_caret_more_options_shap_check=="Select models")) {
 								empty_lab = ""
-								names(empty_lab) = get_rv_labels("model_training_caret_test_metrics_trained_models_shap_ph")
-								selectInput("model_training_caret_test_metrics_trained_models_shap"
-									, label = NULL
-									, selected = NULL
-									, choices = c(empty_lab , temp_models)
-									, multiple=TRUE
-									, width="100%"
-								)
-							} else {
-								selectInput("model_training_caret_test_metrics_trained_models_shap"
-									, label = NULL
-									, selected = temp_models
-									, choices = temp_models
-									, multiple=TRUE
-									, width="100%"
-								)
+								names(empty_lab) = temp_labs
+								temp_models = c(empty_lab , temp_models)
+								temp_labs = NULL
+								temp_selected = NULL
 							}
+							selectInput("model_training_caret_test_metrics_trained_models_shap"
+								, label = temp_labs
+								, selected = temp_selected
+								, choices = temp_models
+								, multiple=TRUE
+								, width="100%"
+							)
 						} else {
 							temp_models = NULL
 							NULL
@@ -211,7 +218,7 @@ model_training_caret_train_metrics_server = function() {
 	
 					## Select metrics for trained model
 					output$model_training_caret_test_metrics_trained_models_options = renderUI({
-						req(rv_training_results$post_model_metrics_objs)
+						req(!is.null(rv_training_results$post_model_metrics_objs))
 						if (isTRUE(length(input$model_training_caret_more_options_shap_check)>0)) {
 							if ( (isTRUE(input$model_training_caret_more_options_shap_check=="All")) | (isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_shap)) & isTRUE(any(input$model_training_caret_test_metrics_trained_models_shap!="")))) {
 								rv_training_models$all_trained_models_metrics = Rautoml::get_metrics_names(rv_training_results$test_metrics_objs)
@@ -219,9 +226,9 @@ model_training_caret_train_metrics_server = function() {
 								empty_lab = ""
 								names(empty_lab) = get_rv_labels("model_training_caret_test_metrics_trained_models_options_ph")
 								selectInput("model_training_caret_test_metrics_trained_models_options"
-									, label = NULL
-									, selected = NULL
-									, choices = c(empty_lab , temp_metrics)
+									, label = get_rv_labels("model_training_caret_test_metrics_trained_models_options_ph")
+									, choices = temp_metrics #c(empty_lab, temp_metrics)
+									, selected = temp_metrics[[1]]
 									, multiple=TRUE
 									, width="100%"
 								)
@@ -236,9 +243,8 @@ model_training_caret_train_metrics_server = function() {
 					
 					## Apply Metrics/SHAP values selection
 					output$model_training_caret_test_metrics_trained_shap_apply_ui = renderUI({
-						req(rv_training_results$post_model_metrics_objs)
-						req(rv_training_models$all_trained_models)
-						req(input$model_training_caret_test_metrics_trained_models_shap)
+						req(!is.null(rv_training_results$post_model_metrics_objs))
+						req(!is.null(rv_training_models$all_trained_models))
 						if (((isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) & isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_options))) | isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
 							actionBttn("model_training_caret_test_metrics_trained_shap_apply"
 								, inline=TRUE
@@ -253,86 +259,96 @@ model_training_caret_train_metrics_server = function() {
 					})
 
 					observeEvent(input$model_training_caret_test_metrics_trained_shap_apply, {
-						req(rv_training_results$test_metrics_objs)
-						req(rv_training_results$post_model_metrics_objs)
-						req(rv_training_models$all_trained_models)
-						req(input$model_training_caret_test_metrics_trained_models_shap)
-						req(input$model_training_caret_test_metrics_trained_models_options)
+						req(!is.null(rv_training_results$post_model_metrics_objs))
+						req(!is.null(rv_training_models$all_trained_models))
+						req(!is.null(rv_training_results$test_metrics_objs))
+						req(!is.null(rv_training_models$all_trained_models))
+						req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
+						req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
+						req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
 						if (((isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) & isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_options))) | isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
 							if (isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) {
+								
+								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
+								
 								rv_training_results$test_metrics_objs_filtered = Rautoml::extract_more_metrics(
 									object=rv_training_results$test_metrics_objs
 									, model_name=input$model_training_caret_test_metrics_trained_models_shap
 									, metric_name=input$model_training_caret_test_metrics_trained_models_options
 								)
-								test_plots_filtered = plot(rv_training_results$test_metrics_objs_filtered)
-								output$model_training_caret_test_metrics_plot_all_filtered = renderPlot({
-									test_plots_filtered$all	
-								})
 								
-								output$model_training_caret_test_metrics_plot_roc_filtered = renderPlot({
-									test_plots_filtered$roc
-								})
+								if (NROW(rv_training_results$test_metrics_objs_filtered$all)) {
+									test_plots_filtered = plot(rv_training_results$test_metrics_objs_filtered)
+									output$model_training_caret_test_metrics_plot_all_filtered = renderPlot({
+										req(!is.null(test_plots_filtered$all))
+										test_plots_filtered$all	
+									})
+									
+									output$model_training_caret_test_metrics_plot_roc_filtered = renderPlot({
+										test_plots_filtered$roc
+									})
 
-								output$model_training_caret_test_metrics_plot_all_filtered_ui = renderUI({
-									req(!is.null(test_plots_filtered$all))
-									p(
-										hr()
-										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_plot_all_filtered"), ":</b> <br/>"))
-										, fluidRow(
-											 column(width=12
-												, plotOutput("model_training_caret_test_metrics_plot_all_filtered", height = "1000px")
-											)
-										)
-									)
-								})
-
-								output$model_training_caret_test_metrics_plot_roc_filtered_ui = renderUI({
-									req(!is.null(test_plots_filtered$roc))
+									output$model_training_caret_test_metrics_plot_all_filtered_ui = renderUI({
+										req(!is.null(test_plots_filtered$all))
 										p(
 											hr()
-											, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_plot_roc_filtered"), ":</b> <br/>"))
+											, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_plot_all_filtered"), ":</b> <br/>"))
 											, fluidRow(
-												column(width=12
-													, plotOutput("model_training_caret_test_metrics_plot_roc_filtered", height = "1000px")
+												 column(width=12
+													, plotOutput("model_training_caret_test_metrics_plot_all_filtered", height = "1000px")
 												)
 											)
 										)
-								})
+									})
 
-								output$model_training_caret_test_metrics_df_filtered = DT::renderDT({
-								  df = rv_training_results$test_metrics_objs_filtered$all
+									output$model_training_caret_test_metrics_plot_roc_filtered_ui = renderUI({
+										req(!is.null(test_plots_filtered$roc))
+											p(
+												hr()
+												, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_plot_roc_filtered"), ":</b> <br/>"))
+												, fluidRow(
+													column(width=12
+														, plotOutput("model_training_caret_test_metrics_plot_roc_filtered", height = "1000px")
+													)
+												)
+											)
+									})
 
-								  DT::datatable(
-									 df,
-									 escape = FALSE,
-									 rownames = FALSE,
-									 options = list(
-										processing = FALSE,
-										autoWidth = FALSE,
-										scrollX = TRUE,
-										columnDefs = list(
-										  list(className = 'dt-center', targets = c("lower", "estimate", "upper"))
-										)
-									 )
-								  ) %>%
-									 DT::formatRound(columns = c("lower", "estimate", "upper"), digits = 4)
-								})
+									output$model_training_caret_test_metrics_df_filtered = DT::renderDT({
+									  df = rv_training_results$test_metrics_objs_filtered$all
 
-								output$model_training_caret_test_metrics_df_filtered_ui = renderUI({
-									req(!is.null(rv_training_results$test_metrics_objs_filtered$all))
-									p(
-										br()
-										, hr()
-										, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_df_filtered"), ":</b> <br/>"))
-										, fluidRow(
-											column(width = 12
-												, DT::DTOutput("model_training_caret_test_metrics_df_filtered", width="100%", fill=TRUE)
+									  DT::datatable(
+										 df,
+										 escape = FALSE,
+										 rownames = FALSE,
+										 options = list(
+											processing = FALSE,
+											autoWidth = FALSE,
+											scrollX = TRUE,
+											columnDefs = list(
+											  list(className = 'dt-center', targets = c("lower", "estimate", "upper"))
+											)
+										 )
+									  ) %>%
+										 DT::formatRound(columns = c("lower", "estimate", "upper"), digits = 4)
+									})
+
+									output$model_training_caret_test_metrics_df_filtered_ui = renderUI({
+										req(!is.null(rv_training_results$test_metrics_objs_filtered$all))
+										p(
+											br()
+											, hr()
+											, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_df_filtered"), ":</b> <br/>"))
+											, fluidRow(
+												column(width = 12
+													, DT::DTOutput("model_training_caret_test_metrics_df_filtered", width="100%", fill=TRUE)
+												)
 											)
 										)
-									)
-								})
-
+									})
+									
+									
+								}
 							} else {
 								rv_training_results$test_metrics_objs_filtered = NULL
 								output$model_training_caret_test_metrics_plot_all_filtered = NULL
@@ -342,7 +358,6 @@ model_training_caret_train_metrics_server = function() {
 							}
 						
 							if (isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
-								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
 								rv_training_results$test_metrics_objs_shap = tryCatch({
 									Rautoml::compute_shap(
 										models=rv_training_results$models
@@ -374,7 +389,6 @@ model_training_caret_train_metrics_server = function() {
 								
 								if (is.null(rv_training_results$shap_plots)) return()
 
-								close_progress_bar(att_new_obj=model_metrics_caret_pb)
 								
 								## Variable importance
 								output$model_training_caret_test_metrics_shap_values_varimp = renderPlot({
@@ -443,6 +457,7 @@ model_training_caret_train_metrics_server = function() {
 									rv_training_results$shap_plots$force
 								})
 
+								close_progress_bar(att_new_obj=model_metrics_caret_pb)
 								
 							} else {
 								rv_training_results$test_metrics_objs_shap = NULL		
@@ -456,11 +471,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-								output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
-								output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
-								output$model_training_caret_test_metrics_shap_values_force_ui = NULL
-								
-								output$model_training_caret_train_metrics_shap_values = NULL
+								close_progress_bar(att_new_obj=model_metrics_caret_pb)
 							}
 						} else {
 							rv_training_results$test_metrics_objs_filtered = NULL
@@ -479,11 +490,7 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-							output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
-							output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
-							output$model_training_caret_test_metrics_shap_values_force_ui = NULL
-						
-							output$model_training_caret_train_metrics_shap_values = NULL
+							close_progress_bar(att_new_obj=model_metrics_caret_pb)
 						}
 					})
 
@@ -520,11 +527,7 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-					output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
-					output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
-					output$model_training_caret_test_metrics_shap_values_force_ui = NULL
-					
-					output$model_training_caret_train_metrics_shap_values = NULL
+					close_progress_bar(att_new_obj=model_metrics_caret_pb)
 				}
 			} else {
 				output$model_training_caret_train_metrics_plot = NULL
@@ -559,11 +562,7 @@ model_training_caret_train_metrics_server = function() {
 				output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-				output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
-				output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
-				output$model_training_caret_test_metrics_shap_values_force_ui = NULL
-				
-				output$model_training_caret_train_metrics_shap_values = NULL
+				close_progress_bar(att_new_obj=model_metrics_caret_pb)
 			}
 		} else {
 			output$model_training_caret_train_metrics_plot = NULL
@@ -598,167 +597,169 @@ model_training_caret_train_metrics_server = function() {
 			output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-			output$model_training_caret_test_metrics_shap_values_beeswarm_ui = NULL
-			output$model_training_caret_test_metrics_shap_values_waterfall_ui = NULL
-			output$model_training_caret_test_metrics_shap_values_force_ui = NULL
-			output$model_training_caret_train_metrics_shap_values = NULL
+			close_progress_bar(att_new_obj=model_metrics_caret_pb)
 		}
 
-	})
+	
 
+		output$model_training_caret_train_metrics = renderUI({
+			req(!is.null(rv_current$working_df))
+			req(!is.null(rv_ml_ai$preprocessed))
+			req(!is.null(rv_training_results$train_metrics_df))
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+					if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
 
-	output$model_training_caret_train_metrics = renderUI({
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
-
-						p(br()
-							, hr()
-							, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_metrics"), ":</b> <br/>"))
-							, tabsetPanel(
-								tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
-									, p(
-										br()
-										, box(title = NULL 
-											, status = "success"
-											, solidHeader = TRUE
-											, collapsible = TRUE
-											, collapsed = FALSE
-											, width = 12
-											, fluidRow(
-												column(width = 12
-													, DT::DTOutput("model_training_caret_train_metrics_df", width="100%", fill=TRUE)
+							p(br()
+								, hr()
+								, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_metrics"), ":</b> <br/>"))
+								, tabsetPanel(
+									tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
+										, p(
+											br()
+											, box(title = NULL 
+												, status = "success"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													column(width = 12
+														, DT::DTOutput("model_training_caret_train_metrics_df", width="100%", fill=TRUE)
+													)
 												)
-											)
-											, hr()
-											, fluidRow(
-												 column(width=12
-													, plotOutput("model_training_caret_train_metrics_plot")
+												, hr()
+												, fluidRow(
+													 column(width=12
+														, plotOutput("model_training_caret_train_metrics_plot")
+													)
 												)
 											)
 										)
 									)
-								)
-								, tabPanel(get_rv_labels("model_training_caret_train_metrics_test")
-									, p(
-										br()
-										, box(title = NULL 
-											, status = "success"
-											, solidHeader = TRUE
-											, collapsible = TRUE
-											, collapsed = TRUE
-											, width = 12
-											, fluidRow(
-												column(width = 6
-													, DT::DTOutput("model_training_caret_test_metrics_df", width="100%", fill=TRUE)
+									, tabPanel(get_rv_labels("model_training_caret_train_metrics_test")
+										, p(
+											br()
+											, box(title = NULL 
+												, status = "success"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = TRUE
+												, width = 12
+												, fluidRow(
+													column(width = 6
+														, DT::DTOutput("model_training_caret_test_metrics_df", width="100%", fill=TRUE)
+													)
+													 , column(width=6
+														, plotOutput("model_training_caret_test_metrics_plot_specifics", height = "400px")
+													)
 												)
-												 , column(width=6
-													, plotOutput("model_training_caret_test_metrics_plot_specifics", height = "400px")
+												, hr()
+												, fluidRow(
+													 column(width=12
+														, plotOutput("model_training_caret_test_metrics_plot_all", height = "400px")
+													)
 												)
-											)
-											, hr()
-											, fluidRow(
-												 column(width=12
-													, plotOutput("model_training_caret_test_metrics_plot_all", height = "400px")
-												)
-											)
-											, hr()
-											, fluidRow(
-												column(width=12
-													, plotOutput("model_training_caret_test_metrics_plot_roc", height = "400px")
+												, hr()
+												, fluidRow(
+													column(width=12
+														, plotOutput("model_training_caret_test_metrics_plot_roc", height = "400px")
+													)
 												)
 											)
 										)
 									)
-								)
-								, tabPanel(get_rv_labels("model_training_caret_more_metrics")
-									, p(
-										br()
-										, box(title = NULL
-											, status = "success"
-											, solidHeader = TRUE
-											, collapsible = TRUE
-											, collapsed = TRUE
-											, width = 12
-											, uiOutput("model_training_caret_post_model_metrics")
+									, tabPanel(get_rv_labels("model_training_caret_more_metrics")
+										, p(
+											br()
+											, box(title = NULL
+												, status = "success"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = TRUE
+												, width = 12
+												, uiOutput("model_training_caret_post_model_metrics")
+											)
 										)
 									)
-								)
-								, tabPanel(get_rv_labels("model_training_caret_more_options_shap")
-									, p(
-										br()
-										, box(title = NULL 
-											, status = "success"
-											, solidHeader = TRUE
-											, collapsible = TRUE
-											, collapsed = FALSE
-											, width = 12
-											, fluidRow(
-												 column(width=6
-													, uiOutput("model_training_caret_more_options_shap")
-													, uiOutput("model_training_caret_test_metrics_trained_models_shap")
-													, uiOutput("model_training_caret_test_metrics_trained_models_options")
-													, br()
-													, uiOutput("model_training_caret_test_metrics_trained_shap_apply_ui")
+									, tabPanel(get_rv_labels("model_training_caret_more_options_shap")
+										, p(
+											br()
+											, box(title = NULL 
+												, status = "success"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													 column(width=6
+														, uiOutput("model_training_caret_more_options_shap")
+														, uiOutput("model_training_caret_test_metrics_trained_models_shap")
+														, uiOutput("model_training_caret_test_metrics_trained_models_options")
+														, br()
+														, uiOutput("model_training_caret_test_metrics_trained_shap_apply_ui")
+													)
+													, column(width=6
+														, uiOutput("model_training_caret_test_metrics_trained_shap_switch")
+													)
 												)
-												, column(width=6
-													, uiOutput("model_training_caret_test_metrics_trained_shap_switch")
+												, uiOutput("model_training_caret_test_metrics_df_filtered_ui")
+												, fluidRow(
+												  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_all_filtered_ui")),
+												  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_roc_filtered_ui"))
 												)
+												, uiOutput("model_training_caret_test_metrics_shap_values_varimp_ui")
+												, uiOutput("model_training_caret_test_metrics_shap_values_varfreq_ui")
+												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
+												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
 											)
-											, uiOutput("model_training_caret_test_metrics_df_filtered_ui")
-											, fluidRow(
-											  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_all_filtered_ui")),
-											  column(width = 6, uiOutput("model_training_caret_test_metrics_plot_roc_filtered_ui"))
-											)
-											, uiOutput("model_training_caret_test_metrics_shap_values_varimp_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_varfreq_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
-											, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
 										)
 									)
-								)
 
 
+								)
 							)
-						)
 
+					}
 				}
 			}
-		}
-	})
-	
-	
-	output$model_training_caret_train_metrics_shap_values = renderUI({
-		req(!is.null(rv_current$working_df))
-		req(!is.null(rv_ml_ai$preprocessed))
-		req(!is.null(rv_training_results$shap_plots))
-		p(
+		})
+		
+		
+		output$model_training_caret_train_metrics_shap_values = renderUI({
+			req(!is.null(rv_current$working_df))
+			req(!is.null(rv_ml_ai$preprocessed))
+			req(!is.null(rv_training_results$shap_plots))
+			req(isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check))
+			p(
 
-			hr()
-			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_beeswarm"), ":</b> <br/>"))
-			, fluidRow(
-				column(width=12
-					, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px")
+				hr()
+				, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_beeswarm"), ":</b> <br/>"))
+				, fluidRow(
+					column(width=12
+						, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px")
+					)
+				)
+				
+				, hr()
+				, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_waterfall"), ":</b> <br/>"))
+				, fluidRow(
+					column(width=12
+						, plotOutput("model_training_caret_test_metrics_shap_values_waterfall", height = "1000px")
+					)
+				)
+
+				, hr()
+				, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_force"), ":</b> <br/>"))
+				, fluidRow(
+					column(width=12
+						, plotOutput("model_training_caret_test_metrics_shap_values_force", height = "1000px")
+					)
 				)
 			)
 			
-			, hr()
-			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_waterfall"), ":</b> <br/>"))
-			, fluidRow(
-				column(width=12
-					, plotOutput("model_training_caret_test_metrics_shap_values_waterfall", height = "1000px")
-				)
-			)
+		})
 
-			, hr()
-			, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_force"), ":</b> <br/>"))
-			, fluidRow(
-				column(width=12
-					, plotOutput("model_training_caret_test_metrics_shap_values_force", height = "1000px")
-				)
-			)
-		)
-		
 	})
-	 
+ 
 }

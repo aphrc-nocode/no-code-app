@@ -111,6 +111,54 @@ model_training_caret_train_all_server = function() {
 			}
 		}
 	})
+	
+
+	### lasso
+	observeEvent(input$lasso_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_lasso_check)) {
+					rv_training_models$lasso_param = TRUE			
+				}
+			}
+		}
+	})
+
+
+	### ridge
+	observeEvent(input$ridge_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_ridge_check)) {
+					rv_training_models$ridge_param = TRUE			
+				}
+			}
+		}
+	})
+
+
+	### knn
+	observeEvent(input$knn_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_knn_check)) {
+					rv_training_models$knn_param = TRUE			
+				}
+			}
+		}
+	})
+
+
+	### nnet
+	observeEvent(input$nnet_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_nnet_check)) {
+					rv_training_models$nnet_param = TRUE			
+				}
+			}
+		}
+	})
 
 
 	## Check selected models
@@ -126,6 +174,8 @@ model_training_caret_train_all_server = function() {
 						, param_set=list(intercept=input$model_training_caret_models_ols_advance_intercept)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$ols_model = NULL
 				}
 
 				
@@ -139,6 +189,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$rf_model = NULL
 				}
 
 				## GBM
@@ -160,6 +212,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$gbm_model = NULL
 				}
 
 				## xgbTree
@@ -184,6 +238,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$xgbTree_model = NULL
 				}
 
 
@@ -206,6 +262,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$xgbLinear_model = NULL
 				}
 
 				## svmRadial
@@ -225,6 +283,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$svmRadial_model = NULL
 				}
 
 				## svmLinear
@@ -237,6 +297,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$svmLinear_model = NULL
 				}
 
 
@@ -258,6 +320,8 @@ model_training_caret_train_all_server = function() {
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$svmPoly_model = NULL
 				}
 
 
@@ -267,15 +331,83 @@ model_training_caret_train_all_server = function() {
 						unname(rv_training_models$glmnet_name)
 						, param=rv_training_models$glmnet_param
 						, param_set=list(
-							degree=as.numeric(input$model_training_caret_models_glmnet_advance_alpha)
+							alpha=as.numeric(input$model_training_caret_models_glmnet_advance_alpha)
+							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$glmnet_model = NULL
+				}
+
+				
+				## lasso
+				if (isTRUE(input$model_training_caret_models_lasso_check)) {
+					rv_training_models$lasso_param = TRUE
+					rv_training_models$lasso_model = Rautoml::setup_caret( 
+						unname(rv_training_models$lasso_name)
+						, param=TRUE#rv_training_models$lasso_param
+						, param_set=list(
+							alpha=as.numeric(input$model_training_caret_models_lasso_advance_alpha)
+							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$lasso_model = NULL
+				}
+
+				
+				## ridge
+				if (isTRUE(input$model_training_caret_models_ridge_check)) {
+					rv_training_models$ridge_param = TRUE
+					rv_training_models$ridge_model = Rautoml::setup_caret( 
+						unname(rv_training_models$ridge_name)
+						, param=TRUE#rv_training_models$ridge_param
+						, param_set=list(
+							alpha=as.numeric(input$model_training_caret_models_ridge_advance_alpha)
+							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$ridge_model = NULL
+				}
+
+				
+				## knn
+				if (isTRUE(input$model_training_caret_models_knn_check)) {
+					rv_training_models$knn_model = Rautoml::setup_caret( 
+						unname(rv_training_models$knn_name)
+						, param=rv_training_models$knn_param
+						, param_set=list(
+							k=as.numeric(input$model_training_caret_models_knn_advance_k)
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$knn_model = NULL
+				}
+
+				
+				## nnet
+				if (isTRUE(input$model_training_caret_models_nnet_check)) {
+					rv_training_models$nnet_model = Rautoml::setup_caret( 
+						unname(rv_training_models$nnet_name)
+						, param=rv_training_models$nnet_param
+						, param_set=list(
+							size=as.numeric(input$model_training_caret_models_nnet_advance_size)
+							, decay=as.numeric(input$model_training_caret_models_nnet_advance_decay)
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$nnet_model = NULL
 				}
 
 				
 				## Update this for every model
-				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) ) {
+				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) ) {
 					rv_ml_ai$at_least_one_model = FALSE
 				}
 			}
@@ -305,65 +437,83 @@ model_training_caret_train_all_server = function() {
 	})
 
 	## Model list
-	output$model_training_caret_models_ui = renderUI({
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				p(br()
-				  , hr()
-				  , box(
-						 title = get_rv_labels("model_training_caret_models_ui"),
-						 status = "success",
-						 solidHeader = TRUE,
-						 collapsible = TRUE,
-						 collapsed = TRUE,
-						 width = 12,
-						 fluidRow (
-							column(width=4
-								, uiOutput("model_training_caret_models_ols_check")
-								, uiOutput("model_training_caret_models_ols_advance_intercept")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_rf_check")
-								, uiOutput("model_training_caret_models_rf_advance_params")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_gbm_check")
-								, uiOutput("model_training_caret_models_gbm_advance_params")
-							)
-						 )
-						 , fluidRow (
-							column(width=4
-								, uiOutput("model_training_caret_models_xgbTree_check")
-								, uiOutput("model_training_caret_models_xgbTree_advance_params")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_xgbLinear_check")
-								, uiOutput("model_training_caret_models_xgbLinear_advance_params")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_svmRadial_check")
-								, uiOutput("model_training_caret_models_svmRadial_advance_params")
-							)
-						 )
-						 , fluidRow (
-							column(width=4
-								, uiOutput("model_training_caret_models_svmLinear_check")
-								, uiOutput("model_training_caret_models_svmLinear_advance_params")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_svmPoly_check")
-								, uiOutput("model_training_caret_models_svmPoly_advance_params")
-							)
-							, column(width=4
-								, uiOutput("model_training_caret_models_glmnet_check")
-								, uiOutput("model_training_caret_models_glmnet_advance_params")
-							)
-						 )
-						 , uiOutput("model_training_apply")
-				  )
-				)
+	observe({
+		output$model_training_caret_models_ui = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+					p(br()
+					  , hr()
+					  , box(
+							 title = get_rv_labels("model_training_caret_models_ui"),
+							 status = "success",
+							 solidHeader = TRUE,
+							 collapsible = TRUE,
+							 collapsed = TRUE,
+							 width = 12,
+							 fluidRow (
+								column(width=4
+									, uiOutput("model_training_caret_models_ols_check")
+									, uiOutput("model_training_caret_models_ols_advance_intercept")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_rf_check")
+									, uiOutput("model_training_caret_models_rf_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_gbm_check")
+									, uiOutput("model_training_caret_models_gbm_advance_params")
+								)
+							 )
+							 , fluidRow (
+								column(width=4
+									, uiOutput("model_training_caret_models_xgbTree_check")
+									, uiOutput("model_training_caret_models_xgbTree_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_xgbLinear_check")
+									, uiOutput("model_training_caret_models_xgbLinear_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_svmRadial_check")
+									, uiOutput("model_training_caret_models_svmRadial_advance_params")
+								)
+							 )
+							 , fluidRow (
+								column(width=4
+									, uiOutput("model_training_caret_models_svmLinear_check")
+									, uiOutput("model_training_caret_models_svmLinear_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_svmPoly_check")
+									, uiOutput("model_training_caret_models_svmPoly_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_glmnet_check")
+									, uiOutput("model_training_caret_models_glmnet_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_lasso_check")
+									, uiOutput("model_training_caret_models_lasso_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_ridge_check")
+									, uiOutput("model_training_caret_models_ridge_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_knn_check")
+									, uiOutput("model_training_caret_models_knn_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_nnet_check")
+									, uiOutput("model_training_caret_models_nnet_advance_params")
+								)
+							 )
+							 , uiOutput("model_training_apply")
+					  )
+					)
+				}
 			}
-		}
+		})
 	})
 
 	## Train models
@@ -373,7 +523,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(rv_ml_ai$at_least_one_model)) {
 
 					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
-
+ 
 					all_model_params = c(rv_training_models$ols_model
 						, rv_training_models$rf_model
 						, rv_training_models$gbm_model
@@ -383,8 +533,14 @@ model_training_caret_train_all_server = function() {
 						, rv_training_models$svmLinear_model
 						, rv_training_models$svmPoly_model
 						, rv_training_models$glmnet_model
+						, rv_training_models$lasso_model
+						, rv_training_models$ridge_model
+						, rv_training_models$knn_model
+						, rv_training_models$nnet_model
 					)
 					set.seed(rv_ml_ai$seed_value)
+					rv_training_results$training_completed = FALSE
+
 					if (isTRUE(input$model_training_setup_start_clusters_check)) {
 						Rautoml::start_cluster()
 					}
@@ -402,12 +558,15 @@ model_training_caret_train_all_server = function() {
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
-					
-					if (isTRUE(is.null(rv_training_results$models))) return()
+						
 					
 					if (isTRUE(input$model_training_setup_start_clusters_check)) {
 						Rautoml::stop_cluster()
 					}
+					
+					
+					if (isTRUE(is.null(rv_training_results$models))) return()
+					
 					if (isTRUE(input$model_training_setup_include_ensemble_check)) {
 						rv_training_results$models = tryCatch({
 							create_ensemble(
@@ -420,8 +579,33 @@ model_training_caret_train_all_server = function() {
 							close_progress_bar(att_new_obj=model_training_caret_pb)
 							return(NULL)
 						})
-						print(rv_training_results$models)
 					}
+
+					rv_training_results$training_completed = TRUE
+					rv_ml_ai$at_least_one_model = FALSE
+				
+## 					rv_training_models$ols_model = NULL
+## 					rv_training_models$rf_model = NULL
+## 					rv_training_models$gbm_model = NULL
+## 					rv_training_models$xgbTree_model = NULL
+## 					rv_training_models$xgbLinear_model = NULL
+## 					rv_training_models$svmRadial_model = NULL
+## 					rv_training_models$svmLinear_model = NULL
+## 					rv_training_models$svmPoly_model = NULL
+## 					rv_training_models$glmnet_model = NULL
+## 					rv_training_models$lasso_model = NULL
+## 					rv_training_models$ridge_model = NULL
+## 					rv_training_models$knn_model = NULL
+## 					rv_training_models$nnet_model = NULL
+## 
+## 					rv_train_control_caret$method = "cv"
+## 					rv_train_control_caret$number = 5
+## 					rv_train_control_caret$repeats = NA
+## 					rv_train_control_caret$search = "grid"
+## 					rv_train_control_caret$verboseIter = FALSE
+## 					rv_train_control_caret$savePredictions = FALSE
+## 					rv_train_control_caret$classProbs = TRUE
+## 				
 					
 					if (isTRUE(is.null(rv_training_results$models))) return()
 					
@@ -432,6 +616,7 @@ model_training_caret_train_all_server = function() {
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
+					
 
 					if (is.null(rv_training_results$train_metrics_df)) return()
 
@@ -457,6 +642,7 @@ model_training_caret_train_all_server = function() {
 						return(NULL)
 					})
 
+					
 					if (is.null(rv_training_results$test_metrics_objs)) return()
 
 					## Generate logs
@@ -484,57 +670,67 @@ model_training_caret_train_all_server = function() {
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
+					
 
 					if (is.null(rv_training_results$post_model_metrics_objs)) return()
 
-
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_rf_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_gbm_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_xgbTree_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_xgbLinear_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_svmRadial_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_svmLinear_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_svmPoly_check", value=FALSE)
-					updatePrettyCheckbox(session, inputId="model_training_caret_models_glmnet_check", value=FALSE)
-					rv_ml_ai$at_least_one_model = FALSE
-					rv_training_models$ols_model = NULL
-					rv_training_models$rf_model = NULL
-					rv_training_models$gbm_model = NULL
-					rv_training_models$xgbTree_model = NULL
-					rv_training_models$xgbLinear_model = NULL
-					rv_training_models$svmRadial_model = NULL
-					rv_training_models$svmLinear_model = NULL
-					rv_training_models$svmPoly_model = NULL
-					rv_training_models$glmnet_model = NULL
-					
-					rv_train_control_caret$method = "cv"
-					rv_train_control_caret$number = 5
-					rv_train_control_caret$repeats = NA
-					rv_train_control_caret$search = "grid"
-					rv_train_control_caret$verboseIter = FALSE
-					rv_train_control_caret$savePredictions = FALSE
-					rv_train_control_caret$classProbs = TRUE
-				
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				} else {
 					rv_training_results$models = NULL
 					rv_training_results$train_metrics_df = NULL
 					rv_training_results$test_metrics_objs = NULL
 					rv_training_results$post_model_metrics_objs = NULL
+					close_progress_bar(att_new_obj=model_training_caret_pb)
 				}
 			} else {
 				rv_training_results$models = NULL
 				rv_training_results$train_metrics_df = NULL
 				rv_training_results$test_metrics_objs = NULL
 				rv_training_results$post_model_metrics_objs = NULL
+				close_progress_bar(att_new_obj=model_training_caret_pb)
 			}
 		} else {
 			rv_training_results$models = NULL
 			rv_training_results$train_metrics_df = NULL
 			rv_training_results$test_metrics_objs = NULL
 			rv_training_results$post_model_metrics_objs = NULL
+			close_progress_bar(att_new_obj=model_training_caret_pb)
 		}
 	})	
+
+## 	observe({
+## 		req(!isTRUE(rv_training_results$training_completed), isTRUE(!is.null(rv_training_results$training_completed)))
+## 		req(isTRUE(!is.null(rv_current$working_df)))
+## 		req(isTRUE(!is.null(rv_ml_ai$preprocessed)))
+## 		req(!isTRUE(rv_training_results$training_completed))
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_ols_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_rf_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_gbm_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_xgbTree_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_xgbLinear_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_svmRadial_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_svmLinear_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_svmPoly_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_glmnet_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_lasso_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_ridge_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_knn_check", value=FALSE)
+## 		updatePrettyCheckbox(session, inputId="model_training_caret_models_nnet_check", value=FALSE)
+## 		rv_ml_ai$at_least_one_model = FALSE
+## 		rv_training_models$ols_model = NULL
+## 		rv_training_models$rf_model = NULL
+## 		rv_training_models$gbm_model = NULL
+## 		rv_training_models$xgbTree_model = NULL
+## 		rv_training_models$xgbLinear_model = NULL
+## 		rv_training_models$svmRadial_model = NULL
+## 		rv_training_models$svmLinear_model = NULL
+## 		rv_training_models$svmPoly_model = NULL
+## 		rv_training_models$glmnet_model = NULL
+## 		rv_training_models$lasso_model = NULL
+## 		rv_training_models$ridge_model = NULL
+## 		rv_training_models$knn_model = NULL
+## 		rv_training_models$nnet_model = NULL
+## 					
+## 	})
 }
 
