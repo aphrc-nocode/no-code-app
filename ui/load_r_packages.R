@@ -79,7 +79,6 @@ libraries <- c(
    "themis",
    "vetiver",
    "waiter",
-   "DataQualityDashboard",
    "glue",
    "zip",
    "htmlwidgets"
