@@ -20,7 +20,8 @@ feature_engineering_ui = function() {
 				),
 				conditionalPanel(
 					condition = "input.modelling_framework_choices == 'Pycaret'",
-					uiOutput("automl_module_ui")
+					#uiOutput("automl_module_ui")
+					automl_controls_ui("automl_controls")
 				)
 			),
 			column(width = 9,

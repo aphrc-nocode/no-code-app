@@ -301,6 +301,7 @@ feature_engineering_impute_missing_server = function() {
 
 				if (is.null(partition_objs)) return()
 				
+				
 				rv_ml_ai$split = partition_objs$split
 				rv_ml_ai$train_df = partition_objs$train_df
 				rv_ml_ai$test_df = partition_objs$test_df
@@ -349,6 +350,9 @@ feature_engineering_impute_missing_server = function() {
 					if (is.null(rv_ml_ai$preprocessed)) return()
 
 				} 
+				
+				shinyalert::shinyalert("Done!", get_rv_labels("feature_engineering_apply_success"), type = "success")
+				
 				rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
 				output$feature_engineering_preprocessed_log_ui = renderUI({
 					p(

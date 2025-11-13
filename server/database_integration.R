@@ -33,7 +33,7 @@ database_integration_server <- function(){
         
         shinyalert::shinyalert("", get_rv_labels("db_connect_success"), type = "success")
         query_schemas <-"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog', 'information_schema') AND schema_name NOT LIKE 'pg_%' "
-        schemas <- DatabaseConnector::querySql(conn, query_schemas)$SCHEMA_NAME
+        schemas <- DatabaseConnector::querySql(conn, query_schemas)$schema_name
         schema_list <- schemas
         rv_database$schema_list <- schema_list
         updateSelectInput(session,inputId = "db_schema_list", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )

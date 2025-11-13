@@ -78,6 +78,16 @@ MODELS_DIR = os.path.abspath(MODELS_DIR)
 
 
 REG_PATH = os.path.join("logs", "deployments.json")
+import re
+from pathlib import Path
+
+def slugify(text: str) -> str:
+    text = text or ""
+    text = text.strip().lower()
+    text = re.sub(r"[^\w\-]+", "_", text)
+    text = re.sub(r"_+", "_", text).strip("_")
+    return text or "dataset"
+
 
 def _unwrap_estimator(model):
     from sklearn.pipeline import Pipeline
@@ -95,6 +105,66 @@ def _unwrap_estimator(model):
 
 # ---- helpers ready/stop checks ----
 import socket, http.client
+
+# --- METRICS normalisation helpers ------------------------------------------
+
+_METRIC_ALIASES = {
+    "accuracy": ["accuracy", "acc"],
+    "auc": ["auc", "roc_auc", "roc auc"],
+    "f1": ["f1", "f1 score", "f1_score"],
+    "recall": ["recall", "tpr", "sensitivity"],
+    "precision": ["precision", "ppv"],
+    "kappa": ["kappa", "cohen kappa", "cohen_kappa"],
+    "mcc": ["mcc", "matthews"],
+    "rmse": ["rmse"],
+    "r2": ["r2", "r^2"],
+}
+
+def _normalize_metric_name(s: str) -> str:
+    if not s:
+        return ""
+    k = str(s).strip().lower()
+    for canon, aliases in _METRIC_ALIASES.items():
+        if k == canon or k in aliases:
+            return canon  # clé canonique
+    return k
+
+def _title_metric(canon: str) -> str:
+    # clé canonique -> libellé affiché
+    TITLES = {
+        "accuracy": "Accuracy",
+        "auc": "AUC",
+        "f1": "F1",
+        "recall": "Recall",
+        "precision": "Precision",
+        "kappa": "Kappa",
+        "mcc": "MCC",
+        "rmse": "RMSE",
+        "r2": "R2",
+    }
+    return TITLES.get(canon, canon.title())
+
+def _metrics_to_map(rows) -> dict:
+    """
+    rows: list[dict] tel que renvoyé par clf_pull() ou proche
+    -> dict {canon_metric_name -> float}
+    """
+    out = {}
+    if not isinstance(rows, (list, tuple)):
+        return out
+    for r in rows:
+        # PyCaret varie suivant versions
+        name = r.get("Metric") or r.get("metric") or r.get("Name") or r.get("name")
+        val  = r.get("Score")  or r.get("score")  or r.get("Value") or r.get("value")
+        try:
+            canon = _normalize_metric_name(name)
+            if canon and (val is not None):
+                out[canon] = float(val)
+        except Exception:
+            pass
+    return out
+
+
 
 def _wait_http_ok(host: str, port: int, path: str = "/openapi.json", timeout_s: float = 6.0) -> bool:
     """Wait for GET path to respond with 200 OK (Swagger ready)."""
@@ -265,35 +335,17 @@ def shap_simple_b64(model):
 
 
 def _models_table():
-    """
-    Returns a DataFrame with standardized columns:
-    [‘model_id’, ‘Model’] regardless of the format returned by PyCaret.
-    """
-    md = clf_models().reset_index()  # different versions => variable columns
+    md = clf_models().reset_index()
     cols = {c.lower(): c for c in md.columns}
-
-    # id column (pycaret short code)
-    if 'id' in cols:
-        id_col = cols['id']
-    elif 'index' in md.columns:
-        id_col = 'index'     # sometimes the ID is in the reset index
+    id_col = cols.get('id', 'index')
+    if id_col not in md.columns: id_col = md.columns[0]
+    if 'model' in cols: name_col = cols['model']
+    elif 'name' in cols: name_col = cols['name']
+    elif 'estimator' in cols: name_col = cols['estimator']
     else:
-        id_col = md.columns[0]  # fallback
-
-    # readable label column
-    if 'model' in cols:
-        name_col = cols['model']
-    elif 'name' in cols:
-        name_col = cols['name']
-    elif 'estimator' in cols:
-        name_col = cols['estimator']
-    else:
-        # no label? duplicate the ID
-        md['Model'] = md[id_col].astype(str)
-        name_col = 'Model'
-
+        md['Model'] = md[id_col].astype(str); name_col = 'Model'
     md = md.rename(columns={id_col: 'model_id', name_col: 'Model'})
-    return md[['model_id', 'Model']]
+    return md[['model_id','Model']]
 
 def _extract_base_estimator(model):
     # Try to retrieve the underlying estimator if the model is wrapped
@@ -620,7 +672,9 @@ async def evaluate_model(
     model_id: str | None = Form(None),
     model_name: str | None = Form(None),
     session_id: int = Form(123),
-    train_size: float = Form(0.8)
+    session_name: str | None = Form(None),
+    train_size: float = Form(0.8),
+    dataset_id: str | None = Form(None)
 ):
     # Read CSV
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
@@ -639,6 +693,14 @@ async def evaluate_model(
         html=False,
         verbose=False
     )
+    
+    # --- Dataset slug (unique par dataset) ---
+    if not dataset_id:
+        raise HTTPException(status_code=400, detail="dataset_id is required")
+    dataset_slug = slugify(dataset_id)
+    dataset_name = dataset_id
+
+
 
     # model code (robust)
     code = _resolve_model_id(model_id, model_name)
@@ -680,10 +742,43 @@ async def evaluate_model(
     except Exception:
         roc_data = None
 
+    # ---- Standard metrics (classification) ----
+    metrics_map = {}
+    try:
+        acc   = accuracy_score(y_true, y_pred)
+        rec_w = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+        pre_w = precision_score(y_true, y_pred, average="weighted", zero_division=0)
+        f1_w  = f1_score(y_true, y_pred, average="weighted")
+        kap   = cohen_kappa_score(y_true, y_pred)
+        mcc   = matthews_corrcoef(y_true, y_pred)
+
+        auc_val = None
+        try:
+            if y_score is not None and pd.Series(y_true).nunique() == 2:
+                classes = sorted(pd.Series(y_true).unique().tolist())
+                pos_class = classes[-1]
+                y_bin = (pd.Series(y_true) == pos_class).astype(int)
+                auc_val = roc_auc_score(y_bin, y_score)
+        except Exception:
+            auc_val = None
+
+        metrics_map = {
+            "Accuracy": float(acc),
+            "Recall": float(rec_w),
+            "Precision": float(pre_w),
+            "F1": float(f1_w),
+            "Kappa": float(kap),
+            "MCC": float(mcc)
+        }
+        if auc_val is not None:
+            metrics_map["AUC"] = float(auc_val)
+    except Exception:
+        pass
+
     # Plots recorded by PyCaret (encoded in base64)
     plots = {}
-    debug={}
-    
+    debug = {}
+
     try:
         clf_plot(model, plot='auc', save=True)
         plots["roc"] = _b64("AUC.png")
@@ -699,14 +794,11 @@ async def evaluate_model(
         plots["importance"] = _b64("Feature Importance.png")
     except Exception:
         pass
-        # ---- SHAP summary: first PyCaret interpret_model, otherwise fallback shap_summary_b64 ----
-        # ---- SHAP summary: first via PyCaret, otherwise in-house fallback ----
-# ---- SHAP summary: PyCaret then in-house fallback ----
+
+    # ---- SHAP summary: PyCaret then in-house fallback ----
     try:
         shap_b64 = None
         shap_dbg = []
-
-        # 1) PyCaret attempt (file)
         try:
             if os.path.exists("SHAP Summary Plot.png"):
                 os.remove("SHAP Summary Plot.png")
@@ -719,13 +811,10 @@ async def evaluate_model(
                 shap_dbg.append("pycaret_interpret_model")
         except Exception as e:
             shap_dbg.append(f"interpret_fail:{type(e).__name__}:{str(e)[:120]}")
-
-        # 2) in-house fallback
         if not _is_valid_b64(shap_b64):
             b64_img, dbg = shap_summary_b64(model)
             shap_b64 = b64_img
             if dbg: shap_dbg.append(dbg)
-
         if _is_valid_b64(shap_b64):
             plots["shap_summary"] = shap_b64
         else:
@@ -733,17 +822,120 @@ async def evaluate_model(
     except Exception as e:
         debug["shap_error"] = f"{type(e).__name__}:{str(e)[:160]}"
 
+    # ---------- Save the trained model (PyCaret saves to <MODELS_DIR>/<code>.pkl) ----------
+    model_basename = f"{code}__{dataset_slug}"
+    pkl_path = os.path.join(MODELS_DIR, f"{model_basename}.pkl")
+    try:
+        if os.path.exists(pkl_path):
+            os.remove(pkl_path)  # on remplace proprement l’ancien
+    except Exception:
+        pass
+    save_model(model, os.path.join(MODELS_DIR, model_basename))
 
-    # Saving the template (for later deployment)
-    save_model(model, os.path.join(MODELS_DIR, code))
+
+
+    # ---------- Ensure a side folder exists for metadata ----------
+    model_dir = os.path.join(MODELS_DIR, model_basename)
+    os.makedirs(model_dir, exist_ok=True)
+
+
+    # ---------- Build a robust metrics_map from the PyCaret pull() ----------
+    def _extract_metrics_map(metrics_list):
+        """
+        Accepts list[dict] (from clf_pull().to_dict('records')) and returns a dict metric_name -> float
+        Handles both wide tables (Accuracy, AUC, … as columns) and tall tables (Metric / Value or Score).
+        """
+        mm = {}
+
+        # 1) Wide-style rows: keep only numeric metrics
+        if isinstance(metrics_list, list):
+            for row in metrics_list:
+                if not isinstance(row, dict):
+                    continue
+                # tall style first (Metric/Value or Score)
+                key = str(row.get("Metric") or row.get("metric") or row.get("Name") or "").strip()
+                val = row.get("Value", row.get("Score", None))
+                if key and isinstance(val, (int, float)) and np.isfinite(val):
+                    mm[key] = float(val)
+                # wide style: scan numeric columns (skip obvious non-metrics)
+                for k, v in row.items():
+                    if k in ("Model", "model", "Fold", "Fold #", "TT (Sec)", "Duration", "CPU Times"):
+                        continue
+                    if isinstance(v, (int, float)) and np.isfinite(v):
+                        # keep best value seen for a given key
+                        try:
+                            kk = str(k).strip()
+                            if kk:
+                                mm[kk] = float(v)
+                        except Exception:
+                            pass
+        return mm
+
+    metrics_map = _extract_metrics_map(metrics)  # 'metrics' already built above from clf_pull()
+    available_metrics = sorted([k for k in metrics_map.keys() if k])
+
+    # ---------- Pick a headline metric (best-effort) ----------
+    # Prefer binary-classification metrics first, then generic ones, then regression
+    PREF_ORDER = (
+        "AUC", "Accuracy", "F1", "Recall", "Precision", "Kappa", "MCC",
+        "R2", "RMSE", "MAE"
+    )
+    headline_metric_name = None
+    headline_metric_value = None
+    for cand in PREF_ORDER:
+        if cand in metrics_map:
+            headline_metric_name = cand
+            headline_metric_value = float(metrics_map[cand])
+            break
+    # Fallback if nothing matched
+    if headline_metric_name is None and available_metrics:
+        headline_metric_name = available_metrics[0]
+        headline_metric_value = float(metrics_map[headline_metric_name])
+
+    # ---------- Pretty model display name from the installed PyCaret version ----------
+    try:
+        md = _models_table()   # returns ['model_id','Model']
+        id2name = {str(r["model_id"]).strip(): str(r["Model"]).strip()
+                for _, r in md.iterrows()}
+        model_pretty = id2name.get(code, code)
+    except Exception:
+        model_pretty = code
+
+    # ---------- Build meta payload ----------
+    meta = {
+        #"model_id": code,                         # short code (e.g. "lr")
+        "model_id": model_basename,          # ex. lr__diabetes  (UNIQUE)
+        "model_name": model_pretty,               # human-readable (e.g. "Logistic Regression")
+        "target": target,
+        "session_id": str(session_id),
+        "session_name": session_name or "",
+        "train_size": float(train_size),
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "metric_name": headline_metric_name,      # the metric currently chosen as default
+        "metric_value": headline_metric_value,    # numeric value for that metric
+        "metrics_map": metrics_map,               # dict metric -> float (used by the R UI)
+        "available_metrics": available_metrics,   # list for the <select> in the R UI
+        "dataset_id": dataset_id or "",
+        "dataset_name": dataset_name,
+        "dataset_slug": dataset_slug,
+        "model_basename": model_basename
+    }
+
+
+
+    # ---------- Write meta.json next to the model ----------
+    with open(os.path.join(model_dir, "meta.json"), "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
 
     resp = {
-        "metrics": metrics,     # list[dict]
+        "metrics": metrics,     # list[dict] from clf_pull()
         "plots": plots,         # dict of base64
         "extras": {
             "confusion_matrix": cm,    # list[list] or None
-            "roc_curve": roc_data,      # dict or None
-            "debug":debug
+            "roc_curve": roc_data,     # dict or None
+            "metrics_map": metrics_map,
+            "debug": debug
         }
     }
     return JSONResponse(content=clean_json(resp))
@@ -1076,7 +1268,10 @@ def serve_model(port: int, model_id: str):
     - We load the model at boot time and expose /health, / (-> /docs), /predict.
     """
     # --- Deduce the “code” from the composite key ---
-    code = model_id.split("__", 1)[0] if "__" in model_id else model_id
+    # Use full basename for loading; keep code for display only
+    model_basename = model_id
+    code = model_basename.split("__", 1)[0] if "__" in model_basename else model_basename
+
 
     # --- Local imports to avoid parent-side collisions ---
     from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -1109,8 +1304,9 @@ def serve_model(port: int, model_id: str):
             load_model_fn = _load_model_reg
 
         # PyCaret 3: accepts “basename” without .pkl
-        model_path_base = str((MODELS_DIR / code).resolve())
+        model_path_base = str((MODELS_DIR / model_basename).resolve())
         model = load_model_fn(model_path_base)
+
     except Exception as e:
         # In case of clear failure, we raise: the parent will cut the process
         raise RuntimeError(f"Failed to load model '{code}': {e}")
@@ -1193,7 +1389,7 @@ def serve_model(port: int, model_id: str):
         return FileResponse(
             tmp_path,
             media_type="text/csv",
-            filename=f"predictions_{code}.csv"
+            filename=f"predictions_{model_basename}.csv"
         )
 
 
@@ -1298,27 +1494,34 @@ def _to_bool(x) -> bool:
 @app.post("/predict_deployed_model")
 async def predict_deployed_model(
     file: UploadFile = File(...),
+    model_name: Optional[str] = Form(None),
     proba: Optional[str] = Form("false"),
-    # optional and ignored if not used by you:
     session_id: Optional[str] = Form(None),
     target: Optional[str] = Form(None),
 ):
     proba = _to_bool(proba)
 
-    model_path = (MODELS_DIR / "deployed_model.pkl").resolve()
-    if not model_path.exists():
-        raise HTTPException(status_code=400, detail=f"Deployed model not found at {model_path}")
+    # --- Détermination dynamique du modèle à charger ---
+    if model_name:
+        model_path = (MODELS_DIR / model_name).resolve()
+    else:
+        # fallback: cherche un .pkl dans le dossier models/
+        model_files = list(MODELS_DIR.glob("*.pkl"))
+        if not model_files:
+            raise HTTPException(status_code=400, detail="No model .pkl found in models directory.")
+        model_path = model_files[0]
 
-    # read the uploaded CSV file
+    if not model_path.exists():
+        raise HTTPException(status_code=400, detail=f"Model file not found at {model_path}")
+
+    # --- Lecture du CSV uploadé ---
     raw = await file.read()
     try:
         df = pd.read_csv(io.BytesIO(raw))
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Invalid CSV: {e}")
 
-    # Load the deployed model (PyCaret)
-    # -> if you are doing classification: from pycaret.classification import load_model, predict_model
-    # -> otherwise regression: from pycaret.regression import load_model, predict_model
+    # --- Chargement du modèle PyCaret (classification ou régression) ---
     try:
         from pycaret.classification import load_model, predict_model
         is_classification = True
@@ -1327,29 +1530,93 @@ async def predict_deployed_model(
         is_classification = False
 
     try:
-        model = load_model(str(model_path).replace(".pkl", ""))  # PyCaret 3 accepts base names without .pkl
+        # PyCaret 3.x : load_model sans extension
+        model = load_model(str(model_path).replace(".pkl", ""))
     except Exception:
-        # fallback if the file is already a complete pickle
+        # Fallback pickle brut
         import pickle
         with open(model_path, "rb") as f:
             model = pickle.load(f)
 
+    # --- Prédiction ---
     try:
         preds = predict_model(model, data=df, raw_score=proba if is_classification else False)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
-    # Save a temporary CSV file to be sent back
+    # --- Sauvegarde temporaire CSV ---
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
     tmp_path = tmp.name
     tmp.close()
     preds.to_csv(tmp_path, index=False, encoding="utf-8")
 
-    # Return a CSV file (Content-Type text/csv)
-    filename = "predictions.csv"
+    # --- Réponse ---
     return FileResponse(
         tmp_path,
         media_type="text/csv",
-        filename=filename
+        filename=f"predictions_{model_path.stem}.csv"
     )
 
+
+from pathlib import Path
+@app.get("/saved_models")
+def saved_models():
+    """
+    Liste les modèles enregistrés dans MODELS_DIR.
+    Retourne pour chaque item :
+      model_id, model_name, target, session_id, created_at,
+      metric_name, metric_value, metrics_map, available_metrics
+    """
+    items = []
+    try:
+        for p in sorted(os.listdir(MODELS_DIR)):
+            base = os.path.join(MODELS_DIR, p)
+            if not os.path.isdir(base):
+                continue
+            meta_path = os.path.join(base, "meta.json")
+            if not os.path.exists(meta_path):
+                continue
+            try:
+                with open(meta_path, "r", encoding="utf-8") as f:
+                    m = json.load(f)
+            except Exception:
+                continue
+
+            # robust fallbacks
+            metrics_map = m.get("metrics_map") or {}
+            if not isinstance(metrics_map, dict):
+                metrics_map = {}
+
+            # human-readable metric name/value if missing
+            metric_name  = m.get("metric_name")
+            metric_value = m.get("metric_value")
+            if (metric_name is None or metric_value is None) and metrics_map:
+                # pick best available by same preference
+                for cand in ("accuracy","auc","f1","recall","precision","kappa","mcc","r2","rmse"):
+                    if cand in metrics_map:
+                        metric_name  = _title_metric(cand)
+                        metric_value = float(metrics_map[cand])
+                        break
+
+            avail = m.get("available_metrics")
+            if not avail and metrics_map:
+                avail = [_title_metric(k) for k in metrics_map.keys()]
+
+            items.append({
+                "model_id":   m.get("model_id") or p,
+                "model_name": m.get("model_name") or p,
+                "target":     m.get("target") or "",
+                "session_id": m.get("session_id") or "",
+                "session_name": m.get("session_name", ""),
+                "created_at": m.get("created_at"),
+                "metric_name": metric_name,
+                "metric_value": metric_value,
+                "metrics_map": metrics_map,          # <- important pour le client
+                "available_metrics": avail or [],
+                "dataset_name": m.get("dataset_name") or "",
+                "dataset_slug": m.get("dataset_slug") or "",
+            })
+    except Exception:
+        pass
+
+    return {"items": items}

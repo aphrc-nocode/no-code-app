@@ -8,10 +8,9 @@ source("R/shinyutilities.R")
 source(paste0(getwd(), "/server/maskedpassinput.R"))
 # U1 Add this line of code to call automl_UI from UI folder
 source("ui/automl_ui.R")
-# automl controls
+# Automl controls
 source("ui/automl_controls_ui.R")
 source("ui/train_model_ui.R")
-
 
 # Load UI function before deploy_model_ui()
 source("ui/deploy_model_ui.R")

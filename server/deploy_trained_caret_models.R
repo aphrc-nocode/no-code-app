@@ -1,7 +1,7 @@
 #### ---- Deploy trained model ------------------------------------- ####
 
 deploy_trained_caret_models = function() {
-	observeEvent(c(input$manage_data_apply, input$model_training_apply), {
+	observeEvent({list(input$manage_data_apply, input$model_training_apply)}, {
 		req(!is.null(rv_current$working_df))
 		req(!is.null(rv_current$dataset_id))
 		req(isTRUE(Rautoml::check_logs(path=".log_files", pattern="-trained.model.main.log")))
@@ -40,18 +40,20 @@ deploy_trained_caret_models = function() {
 		})	
 		
 		## Models in summary table
-		output$deploy_trained_caret_models_select_model = renderUI({
-			req(isTRUE(check_trained_data))
-			req(NROW(rv_deploy_models$trained_models_table)>0)
-			temp_model_labels = Rautoml::extract_value_labels(rv_deploy_models$trained_models_table, "model")
-			selectInput("deploy_trained_caret_models_select_model"
-				, label = get_rv_labels("deploy_trained_caret_models_select_model")
-				, choices = temp_model_labels 
-				, selected = temp_model_labels
-				, multiple = TRUE
-				, width = NULL
-			)	
-		})	
+		observeEvent(input$deploy_trained_caret_models_select_session, {
+			output$deploy_trained_caret_models_select_model = renderUI({
+				req(isTRUE(check_trained_data))
+				req(NROW(rv_deploy_models$trained_models_table)>0)
+				temp_model_labels = Rautoml::extract_value_labels(rv_deploy_models$trained_models_table, "model")
+				selectInput("deploy_trained_caret_models_select_model"
+					, label = get_rv_labels("deploy_trained_caret_models_select_model")
+					, choices = temp_model_labels 
+					, selected = temp_model_labels
+					, multiple = TRUE
+					, width = NULL
+				)	
+			})	
+		})
 	  
 		output$deploy_trained_caret_models_table = DT::renderDT({
 			req(input$deploy_trained_caret_models_select_session)
@@ -340,5 +342,6 @@ deploy_trained_caret_models = function() {
 		})
 		
 	})
+
 }
 

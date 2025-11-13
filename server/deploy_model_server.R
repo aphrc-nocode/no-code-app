@@ -1,620 +1,546 @@
-deployment_server <- function(id, rv_ml_ai, rv_current, api_base="http://127.0.0.1:8000") {
-  moduleServer(id, function(input, output, session) {
+deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
+    # --- helpers for normalizing metric names ---
     `%||%` <- function(a, b) if (is.null(a)) b else a
 
-    safe_id <- function(x) gsub("[^A-Za-z0-9_]", "_", x)
-    make_key <- function(code, id, sess) {
-      a <- as.character(code %||% id %||% "")
-      b <- as.character(sess %||% "")
-      paste0(a, "__", b)  # ex: "lr__test"
+    .slugify <- function(s) {
+      s <- tolower(trimws(s %||% ""))
+      s <- gsub("[^a-z0-9\\-]+", "_", s)
+      s <- gsub("_+", "_", s)
+      s <- gsub("^_|_$", "", s)
+      s
+    }
+
+    .parse_time <- function(x) {
+      out <- suppressWarnings(as.POSIXct(x, tz = "UTC"))
+      if (all(is.na(out))) out <- suppressWarnings(as.POSIXct(x, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+      if (all(is.na(out))) out <- suppressWarnings(as.POSIXct(gsub("Z$","", x), format = "%Y-%m-%dT%H:%M:%S", tz = "UTC"))
+      out
     }
 
 
-    rv_deploy <- reactiveValues(
-      deployed = data.frame(
-        model_id = character(0),
-        model    = character(0),
-        session_id = character(0),
-        url     = character(0),
-        api     = character(0),
-        status  = character(0),
+    normalize_metric <- function(x) {
+      x <- tolower(trimws(x %||% ""))
+      aliases <- list(
+        accuracy = c("accuracy","acc"),
+        auc      = c("auc","roc_auc","roc auc"),
+        f1       = c("f1","f1 score","f1_score"),
+        recall   = c("recall","tpr","sensitivity"),
+        precision= c("precision","ppv"),
+        kappa    = c("kappa","cohen kappa","cohen_kappa"),
+        mcc      = c("mcc","matthews"),
+        rmse     = c("rmse"),
+        r2       = c("r2","r^2")
+      )
+      for (nm in names(aliases)) if (x %in% aliases[[nm]]) return(nm)
+      x
+    }
+    title_metric <- function(canon) {
+      lut <- c(accuracy="Accuracy", auc="AUC", f1="F1", recall="Recall",
+              precision="Precision", kappa="Kappa", mcc="MCC", rmse="RMSE", r2="R2")
+      if (!is.na(lut[canon])) lut[canon] else tools::toTitleCase(canon)
+    }
+
+    refresh_key <- reactiveVal(0)
+
+    # ------------------------------------------------------------
+    # 0) DATASET CONTEXT (optional)
+    # ------------------------------------------------------------
+    current_dataset <- reactiveVal(NULL)
+    observe({
+      ds <- rv_ml_ai$dataset_id %||% rv_current$dataset_id
+      if (!is.null(ds) && nzchar(ds)) current_dataset(ds)
+    })
+    output$dataset_info <- renderUI({
+      ds <- current_dataset()
+      if (is.null(ds) || !nzchar(ds)) {
+        div(
+          tags$strong("No dataset selected yet."),
+          p("Pick a dataset to discover existing trained models and deploy one.")
+        )
+      } else {
+        div(
+          tags$strong("Selected dataset: "), code(ds), br(),
+          tags$em("If trained PyCaret models exist for this dataset, they’ll appear below.")
+        )
+      }
+    })
+
+    output$dataset_selector <- renderUI({
+      ds <- current_dataset()
+      if (!is.null(ds) && nzchar(ds)) return(NULL)
+      choices <- rv_current$known_datasets
+      if (is.null(choices) || length(choices) == 0) return(div(tags$em("No datasets indexed yet.")))
+      selectInput(ns("pick_dataset"), "Choose dataset", choices = choices, selected = NULL)
+    })
+    observeEvent(input$pick_dataset, {
+      req(input$pick_dataset); current_dataset(input$pick_dataset)
+    }, ignoreInit = TRUE)
+
+    # ------------------------------------------------------------
+    # 1) READY FLAG (for conditionalPanel in the UI)
+    # ------------------------------------------------------------
+    ready_flag <- reactive({
+      # (A) a completed PyCaret run
+      cond_train <- isTRUE(rv_ml_ai$status %in% c("Finished","Finished_NoPlots")) &&
+                    !is.null(rv_ml_ai$leaderboard) && NROW(rv_ml_ai$leaderboard) > 0
+      # (B) a selected dataset + available history
+      ds   <- current_dataset()
+      imap <- index_map()
+      cond_hist <- !is.null(ds) && nzchar(ds) && !is.null(imap) && any(imap$dataset_id == ds & (imap$framework %in% c("PyCaret","pycaret","Pycaret")))
+      isTRUE(cond_train || cond_hist)
+    })
+    output$ready_flag <- reactive({ ready_flag() })
+    outputOptions(output, "ready_flag", suspendWhenHidden = FALSE)
+
+    output$prereq_status <- renderUI({
+      if (isTRUE(ready_flag())) return(HTML(""))
+      HTML("<div class='alert alert-info' role='alert' style='margin-top:8px;'>
+      Deployment unavailable: Run <b>PyCaret</b> (Launch AutoML → Train) 
+      or choose a <b>dataset</b> that already has trained models. </div>")
+    })
+
+
+    # ------------------------------------------------------------
+    # 2) DATA SOURCES (API)
+    #    /saved_models: list of saved models (with meta)
+    #    /deployments: list of models already deployed (status)
+    # ------------------------------------------------------------
+    .get_saved_models <- function() {
+      url <- paste0(api_base, "/saved_models")
+      res <- try(httr::GET(url), silent = TRUE)
+      if (inherits(res, "try-error") || httr::http_error(res)) return(NULL)
+      txt <- httr::content(res, as = "text", encoding = "UTF-8")
+      # IMPORTANT: no simplify to preserve list-columns
+      j <- try(jsonlite::fromJSON(txt, simplifyVector = FALSE), silent = TRUE)
+      if (inherits(j, "try-error") || is.null(j$items)) return(NULL)
+      j$items  # list of items (each is a named list)
+    }
+    .get_deployments <- function() {
+      url <- paste0(api_base, "/deployments")
+      res <- try(httr::GET(url), silent = TRUE)
+      if (inherits(res, "try-error") || httr::http_error(res)) return(data.frame())
+      txt <- httr::content(res, as = "text", encoding = "UTF-8")
+      j <- try(jsonlite::fromJSON(txt), silent = TRUE)
+      if (inherits(j, "try-error") || is.null(j$items)) return(data.frame())
+      as.data.frame(j$items, stringsAsFactors = FALSE)
+    }
+
+    # Index of historical models: logs/models/index.csv
+    .index_path <- function() file.path(getwd(), "logs", "models", "index.csv")
+
+    index_map <- reactive({
+      p <- .index_path()
+      if (!file.exists(p)) return(NULL)
+      df <- tryCatch(read.csv(p, stringsAsFactors = FALSE, check.names = FALSE), error = function(e) NULL)
+      if (is.null(df) || !"dataset_id" %in% names(df) || !"model" %in% names(df)) return(NULL)
+
+      # standard model key (always lowercase code, no spaces)
+      df$model <- tolower(gsub("\\s+", "", trimws(df$model)))
+
+      # prioritize lines with a “displayable session name”
+      # (session_name not NA/not empty OR session_id not NA/not empty)
+      has_name <- (!is.na(df$session_name) & nzchar(as.character(df$session_name))) |
+                  (!is.na(df$session_id)   & nzchar(as.character(df$session_id)))
+
+      # try to sort by date as well, if available
+      suppressWarnings({
+        dt <- try(as.POSIXct(df$date_trained), silent = TRUE)
+        if (inherits(dt, "try-error")) dt <- rep(Sys.time(), nrow(df))
+      })
+
+      ord <- order(-as.integer(has_name), -as.numeric(dt))
+      df <- df[ord, , drop = FALSE]
+
+      # keep 1 line per model (the “best” thanks to the order)
+      df <- df[!duplicated(df$model), , drop = FALSE]
+      df
+    })
+    # Raw data (without filters)
+    raw_models <- reactive({
+      refresh_key()
+      items <- .get_saved_models()
+      if (is.null(items) || length(items) == 0) return(data.frame())
+
+      # Build a data.frame + keep list-columns for metrics_map/available_metrics
+      df <- data.frame(
+        model_id   = vapply(items, function(x) x$model_id   %||% "", character(1)),
+        model_name = vapply(items, function(x) x$model_name %||% "", character(1)),
+        target     = vapply(items, function(x) x$target     %||% "", character(1)),
+        session_id = vapply(items, function(x) x$session_id %||% "", character(1)),
+        session_name = vapply(items, function(x) x$session_name %||% "", character(1)),
+        metric_name  = vapply(items, function(x) x$metric_name  %||% "", character(1)),
+        metric_value = vapply(items, function(x) x$metric_value %||% NA_real_, numeric(1)),
+        created_at = vapply(items, function(x) x$created_at %||% "", character(1)),
+        framework  = "PyCaret",
         stringsAsFactors = FALSE
       )
-    )
 
-    # --- Periodic retrieval of the backend status (/deployments) ---
-    fetch_deployments <- function() {
-      res <- tryCatch(httr::GET(paste0(api_base, "/deployments"), httr::timeout(10)), error = function(e) NULL)
-      if (is.null(res) || httr::http_error(res)) return(data.frame())
-      out <- tryCatch(httr::content(res, as = "parsed", type = "application/json"), error = function(e) list(items = list()))
-      items <- out$items %||% list()
-      if (!length(items)) return(data.frame())
-      as.data.frame(do.call(rbind, lapply(items, as.data.frame)), stringsAsFactors = FALSE)
-    }
+      # fields returned by /saved_models (if present)
+      df$dataset_name <- vapply(items, function(x) x$dataset_name %||% "", character(1))
+      df$dataset_slug <- vapply(items, function(x) x$dataset_slug %||% "", character(1))
 
-    # refreshes every 2 seconds
-    deployed_df <- reactivePoll(2000, session,
-      checkFunc = function() { Sys.time() },
-      valueFunc = function() {
-        df <- fetch_deployments()
-        need <- c("model_id","model","url","api","status")
+      # ---- COALESCE FOR DISPLAY: display the session name if it exists ----
+      df$session_id <- ifelse(nzchar(df$session_name), df$session_name, df$session_id)
 
-        # Add the missing columns while respecting the number of rows (0 or >0)
-        for (nm in need) {
-          if (!nm %in% names(df)) {
-            df[[nm]] <- if (NROW(df)) NA_character_ else character(0)
+
+      # extract the template code (prefix before __)
+      df$model_code <- sub("^([a-z]+).*", "\\1", tolower(df$model_id %||% ""))
+
+      # attach list-cols
+      df$metrics_map <- lapply(items, function(x) x$metrics_map %||% list())
+      df$available_metrics <- lapply(items, function(x) x$available_metrics %||% list())
+      # === Filtering by dataset: priority index.csv, then filter by slug =====
+      imap <- index_map()
+      ds   <- current_dataset()
+      want <- .slugify(ds)
+
+      if (!is.null(ds) && nzchar(ds)) {
+        if (!is.null(imap)) {
+          # index.csv -> we compare the CODES (ridge, lr, rf, …)
+          keep_codes <- unique(imap$model[imap$dataset_id == ds & (imap$framework %in% c("PyCaret","pycaret","Pycaret"))])
+          keep_codes <- tolower(trimws(keep_codes))
+          if (length(keep_codes)) {
+            df <- df[df$model_code %in% keep_codes, , drop = FALSE]
+          } else {
+            df <- df[0, , drop = FALSE]
           }
         }
 
-        # Ensure order + character types
-        df <- df[, need, drop = FALSE]
-        for (nm in need) df[[nm]] <- as.character(df[[nm]])
-        df
+        # --- In ALL cases: second filter by dataset slug (avoids old files...) ---
+        if (nrow(df)) {
+          # normalize meta if absent
+          if (!("dataset_slug" %in% names(df))) df$dataset_slug <- NA_character_
+          df$dataset_slug <- tolower(df$dataset_slug)
+
+          # suffixe <code>__<suffix>
+          df$model_suffix <- tolower(sub("^[a-z]+__?", "", df$model_id))
+
+          has_meta <- nzchar(df$dataset_slug)
+          keep2 <- logical(nrow(df))
+          # a) meta explicit
+          keep2[has_meta] <- df$dataset_slug[has_meta] == want
+          # b) fallback: suffix of the model_id
+          keep2[!has_meta] <- df$model_suffix[!has_meta] == want
+
+          df <- df[keep2, , drop = FALSE]
+        }
       }
-    )
 
+      # --- Attach a session label “display_session” from the index --------
+      if (!is.null(imap) && !is.null(ds) && nzchar(ds) && nrow(df)) {
+        sub <- imap[imap$dataset_id == ds & (imap$framework %in% c("PyCaret","pycaret","Pycaret")),
+                    c("model","session_name","session_id"), drop = FALSE]
 
+        if (nrow(sub)) {
+          # normalize the model key (code)
+          sub$model <- tolower(gsub("\\s+", "", trimws(sub$model)))
 
-        # Final URLs (“single active template” version)
-    predict_url <- function() paste0(api_base, "/predict_deployed_model")
-    docs_url    <- function() paste0(api_base, "/docs")   # or “/__docs__” depending on your configuration
+          # function that selects the best display value for 1 model
+          choose_display <- function(sn, sid) {
+            sn  <- as.character(sn);  sn[!nzchar(sn)]  <- NA_character_
+            sid <- as.character(sid); sid[!nzchar(sid)] <- NA_character_
 
-    # Retrieves a “selection” view from the filtered table at the top
-    selected_models_view <- reactive({
-      # we use the table that has already been built (deploy_table())
-      df <- deploy_table()
-      if (is.null(df) || !NROW(df)) return(df)
+            # 1) session_name “human” (different from “session_###”)
+            cand1 <- sn[!is.na(sn) & !grepl("^session_\\d+$", sn)]
+            if (length(cand1) && any(nzchar(cand1))) return(cand1[1])
 
-      # if the user has performed a search/filter, we take everything that remains visible
+            # 2) Non-numeric session_id (e.g., “test”)
+            cand2 <- sid[!is.na(sid) & !grepl("^\\d+$", sid)]
+            if (length(cand2) && any(nzchar(cand2))) return(cand2[1])
+
+            # 3) otherwise any session_name
+            cand3 <- sn[!is.na(sn)]
+            if (length(cand3) && any(nzchar(cand3))) return(cand3[1])
+
+            # 4) otherwise session_id (same numeric value)
+            cand4 <- sid[!is.na(sid)]
+            if (length(cand4) && any(nzchar(cand4))) return(cand4[1])
+
+            NA_character_
+          }
+
+          # aggregation by model -> a display_session value
+          agg <- by(sub, sub$model, function(g) {
+            data.frame(
+              model = unique(as.character(g$model))[1],
+              display_session = choose_display(g$session_name, g$session_id),
+              stringsAsFactors = FALSE
+            )
+          })
+          map <- do.call(rbind, as.list(agg))
+          if (!is.null(map) && nrow(map)) {
+            df$model_id <- tolower(gsub("\\s+", "", trimws(df$model_id)))
+            df$display_session <- map$display_session[ match(df$model_id, map$model) ]
+          } else {
+            df$display_session <- NA_character_
+          }
+        } else {
+          df$display_session <- NA_character_
+        }
+      } else if (nrow(df)) {
+        df$display_session <- NA_character_
+      }
+      
       df
     })
 
-    # --- Combined view: visible candidates + backend status + Start/Stop button ---
-# --- Combined view: visible candidates + backend status + Start/Stop button ---
-    deploy_view <- reactive({
-      cand <- deploy_table()
-      remote <- deployed_df()
-      dep <- if (NROW(remote)) remote else (rv_deploy$deployed %||% data.frame())
+    # ------------------------------------------------------------
+    # #3) FILTERS (UI): sessions & metrics
+    # ------------------------------------------------------------
+    output$session_filter <- renderUI({
+    df <- filtered_models()
+    ch <- unique(na.omit(as.character(df$session_id)))
+    ch <- ch[ch != ""]
+    selectInput(ns("f_session"), "Session", choices = c("All", ch), selected = "All")
+      })
+    output$metric_picker <- renderUI({
+      df <- raw_models()
+      allm <- unique(unlist(df$available_metrics, use.names = FALSE))
+      allm <- allm[!is.na(allm) & nzchar(allm)]
+      if (length(allm) == 0) {
+        allm <- c("Accuracy","AUC","F1","Recall","Precision","Kappa","MCC","RMSE","R2")
+      }
+      default_metric <- if ("Accuracy" %in% allm) "Accuracy" else allm[1]
+      selectInput(ns("f_metric"), "Metric", choices = allm, selected = default_metric)
+    })
 
-      if (is.null(cand) || !NROW(cand)) {
-        if (!NROW(dep)) return(data.frame())
-        out <- dep
-        if (!"session_id" %in% names(out)) out$session_id <- NA_character_
-      } else {
-        # BEFORE the merge, keep the model_id from deploy_table() (already = model_key)
-        key_cand <- cand$model_id %||% cand$model_code %||% cand$model
-        cand$model_id <- as.character(key_cand)
+    # Applying filters + status enrichment
+    filtered_models <- reactive({
+      refresh_key()
+      df <- raw_models()
+      if (!nrow(df)) return(df)
 
-
-        need_dep <- c("model_id","url","api","status")
-        for (nm in need_dep) if (!nm %in% names(dep)) dep[[nm]] <- NA_character_
-        # ensure that the model_id column is of type character
-        cand$model_id <- as.character(cand$model_id)
-
-        out <- merge(
-          cand[, c("model_id","model","session_id"), drop = FALSE],
-          dep[,  need_dep, drop = FALSE],
-          by = "model_id", all.x = TRUE, sort = FALSE
-        )
+      # --- Session filter
+      if (!is.null(input$f_session) && input$f_session != "All") {
+        df <- subset(df, session_id == input$f_session)
       }
 
-      # Default status
-      out$status[is.na(out$status) | out$status == ""] <- "Not deployed"
-      # Valid IDs for inputId (no spaces/accents)
-      safe_id <- function(x) gsub("[^A-Za-z0-9_]", "_", x)
+      # --- selected metric -> keep NUMERIC here
+      chosen <- input$f_metric
+      if (!is.null(chosen) && nzchar(chosen)) {
+        canon <- normalize_metric(chosen)        # Canonization function
+        df$metric_name <- title_metric(canon)    # Wording for display
 
-      # Start/Stop buttons per line (no vectorized ifelse)
-      out$action <- vapply(seq_len(NROW(out)), function(i) {
-        mid_safe <- safe_id(out$model_id[i])
-        if (identical(out$status[i], "Deployed")) {
-          as.character(actionButton(ns(paste0("stop_", mid_safe)), "Stop", class = "btn btn-warning btn-sm"))
+        df$metric_value <- vapply(seq_len(nrow(df)), function(i) {
+          mm <- df$metrics_map[[i]]
+          if (is.null(mm) || length(mm) == 0) return(NA_real_)
+          # search for the canonical key first, then for variants
+          val <- mm[[canon]]
+          if (is.null(val)) {
+            val <- mm[[chosen]] %||% mm[[tolower(chosen)]] %||% mm[[toupper(chosen)]]
+          }
+          suppressWarnings(as.numeric(val))
+        }, numeric(1))
+      } else {
+        # if no metric is selected, ensure a numeric value (avoid list/character)
+        df$metric_value <- rep(NA_real_, nrow(df))
+      }
+
+      # --- deployment status (merge correct, not all_x)
+      depl <- .get_deployments()
+      if (nrow(depl) > 0 && "model_id" %in% names(depl)) {
+        keep <- intersect(c("model_id","status","api","url"), names(depl))
+        depl2 <- unique(depl[, keep, drop = FALSE])
+        df <- merge(df, depl2, by = "model_id", all.x = TRUE, sort = FALSE)
+        if (!"status" %in% names(df)) df$status <- NA_character_
+        df$status[is.na(df$status)] <- "Not deployed"
+      } else {
+        df$status <- "Not deployed"
+      }
+
+      # --- DEDUP: only one line per model_code (best metric_value, otherwise most recent) ---
+      if (nrow(df)) {
+        # restore raw digital data for comparison
+        score_num <- suppressWarnings(as.numeric(df$metric_value))
+        dt_parsed <- .parse_time(df$created_at)
+
+        df$model_code <- sub("^([a-z]+).*", "\\1", tolower(df$model_id))
+
+        pick_best <- function(d) {
+          sc <- suppressWarnings(as.numeric(d$metric_value))
+          if (any(is.finite(sc))) {
+            return(d[which.max(replace(sc, !is.finite(sc), -Inf))[1], , drop = FALSE])
+          }
+          dt <- .parse_time(d$created_at)
+          if (any(!is.na(dt))) {
+            return(d[order(dt, decreasing = TRUE, na.last = NA)[1], , drop = FALSE])
+          }
+          d[1, , drop = FALSE]
+        }
+        df <- do.call(rbind, lapply(split(df, df$model_code), pick_best))
+        rownames(df) <- NULL
+      }
+
+      # --- display formatting (DO ONCE ONLY)
+      # 3 decimal places -> new text column (avoids breaking the number)
+      df$metric_value <- ifelse(
+        is.na(df$metric_value),
+        NA_character_,
+        sprintf("%.3f", as.numeric(df$metric_value))
+      )
+
+      # legible date
+      suppressWarnings({
+        dt <- try(as.POSIXct(df$created_at, tz = "UTC"), silent = TRUE)
+        if (!inherits(dt, "try-error")) {
+          df$created_at <- format(dt, "%Y-%m-%d %H:%M")
+        }
+      })
+
+      df
+    })
+
+    # ------------------------------------------------------------
+    # 4) MAIN TABLE + Deploy Button
+    # ---------------- --------------------------------------------
+    # --- Session Display: prefer session_name (text) to session_id (integer)
+
+    output$validate_table <- DT::renderDataTable({
+      df <- filtered_models()
+      # ---- Force the display of “session_id” from the index (current dataset) ----
+      imap <- index_map()
+      ds   <- current_dataset()
+
+      if (!is.null(imap) && !is.null(ds) && nzchar(ds) && nrow(df)) {
+        sub <- imap[imap$dataset_id == ds & (imap$framework %in% c("PyCaret","pycaret","Pycaret")),
+                    c("model","session_name","session_id"), drop = FALSE]
+
+        if (nrow(sub)) {
+          # key = model code (lowercase, no spaces)
+          norm_code <- function(x) tolower(gsub("\\s+", "", trimws(x)))
+          sub$model <- norm_code(sub$model)
+          choose_display <- function(sn, sid) {
+            sn  <- as.character(sn);  sn[!nzchar(sn)]  <- NA_character_
+            sid <- as.character(sid); sid[!nzchar(sid)] <- NA_character_
+            cand <- c(
+              sn[!is.na(sn)  & !grepl("^session_\\d+$", sn)],
+              sid[!is.na(sid) & !grepl("^\\d+$", sid)],
+              sn[!is.na(sn)],
+              sid[!is.na(sid)]
+            )
+            if (length(cand)) cand[1] else NA_character_
+          }
+
+          # aggregation model -> display_session
+          map <- tapply(
+            X    = seq_len(nrow(sub)),
+            INDEX= sub$model,
+            FUN  = function(ix) choose_display(sub$session_name[ix], sub$session_id[ix])
+          )
+          map <- as.character(map)
+          keys <- names(map)
+
+          # applies to the displayed DF
+          df$model_id  <- norm_code(df$model_id)
+          disp <- map[ match(df$model_id, keys) ]
+
+          # fallback: keep the original if nothing is found in the index
+          orig <- as.character(df$session_id)
+          disp[is.na(disp) | !nzchar(disp)] <- orig[is.na(disp) | !nzchar(disp)]
+
+          df$session_id <- disp
+        }
+      }
+
+      df$swagger <- vapply(seq_len(nrow(df)), function(i) {
+        api <- df$api[i] %||% ""
+        if (nzchar(api)) sprintf("<a href='%s' target='_blank'>Swagger</a>", htmltools::htmlEscape(api)) else ""
+      }, character(1))
+
+      show_cols <- c("model_id","model_name","target","session_id","metric_name",
+                    "metric_value","framework","created_at","swagger","status")
+      show_cols <- show_cols[show_cols %in% names(df)]
+      df <- df[, show_cols, drop = FALSE]
+
+      df$action <- vapply(seq_len(nrow(df)), function(i) {
+        mid <- df$model_id[i]
+        st  <- tolower(df$status[i] %||% "")
+        if (st == "deployed") {
+          sprintf("<button class='btn btn-sm btn-danger action-stop' data-model='%s'>Stop</button>", mid)
         } else {
-          as.character(actionButton(ns(paste0("start_", mid_safe)), "Start", class = "btn btn-success btn-sm"))
+          sprintf("<button class='btn btn-sm btn-primary action-deploy' data-model='%s'>Deploy</button>", mid)
         }
       }, character(1))
 
-
-      out
+      DT::datatable(df, rownames = FALSE, escape = FALSE, options = list(pageLength = 10, dom = "tip"))
     })
 
 
 
-    # small factory with a ‘deployed’ line
-    make_deployed_row <- function(model_id, model, session_id, status, url = NA_character_, api = NA_character_) {
-      data.frame(
-        model_id   = as.character(model_id),
-        model      = as.character(model),
-        session_id = as.character(session_id),
-        url        = as.character(url),
-        api        = as.character(api),
-        status     = as.character(status),
-        stringsAsFactors = FALSE
-      )
-    }
-
-
-
-      observeEvent(input$deploy_selected, {
-        df <- selected_models_view()
-        if (is.null(df) || !NROW(df)) {
-          showNotification("No visible templates to deploy (empty filter?)", type = "warning")
-          return()
-        }
-        idx <- input$logs_table_rows_selected
-        if (is.null(idx) || !length(idx)) idx <- 1L
-        row <- df[idx[1], , drop = FALSE]
-
-        model_code <- row$model_code %||% row$model_id %||% row$model
-        model_name <- row$model       %||% row$model_code
-        session_id <- row$session_id  %||% ""
-        model_key  <- make_key(model_code, row$model_id, session_id)  # <-- uniq key
-
-        if (is.null(model_code) || !nzchar(as.character(model_code))) {
-          showNotification("Unable to determine the model ID.", type="error")
-          return()
-        }
-
-        body <- list(
-          model_id   = as.character(model_key),  # <-- send the unique key to the backend
-          model_name = as.character(model_name),
-          session_id = as.character(session_id)
-        )
-
-        res <- tryCatch(
-          httr::POST(paste0(api_base, "/deploy_model"), body = body, encode = "form", httr::timeout(120)),
-          error = function(e) e
-        )
-        if (inherits(res, "response") && httr::status_code(res) == 422) {
-          res <- tryCatch(
-            httr::POST(paste0(api_base, "/deploy_model"), body = body, encode = "multipart", httr::timeout(120)),
-            error = function(e) e
-          )
-        }
-        if (!inherits(res, "response") || httr::http_error(res)) {
-          msg <- if (inherits(res, "response")) paste(httr::status_code(res), httr::content(res, as="text", encoding="UTF-8")) else conditionMessage(res)
-          showNotification(paste("Deploy error:", msg), type = "error", duration = 10)
-          return()
-        }
-
-        parsed <- tryCatch(httr::content(res, as = "parsed", type = "application/json"), error = function(e) list())
-        new_row <- make_deployed_row(
-          model_id   = model_key,
-          model      = model_name,
-          session_id = session_id,
-          status     = parsed$status %||% "Deployed",
-          url        = parsed$url    %||% NA_character_,
-          api        = parsed$api    %||% NA_character_
-        )
-
-        if (!NROW(rv_deploy$deployed)) {
-          rv_deploy$deployed <- new_row
-        } else {
-          ix <- match(model_key, rv_deploy$deployed$model_id)
-          if (is.na(ix)) rv_deploy$deployed <- rbind(rv_deploy$deployed, new_row)
-          else rv_deploy$deployed[ix, names(new_row)] <- new_row[1, names(new_row)]
-        }
-        showNotification(paste("Model", model_key, "deployed."), type = "message")
-      })
-
-
-
-
-
-    observeEvent(input$stop_all, {
-      # Attempt to deploy the model; if absent, fallback to no-op but clear the local state
-      res <- tryCatch(
-        httr::POST(paste0(api_base, "/undeploy_model"), encode="json", httr::timeout(60)),
-        error = function(e) e
-      )
-
-      # ignore errors if the endpoint does not exist
-      rv_deploy$deployed <- rv_deploy$deployed[0, ]
-      showNotification("Deployment stopped.", type = "warning")
-    })
-
-
-    # --- Top table: Deployed models (auto-populated + buttons) ---
-    output$deployed_table <- DT::renderDataTable({
-      df <- deploy_view()
-      if (!NROW(df)) {
-        return(DT::datatable(
-          data.frame(info = "No data available in table"),
-          options = list(pageLength = 10, scrollX = TRUE, dom = "tip", stateSave = TRUE),
-          rownames = FALSE
-        ))
-      }
-
-      df$url <- ifelse(!is.na(df$url) & df$url!="", sprintf('<a href="%s" target="_blank">predict</a>', df$url), "")
-      df$api <- ifelse(!is.na(df$api) & df$api!="", sprintf('<a href="%s" target="_blank">docs</a>', df$api), "")
-
-      DT::datatable(
-        df[, c("model_id","model","session_id","url","api","status","action")],
-        rownames = FALSE, escape = FALSE,
-        options = list(
-          pageLength = 10, scrollX = TRUE, dom = "tip",
-            # *** key for actionButtons to work ***
-          preDrawCallback = DT::JS('function() { Shiny.unbindAll(this.api().table().node()); }'),
-          drawCallback    = DT::JS('function() { Shiny.bindAll(this.api().table().node()); }')
-        )
-      )
-    })
-
-
-
-    # --- Dynamic Start/Stop actions per line ---
-# --- Dynamic Start/Stop actions per line (with real actionButtons) ---
-# --- Dynamic Start/Stop actions per line (with real actionButtons) ---
-# --- Dynamic Start/Stop actions per line (bind-once) ---
-observe({
-  df <- deploy_view()
-  if (!NROW(df)) return()
-  
-  # remembers which IDs already have handlers
-  if (is.null(session$userData$bound_ids)) session$userData$bound_ids <- character(0)
-  bound <- session$userData$bound_ids
-  
-  safe_id <- function(x) gsub("[^A-Za-z0-9_]", "_", x)
-  ids <- unique(as.character(df$model_id))
-  to_bind <- setdiff(ids, bound)
-  if (!length(to_bind)) return()
-
-  for (mid in to_bind) local({
-    mid_local <- mid
-    mid_safe  <- safe_id(mid_local)
-    row_fn <- function() df[df$model_id == mid_local, , drop = FALSE][1, ]
-
-    # STOP (bind once only)
-    observeEvent(input[[paste0("stop_", mid_safe)]], {
-      row <- row_fn()
-      res <- tryCatch(
-        httr::POST(paste0(api_base, "/undeploy_model"),
-                   body = list(model_id = mid_local), encode = "form", httr::timeout(60)),
-        error = function(e) e
-      )
-      if (!inherits(res, "response") || httr::http_error(res)) {
-        showNotification("Stop error", type = "error"); return()
-      }
-      if (NROW(rv_deploy$deployed)) {
-        keep <- rv_deploy$deployed$model_id != mid_local
-        rv_deploy$deployed <- rv_deploy$deployed[keep, , drop = FALSE]
-      }
-      showNotification(paste("Model", mid_local, "stopped."), type = "warning", duration = 3, id = paste0("notif_", mid_safe))
-    }, ignoreInit = TRUE, once = FALSE)
-
-    # START (bind once only)
-    observeEvent(input[[paste0("start_", mid_safe)]], {
-      row <- row_fn()
-      body <- list(
-        model_id   = mid_local,
-        model_name = row$model %||% mid_local,
-        session_id = row$session_id %||% ""
-      )
-      res <- tryCatch(
-        httr::POST(paste0(api_base, "/deploy_model"),
-                   body = body, encode = "form", httr::timeout(120)),
-        error = function(e) e
-      )
-      if (inherits(res, "response") && httr::status_code(res) == 422) {
-        res <- tryCatch(
-          httr::POST(paste0(api_base, "/deploy_model"),
-                     body = body, encode = "multipart", httr::timeout(120)),
-          error = function(e) e
-        )
-      }
-      if (!inherits(res, "response") || httr::http_error(res)) {
-        showNotification("Start error", type = "error"); return()
-      }
-      parsed <- tryCatch(httr::content(res, as = "parsed", type = "application/json"), error = function(e) list())
-      url  <- parsed$url  %||% NA_character_
-      api  <- parsed$api  %||% NA_character_
-      stat <- parsed$status %||% "Deployed"
-
-      new_row <- data.frame(
-        model_id   = mid_local,
-        model      = row$model %||% mid_local,
-        session_id = row$session_id %||% "",
-        url        = url,
-        api        = api,
-        status     = stat,
-        stringsAsFactors = FALSE
-      )
-      if (!NROW(rv_deploy$deployed)) {
-        rv_deploy$deployed <- new_row
-      } else {
-        ix <- match(mid_local, rv_deploy$deployed$model_id)
-        if (is.na(ix)) rv_deploy$deployed <- rbind(rv_deploy$deployed, new_row)
-        else rv_deploy$deployed[ix, names(new_row)] <- new_row[1, names(new_row)]
-      }
-      showNotification(paste("Model", mid_local, "deployed."), type = "message", duration = 3, id = paste0("notif_", mid_safe))
-    }, ignoreInit = TRUE, once = FALSE)
+  # ---- Binder JS : un seul observe suffit ----
+  observe({
+    session$sendCustomMessage("bindDeployBtn", list(ns = ns("")))
   })
 
-  # mark these IDs as already bound
-  session$userData$bound_ids <- union(bound, to_bind)
-})
+  # ---- Deploy ----
+  observeEvent(input$deploy_model_id, {
+    req(input$deploy_model_id)
 
-
-
-
-    logs_path <- file.path(getwd(), "logs", "models", "index.csv")
-    dir.create(dirname(logs_path), recursive = TRUE, showWarnings = FALSE)
-
-    read_logs <- function(filePath, ...) {
-      if (!file.exists(filePath)) return(data.frame())
-      df <- tryCatch(utils::read.csv(filePath, check.names = FALSE, stringsAsFactors = FALSE),
-                    error = function(e) data.frame())
-      if (!NROW(df)) return(df)
-
-      # --- column coalescing utility
-# --- rowwise utility: fills ‘target’ row by row starting from the first non-empty candidate column
-      rowwise_coalesce <- function(d, target, candidates) {
-        if (!target %in% names(d)) d[[target]] <- NA_character_
-        for (c in candidates) {
-          if (c %in% names(d)) {
-            empty <- is.na(d[[target]]) | trimws(d[[target]]) == "" | d[[target]] == "NA"
-            src   <- d[[c]]
-            take  <- empty & !is.na(src) & trimws(as.character(src)) != "" & src != "NA"
-            if (any(take)) d[[target]][take] <- as.character(src[take])
-          }
-        }
-        d
-      }
-      #--- reconcile outcome/session (line by line)
-      df <- rowwise_coalesce(df, "outcome",    c("outcome","Outcome","target","Target"))
-      df <- rowwise_coalesce(df, "session_id", c("session_id","session_name","session","seed"))
-
-      # Force clean types + trim
-      df$outcome    <- trimws(as.character(df$outcome));    df$outcome[is.na(df$outcome)] <- ""
-      df$session_id <- trimws(as.character(df$session_id)); df$session_id[is.na(df$session_id)] <- ""
-
-      # session_name is not retained
-      if ("session_name" %in% names(df)) df$session_name <- NULL
-
-      # --- date
-      if ("date_trained" %in% names(df)) {
-        dt <- suppressWarnings(as.POSIXct(df$date_trained, tz = "UTC"))
-        if (all(is.na(dt))) dt <- suppressWarnings(as.POSIXct(df$date_trained, format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))
-        df$date_trained <- dt
-        df$date_trained_display <- if (inherits(dt, "POSIXct")) format(dt, "%Y-%m-%d %H:%M:%S") else df$date_trained
-      }
-
-      # --- reconcile outcome / session
-      #df <- rowwise_coalesce(df, « outcome »,    c(« Outcome », “target”, « Target »))
-
-      # Fill in session_id from alias then force to character
-      df <- rowwise_coalesce(df, "session_id", c("session_id", "session_name", "session", "seed"))
-      df$session_id <- as.character(df$session_id)
-      df$session_id[is.na(df$session_id)] <- ""
-
-      # session_name is not retained
-      if ("session_name" %in% names(df)) df$session_name <- NULL
-
-      if (!"framework" %in% names(df)) df$framework <- "PyCaret"
-
-      # --- digitize known metrics
-      to_num <- function(v){
-        v <- as.character(v); v <- trimws(gsub("\u00A0"," ",v, useBytes=TRUE))
-        v <- gsub(",", ".", v); v <- gsub("%","", v)
-        suppressWarnings(as.numeric(v))
-      }
-      known <- c("Accuracy","AUC","ROC AUC","ROC_AUC","F1","F1 Score","Recall","Sensitivity",
-                "Precision","Prec.","Specificity","Kappa","MCC","R2","RMSE","MAE","MAPE","RMSLE")
-      for (nm in intersect(known, names(df))) {
-        if (!is.numeric(df[[nm]])) {
-          num <- to_num(df[[nm]])
-          if (any(!is.na(num))) df[[nm]] <- num
-        }
-      }
-
-      df[order(df$date_trained, decreasing = TRUE), , drop = FALSE]
-    }
-
-
-    logs <- reactiveFileReader(1500, session, logs_path, read_logs)
-
-    # — candidate metrics: all numeric metrics except meta
-    metric_candidates <- function(df) {
-      if (!NROW(df)) return(character(0))
-      drop <- c("date_trained","date_trained_display","dataset_id","outcome","session_name","session_id",
-                "framework","model","model_id","model_code","model_readable","metric","estimate",
-                "path_model","id","ID","Rank","Fold","TT","TT (Sec)","n_test","Time")
-      num <- names(df)[vapply(df, is.numeric, logical(1))]
-      num <- setdiff(num, drop)
-      order_known <- c("Accuracy","AUC","ROC AUC","ROC_AUC","F1","F1 Score","Recall","Sensitivity",
-                       "Precision","Prec.","Specificity","Kappa","MCC","R2","RMSE","MAE","MAPE","RMSLE")
-      c(intersect(order_known, num), setdiff(num, order_known))
-    }
-
-    # — metric direction (TRUE = larger is better)
-    metric_maximize <- function(m) {
-      if (is.null(m)) return(TRUE)
-      to_min <- c("RMSE","MAE","MAPE","RMSLE")
-      !m %in% to_min
-    }
-
-    # ---- Filter UI ----
-  output$logs_filters <- renderUI({
-    df <- logs()
-    # prefer session_id
-    #ses_choices <- if (“session_id” %in% names(df)) df$session_id else df$session_name
-    #sessions <- sort(unique(ses_choices))
-    sessions <- sort(unique(df$session_id))
-
-    # available digital metrics
-    metric_candidates <- function(d) {
-      drop <- c("date_trained","date_trained_display","dataset_id","outcome","session_name","session_id",
-                "framework","model","model_id","model_code","metric","estimate","path_model","id","ID")
-      num <- names(d)[vapply(d, is.numeric, logical(1))]
-      setdiff(num, drop)
-    }
-    metrics <- metric_candidates(df)
-
-    fluidRow(
-      column(5,
-        selectizeInput(ns("filter_sessions"), "Sessions", choices = sessions, multiple = TRUE,
-                      options = list(placeholder = "Sélectionner une ou plusieurs sessions"))
+    res <- try(
+      httr::POST(
+        paste0(api_base, "/deploy_model"),
+        body   = list(model_id = input$deploy_model_id),
+        encode = "multipart"
       ),
-      column(4,
-        selectInput(ns("filter_metric"), "Métrique", choices = metrics, selected = metrics[1])
-      ),
-      column(3,
-        uiOutput(ns("metric_value_ui"))
-      )
+      silent = TRUE
     )
+
+    if (inherits(res, "try-error") || httr::http_error(res)) {
+      showNotification("Deployment failed.", type = "error")
+      # we still force a redraw to reactivate the button on the JS side
+      refresh_key(isolate(refresh_key()) + 1)
+      return()
+    }
+
+    showNotification("Model deployed successfully.", type = "message")
+
+    # Open Swagger if the API is returned by FastAPI
+    api_url <- tryCatch(httr::content(res, as = "parsed")$api, error = function(e) NULL)
+    if (!is.null(api_url) && nzchar(api_url)) {
+      session$sendCustomMessage("openSwagger", list(url = api_url))
+    }
+
+    # IMPORTANT: short wait to allow /deployments to reflect the “Deployed” status
+    later::later(function() {
+      refresh_key(isolate(refresh_key()) + 1)
+    }, delay = 0.8)
+  })
+
+  # ---- Stop (undeploy) ----
+  observeEvent(input$stop_model_id, {
+    req(input$stop_model_id)
+
+    res <- try(
+      httr::POST(
+        paste0(api_base, "/undeploy_model"),
+        body = list(model_id = input$stop_model_id),
+        encode = "multipart"
+      ),
+      silent = TRUE
+    )
+
+    if (inherits(res, "try-error") || httr::http_error(res)) {
+      showNotification("Stop failed.", type = "error")
+      refresh_key(isolate(refresh_key()) + 1)
+      return()
+    }
+
+    showNotification("Model stopped.", type = "message")
+
+    # short delay so that /deployments no longer lists the template
+    later::later(function() {
+      refresh_key(isolate(refresh_key()) + 1)
+    }, delay = 0.6)
   })
 
 
-    # dynamic threshold field (min or max)
-    output$metric_value_ui <- renderUI({
-      req(input$filter_metric)
-      df <- logs()
-      m  <- input$filter_metric
-      vals <- df[[m]]
-      rng <- range(vals, na.rm = TRUE)
-      lab <- if (metric_maximize(m)) "Seuil minimum" else "Seuil maximum"
-      numericInput(ns("metric_threshold"), lab, value = if (metric_maximize(m)) rng[1] else rng[2], step = 0.001)
-    })
-
-    # ---- filtered table ----
-    deploy_table <- reactive({
-      df <- logs()
-      req(NROW(df) > 0)
-
-      # filter sessions (we use session_id priority)
-      if (!is.null(input$filter_sessions) && length(input$filter_sessions) > 0) {
-        sel <- input$filter_sessions
-        if ("session_id" %in% names(df)) {
-          df <- df[df$session_id %in% sel, , drop = FALSE]
-        } else {
-          df <- df[df$session_name %in% sel, , drop = FALSE]
-        }
-      }
-
-      # --- Fallback outcome if empty: use the current target of the session
-      # (secure because we have just filtered by session)
-      if (NROW(df) > 0) {
-        empty_out <- is.na(df$outcome) | df$outcome == "" | df$outcome == "NA"
-        fallback  <- rv_ml_ai$target %||% rv_current$target %||% rv_ml_ai$outcome
-        if (!is.null(fallback) && nzchar(fallback) && any(empty_out)) {
-          df$outcome[empty_out] <- as.character(fallback)
-        }
-      }
-
-
-      # build the view with a single metric
-      metric_selected <- input$filter_metric
-      if (!is.null(metric_selected) && metric_selected %in% names(df)) {
-        val <- df[[metric_selected]]
-      } else {
-        metric_selected <- NA_character_
-        val <- NA_real_
-      }
-
-      # 1) Filter by sessions (session_id only)
-      if (!is.null(input$filter_sessions) && length(input$filter_sessions) > 0) {
-        sel <- input$filter_sessions
-        df  <- df[df$session_id %in% sel, , drop = FALSE]
-      }
-
-      # 2) Remove obviously invalid lines
-      #    - missing/empty model
-      #    - missing/empty session_id
-      bad_model <- is.null(df$model) | is.na(df$model) | df$model == "" | df$model == "NA"
-      bad_sess  <- is.null(df$session_id) | is.na(df$session_id) | df$session_id == "" | df$session_id == "NA"
-      df <- df[!(bad_model | bad_sess), , drop = FALSE]
-
-      # 3) Calculation of the chosen metric (as you had it)
-      metric_selected <- input$filter_metric
-      if (!is.null(metric_selected) && metric_selected %in% names(df)) {
-        val <- suppressWarnings(as.numeric(df[[metric_selected]]))
-      } else {
-        metric_selected <- NA_character_
-        val <- rep(NA_real_, nrow(df))
-      }
-
-      # 4) Remove lines where the metric is missing (avoids ‘lr’ without value)
-      df   <- df[!is.na(val), , drop = FALSE]
-      val  <- val[!is.na(val)]
-
-      # colonnes méta
-      #keep_meta <- c(« date_trained_display »,« model_id »,« model »,« dataset_id »,« outcome »,“session_id”,« framework »)
-      #keep_meta <- intersect(keep_meta, names(df))
-
-      # meta columns (add model_code if present)
-      keep_meta <- c("date_trained_display","model_id","model_code","model",
-                    "dataset_id","outcome","session_id","framework")
-      keep_meta <- intersect(keep_meta, names(df))
-
-
-      # if nothing to display → return an empty data.frame with the correct columns
-      if (!NROW(df) || !length(keep_meta)) {
-        empty <- data.frame(
-          date_trained = character(0),
-          model        = character(0),
-          dataset_id   = character(0),
-          outcome      = character(0),
-          session_id   = character(0),
-          framework    = character(0),
-          metric       = character(0),
-          value        = numeric(0),
-          stringsAsFactors = FALSE
-        )
-        return(empty)
-      }
-
-      out <- df[, keep_meta, drop = FALSE]
-
-      # rename BEFORE adding metric/value
-      if ("date_trained_display" %in% names(out)) {
-        names(out)[names(out) == "date_trained_display"] <- "date_trained"
-      }
-
-      # add metric/value respecting nrow(out)
-      out$metric <- rep_len(input$filter_metric %||% NA_character_, nrow(out))
-      out$value  <- rep_len(suppressWarnings(as.numeric(val)), nrow(out))
-
-      # light deduplication
-      dedup_keys <- intersect(c("session_id","model_id","model","dataset_id","outcome","date_trained"), names(out))
-      if (length(dedup_keys) > 0) {
-        out <- out[!duplicated(out[, dedup_keys, drop = FALSE]), , drop = FALSE]
-      }
-
-      # sorting
-      if (NROW(out) && !all(is.na(out$value))) {
-        minimize <- (out$metric[1] %in% c("RMSE","MAE","MAPE","RMSLE"))
-        ord <- order(out$value, decreasing = !minimize, na.last = TRUE)
-        out <- out[ord, , drop = FALSE]
-      }
-
-      # unique key (model + session)
-      out$model_key <- make_key(out$model_code, out$model_id, out$session_id)
-      # and, for internal consistency, which will be used everywhere instead of model_id
-      out$model_id <- out$model_key
-
-      rownames(out) <- NULL
-      out
-
-    })
-
-
-    output$logs_table <- DT::renderDataTable({
-      df <- deploy_table()
-      if (!NROW(df)) return(NULL)
-      dt <- DT::datatable(df,
-            rownames = FALSE,
-            selection = "single",            # <-- add this
-            options = list(pageLength = 10, scrollX = TRUE))
-      num_cols <- which(vapply(df, is.numeric, logical(1)))
-      if (length(num_cols)) for (j in num_cols) dt <- DT::formatRound(dt, j, 4)
-      dt
-    })
-
-
-    # small flag to disable the suite if there are no logs (used later)
-    output$ready_flag <- reactive(NROW(logs()) > 0)
-    outputOptions(output, "ready_flag", suspendWhenHidden = FALSE)
+    # ------------------------------------------------------------
+    # 5) LOGS / HISTO
+    # ------------------------------------------------------------
+    output$logs_filters <- renderUI({ tagList() })
+    output$logs_table   <- DT::renderDataTable({ DT::datatable(data.frame(), rownames = FALSE) })
   })
 }
-
 
