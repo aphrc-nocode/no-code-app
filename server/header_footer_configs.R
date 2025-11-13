@@ -72,20 +72,20 @@ menu_translation = function(){
 		  tabName = "deeplearning",
 		  icon = icon("gear"),
 		  
-		  # --- CNN Deep section with its own submenus ---
-		  menuItem(
-		    HTML(paste0("<span class='menu-label'>", get_rv_labels("cnn_deep"), "</span>")),
-		    tabName = "cnntransformers",
-		    icon = icon("gear", lib = "font-awesome"),
-		    
-		    menuSubItem(get_rv_labels("dashboard"), tabName = "dashboard", icon = icon("dashboard")),
-		    menuSubItem(get_rv_labels("c_pipeline"), tabName = "create", icon = icon("plus-circle")),
-		    menuSubItem(get_rv_labels("t_model"), tabName = "train", icon = icon("cog")),
-		    menuSubItem(get_rv_labels("m_predictions"), tabName = "predict", icon = icon("eye")),
-		    menuSubItem(get_rv_labels("v_jobs"), tabName = "jobs", icon = icon("list")),
-		    menuSubItem(get_rv_labels("v_datasets"), tabName = "datasets", icon = icon("database")),
-		    menuSubItem(get_rv_labels("d_jobs"), tabName = "delete", icon = icon("trash"))
-		  ),
+		  # # --- CNN Deep section with its own submenus ---
+		  # menuItem(
+		  #   HTML(paste0("<span class='menu-label'>", get_rv_labels("cnn_deep"), "</span>")),
+		  #   tabName = "cnntransformers",
+		  #   icon = icon("gear", lib = "font-awesome"),
+		  #   
+		  #   menuSubItem(get_rv_labels("dashboard"), tabName = "dashboard", icon = icon("dashboard")),
+		  #   menuSubItem(get_rv_labels("c_pipeline"), tabName = "create", icon = icon("plus-circle")),
+		  #   menuSubItem(get_rv_labels("t_model"), tabName = "train", icon = icon("cog")),
+		  #   menuSubItem(get_rv_labels("m_predictions"), tabName = "predict", icon = icon("eye")),
+		  #   menuSubItem(get_rv_labels("v_jobs"), tabName = "jobs", icon = icon("list")),
+		  #   menuSubItem(get_rv_labels("v_datasets"), tabName = "datasets", icon = icon("database")),
+		  #   menuSubItem(get_rv_labels("d_jobs"), tabName = "delete", icon = icon("trash"))
+		  #),
 		  
 		  # --- Transformers Deep ---
 		  menuItem(
