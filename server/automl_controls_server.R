@@ -345,7 +345,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
               analysis_type = .scalar_chr_or_null(analysis_type)
             ),
             encode = "multipart",
-            httr::timeout(600)
+            httr::timeout(600),
+            verbose()
           ),
           error = function(e) e
         )
@@ -553,7 +554,8 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
               body = body_eval,
               encode = "multipart",
               httr::add_headers(`accept` = "application/json"),
-              httr::timeout(600)
+              httr::timeout(600),
+              verbose()
             ),
             error = function(e) e
           )

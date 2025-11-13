@@ -1,6 +1,0 @@
-fastapi==0.115.14
-uvicorn==0.34.3
-pycaret==3.3.2
-pandas==2.1.4
-python-multipart==0.0.20
-shap==0.48.0
