@@ -1,82 +1,90 @@
 libraries <- c(
-   "waiter"
-   , "remotes"
-   , "gsheet"
-   , "shiny"
-   , "shinyjs"
-   , "shinyvalidate"
-   , "shinyalert"
-   , "shinyWidgets"
-   , "shinydashboard"
-   , "shinydashboardPlus"
-   , "shinycssloaders"
-   , "sjlabelled"
-   , "dplyr"
-   , "stringr"
-   , "stringi"
-   , "officer"
-   , "readr"
-   , "readxl"
-   , "openxlsx"
-   , "haven"
-   , "forcats"
-   , "skimr"
-   , "summarytools"
-   , "countries"
-   , "plotly"
-   , "RPostgreSQL"
-   , "DT"
-   , "bslib"
-   , "gt"
-   , "lubridate"
-   , "gtsummary"
-   , "webshot"
-   , "webshot2"
-   , "ggplot2"
-   , "shinyFiles"
-   , "flextable"
-   , "RSQLite"
-   , "sjmisc"
-   , "DBI"
-   , "RMySQL"
-   , "remotes"
-   , "Achilles"
-   , "DatabaseConnector"
-   , "doParallel"
-   , "GGally"
-   , "DataExplorer"
-   , "htmltools"
-   , "promises"
-   , "future"
-   , "CodelistGenerator"
-   , "CDMConnector"
-   , "CohortConstructor"
-   , "RColorBrewer"
-   , "caret"
-   , "cli"
-   , "fastshap"
-   , "gemini.R"
-   , "naniar"
-   , "recipes"
-   , "rlang"
-   , "rsample"
-   , "shapviz"
-   , "callr"
-   , "caretEnsemble"
-   , "cvms"
-   , "digest"
-   , "foreach"
-   , "ggthemes"
-   , "grid"
-   , "httpuv"
-   , "httr"
-   , "patchwork"
-   , "pins"
-   , "plumber"
-   , "scales"
-   , "themis"
-   , "vetiver"
+   "remotes",
+   "gsheet",
+   "dygraphs",
+   "jsonlite",
+   "httr2",
+   "shiny",
+   "shinyjs",
+   "shinyvalidate",
+   "shinyalert",
+   "shinyWidgets",
+   "shinydashboard",
+   "shinydashboardPlus",
+   "shinycssloaders",
+   "sjlabelled",
+   "tidyr",
+   "dplyr",
+   "stringr",
+   "stringi",
+   "officer",
+   "readr",
+   "readxl",
+   "openxlsx",
+   "haven",
+   "forcats",
+   "skimr",
+   "summarytools",
+   "countries",
+   "plotly",
+   "RPostgreSQL",
+   "DT",
+   "bslib",
+   "gt",
+   "lubridate",
+   "gtsummary",
+   "webshot",
+   "webshot2",
+   "ggplot2",
+   "shinyFiles",
+   "flextable",
+   "RSQLite",
+   "sjmisc",
+   "DBI",
+   "RMySQL",
+   "Achilles",
+   "DatabaseConnector",
+   "doParallel",
+   "GGally",
+   "DataExplorer",
+   "htmltools",
+   "promises",
+   "future",
+   "CodelistGenerator",
+   "CDMConnector",
+   "CohortConstructor",
+   "RColorBrewer",
+   "caret",
+   "cli",
+   "fastshap",
+   "gemini.R",
+   "naniar",
+   "recipes",
+   "rlang",
+   "rsample",
+   "shapviz",
+   "callr",
+   "caretEnsemble",
+   "cvms",
+   "digest",
+   "foreach",
+   "ggthemes",
+   "grid",
+   "httpuv",
+   "httr",
+   "patchwork",
+   "pins",
+   "plumber",
+   "scales",
+   "themis",
+   "vetiver",
+   "waiter",
+   "DataQualityDashboard",
+   "glue",
+   "zip",
+   "htmlwidgets"
 )
+
 
 # Install missing CRAN packages
 missing <- setdiff(libraries, rownames(installed.packages()))
