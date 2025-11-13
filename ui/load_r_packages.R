@@ -93,24 +93,28 @@ invisible(lapply(libraries, library, character.only = TRUE))
 
 st_options(footnote=NA, headings = FALSE)
 
-pkg = "duckdb"
-if (!requireNamespace(pkg, quietly = TRUE)) {
- install.packages(pkg, repos = "https://cloud.r-project.org")
- library(pkg, character.only = TRUE)
-}
-
-install_github_if_missing <- function(pkg, repo) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    remotes::install_github(repo)
-    library(pkg, character.only = TRUE)
-  }
-}
-
 install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
 install_github_if_missing("login", "jbryer/login")
-install_github_if_missing("Andromeda", "OHDSI/Andromeda")
-install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
 
+tryCatch({
+	pkg = "duckdb"
+	if (!requireNamespace(pkg, quietly = TRUE)) {
+	 install.packages(pkg, lib=NULL, repos = "https://cloud.r-project.org")
+	 library(pkg, character.only = TRUE)
+	}
+
+	install_github_if_missing <- function(pkg, repo) {
+	  if (!requireNamespace(pkg, quietly = TRUE)) {
+		 remotes::install_github(repo)
+		 library(pkg, character.only = TRUE)
+	  }
+	}
+
+	install_github_if_missing("Andromeda", "OHDSI/Andromeda")
+	install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
+}, error=function(e) {
+	return(NULL)
+})
 
 
 
