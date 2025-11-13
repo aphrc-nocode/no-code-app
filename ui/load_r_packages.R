@@ -104,6 +104,10 @@ install_github_if_missing <- function(pkg, repo) {
 install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
 install_github_if_missing("login", "jbryer/login")
 
+install.packages("duckdb", repos = "https://cloud.r-project.org")
+remotes::install_github("OHDSI/Andromeda")
+remotes::install_github("OHDSI/FeatureExtraction")
+
 
 
 
