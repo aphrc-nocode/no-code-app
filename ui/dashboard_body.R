@@ -79,7 +79,7 @@ aphrcBody <- dashboardBody(
 	tabItems(
 		tabItem(tabName = "homePage"
 			, class = "active"
-			, fluidRow()
+			, homepage()
 		)
 
 		## Source data
