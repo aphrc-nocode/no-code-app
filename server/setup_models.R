@@ -328,6 +328,8 @@ setup_models_ui = function() {
 				, "<br>"
 				, "<b>", "Excluded Predictors: ", "</b>", paste0(rv_ml_ai$excluded_predictors, collapse=", ")
 			)
+			
+			shinyalert::shinyalert("Done!", get_rv_labels("setup_models_analysis_success"), type = "success")
 
 			output$setup_models_analysis_results = renderUI({
 				p(
@@ -366,7 +368,7 @@ setup_models_ui = function() {
 observeEvent(input$modelling_framework_choices, {
 	  req(input$modelling_framework_choices)
 	  rv_ml_ai$modelling_framework <- input$modelling_framework_choices
-	  message("Modelling framework sélectionné : ", rv_ml_ai$modelling_framework)
+#	  message("Modelling framework sélectionné : ", rv_ml_ai$modelling_framework)
 	})
 	
 

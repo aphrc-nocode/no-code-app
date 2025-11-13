@@ -193,11 +193,9 @@ generate_research_questions_gemini = function() {
 					rv_current$quick_explore_summary = generate_data_summary(rv_current$working_df)
 				}
 
-## 				 waiter_show( # show the waiter
-## 					html = spin_loaders(id = 15, color = "green", style = "spin")
-## 					, color = NULL
-## 				 )
-				showPageSpinner()
+#				showPageSpinner()
+				start_progress_bar(id="generate_research_questions_outcome_pb", att_new_obj=generate_research_questions_outcome_pb, text=get_rv_labels("generate_research_questions_outcome_pb"))
+				
 				if (isTRUE(!is.null(rv_current$outcome))) {
 					outcome_prompt = paste0(get_prompts("generate_research_questions_outcome"), " ", rv_current$outcome)
 				} else {
@@ -215,10 +213,15 @@ generate_research_questions_gemini = function() {
 						, seed = rv_current$seed
 					)
 				}, error=function(e){
-					list(outputs = get_rv_labels("generate_research_questions_error")
-						, history = list()
+					close_progress_bar(att_new_obj=generate_research_questions_outcome_pb)
+					return(
+						list(outputs = get_rv_labels("generate_research_questions_error")
+							, history = list()
+						)
 					)
 				})
+				
+				close_progress_bar(att_new_obj=generate_research_questions_outcome_pb)
 				rv_generative_ai$history = research_question_chat$history
 				output$generate_research_questions_gemini = renderUI({
 					p(br()
@@ -227,8 +230,7 @@ generate_research_questions_gemini = function() {
 						, shiny::markdown(research_question_chat$outputs)
 					)
 				})
-## 			 waiter_hide()
-				hidePageSpinner()
+## 				hidePageSpinner()
 			}
 		}
 	})
@@ -237,11 +239,9 @@ generate_research_questions_gemini = function() {
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 				if (isTRUE(input$generate_research_questions_additional_analysis)) {
-## 				 waiter_show( # show the waiter
-## 					html = spin_loaders(id = 15, color = "green", style = "spin")
-## 					, color = NULL
-## 				 )
-						showPageSpinner()
+						
+						start_progress_bar(id="generate_research_questions_additional_analysis_pb", att_new_obj=generate_research_questions_additional_analysis_pb, text=get_rv_labels("generate_research_questions_additional_analysis_pb"))
+#						showPageSpinner()
 						analysis_prompt = get_prompts("generate_research_questions_additional_analysis")
 					suggest_analysis_chat = tryCatch({
 						gemini.R::gemini_chat(prompt = analysis_prompt
@@ -250,10 +250,15 @@ generate_research_questions_gemini = function() {
 							, seed = rv_current$seed
 						)
 					}, error=function(e){
-						list(outputs = get_rv_labels("generate_research_questions_error")
-							, history = list()
+						close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
+						return(
+							list(outputs = get_rv_labels("generate_research_questions_error")
+								, history = list()
+							)
 						)
 					})
+					
+					close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
 					output$generate_research_question_gemini_suggest_analysis = renderUI({
 						p(br()
 							, h2(get_rv_labels("generate_research_questions_suggest_analysis"))
@@ -261,8 +266,8 @@ generate_research_questions_gemini = function() {
 							, shiny::markdown(suggest_analysis_chat$outputs)
 						)
 					})
-## 					waiter_hide()
-					hidePageSpinner()
+#					hidePageSpinner()
+
 				}
 				
 			}
