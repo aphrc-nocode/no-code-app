@@ -316,7 +316,7 @@ transform_data_quick_explore_recode_server = function() {
 
 			if (is.null(rv_current$working_df)) return()
 			
-			rv_currenr$data = rv_current$working_df
+			rv_current$data = rv_current$working_df
 			updateCheckboxInput(session = session, "transform_data_recode_variable_check", value = FALSE)
 			updateTextAreaInput(session=session, "transform_data_recode_variable_input", value=NULL)
 		}

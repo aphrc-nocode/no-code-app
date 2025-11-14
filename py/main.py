@@ -72,12 +72,25 @@ from pycaret.clustering import (
 from typing import Optional, Dict, Any, List
 
 # Project root directory (where this file is located)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
-MODELS_DIR = os.path.join(BASE_DIR, "..", "models")
-MODELS_DIR = os.path.abspath(MODELS_DIR)
+#BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
+#MODELS_DIR = os.path.join(BASE_DIR, "..", "models")
+#MODELS_DIR = os.path.abspath(MODELS_DIR)
 
 
-REG_PATH = os.path.join("logs", "deployments.json")
+#REG_PATH = os.path.join("logs", "deployments.json")
+
+from pathlib import Path
+
+BASE_DIR  = Path(__file__).resolve().parent
+# Permets l’override par variable d’env LOGS_DIR (compose monte ./logs -> /app/logs)
+LOGS_DIR  = Path(os.getenv("LOGS_DIR", BASE_DIR.parent / "logs")).resolve()
+MODELS_DIR = LOGS_DIR / "models"
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+REG_PATH = LOGS_DIR / "deployments.json"
+
+
+
 import re
 from pathlib import Path
 
@@ -87,6 +100,40 @@ def slugify(text: str) -> str:
     text = re.sub(r"[^\w\-]+", "_", text)
     text = re.sub(r"_+", "_", text).strip("_")
     return text or "dataset"
+
+from fastapi import HTTPException
+import math
+
+def _decide_stratify_and_validate(df, target: str, train_size: float):
+    if target not in df.columns:
+        raise HTTPException(status_code=400, detail=f"Target '{target}' not in columns.")
+
+    y = df[target].dropna()
+    n = len(y)
+    if n < 3:
+        raise HTTPException(status_code=400, detail=f"Dataset too small (n={n}). Need >= 3 rows.")
+
+    vc = y.value_counts()
+    n_classes = vc.shape[0]
+    if n_classes < 2:
+        raise HTTPException(status_code=400, detail="Only one class present in target. Need at least 2 classes.")
+
+    min_count = int(vc.min())
+
+    # condition stricte pour la stratification (sklearn en a besoin)
+    # Règle simple: au moins 2 occurrences par classe pour pouvoir splitter stratifié
+    if min_count < 2:
+        # On désactive la stratification et on prévient
+        return False, f"data_split_stratify disabled automatically (minority class has {min_count} sample)."
+
+    # Optionnel: vérifier que le split laisse >=1 sample par classe dans train et test (très petits jeux)
+    test_size = 1.0 - float(train_size)
+    # nombre attendu en test pour la minorité: min_count * test_size
+    if min_count * test_size < 1.0:
+        # sur très petit dataset, on force test_size à 0.2 mini/arrondis
+        # (ou on garde tel quel; on préfère juste prévenir)
+        return True, "Stratified split kept. Note: dataset is small; consider larger test size."
+    return True, None
 
 
 def _unwrap_estimator(model):
@@ -600,7 +647,7 @@ app.add_middleware(
 
 
 @app.post("/automl")
-async def automl(
+def automl(
     file: UploadFile = File(...),
     target: str = Form(...),
     session_id: int = Form(123),
@@ -609,7 +656,7 @@ async def automl(
 ):
     # Read uploaded CSV
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-        tmp.write(await file.read())
+        tmp.write(file.file.read())
         tmp_path = tmp.name
     df = read_csv_flexible(tmp_path)
     os.remove(tmp_path)
@@ -617,20 +664,52 @@ async def automl(
     if analysis_type != "supervised":
         return JSONResponse(status_code=400, content={"error": "Only 'supervised' supported here."})
 
-    # Setup + compare (we want ALL possible PyCaret models for the installed version)
-    clf_setup(
-        data=df,
-        target=target,
-        session_id=int(session_id),
-        train_size=float(train_size),
-        fold=5,
-        html=False,
-        verbose=False
-    )
-    clf_compare(turbo=False)  # trains and fills the pull()
+       # après avoir lu df
+    stratify_flag, note = _decide_stratify_and_validate(df, target, train_size)
+
+    # Setup PyCaret en tenant compte de stratify_flag
+    try:
+        clf_setup(
+            data=df,
+            target=target,
+            session_id=int(session_id),
+            train_size=float(train_size),
+            data_split_shuffle=True,
+            data_split_stratify=stratify_flag,
+            fold=5,
+            html=False,
+            verbose=False,
+        )
+    except HTTPException:
+        # _decide_stratify_and_validate a déjà renvoyé un message clair
+        raise
+    except Exception as e:
+        # on renvoie un 400 lisible plutôt qu’un 500
+        raise HTTPException(status_code=400, detail=f"setup failed: {str(e)}")
+
+    # Entraîne tous les modèles possibles pour cette version de PyCaret
+    clf_compare(turbo=False)  # remplit le pull()
+
 
     # Leaderboard CV
     lb = clf_pull().reset_index(drop=True)
+    
+        # --- Debug: si aucun modèle n'est sorti, on renvoie une erreur claire ----
+    if lb is None or lb.empty:
+        n_rows = df.shape[0]
+        n_cols = df.shape[1]
+        n_classes = df[target].nunique(dropna=True)
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"compare_models() returned an empty leaderboard. "
+                f"Check your data: n_rows={n_rows}, n_cols={n_cols}, "
+                f"n_classes(target)={n_classes}. "
+                f"Possible causes: target has 1 seule classe, "
+                f"trop peu de lignes, ou erreurs internes PyCaret."
+            )
+        )
+
 
     # === Build a RELIABLE label -> code mapping based on the installed version of PyCaret ===
     # Official table of models (codes + labels) for YOUR version
@@ -666,7 +745,7 @@ async def automl(
 
 # Model evaluation endpoint
 @app.post("/evaluate_model")
-async def evaluate_model(
+def evaluate_model(
     file: UploadFile = File(...),
     target: str = Form(...),
     model_id: str | None = Form(None),
@@ -678,7 +757,7 @@ async def evaluate_model(
 ):
     # Read CSV
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-        tmp.write(await file.read())
+        tmp.write(file.file.read())
         path = tmp.name
     df = pd.read_csv(path)
     os.remove(path)
@@ -1038,7 +1117,7 @@ def _canonical_code_or_raise(code_or_label: str) -> str:
 
 
 @app.post("/test_leaderboard")
-async def test_leaderboard(
+def test_leaderboard(
     file: UploadFile = File(...),
     target: str = Form(...),
     session_id: int = Form(123),
@@ -1050,7 +1129,7 @@ async def test_leaderboard(
     try:
         # 1) Read CSV
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            tmp.write(await file.read())
+            tmp.write(file.file.read())
             p = tmp.name
         df = read_csv_flexible(p)
         os.remove(p)
@@ -1201,8 +1280,8 @@ class DeployPayload(BaseModel):
     model_id: str
 
 # Resolve absolute models directory: <repo_root>/models next to this file
-BASE_DIR = Path(__file__).resolve().parent
-MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR.parent / "models")).resolve()
+#BASE_DIR = Path(__file__).resolve().parent
+#MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR.parent / "models")).resolve()
 # If your main.py is already at repo root, use:
 # MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR / "models")).resolve()
 
@@ -1492,7 +1571,7 @@ def _to_bool(x) -> bool:
     return str(x).strip().lower() in ("true", "1", "yes", "y")
 
 @app.post("/predict_deployed_model")
-async def predict_deployed_model(
+def predict_deployed_model(
     file: UploadFile = File(...),
     model_name: Optional[str] = Form(None),
     proba: Optional[str] = Form("false"),
@@ -1515,7 +1594,7 @@ async def predict_deployed_model(
         raise HTTPException(status_code=400, detail=f"Model file not found at {model_path}")
 
     # --- Lecture du CSV uploadé ---
-    raw = await file.read()
+    raw = file.file.read()
     try:
         df = pd.read_csv(io.BytesIO(raw))
     except Exception as e:

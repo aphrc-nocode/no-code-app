@@ -1,0 +1,17 @@
+
+# --- API stack ----
+fastapi
+uvicorn[standard]
+python-multipart
+
+pycaret==3.3.2
+
+scikit-learn
+numpy
+scipy
+pandas
+matplotlib
+shap
+lightgbm
+xgboost
+catboost

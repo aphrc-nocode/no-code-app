@@ -1,4 +1,5 @@
 ### OMOP analysis - DQD ACHILLES CohortConstructor
+
 omop_analysis_server <- function(){
   
   observe({
@@ -23,18 +24,9 @@ omop_analysis_server <- function(){
   database_user <- isolate(rv_database$database_user)
   database_pass <- isolate(rv_database$database_pass)
   
-  connectionDetails <- rv_database$details  #Call to earlier connection details with persistent con
+  connectionDetails <- rv_database$details  #Call to earlier connection details with persistent con  
 
-  # connectionDetails <- createConnectionDetails(
-  #   dbms = "postgresql",
-  #   server = paste(database_host, database_name, sep="/"),
-  #   user = database_user,
-  #   password = database_pass,
-  #   pathToDriver = file_path
-  # )
-  # 
-
-  
+    
   
   #Setting up the variable
   
@@ -43,7 +35,7 @@ omop_analysis_server <- function(){
   cdmSourceName <- input$cdmSourceName
   numThreads <- 1 # on Redshift, 3 seems to work well
   sqlOnly <- FALSE # set to TRUE if you just want to get the SQL scripts and not actually run the queries
-  outputFolder <- "outputs"
+  outputFolder <- "output"
   verboseMode <- TRUE # set to TRUE if you want to see activity written to the console
   writeToTable <- TRUE # set to FALSE if you want to skip writing to results table
   checkLevels <- c("TABLE", "FIELD", "CONCEPT")
@@ -51,7 +43,7 @@ omop_analysis_server <- function(){
   
   print(paste("db-omop:", input$cdm_schema))
   
-  folder <- file.path(getwd(),"outputs")
+  folder <- file.path(getwd(),"output")
   
   # To run DQD on the bg
   # Step 2: Launch in background
@@ -128,7 +120,7 @@ omop_analysis_server <- function(){
     
   },
   error = function(e){
-    shinyalert::shinyalert("", "Error running DQD", type = "error")
+    shinyalert("", "Error running DQD", type = "error")
   })
 
   
@@ -159,7 +151,7 @@ omop_analysis_server <- function(){
       return(json_files[valid][which.max(datetime)])
     }
     
-    folder <- file.path(getwd(),"outputs")
+    folder <- file.path(getwd(),"output")
     
     path_to_json <- get_latest_json(folder)
 
@@ -188,17 +180,16 @@ omop_analysis_server <- function(){
     showNotification("DQD dashboard launched in browser", type = "message")
 
   })
+    
   
   observeEvent(input$existed_conn, {
     if(input$existed_conn == "Postgres Connection"){
       updateSelectInput(session,inputId = "cdm_schema", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
       updateSelectInput(session,inputId = "results_schema", choices = rv_database$schema_list,selected = rv_database$schema_list[1] )
-      
-      }
-    
-  })  
-  
 
+      }
+
+  })
   
 }
 

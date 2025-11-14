@@ -1,10 +1,5 @@
 # ui.R
 
-library(shiny)
-library(DT)
-library(shinyjs)
-library(dygraphs)
-
 # Helper function to create a collapsible section
 collapsible_panel <- function(title, ..., open = FALSE) {
   tags$details(

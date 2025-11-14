@@ -4,7 +4,13 @@ options(shiny.maxRequestSize=300*1024^2)
 source("R/utils_logging.R")
 
 # ----- FastAPI base URL -----
-api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+# ----- FastAPI base URL -----
+api_base <- "http://localhost:3760"
+
+message("[ML API base] ", api_base)
+
 
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")

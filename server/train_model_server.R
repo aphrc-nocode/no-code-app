@@ -320,7 +320,8 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
             url   = paste0(api_base, "/evaluate_model"),
             body  = body_eval,
             encode = "multipart",
-            httr::timeout(600)
+            httr::timeout(600),
+            verbose()
           ),
           error = function(e) e
         )

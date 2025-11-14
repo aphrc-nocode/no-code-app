@@ -1,14 +1,5 @@
 # server.R
 
-library(shiny)
-library(httr2)
-library(jsonlite)
-library(DT)
-library(dplyr)
-library(shinyjs)
-library(tidyr) 
-library(dygraphs)
-
 # Increase max file upload size (e.g., to 2GB)
 options(shiny.maxRequestSize = 2000*1024^2)
 
