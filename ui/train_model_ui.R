@@ -16,22 +16,14 @@ train_model_ui <- function(id) {
         sliderInput(ns("top_n"), "Show top N models:", min = 1, max = 50, value = 10, step = 1),
         DT::dataTableOutput(ns("leaderboard_train_table")),
         br(),
-        shiny::downloadButton("leaderboard_train_tabledown", label = "donwload"),
-        br(),
         h4("Test performance"),
         DT::dataTableOutput(ns("test_leaderboard_table")),
-        br(),
-        shiny::downloadButton("test_leaderboard_tabledown", label = "donwload"),
         br(),
         h4("Select a model for detailed evaluation"),
         uiOutput(ns("model_selector")),
         br(),
-        shiny::downloadButton("model_selectordonw", label = "donwload"),
-        br(),
         h4("Metrics (Test set)"),
         uiOutput(ns("metrics_table")),
-        br(),
-        shiny::downloadButton("metrics_tabledown", label = "donwload"),
         br(),
         h4("Evaluation plots"),
         tabsetPanel(
@@ -46,15 +38,7 @@ train_model_ui <- function(id) {
             ),
             uiOutput(ns("fi_ui"))
           ),
-          tabPanel("SHAP Values", uiOutput(ns("shap_ui"))),
-          tabPanel("ROC Curve",uiOutput(ns("roc_ui")),
-                   br(),shiny::downloadButton("roc_uidown", label = "donwload")),
-          tabPanel("Confusion Matrix",   uiOutput(ns("cm_ui")),
-                   br(),shiny::downloadButton("cm_uidown", label = "donwload")),
-          tabPanel("Feature Importance", uiOutput(ns("fi_ui")),
-                   br(),shiny::downloadButton("fi_uidown", label = "donwload")),
-          tabPanel("SHAP Values", uiOutput(ns("shap_ui")),
-                   br(),shiny::downloadButton("shap_uidown", label = "donwload"))
+          tabPanel("SHAP Values",        uiOutput(ns("shap_ui")))
         )
       )
     ),
@@ -74,3 +58,4 @@ train_model_ui <- function(id) {
     )
   )
 }
+
