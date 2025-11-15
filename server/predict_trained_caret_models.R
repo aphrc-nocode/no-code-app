@@ -240,10 +240,35 @@ predict_trained_caret_models = function() {
 				)
 			})
 			
+			output$predict_trained_caret_models_predicted_values_tabledown <- downloadHandler(
+			  filename = function(){
+			    paste(
+			      "predicted_table", format(Sys.Date(), "%B %d %Y"), ".csv")
+			  },
+			  content = function(file){
+			    write.csv(rv_deploy_models$predicted_df, file = file,row.names = FALSE
+			    )
+			  }
+			  
+			)
+			
 			output$predict_trained_caret_models_predicted_values_plot = renderPlot({
 				req(!is.null(rv_deploy_models$predicted_df), is.data.frame(rv_deploy_models$predicted_df)) 
 				 Rautoml::viz_pred(rv_deploy_models$predicted_df)
 			})
+			
+			output$predict_trained_caret_models_predicted_values_plotdown <- downloadHandler(
+			  filename = function(){
+			    paste(
+			      "predicted_table_plot", format(Sys.Date(), "%B %d %Y"), ".png")
+			  },
+			  content = function(file){
+			    ggsave(filename = file,
+			           plot = Rautoml::viz_pred(rv_deploy_models$predicted_df), dpi = 300
+			    )
+			  }
+			  
+			)
 			
 			close_progress_bar(att_new_obj=predict_models_caret_pb)
 
@@ -260,10 +285,13 @@ predict_trained_caret_models = function() {
 						, width = 12
 						, fluidRow(
 							column(width = 6
-								, DT::DTOutput("predict_trained_caret_models_predicted_values_table")
+								, DT::DTOutput("predict_trained_caret_models_predicted_values_table"),
+								br(),
+								 downloadBttn("predict_trained_caret_models_predicted_values_tabledown", label = get_rv_labels("downloadid")),
 							)
 							, column(width = 6
-								, plotOutput("predict_trained_caret_models_predicted_values_plot")
+								, plotOutput("predict_trained_caret_models_predicted_values_plot"),br(),
+								downloadBttn("predict_trained_caret_models_predicted_values_plotdown", label = get_rv_labels("downloadid")),
 							)
 						)
 					)
