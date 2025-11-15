@@ -82,7 +82,8 @@ libraries <- c(
    "glue",
    "zip",
    "htmlwidgets",
-	"duckdb"
+	"duckdb",
+	"gbm"
 )
 
 
