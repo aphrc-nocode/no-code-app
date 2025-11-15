@@ -46,7 +46,7 @@ train_model_ui <- function(id) {
             ),
             uiOutput(ns("fi_ui"))
           ),
-          tabPanel("SHAP Values",        uiOutput(ns("shap_ui")))
+          tabPanel("SHAP Values", uiOutput(ns("shap_ui"))),
           tabPanel("ROC Curve",uiOutput(ns("roc_ui")),
                    br(),shiny::downloadButton("roc_uidown", label = "donwload")),
           tabPanel("Confusion Matrix",   uiOutput(ns("cm_ui")),
