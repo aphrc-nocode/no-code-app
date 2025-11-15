@@ -17,7 +17,7 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_train_metrics_plotdown <- downloadHandler(
 					  filename = function(){
 					    paste(
-					      "train_metrics", format(Sys.Date(), "%B %d %Y"), ".png")
+					      "train_metrics",Sys.time(), ".png")
 					  },
 					  content = function(file){
 					    ggsave(filename = file,
@@ -50,7 +50,7 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_train_metrics_dfdown <- downloadHandler(
 					  filename = function(){
 					    paste(
-					      "train_metrics", format(Sys.Date(), "%B %d %Y"), ".csv")
+					      "train_metrics",Sys.time(), ".csv")
 					  },
 					  content = function(file){
 					    write.csv(rv_training_results$train_metrics_df, file = file,row.names = FALSE
@@ -78,7 +78,7 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_plot_specificsdown <- downloadHandler(
 						  filename = function(){
 						    paste(
-						      "test_plots_specifics", format(Sys.Date(), "%B %d %Y"), ".png")
+						      "test_plots_specifics",Sys.time(), ".png")
 						  },
 						  content = function(file){
 						    ggsave(filename = file,
@@ -95,7 +95,7 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_plot_alldown <- downloadHandler(
 						  filename = function(){
 						    paste(
-						      "test_plots_all", format(Sys.Date(), "%B %d %Y"), ".png")
+						      "test_plots_all",Sys.time(), ".png")
 						  },
 						  content = function(file){
 						    ggsave(filename = file,
@@ -112,7 +112,7 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_plot_rocdown <- downloadHandler(
 						  filename = function(){
 						    paste(
-						      "test_plots_roc", format(Sys.Date(), "%B %d %Y"), ".png")
+						      "test_plots_roc",Sys.time(), ".png")
 						  },
 						  content = function(file){
 						    ggsave(filename = file,
@@ -145,7 +145,7 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_dfdown <- downloadHandler(
 						  filename = function(){
 						    paste(
-						      "metricsoutputs", format(Sys.Date(), "%B %d %Y"), ".csv")
+						      "metricsoutputs",Sys.time(), ".csv")
 						  },
 						  content = function(file){
 						    write.csv(rv_training_results$test_metrics_objs$al, file = file,row.names = FALSE
@@ -428,7 +428,7 @@ model_training_caret_train_metrics_server = function() {
 									output$model_training_caret_test_metrics_plot_all_filtereddown <- downloadHandler(
 									  filename = function(){
 									    paste(
-									      "test_plots_filtered_all", format(Sys.Date(), "%B %d %Y"), ".png")
+									      "test_plots_filtered_all",Sys.time(), ".png")
 									  },
 									  content = function(file){
 									    req(!is.null(test_plots_filtered$all))
@@ -448,7 +448,7 @@ model_training_caret_train_metrics_server = function() {
 									output$model_training_caret_test_metrics_plot_roc_filtereddown <- downloadHandler(
 									  filename = function(){
 									    paste(
-									      "test_plots_filtered_roc", format(Sys.Date(), "%B %d %Y"), ".png")
+									      "test_plots_filtered_roc",Sys.time(), ".png")
 									  },
 									  content = function(file){
 									    ggsave(filename = file,
@@ -512,7 +512,7 @@ model_training_caret_train_metrics_server = function() {
 									output$model_training_caret_test_metrics_df_filtereddown <- downloadHandler(
 									  filename = function(){
 									    paste(
-									      "training_results$test_metrics_objs_filtered_all", format(Sys.Date(), "%B %d %Y"), ".csv")
+									      "test_metrics_objs_filtered_all",Sys.time(), ".csv")
 									  },
 									  content = function(file){
 									    write.csv(rv_training_results$test_metrics_objs_filtered$all, file = file,row.names = FALSE
@@ -589,7 +589,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_varimpdown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "shap_plots_varimportance", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "shap_plots_varimportance",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -623,7 +623,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_varfreqdown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "test_metrics_shap_values_varfreq", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "test_metrics_shap_values_varfreq",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -656,7 +656,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_vardepdown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "test_metrics_shap_values_vardepolyment", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "test_metrics_shap_values_vardepolyment",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -688,7 +688,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_beeswarmdown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "test_metrics_shap_values_beeswarm", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "test_metrics_shap_values_beeswarm",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -707,7 +707,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_waterfalldown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "test_metrics_shap_values_waterfall", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "test_metrics_shap_values_waterfall",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -726,7 +726,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_forcedown <- downloadHandler(
 								  filename = function(){
 								    paste(
-								      "test_metrics_shap_values_force", format(Sys.Date(), "%B %d %Y"), ".png")
+								      "test_metrics_shap_values_force",Sys.time(), ".png")
 								  },
 								  content = function(file){
 								    ggsave(filename = file,
@@ -1039,7 +1039,7 @@ model_training_caret_train_metrics_server = function() {
 					column(width=12
 						, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px"),
 						br(),
-						downloadBttn("model_training_caret_test_metrics_shap_values_beeswarm_down", label =get_rv_labels("downloadid"),color = "success" )
+						downloadBttn("model_training_caret_test_metrics_shap_values_beeswarmdown", label =get_rv_labels("downloadid"),color = "success" )
 					)
 				)
 				

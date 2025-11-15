@@ -242,7 +242,7 @@ predict_trained_caret_models = function() {
 			output$predict_trained_caret_models_predicted_values_tabledown <- downloadHandler(
 			  filename = function(){
 			    paste(
-			      "predicted_table", format(Sys.Date(), "%B %d %Y"), ".csv")
+			      "predicted_table",Sys.time(), ".csv")
 			  },
 			  content = function(file){
 			    write.csv(rv_deploy_models$predicted_df, file = file,row.names = FALSE
@@ -259,7 +259,7 @@ predict_trained_caret_models = function() {
 			output$predict_trained_caret_models_predicted_values_plotdown <- downloadHandler(
 			  filename = function(){
 			    paste(
-			      "predicted_table_plot", format(Sys.Date(), "%B %d %Y"), ".png")
+			      "predicted_table_plot",Sys.time(), ".png")
 			  },
 			  content = function(file){
 			    ggsave(filename = file,
