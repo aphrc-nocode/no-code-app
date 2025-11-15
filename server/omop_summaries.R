@@ -21,7 +21,7 @@ omopVizServer <- function() {
           WHERE schema_name NOT LIKE 'pg_%' 
             AND schema_name <> 'information_schema'
         "
-        omop_conn$schemas <- DatabaseConnector::querySql(omop_conn$conn, schema_query)$SCHEMA_NAME
+        omop_conn$schemas <- DatabaseConnector::querySql(omop_conn$conn, schema_query)$schema_name
         
         output$schema_selection <- renderUI({
           tagList(
@@ -100,14 +100,14 @@ omopVizServer <- function() {
         FROM information_schema.tables
         WHERE table_schema = '{input$cdm_schema}'
       ")
-      table_list <- DatabaseConnector::querySql(omop_conn$conn, tables_query)$TABLE_NAME
+      table_list <- DatabaseConnector::querySql(omop_conn$conn, tables_query)$table_name
 
       output$cdm_table_summaries <- DT::renderDataTable({
         tbl_counts <- purrr::map_dfr(table_list, function(tbl) {
           count_query <- glue::glue("SELECT COUNT(*) AS COUNT FROM {input$cdm_schema}.\"{tbl}\"")
           tryCatch({
             res <- DatabaseConnector::querySql(omop_conn$conn, count_query)
-            tibble::tibble(Table = tbl, Records = res$COUNT[1])
+            tibble::tibble(Table = tbl, Records = res$count[1])
           }, error = function(e) {
             tibble::tibble(Table = tbl, Records = NA_integer_)
           })
@@ -123,7 +123,7 @@ omopVizServer <- function() {
       tbl_counts <- purrr::map_dfr(table_list, function(tbl) {
         count_query <- glue::glue("SELECT COUNT(*) AS COUNT FROM {input$cdm_schema}.\"{tbl}\"")
         res <- tryCatch(DatabaseConnector::querySql(omop_conn$conn, count_query), error = function(e) NULL)
-        tibble::tibble(Table = tbl, Records = ifelse(is.null(res), 0, res$COUNT[1]))
+        tibble::tibble(Table = tbl, Records = ifelse(is.null(res), 0, res$count[1]))
       })
 
       omop_conn$cdm_tables <- tbl_counts |>
@@ -166,12 +166,13 @@ omopVizServer <- function() {
     
     
     output$cdm_source_info <- renderUI({
-      src <- dbGetQuery(con, glue::glue("SELECT cdm_source_name,
+      src <- tryCatch(dbGetQuery(con, glue::glue("SELECT cdm_source_name,
                                          cdm_source_abbreviation,
                                          cdm_release_date,
                                          vocabulary_version
                                           FROM {input$cdm_schema}.cdm_source
-                                        "))
+                                        "),
+                                 error = function(e) NULL))
       
       person_count <- dbGetQuery(con,
                                  glue::glue("SELECT COUNT(*) AS n 
@@ -323,6 +324,7 @@ omopVizServer <- function() {
     
     ## Person table ----
     if (input$selected_cdm_table == "person") {
+      
       gender_query <- glue::glue("SELECT gender_concept_id, concept_name, COUNT(*) AS N
                                   FROM {input$cdm_schema}.person 
                                   JOIN {input$vocab_schema}.concept ON person.gender_concept_id = concept.concept_id
@@ -344,9 +346,22 @@ omopVizServer <- function() {
                                   JOIN {input$cdm_schema}.observation ON person.person_id = observation.person_id
                               ")
       
-      gender_data <- DBI::dbGetQuery(con, gender_query)
-      race_data  <- DBI::dbGetQuery(con, race_query)
-      age_data   <- DBI::dbGetQuery(con, age_query)
+      # gender_data <- DBI::dbGetQuery(con, gender_query)
+      # race_data  <- DBI::dbGetQuery(con, race_query)
+      # age_data   <- DBI::dbGetQuery(con, age_query)
+      
+      gender_data <- tryCatch({
+        DBI::dbGetQuery(con, gender_query)
+      }, error = function(e) NULL)
+      
+      race_data <- tryCatch({
+        DBI::dbGetQuery(con, race_query)
+      }, error = function(e) NULL)
+      
+      age_data <- tryCatch({
+        DBI::dbGetQuery(con, age_query)
+      }, error = function(e) NULL)
+      
      
       ## Gender plot
       output$gender_plot <- renderPlotly({
@@ -371,6 +386,7 @@ omopVizServer <- function() {
     
     ## Observation table -----
     else if (input$selected_cdm_table == "observation") {
+      
       obs_query <- glue::glue("WITH concept_counts AS (
                               SELECT observation_concept_id,
                               COUNT(DISTINCT person_id) AS n
@@ -389,7 +405,13 @@ omopVizServer <- function() {
                               ORDER BY cc.n DESC
                               LIMIT 20
                               ")
-      obs_data <- DBI::dbGetQuery(con, obs_query)
+      #obs_data <- DBI::dbGetQuery(con, obs_query)
+      
+      obs_data <- tryCatch({
+        DBI::dbGetQuery(con, obs_query)
+      }, error = function(e) {
+        NULL
+      })
       
       output$observation_table <- renderDataTable({
         datatable(obs_data, selection = 'single')
@@ -409,7 +431,12 @@ omopVizServer <- function() {
                                 ORDER BY n DESC
                                 ")
         
-        val_data <- DBI::dbGetQuery(con, val_query)
+        #val_data <- DBI::dbGetQuery(con, val_query)
+        val_data <- tryCatch({
+          DBI::dbGetQuery(con, val_query)
+        }, error = function(e) {
+          NULL
+        })
         
         output$value_as_concept_plot <- renderPlotly({
           if (nrow(val_data) > 0) {
@@ -430,7 +457,7 @@ omopVizServer <- function() {
     
     ## Location table ----
     else if (input$selected_cdm_table == "location") {
-      
+        
      location_query <- glue::glue("SELECT l.address_1, l.location_source_value, l.country_source_value,
                                   COUNT(p.person_id) AS n_persons
                                   FROM {input$cdm_schema}.location l
@@ -442,7 +469,12 @@ omopVizServer <- function() {
                                   l.country_source_value
                                   ORDER BY n_persons DESC;
                                   ")
-     loc_data <- DBI::dbGetQuery(con, location_query)
+     #loc_data <- DBI::dbGetQuery(con, location_query)
+     loc_data<- tryCatch({
+       DBI::dbGetQuery(con, location_query)
+     }, error = function(e) {
+       NULL
+     })
     
     output$location_table <- renderDataTable({
       datatable(loc_data, selection = 'single')
@@ -451,7 +483,7 @@ omopVizServer <- function() {
     
     ## Care site table ----
     else if (input$selected_cdm_table == "care_site"){
-      
+    
       care_query<- glue::glue("SELECT c.care_site_name,
                                 c.care_site_source_value,
                                 v.concept_name AS place_of_service,
@@ -469,7 +501,14 @@ omopVizServer <- function() {
                                 address_1
                               ")
       
-      care_data<- DBI::dbGetQuery(con, care_query)
+      #care_data<- DBI::dbGetQuery(con, care_query)
+     
+       care_data<- tryCatch({
+        DBI::dbGetQuery(con, care_query)
+      }, error = function(e) {
+        NULL
+      })
+      
       output$care_table <- renderDataTable({
         datatable(care_data, selection = 'single')
       })
@@ -477,7 +516,6 @@ omopVizServer <- function() {
     
     ## Provider table ----
     else if (input$selected_cdm_table == "provider") {
-      
       summary_query <- glue::glue("SELECT COUNT(*) AS n_providers,
                                   COUNT(DISTINCT CASE WHEN specialty_concept_id <> 0 THEN specialty_concept_id END) AS n_specialties,
                                   COUNT(DISTINCT care_site_id) AS n_care_sites_linked,
@@ -485,7 +523,13 @@ omopVizServer <- function() {
                                   FROM {input$cdm_schema}.provider
                                   ")
       
-      summary_data <- DBI::dbGetQuery(con, summary_query)
+      #summary_data <- DBI::dbGetQuery(con, summary_query)
+      
+      summary_data<- tryCatch({
+        DBI::dbGetQuery(con, summary_query)
+      }, error = function(e) {
+        NULL
+      })
       
       output$summary_table <- renderDataTable({
         datatable(summary_data, options = list(dom = 't'))
@@ -495,9 +539,9 @@ omopVizServer <- function() {
    
     ## Visit Occurrence table ----
     else if (input$selected_cdm_table == "visit_occurrence") {
-  
+              
       # --- Summary table
-      summary_query <- glue::glue("SELECT COUNT(*) AS n_visits,
+      visit_query <- glue::glue("SELECT COUNT(*) AS n_visits,
                                   COUNT(DISTINCT person_id) AS n_persons,
                                   COUNT(DISTINCT visit_concept_id) AS n_visit_types,
                                   MIN(visit_start_date) AS first_visit,
@@ -505,10 +549,14 @@ omopVizServer <- function() {
                                   FROM {input$cdm_schema}.visit_occurrence
                                   ")
   
-    summary_data <- DBI::dbGetQuery(con, summary_query)
-  
+    #visit_data <- DBI::dbGetQuery(con, visit_query)
+    visit_data<- tryCatch({
+      DBI::dbGetQuery(con, visit_query)
+    }, error = function(e) {
+      NULL
+    })
       output$summary_table <- renderDataTable({
-        datatable(summary_data, options = list(dom = 't'))
+        datatable(visit_data, options = list(dom = 't'))
       })
   
   # --- Visits over time
@@ -519,7 +567,13 @@ omopVizServer <- function() {
                                 ORDER BY date;
                                  ")
   
-  visit_time <- DBI::dbGetQuery(con, visit_time_query)
+  #visit_time <- DBI::dbGetQuery(con, visit_time_query)
+  visit_time<- tryCatch({
+    DBI::dbGetQuery(con, visit_time_query)
+  }, error = function(e) {
+    NULL
+  })
+  
   
   output$visit_time_plot <- renderPlotly({
     plot_ly(
@@ -546,7 +600,12 @@ omopVizServer <- function() {
                                   ORDER BY n_visits DESC
                                  ")
   
-  visit_type <- DBI::dbGetQuery(con, visit_type_query)
+  #visit_type <- DBI::dbGetQuery(con, visit_type_query)
+  visit_type<- tryCatch({
+    DBI::dbGetQuery(con, visit_type_query)
+  }, error = function(e) {
+    NULL
+  })
   
       output$visit_type_plot <- renderPlotly({
         plot_ly(data = visit_type,
@@ -567,6 +626,7 @@ omopVizServer <- function() {
     ## Measurement table---- 
   
     else if (input$selected_cdm_table == "measurement") {
+    
       meas_query <- glue::glue("WITH concept_counts AS (SELECT measurement_concept_id,
                                COUNT(*) AS n
                                 FROM {input$cdm_schema}.measurement
@@ -585,7 +645,12 @@ omopVizServer <- function() {
                                 LIMIT 20
                                ")
       
-      meas_data <- DBI::dbGetQuery(con, meas_query)
+      #meas_data <- DBI::dbGetQuery(con, meas_query)
+      meas_data<- tryCatch({
+        DBI::dbGetQuery(con, meas_query)
+      }, error = function(e) {
+        NULL
+      })
       
       # Main measurement table
       output$measurement_table <- renderDataTable({
@@ -636,7 +701,12 @@ omopVizServer <- function() {
                                 ORDER BY value_type, n DESC
                                 ")
         
-        val_data <- DBI::dbGetQuery(con, val_query)
+       # val_data <- DBI::dbGetQuery(con, val_query)
+        val_data<- tryCatch({
+          DBI::dbGetQuery(con, val_query)
+        }, error = function(e) {
+          NULL
+        })
         
         # Categorical plot
         output$measurement_categorical_plot <- renderPlotly({
@@ -672,7 +742,7 @@ omopVizServer <- function() {
     
     ## Condition_Occurrence table-----
     else if (input$selected_cdm_table == "condition_occurrence") {
-      
+     
       gender_sql <- ""
       if (!is.null(input$gender_filter) && input$gender_filter != "All") {
         gender_sql <- glue::glue("AND p.gender_concept_id = 
@@ -704,7 +774,12 @@ omopVizServer <- function() {
                               LIMIT 20
                               ")
       
-      con_data <- DBI::dbGetQuery(con, con_query)
+     # con_data <- DBI::dbGetQuery(con, con_query)
+      con_data<- tryCatch({
+        DBI::dbGetQuery(con, con_query)
+      }, error = function(e) {
+        NULL
+      })
       
       output$condition_table <- renderDataTable({
         datatable(con_data, selection = 'single')
@@ -727,8 +802,12 @@ omopVizServer <- function() {
                                 GROUP BY value_label
                                 ORDER BY n DESC
                                 ")
-        
-        val_data <- DBI::dbGetQuery(con, val_query)
+        #val_data <- DBI::dbGetQuery(con, val_query)
+        val_data<- tryCatch({
+          DBI::dbGetQuery(con, val_query)
+        }, error = function(e) {
+          NULL
+        })
         
         output$value_as_concept_plot <- renderPlotly({
           if (nrow(val_data) > 0) {
@@ -745,6 +824,7 @@ omopVizServer <- function() {
     }
     
   })
+  
   session$onSessionEnded(function() {
     if (!is.null(isolate(omop_conn$conn))) {
       DatabaseConnector::disconnect(isolate(omop_conn$conn))

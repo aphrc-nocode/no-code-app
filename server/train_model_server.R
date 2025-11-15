@@ -24,10 +24,28 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
         }
       }, error = function(e) NULL)
       if (!is.null(mdf)) {
-        output$metrics_table <- renderUI({ DT::dataTableOutput(ns("metrics_dt")) })
+        output$metrics_table <- renderUI({
+          tagList(
+            DT::dataTableOutput(ns("metrics_dt")),
+            br(),
+            downloadBttn(ns("metrics_dtdown"))
+          )
+        })
         output$metrics_dt <- DT::renderDataTable({
           DT::datatable(mdf, options = list(dom = "t", scrollX = TRUE), rownames = FALSE)
         })
+        
+        output$metrics_dtdown <- downloadHandler(
+          filename = function(){
+            paste(
+              "metrics_table", format(Sys.Date(), "%B %d %Y"), "csv")
+          },
+          content = function(file){
+            write.csv(mdf, filename = file, row.names = FALSE
+            )
+          }
+          
+        )
       } else {
         output$metrics_table <- renderUI(tags$em("No metrics available"))
       }
@@ -131,10 +149,31 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
       }, error = function(e) NULL)
 
       if (!is.null(mdf)) {
-        output$metrics_table <- renderUI({ DT::dataTableOutput(ns("metrics_dt")) })
-        output$metrics_dt <- DT::renderDataTable({
-          DT::datatable(mdf, options = list(dom = "t", scrollX = TRUE), rownames = FALSE)
+        output$metrics_table <- renderUI({
+          tagList(
+            DT::dataTableOutput(ns("metrics_dt")),
+            br(),
+            downloadBttn(
+              ns("metrics_dtdown"),
+              label = get_rv_labels("downloadid")
+            )
+          )
         })
+        
+        output$metrics_dt <- DT::renderDataTable({
+          DT::datatable(mdf, options = list(dom = "t", scrollX = TRUE), rownames = FALSE)})
+        
+          output$metrics_dtdown <- downloadHandler(
+            filename = function(){
+              paste(
+                "mdf", format(Sys.Date(), "%B %d %Y"), ".csv")
+            },
+            content = function(file){
+              write.csv(mdf, file = file,row.names = FALSE
+              )
+            }
+            
+          )
       } else if (isTRUE(render_metrics_msg)) {
         output$metrics_table <- renderUI(tags$em("No metrics available."))
       }
@@ -393,6 +432,60 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
         output$cm_ui   <- renderUI(render_b64_img(cm_b64))
         output$fi_ui   <- renderUI(render_b64_img(fi_b64))
         output$shap_ui <- renderUI(render_b64_img(shap_b64))
+        
+        
+        output$roc_uidown <- downloadHandler(
+          filename = function(){
+            paste(
+              "roc_metrics", format(Sys.Date(), "%B %d %Y"), ".png")
+          },
+          content = function(file){
+            ggsave(filename = file,
+                   plot = 	roc_b64, dpi = 300
+            )
+          }
+          
+        )
+        
+        output$cm_uidown <- downloadHandler(
+          filename = function(){
+            paste(
+              "cm_metrics", format(Sys.Date(), "%B %d %Y"), ".png")
+          },
+          content = function(file){
+            ggsave(filename = file,
+                   plot = 	cm_b64, dpi = 300
+            )
+          }
+          
+        )
+        
+        output$fi_uidown <- downloadHandler(
+          filename = function(){
+            paste(
+              "fi_metrics", format(Sys.Date(), "%B %d %Y"), ".png")
+          },
+          content = function(file){
+            ggsave(filename = file,
+                   plot = 	fi_b64, dpi = 300
+            )
+          }
+          
+        )
+        
+        output$shap_uidown <- downloadHandler(
+          filename = function(){
+            paste(
+              "sharp_metrics", format(Sys.Date(), "%B %d %Y"), ".png")
+          },
+          content = function(file){
+            ggsave(filename = file,
+                   plot = 	shap_b64, dpi = 300
+            )
+          }
+          
+        )
+        
 
         # Auto-select the first available tab
         if (has_b64(roc_b64)) {

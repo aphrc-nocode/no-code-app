@@ -1,6 +1,7 @@
 ##### ---- Data Upload Type and Submit ------------------------------------####
 upload_data_server = function(){
 	observeEvent(input$submit_upload, {
+	  start_progress_bar(id="data_upload_id_pb", att_new_obj=data_upload_id_pb, text=get_rv_labels("data_upload_id_progres_bar"))
 	 if (input$upload_type=="Local") {
 		req(iv$is_valid())
 		req(input$files_with_ext)
@@ -97,6 +98,8 @@ upload_data_server = function(){
 		}
 		reset("upload_form")
 	 }
+	 
+	 close_progress_bar(att_new_obj=data_upload_id_pb)
 	 
 	})
 }

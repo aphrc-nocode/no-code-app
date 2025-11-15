@@ -1,5 +1,5 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300*1024^2)
+options(shiny.maxRequestSize=300000*1024^2)
 
 source("R/utils_logging.R")
 
@@ -35,12 +35,14 @@ function(input, output, session){
 
 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
+  data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
   predict_models_caret_pb = Attendant$new("predict_models_caret_pb", hide_on_max = TRUE)
   predict_endpoint_models_caret_pb = Attendant$new("predict_endpoint_models_caret_pb", hide_on_max = TRUE)
   generate_research_questions_outcome_pb = Attendant$new("generate_research_questions_outcome_pb", hide_on_max = TRUE)
   generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
+  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
@@ -630,7 +632,19 @@ function(input, output, session){
 
   ## glmnet
   model_training_caret_models_glmnet_server()
-  
+ 
+  ## LASSO
+  model_training_caret_models_lasso_server()
+
+  ## Ridge
+  model_training_caret_models_ridge_server()
+
+  ## KNN
+  model_training_caret_models_knn_server()
+
+  ## NNET
+  model_training_caret_models_nnet_server()
+
   #### ----- Train all models ----------------------------------- ####
   source("server/train_caret_models.R", local=TRUE)
   model_training_caret_train_all_server()
