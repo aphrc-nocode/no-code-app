@@ -23,7 +23,8 @@ model_training_caret_train_metrics_server = function() {
 					    ggsave(filename = file,
 					           plot = 	plot(rv_training_results$train_metrics_df), dpi = 300
 					    )
-					  }
+					  },
+					  contentType = "image/png"
 					  
 					)
 
@@ -55,7 +56,8 @@ model_training_caret_train_metrics_server = function() {
 					  content = function(file){
 					    write.csv(rv_training_results$train_metrics_df, file = file,row.names = FALSE
 					    )
-					  }
+					  },
+					  contentType = "text/csv"
 					  
 					)
 					
@@ -84,7 +86,8 @@ model_training_caret_train_metrics_server = function() {
 						    ggsave(filename = file,
 						           plot = 	test_plots$specifics, dpi = 300
 						    )
-						  }
+						  },
+						  contentType = "image/png"
 						  
 						)
 						
@@ -101,8 +104,8 @@ model_training_caret_train_metrics_server = function() {
 						    ggsave(filename = file,
 						           plot = 	test_plots$all, dpi = 300
 						    )
-						  }
-						  
+						  },
+						  contentType = "image/png"
 						)
 
 						output$model_training_caret_test_metrics_plot_roc = renderPlot({
@@ -118,7 +121,8 @@ model_training_caret_train_metrics_server = function() {
 						    ggsave(filename = file,
 						           plot = test_plots$roc, dpi = 300
 						    )
-						  }
+						  },
+						  contentType = "image/png"
 						  
 						)
 						
@@ -150,7 +154,8 @@ model_training_caret_train_metrics_server = function() {
 						  content = function(file){
 						    write.csv(rv_training_results$test_metrics_objs$al, file = file,row.names = FALSE
 						    )
-						  }
+						  },
+						  contentType = "text/csv"
 						  
 						)
 						
@@ -185,7 +190,6 @@ model_training_caret_train_metrics_server = function() {
 							
 					}
 
-					
 					
 					output$model_training_caret_post_model_metrics = renderUI({
 					  req(rv_training_results$post_model_metrics_objs)
@@ -436,7 +440,8 @@ model_training_caret_train_metrics_server = function() {
 									    ggsave(filename = file,
 									     plot = test_plots_filtered$all, dpi = 300
 									    )
-									  }
+									  },
+									  contentType = "image/png"
 									  
 									)
 									
@@ -454,7 +459,8 @@ model_training_caret_train_metrics_server = function() {
 									    ggsave(filename = file,
 									           plot = 	test_plots_filtered$roc, dpi = 300
 									    )
-									  }
+									  },
+									  contentType = "image/png"
 									  
 									)
 
@@ -517,7 +523,8 @@ model_training_caret_train_metrics_server = function() {
 									  content = function(file){
 									    write.csv(rv_training_results$test_metrics_objs_filtered$all, file = file,row.names = FALSE
 									    )
-									  }
+									  },
+									  contentType = "text/csv"
 									  
 									)
 
@@ -595,7 +602,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = 	rv_training_results$shap_plots$varimp, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
@@ -629,7 +637,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = 	rv_training_results$shap_plots$varfreq, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
@@ -662,7 +671,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = 	rv_training_results$shap_plots$vardep, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
@@ -694,7 +704,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = rv_training_results$shap_plots$beeswarm, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
@@ -713,7 +724,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = rv_training_results$shap_plots$waterfall, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
@@ -732,7 +744,8 @@ model_training_caret_train_metrics_server = function() {
 								    ggsave(filename = file,
 								           plot = rv_training_results$shap_plots$force, dpi = 300
 								    )
-								  }
+								  },
+								  contentType = "image/png"
 								  
 								)
 
