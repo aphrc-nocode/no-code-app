@@ -30,7 +30,14 @@ train_model_ui <- function(id) {
           id = ns("plots_tabs"), type = "tabs",
           tabPanel("ROC Curve",          uiOutput(ns("roc_ui"))),
           tabPanel("Confusion Matrix",   uiOutput(ns("cm_ui"))),
-          tabPanel("Feature Importance", uiOutput(ns("fi_ui"))),
+          tabPanel(
+            "Feature Importance",
+            div(
+              style = "margin-bottom:10px;",
+              downloadButton(ns("download_fi"), "Download feature importance (CSV)")
+            ),
+            uiOutput(ns("fi_ui"))
+          ),
           tabPanel("SHAP Values",        uiOutput(ns("shap_ui")))
         )
       )

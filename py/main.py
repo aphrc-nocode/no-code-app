@@ -36,10 +36,11 @@ import binascii
 import uvicorn
 
 
+
 from sklearn.metrics import (
     accuracy_score, f1_score, precision_score, recall_score,
-    roc_auc_score, log_loss, confusion_matrix, roc_curve, auc,
-    cohen_kappa_score, matthews_corrcoef,
+    roc_auc_score, log_loss, confusion_matrix, roc_curve,
+    ConfusionMatrixDisplay, cohen_kappa_score, matthews_corrcoef,auc
 )
 
 
@@ -81,11 +82,20 @@ from typing import Optional, Dict, Any, List
 
 from pathlib import Path
 
-BASE_DIR  = Path(__file__).resolve().parent
-# Permets l’override par variable d’env LOGS_DIR (compose monte ./logs -> /app/logs)
-LOGS_DIR  = Path(os.getenv("LOGS_DIR", BASE_DIR.parent / "logs")).resolve()
-MODELS_DIR = LOGS_DIR / "models"
+# Chemins de base
+BASE_DIR = Path(__file__).resolve().parent
+
+# Dossier pour les logs (index.csv, etc.)
+LOGS_DIR = Path(os.getenv("LOGS_DIR", BASE_DIR / "logs"))
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Dossier pour les modèles .pkl (utilisé par Predict/Classify)
+MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR / "models"))
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Fichiers de logs
+METRICS_LOG = LOGS_DIR / "models" / "index.csv"
+METRICS_LOG.parent.mkdir(parents=True, exist_ok=True)
 
 REG_PATH = LOGS_DIR / "deployments.json"
 
@@ -148,6 +158,81 @@ def _unwrap_estimator(model):
     if hasattr(base, "estimator"):
         base = base.estimator
     return base
+
+
+import re
+
+def _get_binary_proba_scores(y_true, pred_df, model, X=None):
+    """
+    Essaie de récupérer une proba pour la classe positive.
+    Retourne (y_score: np.ndarray | None, debug: dict).
+    """
+    debug = {}
+    y_true_ser = pd.Series(y_true)
+    classes = np.unique(y_true_ser.dropna())
+
+    # On ne calcule le ROC que si 2 classes
+    if len(classes) != 2:
+        debug["reason"] = f"n_classes={len(classes)}"
+        return None, debug
+
+    # 1) Colonnes standards de predict_model (PyCaret)
+    proba_priority = [
+        "prediction_score",
+        "Score",
+        "Probability_1",
+        "Probability",
+    ]
+    for col in proba_priority:
+        if col in pred_df.columns:
+            debug["source"] = f"predict_model:{col}"
+            return pd.to_numeric(pred_df[col], errors="coerce").values, debug
+
+    # 2) Colonnes du type Score_0 / Score_1 / Probability_0 / Probability_1
+    proba_like = [
+        c for c in pred_df.columns
+        if re.match(r"^(Score|Probability)[_ ]", str(c))
+    ]
+    if proba_like:
+        pos = sorted(classes)[-1]  # on prend la "plus grande" comme classe positive
+        chosen = None
+
+        # d'abord, essayer de trouver une colonne qui contient le label positif
+        for c in proba_like:
+            if str(pos) in str(c):
+                chosen = c
+                break
+
+        # sinon, on prend la dernière colonne proba comme positive
+        if chosen is None:
+            chosen = sorted(proba_like)[-1]
+
+        debug["source"] = f"predict_model:{chosen}"
+        return pd.to_numeric(pred_df[chosen], errors="coerce").values, debug
+
+    # 3) Fallback : utiliser directement predict_proba du modèle sklearn
+    base = _unwrap_estimator(model)
+    if X is not None and hasattr(base, "predict_proba"):
+        try:
+            proba = base.predict_proba(X)
+            if proba.ndim == 2 and proba.shape[1] >= 2:
+                cls = np.array(base.classes_)
+                pos = sorted(classes)[-1]
+                if pos in cls:
+                    idx = int(np.where(cls == pos)[0][0])
+                else:
+                    # si on ne trouve pas exactement le label,
+                    # on prend la 2ème colonne comme positive
+                    idx = 1 if proba.shape[1] > 1 else 0
+                debug["source"] = f"predict_proba:col_{idx}"
+                debug["classes_"] = [str(c) for c in cls]
+                return proba[:, idx], debug
+        except Exception as e:
+            debug["predict_proba_error"] = f"{type(e).__name__}:{str(e)[:160]}"
+
+    # Rien trouvé
+    debug["reason"] = "no_proba_column_or_predict_proba_failed"
+    return None, debug
 
 
 # ---- helpers ready/stop checks ----
@@ -479,9 +564,13 @@ def _resolve_model_id(code: str | None, label: str | None):
 
     raise HTTPException(status_code=400, detail=f"Unknown model '{code or label}'")
 
-
 def shap_summary_b64(model, max_rows_bg=400, max_rows_plot=600, max_display=20):
-    # 1) Retrieve X transformed otherwise X
+    """
+    Calcule un SHAP summary plot (dot plot) et le renvoie en base64.
+    Retourne (b64_string | None, debug_string).
+    """
+
+    # 1) Récupérer X transformé depuis PyCaret
     X = None
     for key in ("X_train_transformed", "X_transformed", "X_train", "X"):
         try:
@@ -490,22 +579,24 @@ def shap_summary_b64(model, max_rows_bg=400, max_rows_plot=600, max_display=20):
                 break
         except Exception:
             pass
+
     if X is None:
         return None, "no_X_in_config"
 
-    # 2) DataFrame dense & sampling
+    # 2) Mettre X en DataFrame dense + sampling raisonnable
+    dbg = []
     if sparse.issparse(X):
         X = X.tocsr()
         n = min(X.shape[0], max_rows_plot)
         Xt = pd.DataFrame(X[:n].toarray())
-        dbg = ["sparse->dense(sample)"]
+        dbg.append("sparse->dense(sample)")
     elif isinstance(X, pd.DataFrame):
         Xt = X.copy()
-        dbg = ["df"]
+        dbg.append("df")
         if Xt.shape[0] > max_rows_plot:
             Xt = Xt.sample(max_rows_plot, random_state=42)
             dbg.append("sample")
-        # non-numeric columns -> cast where possible
+        # convertir les colonnes object en numériques
         for c in Xt.columns:
             if Xt[c].dtype == "object":
                 try:
@@ -517,46 +608,133 @@ def shap_summary_b64(model, max_rows_bg=400, max_rows_plot=600, max_display=20):
         X = np.asarray(X)
         n = min(X.shape[0], max_rows_plot)
         Xt = pd.DataFrame(X[:n])
-        dbg = ["ndarray->df(sample)"]
+        dbg.append("ndarray->df(sample)")
 
-    Xt_bg = Xt.sample(min(len(Xt), max_rows_bg), random_state=42)
+    # Données à expliquer
+    X_plot = Xt.copy()
+    X_plot = X_plot.apply(pd.to_numeric, errors="coerce").fillna(0)
+    # Utiliser noms des colonnes transformées PyCaret
+    try:
+        Xt_names = list(X_plot.columns)
+    except:
+        Xt_names = [f"Feature {i+1}" for i in range(X_plot.shape[1])]
 
-    # 3) Choix explainer
+    X_plot_vals = X_plot.to_numpy(dtype=float)
+    
+
+    # Échantillon de fond
+    Xt_bg = X_plot.sample(
+        min(len(X_plot), max_rows_bg),
+        random_state=42
+    )
+
+    # 3) Choix du modèle "de base"
     base = _unwrap_estimator(model)
     cname = type(base).__name__.lower()
+
+    # Désactiver SHAP pour Naive Bayes / DecisionTree, etc.
+    if any(k in cname for k in [
+        "naive",
+        "bayes",
+        "gaussiannb",
+        "multinomialnb",
+        "bernoullinb",
+        "complementnb",
+        "nb",
+        "decisiontreeclassifier",
+        "decisiontree",
+    ]):
+        return None, f"{cname}_not_supported_for_shap"
+
     try:
-        if any(k in cname for k in ("forest","tree","gradientboost","xgb","lightgbm","catboost","adaboost","extra")):
+        # --------- A) Modèles linéaires : contributions X * coef -------------
+        if any(k in cname for k in (
+            "logistic", "linear", "ridge", "lasso",
+            "linearsvc", "sgd"
+        )):
+            coef = np.asarray(base.coef_, dtype=float)
+
+            if coef.ndim == 1:
+                # binaire : contributions = X * coef
+                sv = X_plot_vals * coef[None, :]
+            else:
+                # multiclasse : moyenne des contributions sur les classes
+                contribs = []
+                for i in range(coef.shape[0]):
+                    contribs.append(X_plot_vals * coef[i, :][None, :])
+                sv = np.mean(np.stack(contribs, axis=0), axis=0)
+
+            dbg.append("manual_linear_contrib")
+
+        # --------- B) Modèles à arbres : TreeExplainer ------------------------
+        elif any(k in cname for k in (
+            "forest", "tree", "gradientboost", "xgb",
+            "lightgbm", "catboost", "adaboost", "extra"
+        )):
             expl = shap.TreeExplainer(base)
-            sv = expl.shap_values(Xt_bg)
-            if isinstance(sv, list):
-                try:
-                    sv = np.stack([np.asarray(s) for s in sv], axis=0).mean(axis=0)
-                    dbg.append("tree:multiclass-mean")
-                except Exception:
-                    sv = sv[0]
-                    dbg.append("tree:first-class")
-        elif any(k in cname for k in ("logistic","linear","ridge","lasso","linearsvc","sgd")):
-            expl = shap.LinearExplainer(base, Xt_bg)
-            sv = expl.shap_values(Xt_bg)
-            dbg.append("linear")
+            sv = expl.shap_values(X_plot_vals)
+            dbg.append("tree")
+
+        # --------- C) Fallback générique : KernelExplainer --------------------
         else:
-            # Fallback universel (SVM, KNN, NaiveBayes, etc.)
-            f_pred = None
             if hasattr(base, "predict_proba"):
                 f_pred = base.predict_proba
             else:
                 f_pred = base.predict
-            expl = shap.KernelExplainer(f_pred, shap.sample(Xt_bg, min(100, len(Xt_bg)), random_state=42))
-            sv = expl.shap_values(shap.sample(Xt, min(200, len(Xt)), random_state=42))
-            if isinstance(sv, list):
-                # positive class if available, otherwise first
-                sv = sv[1] if len(sv) > 1 else sv[0]
+
+            bg = shap.sample(
+                Xt_bg,
+                min(100, len(Xt_bg)),
+                random_state=42
+            ).to_numpy(dtype=float)
+
+            X_eval = shap.sample(
+                X_plot,
+                min(200, len(X_plot)),
+                random_state=42
+            )
+            X_eval_vals = X_eval.to_numpy(dtype=float)
+
+            expl = shap.KernelExplainer(f_pred, bg)
+            sv = expl.shap_values(X_eval_vals)
+            X_plot_vals = X_eval_vals  # aligner avec sv
             dbg.append("kernel")
 
-        # 4) Explicit figure
+        # --------- 4) Normalisation des shap_values --------------------------
+        # sv peut être :
+        #  - un ndarray  (n_samples, n_features)
+        #  - une liste de ndarrays (multiclass)
+        if isinstance(sv, list):
+            try:
+                sv = np.stack([np.asarray(s) for s in sv], axis=0).mean(axis=0)
+                dbg.append("multiclass-mean")
+            except Exception:
+                sv = np.asarray(sv[0])
+                dbg.append("multiclass-first-class")
+        else:
+            sv = np.asarray(sv)
+
+        # Alignement n_samples(X_plot) et n_samples(sv)
+        n_samples = min(sv.shape[0], X_plot_vals.shape[0])
+        if n_samples == 0:
+            return None, "shap_empty_after_alignment"
+
+        sv = sv[:n_samples]
+        X_plot_vals = X_plot_vals[:n_samples, :]
+
+        # --------- 5) Figure SHAP --------------------------------------------
         fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
-        shap.summary_plot(sv, Xt_bg, show=False, max_display=max_display, plot_type="dot")
-        return fig_to_base64(fig), ";".join(dbg)
+        shap.summary_plot(
+            sv,
+            X_plot_vals,
+            show=False,
+            max_display=max_display,
+            plot_type="dot",
+            feature_names=Xt_names
+        )
+
+        b64 = fig_to_base64(fig)
+        return b64, ";".join(dbg)
 
     except Exception as e:
         return None, f"shap_fail:{type(e).__name__}:{str(e)[:160]}"
@@ -742,6 +920,82 @@ def automl(
     }
     return JSONResponse(content=clean_json(payload))
 
+def _get_proba_scores(y_true, pred_df, model, X=None):
+    """
+    Essaie de récupérer un vecteur de probabilités pour une 'classe positive'.
+    Supporte le cas binaire ou multiclass (one-vs-rest).
+    Retourne (y_score: np.ndarray | None, debug: dict).
+    """
+    debug = {}
+    y_ser = pd.Series(y_true)
+    classes = sorted(y_ser.dropna().unique().tolist())
+    n_classes = len(classes)
+
+    if n_classes < 2:
+        debug["reason"] = f"n_classes={n_classes}"
+        return None, debug
+
+    # On choisit la 'classe positive' = dernière classe triée
+    pos_class = classes[-1]
+    debug["pos_class"] = str(pos_class)
+    debug["n_classes"] = n_classes
+
+    # 1) colonnes standard de predict_model (PyCaret)
+    proba_priority = [
+        "prediction_score",
+        "Score",
+        "Probability_1",
+        "Probability",
+    ]
+    for col in proba_priority:
+        if col in pred_df.columns:
+            debug["source"] = f"predict_model:{col}"
+            return pd.to_numeric(pred_df[col], errors="coerce").values, debug
+
+    # 2) colonnes de type Score_0 / Score_1 / Probability_0 / Probability_1 / etc.
+    import re as _re
+    proba_like = [
+        c for c in pred_df.columns
+        if _re.match(r"^(Score|Probability)[_ ]", str(c))
+    ]
+    if proba_like:
+        chosen = None
+
+        # on essaie de trouver une colonne qui contient le label de la classe positive
+        for c in proba_like:
+            if str(pos_class) in str(c):
+                chosen = c
+                break
+
+        # sinon, on prend la dernière colonne proba comme positive
+        if chosen is None:
+            chosen = sorted(proba_like)[-1]
+
+        debug["source"] = f"predict_model:{chosen}"
+        return pd.to_numeric(pred_df[chosen], errors="coerce").values, debug
+
+    # 3) fallback : utiliser directement predict_proba du modèle sklearn de base
+    base = _unwrap_estimator(model)
+    if X is not None and hasattr(base, "predict_proba"):
+        try:
+            proba = base.predict_proba(X)
+            if proba.ndim == 2 and proba.shape[1] >= 2:
+                cls = np.array(base.classes_)
+                # si la classe 'pos_class' est présente dans classes_
+                if pos_class in cls:
+                    idx = int(np.where(cls == pos_class)[0][0])
+                else:
+                    # sinon, on prend la dernière colonne
+                    idx = proba.shape[1] - 1
+                debug["source"] = f"predict_proba:col_{idx}"
+                debug["classes_"] = [str(c) for c in cls]
+                return proba[:, idx], debug
+        except Exception as e:
+            debug["predict_proba_error"] = f"{type(e).__name__}:{str(e)[:160]}"
+
+    debug["reason"] = "no_proba_column_or_predict_proba_failed"
+    return None, debug
+
 
 # Model evaluation endpoint
 @app.post("/evaluate_model")
@@ -790,20 +1044,26 @@ def evaluate_model(
     metrics = clf_pull().to_dict(orient="records")
 
     # y_true / y_pred / y_score
+    # y_true / y_pred
     y_true = df[target]
     y_pred = None
-    for col in ['Label', 'prediction_label', 'prediction', 'predicted_label']:
+    for col in ["Label", "prediction_label", "prediction", "predicted_label"]:
         if col in pred.columns:
             y_pred = pred[col]
             break
     if y_pred is None:
-        raise HTTPException(status_code=500, detail="No prediction label column in predict_model output.")
+        raise HTTPException(
+            status_code=500,
+            detail="No prediction label column in predict_model output."
+        )
 
-    y_score = None
-    for col in ['prediction_score', 'Score', 'Probability_1', 'Probability']:
-        if col in pred.columns:
-            y_score = pred[col]
-            break
+    # X pour le ROC / AUC
+    X_eval = df.drop(columns=[target])
+
+    # y_score (proba d'une classe positive) binaire OU multiclass (one-vs-rest)
+    y_score, proba_dbg = _get_proba_scores(y_true, pred, model, X_eval)
+
+
 
     # Confusion
     try:
@@ -812,17 +1072,31 @@ def evaluate_model(
         cm = None
 
     # ROC (if binary + proba)
+    # ROC (binaire ou multiclass → one-vs-rest sur pos_class)
     roc_data = None
     try:
-        if y_score is not None and len(np.unique(y_true)) == 2:
-            fpr, tpr, thresholds = roc_curve(y_true, y_score)
-            roc_data = {"fpr": fpr.tolist(), "tpr": tpr.tolist(),
-                        "thresholds": thresholds.tolist(), "auc": float(auc(fpr, tpr))}
-    except Exception:
+        if y_score is not None:
+            y_ser = pd.Series(y_true)
+            classes = sorted(y_ser.dropna().unique().tolist())
+            if len(classes) >= 2:
+                pos_class = classes[-1]
+                y_bin = (y_ser == pos_class).astype(int)
+
+                fpr, tpr, thresholds = roc_curve(y_bin, y_score)
+                roc_data = {
+                    "fpr": fpr.tolist(),
+                    "tpr": tpr.tolist(),
+                    "thresholds": thresholds.tolist(),
+                    "auc": float(auc(fpr, tpr))
+                }
+    except Exception as e:
+        debug["roc_calc_error"] = f"{type(e).__name__}:{str(e)[:160]}"
         roc_data = None
+
 
     # ---- Standard metrics (classification) ----
     metrics_map = {}
+    fi_table = None   # sera rempli si on calcule une feature importance
     try:
         acc   = accuracy_score(y_true, y_pred)
         rec_w = recall_score(y_true, y_pred, average="weighted", zero_division=0)
@@ -833,13 +1107,17 @@ def evaluate_model(
 
         auc_val = None
         try:
-            if y_score is not None and pd.Series(y_true).nunique() == 2:
-                classes = sorted(pd.Series(y_true).unique().tolist())
-                pos_class = classes[-1]
-                y_bin = (pd.Series(y_true) == pos_class).astype(int)
-                auc_val = roc_auc_score(y_bin, y_score)
-        except Exception:
+            if y_score is not None:
+                y_ser = pd.Series(y_true)
+                classes = sorted(y_ser.dropna().unique().tolist())
+                if len(classes) >= 2:
+                    pos_class = classes[-1]
+                    y_bin = (y_ser == pos_class).astype(int)
+                    auc_val = roc_auc_score(y_bin, y_score)
+        except Exception as e:
+            debug["auc_calc_error"] = f"{type(e).__name__}:{str(e)[:160]}"
             auc_val = None
+
 
         metrics_map = {
             "Accuracy": float(acc),
@@ -855,51 +1133,181 @@ def evaluate_model(
         pass
 
     # Plots recorded by PyCaret (encoded in base64)
-    plots = {}
-    debug = {}
+    
+    # ---------- Plots (Matplotlib, sans clf_plot) ----------
+    plots: dict[str, str | None] = {}
+    debug: dict[str, Any] = {}
 
+    # X et noms de classes
+    X = df.drop(columns=[target])
     try:
-        clf_plot(model, plot='auc', save=True)
-        plots["roc"] = _b64("AUC.png")
+        class_names = sorted(pd.Series(y_true).astype(str).unique().tolist())
     except Exception:
-        pass
-    try:
-        clf_plot(model, plot='confusion_matrix', save=True)
-        plots["confusion"] = _b64("Confusion Matrix.png")
-    except Exception:
-        pass
-    try:
-        clf_plot(model, plot='feature', save=True)
-        plots["importance"] = _b64("Feature Importance.png")
-    except Exception:
-        pass
+        class_names = None
 
-    # ---- SHAP summary: PyCaret then in-house fallback ----
+    # --- ROC PNG à partir de roc_data ----------------------------------------
+    try:
+        if roc_data is not None:
+            fig, ax = plt.subplots(figsize=(5, 4))
+            fpr = np.array(roc_data["fpr"])
+            tpr = np.array(roc_data["tpr"])
+            auc_val = roc_data.get("auc", None)
+
+            label = f"AUC = {auc_val:.3f}" if auc_val is not None else "ROC"
+            ax.plot(fpr, tpr, label=label, linewidth=2)
+            ax.plot([0, 1], [0, 1], "k--", linewidth=1)
+
+            ax.set_xlabel("False Positive Rate", fontsize=11)
+            ax.set_ylabel("True Positive Rate", fontsize=11)
+            ax.set_title(f"ROC Curve – {model_name or code}", fontsize=12)
+            ax.legend(loc="lower right", fontsize=9)
+            ax.grid(alpha=0.3)
+
+            buf = BytesIO()
+            fig.tight_layout()
+            fig.savefig(buf, format="png", bbox_inches="tight")
+            plt.close(fig)
+            plots["roc"] = base64.b64encode(buf.getvalue()).decode("utf-8")
+        else:
+            plots["roc"] = None
+    except Exception as e:
+        debug["roc"] = f"{type(e).__name__}:{str(e)[:160]}"
+        plots["roc"] = None
+
+    # --- Confusion matrix PNG -----------------------------------------------
+    try:
+        if cm is not None and class_names is not None:
+            cm_array = np.array(cm)
+            fig, ax = plt.subplots(figsize=(4, 4))
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm_array,
+                                          display_labels=class_names)
+            disp.plot(ax=ax, cmap="Blues", colorbar=False)
+            ax.set_title(f"Confusion Matrix – {model_name or code}")
+            buf = BytesIO()
+            fig.tight_layout()
+            fig.savefig(buf, format="png", bbox_inches="tight")
+            plt.close(fig)
+            plots["confusion"] = base64.b64encode(buf.getvalue()).decode("utf-8")
+        else:
+            plots["confusion"] = None
+    except Exception as e:
+        debug["confusion"] = f"{type(e).__name__}:{str(e)[:160]}"
+        plots["confusion"] = None
+
+    debug["proba"] = proba_dbg
+
+    # --- Feature importance PNG (arbres + modèles linéaires) -----------------
+    try:
+        base_model = _unwrap_estimator(model)
+
+        importances = None
+        feature_names = list(X.columns)
+
+        debug.setdefault("feature_importance", {})
+        debug["feature_importance"]["base_model_cls"] = type(base_model).__name__
+
+        # 1) modèles avec feature_importances_ (arbres, boosting, RF, etc.)
+        if hasattr(base_model, "feature_importances_"):
+            importances = np.array(base_model.feature_importances_, dtype=float)
+            debug["feature_importance"]["source"] = "feature_importances_"
+
+        # 2) modèles linéaires (LogisticRegression, RidgeClassifier, etc.)
+        elif hasattr(base_model, "coef_"):
+            coef = np.asarray(base_model.coef_, dtype=float)
+            if coef.ndim > 1:
+                coef = np.mean(np.abs(coef), axis=0)
+            else:
+                coef = np.abs(coef)
+            importances = coef
+            debug["feature_importance"]["source"] = "coef_"
+
+        if importances is not None:
+            debug["feature_importance"]["len_importances"] = int(len(importances))
+            debug["feature_importance"]["len_features"] = int(len(feature_names))
+
+            # Si mismatch entre importances et noms bruts → utiliser noms transformés PyCaret
+            try:
+                Xt = clf_get_config("X_train_transformed")
+                if isinstance(Xt, pd.DataFrame) and Xt.shape[1] == len(importances):
+                    feature_names = list(Xt.columns)
+                    debug["feature_importance"]["used_transformed_names"] = True
+                else:
+                    feature_names = [f"Feature {i+1}" for i in range(len(importances))]
+                    debug["feature_importance"]["fallback_generic_names"] = True
+            except Exception:
+                feature_names = [f"Feature {i+1}" for i in range(len(importances))]
+                debug["feature_importance"]["fallback_exception"] = True
+
+            # ---- tri + figure ------------------------------------------------
+            idx = np.argsort(importances)[::-1]
+            top_feats = np.array(feature_names)[idx]
+            top_vals  = np.array(importances)[idx]
+
+            # Table pour export CSV
+            fi_table = [
+                {"feature": str(f), "importance": float(v)}
+                for f, v in zip(top_feats, top_vals)
+            ]
+
+            # garder seulement les 40 plus importantes
+            TOP_K = 40
+            if len(top_feats) > TOP_K:
+                top_feats = top_feats[:TOP_K]
+                top_vals  = top_vals[:TOP_K]
+
+            n_feats = len(top_feats)
+            height = min(0.35 * n_feats + 1.0, 12.0)
+            width  = 8.0
+
+            fig, ax = plt.subplots(figsize=(width, height))
+            ax.barh(top_feats[::-1], top_vals[::-1])
+            ax.set_xlabel("Importance (abs coef / gain)")
+            ax.set_title(f"Feature importance – {model_name or code}")
+            fig.tight_layout()
+
+            buf = BytesIO()
+            fig.savefig(buf, format="png", bbox_inches="tight")
+            plt.close(fig)
+            plots["importance"] = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+        else:
+            plots["importance"] = None
+
+    except Exception as e:
+        debug.setdefault("feature_importance", {})
+        debug["feature_importance"]["error"] = f"{type(e).__name__}:{str(e)[:160]}"
+        plots["importance"] = None
+
+
+    # --- SHAP summary (via PyCaret interpret_model) --------------------------
     try:
         shap_b64 = None
-        shap_dbg = []
-        try:
-            if os.path.exists("SHAP Summary Plot.png"):
-                os.remove("SHAP Summary Plot.png")
-        except Exception:
-            pass
-        try:
-            clf_interpret(model, plot='summary', save=True)
-            shap_b64 = _b64("SHAP Summary Plot.png")
-            if _is_valid_b64(shap_b64):
-                shap_dbg.append("pycaret_interpret_model")
-        except Exception as e:
-            shap_dbg.append(f"interpret_fail:{type(e).__name__}:{str(e)[:120]}")
-        if not _is_valid_b64(shap_b64):
-            b64_img, dbg = shap_summary_b64(model)
-            shap_b64 = b64_img
-            if dbg: shap_dbg.append(dbg)
-        if _is_valid_b64(shap_b64):
+        shap_dbg = None
+
+        # On regarde la vraie classe sklearn
+        base_model = _unwrap_estimator(model)
+        cls_name = type(base_model).__name__.lower()
+
+        # Désactiver SHAP pour Naive Bayes (et variantes)
+        if "naive" in cls_name or "bayes" in cls_name:
+            shap_b64 = None
+            shap_dbg = f"shap_disabled_for_model_class:{type(base_model).__name__}"
+        else:
+            # Comportement normal : on calcule SHAP
+            shap_b64, shap_dbg = shap_summary_b64(model)
+
+        if shap_b64 is not None and _is_valid_b64(shap_b64):
             plots["shap_summary"] = shap_b64
         else:
-            debug["shap"] = {"notes": shap_dbg}
+            plots["shap_summary"] = None
+            debug.setdefault("shap", {})
+            debug["shap"]["notes"] = shap_dbg or "SHAP not computed or empty."
+
     except Exception as e:
+        plots["shap_summary"] = None
         debug["shap_error"] = f"{type(e).__name__}:{str(e)[:160]}"
+
+
 
     # ---------- Save the trained model (PyCaret saves to <MODELS_DIR>/<code>.pkl) ----------
     model_basename = f"{code}__{dataset_slug}"
@@ -1014,6 +1422,7 @@ def evaluate_model(
             "confusion_matrix": cm,    # list[list] or None
             "roc_curve": roc_data,     # dict or None
             "metrics_map": metrics_map,
+            "feature_importance": fi_table,
             "debug": debug
         }
     }
@@ -1113,6 +1522,63 @@ def _canonical_code_or_raise(code_or_label: str) -> str:
 
     # Nothing worked
     raise HTTPException(status_code=400, detail=f"Unknown/unsupported model '{code_or_label}' ({type(last_exc).__name__ if last_exc else 'NoTrial'})")
+
+def _unwrap_estimator(model):
+    """
+    Essaie de retrouver le vrai estimateur sklearn à l'intérieur
+    des wrappers courants (Pipeline, CalibratedClassifierCV, GridSearch, etc.).
+    """
+    base = model
+    seen = set()
+
+    while True:
+        if base is None:
+            break
+
+        # éviter les boucles
+        key = repr(type(base))
+        if key in seen:
+            break
+        seen.add(key)
+
+        # 1) Pipeline -> dernier step
+        if hasattr(base, "named_steps"):
+            try:
+                steps = list(base.named_steps.values())
+                if steps:
+                    base = steps[-1]
+                    continue
+            except Exception:
+                pass
+
+        # 2) CalibratedClassifierCV / wrappers avec base_estimator_
+        if hasattr(base, "base_estimator_"):
+            try:
+                base = base.base_estimator_
+                continue
+            except Exception:
+                pass
+
+        # 3) objets avec attribut 'estimator' (certains wrappers sklearn)
+        if hasattr(base, "estimator"):
+            try:
+                base = base.estimator
+                continue
+            except Exception:
+                pass
+
+        # 4) GridSearchCV / RandomizedSearchCV avec best_estimator_
+        if hasattr(base, "best_estimator_"):
+            try:
+                base = base.best_estimator_
+                continue
+            except Exception:
+                pass
+
+        # rien de plus à dérouler
+        break
+
+    return base
 
 
 
