@@ -247,7 +247,8 @@ predict_trained_caret_models = function() {
 			  content = function(file){
 			    write.csv(rv_deploy_models$predicted_df, file = file,row.names = FALSE
 			    )
-			  }
+			  },
+			  contentType = "text/csv"
 			  
 			)
 			
@@ -265,7 +266,8 @@ predict_trained_caret_models = function() {
 			    ggsave(filename = file,
 			           plot = Rautoml::viz_pred(rv_deploy_models$predicted_df), dpi = 300
 			    )
-			  }
+			  },
+			  contentType = "image/png"
 			  
 			)
 			
