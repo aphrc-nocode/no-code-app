@@ -362,7 +362,6 @@ feature_engineering_impute_missing_server = function() {
 
 				} 
 			
-				print(rv_ml_ai$preprocessed$train_dfdf)
 				shinyalert::shinyalert("Done!", get_rv_labels("feature_engineering_apply_success"), type = "success")
 			
 				close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
