@@ -83,7 +83,8 @@ libraries <- c(
    "zip",
    "htmlwidgets",
 	"duckdb",
-	"gbm"
+	"gbm",
+	"MLmetrics"
 )
 
 
