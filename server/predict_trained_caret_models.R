@@ -83,11 +83,10 @@ predict_trained_caret_models = function() {
 				req(is.data.frame(rv_deploy_models$endpoint_objects$template)
 					, input$predict_trained_caret_models_prediction_type_choices=="upload_file"
 				)
-				downloadButton("predict_trained_caret_models_download_template", get_rv_labels("predict_trained_caret_models_download_template"), class = "btn btn-success")
+			  downloadBttn("predict_trained_caret_models_download_template", get_rv_labels("predict_trained_caret_models_download_template"), color = "success")
 			
 			} else if (input$predict_trained_caret_models_prediction_type_choices=="use_form") {
-				actionButton("predict_trained_caret_models_upload_form", paste0("➕ ", get_rv_labels("predict_trained_caret_models_upload_form")), class = "btn btn-primary")
-			}
+			  actionBttn("predict_trained_caret_models_upload_form", paste0("➕ ", get_rv_labels("predict_trained_caret_models_upload_form")), color  = "success")		}
 
 		})
 	
@@ -287,11 +286,11 @@ predict_trained_caret_models = function() {
 							column(width = 6
 								, DT::DTOutput("predict_trained_caret_models_predicted_values_table"),
 								br(),
-								 downloadBttn("predict_trained_caret_models_predicted_values_tabledown", label = get_rv_labels("downloadid")),
+								 downloadBttn("predict_trained_caret_models_predicted_values_tabledown", label = get_rv_labels("downloadid"),color = "succes"),
 							)
 							, column(width = 6
 								, plotOutput("predict_trained_caret_models_predicted_values_plot"),br(),
-								downloadBttn("predict_trained_caret_models_predicted_values_plotdown", label = get_rv_labels("downloadid")),
+								downloadBttn("predict_trained_caret_models_predicted_values_plotdown", label = get_rv_labels("downloadid"), color = "success"),
 							)
 						)
 					)
