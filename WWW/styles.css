@@ -306,4 +306,8 @@ td {
   transition: all .18s ease-in-out;
 }
 
+.top-progress .progress-bar {
+    background-color: #7bc148 !important;
+  }
+
 

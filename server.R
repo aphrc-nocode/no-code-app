@@ -1,5 +1,5 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300*1024^2)
+options(shiny.maxRequestSize=300000*1024^2)
 
 source("R/utils_logging.R")
 
@@ -31,6 +31,7 @@ function(input, output, session){
 
 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
+  data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
   predict_models_caret_pb = Attendant$new("predict_models_caret_pb", hide_on_max = TRUE)

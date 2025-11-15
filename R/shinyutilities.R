@@ -190,7 +190,9 @@ start_progress_bar = function(id="progress-bar", att_new_obj, text="Running ..."
 			 class = "top-progress",
 			 text = text,
 			 striped = TRUE,
-			 animated = TRUE
+			 animated = TRUE,
+			 color    = "success",
+			 bg_color = "light"  
 		  ),
 		  footer = NULL
 		)
