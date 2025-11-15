@@ -1025,7 +1025,13 @@ model_training_caret_train_metrics_server = function() {
 			req(!is.null(rv_ml_ai$preprocessed))
 			req(!is.null(rv_training_results$shap_plots))
 			req(isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check))
-			p(
+			box(title = get_rv_labels("more_model_plots")
+			      , status = "success",
+			      style = "max-height: 700px; overflow-y: auto;"
+			      , solidHeader = TRUE
+			      , collapsible = TRUE
+			      , collapsed = TRUE
+			      , width = 12,
 
 				hr()
 				, HTML(paste0("<b>", get_rv_labels("model_training_caret_test_metrics_shap_values_beeswarm"), ":</b> <br/>"))
@@ -1033,7 +1039,7 @@ model_training_caret_train_metrics_server = function() {
 					column(width=12
 						, plotOutput("model_training_caret_test_metrics_shap_values_beeswarm", height = "1000px"),
 						br(),
-						downloadBttn("model_training_caret_test_metrics_plot_rocdown", label =get_rv_labels("downloadid"),color = "success" )
+						downloadBttn("model_training_caret_test_metrics_shap_values_beeswarm_down", label =get_rv_labels("downloadid"),color = "success" )
 					)
 				)
 				
