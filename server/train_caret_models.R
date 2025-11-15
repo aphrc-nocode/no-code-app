@@ -647,9 +647,7 @@ model_training_caret_train_all_server = function() {
 						return(NULL)
 					})
 
-					
 					if (is.null(rv_training_results$test_metrics_objs)) return()
-
 					## Generate logs
 					Rautoml::create_model_logs(
 						df_name=rv_ml_ai$dataset_id
@@ -676,7 +674,6 @@ model_training_caret_train_all_server = function() {
 						return(NULL)
 					})
 					
-
 					if (is.null(rv_training_results$post_model_metrics_objs)) return()
 
 					close_progress_bar(att_new_obj=model_training_caret_pb)

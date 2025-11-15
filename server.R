@@ -37,6 +37,7 @@ function(input, output, session){
   predict_endpoint_models_caret_pb = Attendant$new("predict_endpoint_models_caret_pb", hide_on_max = TRUE)
   generate_research_questions_outcome_pb = Attendant$new("generate_research_questions_outcome_pb", hide_on_max = TRUE)
   generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
+  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
