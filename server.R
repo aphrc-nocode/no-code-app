@@ -3,11 +3,15 @@ options(shiny.maxRequestSize=300000*1024^2)
 
 source("R/utils_logging.R")
 
-# ----- FastAPI base URL -----
+# ----- FastAPI base URL local version -----
 #api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
 
-# ----- FastAPI base URL -----
+# ----- FastAPI base URL Docker -----
 api_base <- "http://localhost:3760"
+
+# FASTAPI Linux
+#api_base <- "http://localhost:8000"
+
 
 message("[ML API base] ", api_base)
 

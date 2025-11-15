@@ -91,6 +91,30 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
       style="max-width:100%;border:1px solid #eee;border-radius:6px;",
       alt = "SHAP summary")
     }
+
+    # Déterminer si on veut VRAIMENT afficher un plot SHAP
+    .shap_supported_model <- function(debug_list) {
+      cls <- tryCatch(debug_list$feature_importance$base_model_cls, error = function(e) NULL)
+      cls_low <- tolower(cls %||% "")
+
+      if (!nzchar(cls_low)) return(TRUE)  # par défaut on tente
+
+      # Modèles pour lesquels SHAP n'est pas pertinent / pose problème
+      if (grepl("naive", cls_low)  ||
+          grepl("bayes", cls_low)  ||
+          grepl("discriminantanalysis", cls_low) ||
+          grepl("\\blda\\b", cls_low) ||
+          grepl("\\bqda\\b", cls_low) ||
+          grepl("kneighbors", cls_low) ||
+          grepl("neighbors", cls_low) ||
+          grepl("\\bknn\\b", cls_low)) {
+        return(FALSE)
+      }
+      TRUE
+    }
+
+
+
     parse_records_df <- function(x){
       if (is.null(x)) return(NULL)
       o <- tryCatch(jsonlite::fromJSON(jsonlite::toJSON(x), simplifyDataFrame=TRUE), error=function(e) NULL)
@@ -387,6 +411,13 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
         # ---- METRICS
         metrics_df <- parse_records_df(out$metrics)
         rv_ml_ai$eval_metrics <- metrics_df
+        # ---- Feature importance data (for CSV download) ----
+        fi_tbl <- tryCatch(
+          parse_records_df(out$extras$feature_importance),
+          error = function(e) NULL
+          )
+        rv_ml_ai$feature_importance <- fi_tbl
+
         output$metrics_table <- renderUI({ DT::dataTableOutput(ns("metrics_dt")) })
         output$metrics_dt <- DT::renderDataTable({
           DT::datatable(rv_ml_ai$eval_metrics, options = list(dom = "t", scrollX = TRUE), rownames = FALSE)
@@ -468,5 +499,61 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
         }
       })
     })
+
+    output$download_fi <- downloadHandler(
+      filename = function() {
+        paste0("feature_importance_", Sys.Date(), ".csv")
+      },
+      content = function(file) {
+
+        # 1) Récupérer la table de feature importance
+        fi <- rv_ml_ai$feature_importance
+        if (is.null(fi)) {
+          fi <- rv_current$train_model$feature_importance
+        }
+
+        # 2) Si c'est NULL → CSV vide "propre"
+        if (is.null(fi)) {
+          fi <- data.frame(
+            feature    = character(),
+            importance = numeric(),
+            stringsAsFactors = FALSE
+          )
+        }
+
+        # 3) Si c'est une liste de records, la transformer en data.frame
+        if (is.list(fi) && !is.data.frame(fi)) {
+          fi <- parse_records_df(fi)
+        }
+
+        fi <- as.data.frame(fi, stringsAsFactors = FALSE)
+
+        # 4) Aplatir les colonnes de type list (source de l'erreur write.table)
+        for (nm in names(fi)) {
+          if (is.list(fi[[nm]])) {
+            fi[[nm]] <- vapply(
+              fi[[nm]],
+              function(x) {
+                if (length(x) == 1) {
+                  # élément simple → on le convertit en chaîne
+                  as.character(x[[1]])
+                } else {
+                  # élément complexe → on sérialise en JSON
+                  jsonlite::toJSON(x, auto_unbox = TRUE)
+                }
+              },
+              character(1)
+            )
+          }
+        }
+
+        # 5) Écriture du CSV
+        utils::write.csv(fi, file, row.names = FALSE)
+      }
+    )
+
+
+
+
   })
 }
