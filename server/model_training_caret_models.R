@@ -848,3 +848,176 @@ model_training_caret_models_nnet_server = function() {
 
 }
 
+
+#### ---- treebag --------------------------------- ####
+model_training_caret_models_treebag_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_treebag_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_treebag")
+							rv_training_models$treebag_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_treebag_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+}
+
+
+
+#### ---- avNNet --------------------------------- ####
+model_training_caret_models_avNNet_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+		output$model_training_caret_models_avNNet_check = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+						temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_avNNet")
+						rv_training_models$avNNet_name = temp_label 
+						prettyCheckbox(
+							"model_training_caret_models_avNNet_check"
+							, label = names(temp_label)
+							, status = "success"
+							, outline = FALSE
+							, inline = TRUE
+							, value=FALSE
+						)
+					}
+				}
+		 })
+	})
+	
+	
+	## avNNet Model parameters
+	output$model_training_caret_models_avNNet_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_avNNet_check)) {
+					rv_training_models$avNNet_trained_model = rv_training_models$avNNet_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_avNNet_advance_bag"
+							, get_rv_labels("model_training_caret_models_avNNet_advance_bag")
+							, choices = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_avNNet_advance_bag")
+							, selected = TRUE
+							, multiple = TRUE
+						) 
+						, selectInput("model_training_caret_models_avNNet_advance_size"
+							, get_rv_labels("model_training_caret_models_avNNet_advance_size")
+							, choices = floor(seq(1, 100, length.out=50))
+							, selected = 5
+							, multiple = TRUE
+						)
+						, selectInput("model_training_caret_models_avNNet_advance_decay"
+							, get_rv_labels("model_training_caret_models_avNNet_advance_decay")
+							, choices = seq(0, 1, length.out=10) 
+							, selected = 0
+							, multiple = TRUE
+						)
+						, actionButton("avNNet_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+
+
+#### ---- pls --------------------------------- ####
+model_training_caret_models_pls_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+		output$model_training_caret_models_pls_check = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+						temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_pls")
+						rv_training_models$pls_name = temp_label 
+						prettyCheckbox(
+							"model_training_caret_models_pls_check"
+							, label = names(temp_label)
+							, status = "success"
+							, outline = FALSE
+							, inline = TRUE
+							, value=FALSE
+						)
+					}
+				}
+		 })
+	})
+	
+	
+	## pls Model parameters
+	output$model_training_caret_models_pls_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_pls_check)) {
+					rv_training_models$pls_trained_model = rv_training_models$pls_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+						, selectInput("model_training_caret_models_pls_advance_ncomp"
+							, get_rv_labels("model_training_caret_models_pls_advance_ncomp")
+							, choices = floor(seq(1, 100, length.out=50))
+							, selected = 5
+							, multiple = TRUE
+						)
+						, actionButton("pls_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+#### ---- gam --------------------------------- ####
+model_training_caret_models_gam_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+			output$model_training_caret_models_gam_check = renderUI({
+				if (isTRUE(!is.null(rv_current$working_df))) {
+					if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_gam")
+							rv_training_models$gam_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_gam_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+			 })
+	})
+	
+}
+
