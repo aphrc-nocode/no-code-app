@@ -34,14 +34,18 @@ deployment_ui <- function(id) {
       ),
 
       # Main panel (below the selectors)
-      div(class = "mt-2", DT::dataTableOutput(ns("validate_table"))),
+      div(class = "mt-2", DT::dataTableOutput(ns("validate_table")),
+          br(),
+          downloadBttn("validate_tabledown", label = "Download", color = "success")),
 
       # Info banner (optional)
       div(class = "mt-3", htmlOutput(ns("prereq_status"))),
 
       # Logs (if used)
       div(class = "mt-3", uiOutput(ns("logs_filters"))),
-      div(class = "mt-2", DT::dataTableOutput(ns("logs_table")))
+      div(class = "mt-2", DT::dataTableOutput("logs_table"),
+          br(),
+          downloadBttn("logs_tabledown", label = "Download", color = "success"))
     )
   )
 }

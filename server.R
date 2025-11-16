@@ -1,10 +1,20 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300*1024^2)
+options(shiny.maxRequestSize=300000*1024^2)
 
 source("R/utils_logging.R")
 
-# ----- FastAPI base URL -----
-api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+# ----- FastAPI base URL local version -----
+#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+# ----- FastAPI base URL Docker -----
+api_base <- "http://localhost:3760"
+
+# FASTAPI Linux
+#api_base <- "http://localhost:8000"
+
+
+message("[ML API base] ", api_base)
+
 
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")
@@ -25,12 +35,14 @@ function(input, output, session){
 
 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
+  data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
   predict_models_caret_pb = Attendant$new("predict_models_caret_pb", hide_on_max = TRUE)
   predict_endpoint_models_caret_pb = Attendant$new("predict_endpoint_models_caret_pb", hide_on_max = TRUE)
   generate_research_questions_outcome_pb = Attendant$new("generate_research_questions_outcome_pb", hide_on_max = TRUE)
   generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
+  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")

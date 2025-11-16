@@ -128,7 +128,7 @@ feature_engineering_impute_missing_server = function() {
 					})
 
 					## Up sample
-					if (isTRUE(rv_ml_ai$task=="Classifcation")) {
+					if (isTRUE(rv_ml_ai$task=="Classification")) {
 						output$feature_engineering_perform_upsample_steps = renderUI({
 							materialSwitch(
 								inputId = "feature_engineering_perform_upsample_steps_check",
@@ -288,11 +288,17 @@ feature_engineering_impute_missing_server = function() {
 	observeEvent(input$feature_engineering_apply, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
+				if (isTRUE(!is.null(rv_ml_ai$outcome))) {
+					strata = rv_ml_ai$outcome
+				} else {
+					strata = NULL
+				}
 				partition_objs = tryCatch({
 					Rautoml::train_test_split(
 						data=rv_current$working_df
 						, type = input$feature_engineering_perform_partition
 						, prop=rv_ml_ai$partition_ratio
+						, strata = strata
 					)
 				}, error = function(e) {
 					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_partition_error"), "\n", e$message), type = "error")
@@ -305,6 +311,9 @@ feature_engineering_impute_missing_server = function() {
 				rv_ml_ai$split = partition_objs$split
 				rv_ml_ai$train_df = partition_objs$train_df
 				rv_ml_ai$test_df = partition_objs$test_df
+				
+				start_progress_bar(id="feature_engineering_perform_preprocess_pb", att_new_obj=feature_engineering_perform_preprocess_pb, text=get_rv_labels("feature_engineering_perform_preprocess_pb"))
+				
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					rv_ml_ai$preprocessed = tryCatch({
 						Rautoml::preprocess(
@@ -323,6 +332,7 @@ feature_engineering_impute_missing_server = function() {
 						)
 					}, error = function(e) {
 						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_preprocess_check_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
 						return(NULL)
 					})
 				
@@ -344,14 +354,17 @@ feature_engineering_impute_missing_server = function() {
 						)
 					}, error = function(e) {
 						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_preprocess_check_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
 						return(NULL)
 					})
 				
 					if (is.null(rv_ml_ai$preprocessed)) return()
 
 				} 
-				
+			
 				shinyalert::shinyalert("Done!", get_rv_labels("feature_engineering_apply_success"), type = "success")
+			
+				close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
 				
 				rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
 				output$feature_engineering_preprocessed_log_ui = renderUI({

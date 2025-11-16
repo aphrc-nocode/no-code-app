@@ -22,7 +22,14 @@ setup_models_ui = function() {
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(input$setup_models_analysis_session_name!="") & isTRUE(!is.null(input$setup_models_analysis_session_name))) {
-				rv_current$vartype_all = Rautoml::get_types(rv_current$working_df)
+				rv_current$vartype_all = tryCatch({
+					Rautoml::get_types(rv_current$working_df)
+				}, error=function(e){
+
+					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+					return(NULL)
+				})
+				if (is.null(rv_current$vartype_all)) return()
 				output$setup_models_analysis_target_variable_options = renderUI({
 					prettyRadioButtons(
 						inputId = "setup_models_analysis_target_variable_check"
