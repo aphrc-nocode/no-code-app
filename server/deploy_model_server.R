@@ -445,9 +445,16 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
       }
 
       df$swagger <- vapply(seq_len(nrow(df)), function(i) {
-        api <- df$api[i] %||% ""
-        if (nzchar(api)) sprintf("<a href='%s' target='_blank'>Swagger</a>", htmltools::htmlEscape(api)) else ""
+        #swagger_url <- paste0(api_base, "/docs")
+        swagger_url <- paste0(
+            api_base,
+            "/docs#/default/predict_deployed_model_predict_deployed_model_post"
+          )
+
+        sprintf("<a href='%s' target='_blank'>Swagger</a>",
+                htmltools::htmlEscape(swagger_url))
       }, character(1))
+
 
       show_cols <- c("model_id","model_name","target","session_id","metric_name",
                     "metric_value","framework","created_at","swagger","status")
@@ -497,15 +504,15 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
     showNotification("Model deployed successfully.", type = "message")
 
     # Open Swagger if the API is returned by FastAPI
-    api_url <- tryCatch(httr::content(res, as = "parsed")$api, error = function(e) NULL)
-    if (!is.null(api_url) && nzchar(api_url)) {
-      session$sendCustomMessage("openSwagger", list(url = api_url))
-    }
+    # Open Swagger (adapté au mode Docker)
+    parsed <- tryCatch(httr::content(res, as = "parsed"), error = function(e) NULL)
+    api_url <- NULL
+    swagger_url <- paste0(
+      api_base,
+      "/docs#/default/predict_deployed_model_predict_deployed_model_post"
+    )
+    session$sendCustomMessage("openSwagger", list(url = api_url))
 
-    # IMPORTANT: short wait to allow /deployments to reflect the “Deployed” status
-    later::later(function() {
-      refresh_key(isolate(refresh_key()) + 1)
-    }, delay = 0.8)
   })
 
   # ---- Stop (undeploy) ----

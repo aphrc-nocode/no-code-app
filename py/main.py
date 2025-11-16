@@ -79,30 +79,31 @@ from typing import Optional, Dict, Any, List
 
 
 #REG_PATH = os.path.join("logs", "deployments.json")
-
 from pathlib import Path
 
-# Chemins de base
+# Répertoire du fichier main.py (/app/py dans le conteneur)
 BASE_DIR = Path(__file__).resolve().parent
 
-# Dossier pour les logs (index.csv, etc.)
-LOGS_DIR = Path(os.getenv("LOGS_DIR", BASE_DIR / "logs"))
+# Racine de l'application (/app dans le conteneur)
+ROOT_DIR = BASE_DIR.parent
+
+# Dossier pour les logs (index.csv, deployments.json, etc.)
+# Par défaut : /app/logs  (monté sur ./logs côté hôte)
+LOGS_DIR = Path(os.getenv("LOGS_DIR", ROOT_DIR / "logs")).resolve()
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Dossier pour les modèles .pkl (utilisé par Predict/Classify)
-MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR / "models"))
+# Dossier pour les modèles .pkl
+# Par défaut : /app/models  (monté sur ./models côté hôte)
+MODELS_DIR = Path(os.getenv("MODELS_DIR", ROOT_DIR / "models")).resolve()
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Fichiers de logs
+# Fichier index.csv sous logs/models/index.csv
 METRICS_LOG = LOGS_DIR / "models" / "index.csv"
 METRICS_LOG.parent.mkdir(parents=True, exist_ok=True)
 
+# Fichier de registre des déploiements (utilisé par l'API)
 REG_PATH = LOGS_DIR / "deployments.json"
 
-
-
-import re
-from pathlib import Path
 
 def slugify(text: str) -> str:
     text = text or ""

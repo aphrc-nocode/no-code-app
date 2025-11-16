@@ -26,9 +26,9 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
       if (!is.null(mdf)) {
         output$metrics_table <- renderUI({
           tagList(
-            DT::dataTableOutput(ns("metrics_dt")),
-            br(),
-            downloadBttn(ns("metrics_dtdown"))
+            DT::dataTableOutput(ns("metrics_dt"))
+            #br(),
+            #downloadBttn(ns("metrics_dtdown"))
           )
         })
         output$metrics_dt <- DT::renderDataTable({
@@ -151,12 +151,12 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
       if (!is.null(mdf)) {
         output$metrics_table <- renderUI({
           tagList(
-            DT::dataTableOutput(ns("metrics_dt")),
-            br(),
-            downloadBttn(
-              ns("metrics_dtdown"),
-              label = get_rv_labels("downloadid")
-            )
+            DT::dataTableOutput(ns("metrics_dt"))
+            #br(),
+            #downloadBttn(
+              #ns("metrics_dtdown"),
+             # label = get_rv_labels("downloadid")
+            #)
           )
         })
         
