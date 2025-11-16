@@ -3,8 +3,8 @@ train_model_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
-    h3("Train performance & Evaluation"),
-    strong("Status: "), textOutput(ns("job_status")),
+    #h3("Train performance & Evaluation"),
+    #strong("Status: "), textOutput(ns("job_status")),
     br(),
 
     # === When PyCaret was launched and completed ===
@@ -45,16 +45,16 @@ train_model_ui <- function(id) {
     # === Waiting screen until PyCaret/AutoML is ready ===
     conditionalPanel(
       condition = sprintf("output['%s'] != true", ns("train_ready")),
-      div(
-        style = "padding:16px;border:1px dashed #ddd;background:#fafafa;border-radius:8px;",
-        h4("Train – on hold"),
-        p(
-          "Select the option ", strong("PyCaret"),
-          " On the Feature Engineering page, click ",
-          strong("Launch AutoML"),
-          " then launch the ", strong("Training"), "."
-        )
-      )
+      #div(
+        #style = "padding:16px;border:1px dashed #ddd;background:#fafafa;border-radius:8px;",
+        #h4("Train – on hold"),
+        #p(
+          #"Select the option ", strong("PyCaret"),
+          #" On the Feature Engineering page, click ",
+         # strong("Launch AutoML"),
+        #  " then launch the ", strong("Training"), "."
+       # )
+      #)
     )
   )
 }
