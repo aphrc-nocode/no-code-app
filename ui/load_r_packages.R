@@ -1,5 +1,10 @@
 libraries <- c(
    "remotes",
+	"plyr",
+	"e1071",
+	"nnet",
+	"pls",
+	"mgcv",
    "gsheet",
    "dygraphs",
    "jsonlite",

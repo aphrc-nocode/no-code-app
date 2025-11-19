@@ -152,14 +152,15 @@ model_training_caret_train_metrics_server = function() {
 						      "metricsoutputs",Sys.time(), ".csv")
 						  },
 						  content = function(file){
-						    write.csv(rv_training_results$test_metrics_objs$al, file = file,row.names = FALSE
+						    write.csv(rv_training_results$test_metrics_objs$all, file = file,row.names = FALSE
 						    )
 						  },
 						  contentType = "text/csv"
 						  
 						)
 						
-						rv_training_models$all_trained_models = Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
+					  rv_training_models$all_trained_models = Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
+					  
 					  ## More options: SHAP values
 					  output$model_training_caret_more_options_shap = renderUI({
 							prettyRadioButtons(
@@ -203,7 +204,7 @@ model_training_caret_train_metrics_server = function() {
 					      cm_plot = get_rv_labels("model_training_caret_post_model_metrics_cm"),
 					      var_imp_plot = get_rv_labels("model_training_caret_post_model_metrics_vi")
 					    )
-					    
+					   
 					    for (model_name in names(post_model_metrics_objs)) {
 					      row_plots = list()
 					      
@@ -298,7 +299,7 @@ model_training_caret_train_metrics_server = function() {
 					              print(p)
 					              dev.off()
 					              plot_files <- c(plot_files, f)
-					            }
+									}
 					          }
 					          
 					          # create ZIP
@@ -333,10 +334,21 @@ model_training_caret_train_metrics_server = function() {
 
 					## Select trained models
 					output$model_training_caret_test_metrics_trained_models_shap = renderUI({
+
+						req(!is.null(rv_training_results$models))
+						req(!is.null(rv_training_models$all_trained_models))
 						req(!is.null(input$model_training_caret_more_options_shap_check))
 						if (isTRUE(!is.null(rv_training_models$all_trained_models))) {
-							temp_models = rv_training_models$all_trained_models
-							temp_models = temp_models[temp_models %in% names(rv_training_results$models)]
+							temp_models = names(rv_training_models$all_trained_models)
+							## FIXME: The names should align
+							if (inherits(rv_training_results$models, "caretEnsemble")) {
+								temp_models = c(temp_models, "ensemble")
+								fixed_names = gsub("\\.", " ", temp_models)
+
+							} else {
+								fixed_names = gsub("\\.", " ", names(rv_training_results$models))
+							}
+							temp_models = temp_models[temp_models %in% fixed_names]
 							temp_selected = temp_models
 							temp_labs = get_rv_labels("model_training_caret_test_metrics_trained_models_shap_ph")
 							if (isTRUE(input$model_training_caret_more_options_shap_check=="Select models")) {
@@ -365,7 +377,13 @@ model_training_caret_train_metrics_server = function() {
 						req(!is.null(rv_training_results$post_model_metrics_objs))
 						if (isTRUE(length(input$model_training_caret_more_options_shap_check)>0)) {
 							if ( (isTRUE(input$model_training_caret_more_options_shap_check=="All")) | (isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_shap)) & isTRUE(any(input$model_training_caret_test_metrics_trained_models_shap!="")))) {
-								rv_training_models$all_trained_models_metrics = Rautoml::get_metrics_names(rv_training_results$test_metrics_objs)
+								rv_training_models$all_trained_models_metrics = tryCatch({
+									Rautoml::get_metrics_names(rv_training_results$test_metrics_objs)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+								if (is.null(rv_training_models$all_trained_models_metrics)) return()
 								temp_metrics = rv_training_models$all_trained_models_metrics
 								empty_lab = ""
 								names(empty_lab) = get_rv_labels("model_training_caret_test_metrics_trained_models_options_ph")
@@ -558,7 +576,7 @@ model_training_caret_train_metrics_server = function() {
 								rv_training_results$test_metrics_objs_shap = tryCatch({
 									Rautoml::compute_shap(
 										models=rv_training_results$models
-										, model_names=input$model_training_caret_test_metrics_trained_models_shap
+										, model_names=gsub("\\ ", ".", input$model_training_caret_test_metrics_trained_models_shap)
 										, newdata=rv_ml_ai$preprocessed$test_df
 										, response=rv_ml_ai$outcome
 										, task=rv_ml_ai$task

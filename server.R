@@ -651,6 +651,18 @@ function(input, output, session){
   ## NNET
   model_training_caret_models_nnet_server()
 
+  ## TREEBAG
+  model_training_caret_models_treebag_server()
+
+  ## avNNet
+  model_training_caret_models_avNNet_server()
+
+  ## PLS
+  model_training_caret_models_pls_server()
+
+  ## GAM
+  model_training_caret_models_gam_server()
+
   #### ----- Train all models ----------------------------------- ####
   source("server/train_caret_models.R", local=TRUE)
   model_training_caret_train_all_server()
