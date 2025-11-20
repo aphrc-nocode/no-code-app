@@ -79,30 +79,31 @@ from typing import Optional, Dict, Any, List
 
 
 #REG_PATH = os.path.join("logs", "deployments.json")
-
 from pathlib import Path
 
-# Chemins de base
+# Répertoire du fichier main.py (/app/py dans le conteneur)
 BASE_DIR = Path(__file__).resolve().parent
 
-# Dossier pour les logs (index.csv, etc.)
-LOGS_DIR = Path(os.getenv("LOGS_DIR", BASE_DIR / "logs"))
+# Racine de l'application (/app dans le conteneur)
+ROOT_DIR = BASE_DIR.parent
+
+# Dossier pour les logs (index.csv, deployments.json, etc.)
+# Par défaut : /app/logs  (monté sur ./logs côté hôte)
+LOGS_DIR = Path(os.getenv("LOGS_DIR", ROOT_DIR / "logs")).resolve()
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Dossier pour les modèles .pkl (utilisé par Predict/Classify)
-MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE_DIR / "models"))
+# Dossier pour les modèles .pkl
+# Par défaut : /app/models  (monté sur ./models côté hôte)
+MODELS_DIR = Path(os.getenv("MODELS_DIR", ROOT_DIR / "models")).resolve()
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Fichiers de logs
+# Fichier index.csv sous logs/models/index.csv
 METRICS_LOG = LOGS_DIR / "models" / "index.csv"
 METRICS_LOG.parent.mkdir(parents=True, exist_ok=True)
 
+# Fichier de registre des déploiements (utilisé par l'API)
 REG_PATH = LOGS_DIR / "deployments.json"
 
-
-
-import re
-from pathlib import Path
 
 def slugify(text: str) -> str:
     text = text or ""
@@ -1040,27 +1041,65 @@ def evaluate_model(
 
     # fit + predict
     model = clf_create(code)
-    pred = clf_predict(model, data=df)  # also calculates metrics -> pull()
+    # Old version with train for plots
+    #pred = clf_predict(model, data=df)  # also calculates metrics -> pull()
+    #metrics = clf_pull().to_dict(orient="records")
+
+    # --- Utiliser uniquement le jeu de TEST pour l'évaluation ---
+
+    # 1) Récupérer X_test et y_test depuis la config PyCaret
+    X_test = clf_get_config("X_test")
+    y_test = clf_get_config("y_test")
+
+    # Normalisation des formats pour avoir toujours des objets pandas
+    if isinstance(X_test, np.ndarray):
+        X_test = pd.DataFrame(
+            X_test,
+            columns=[f"feature_{i}" for i in range(X_test.shape[1])]
+        )
+
+    if isinstance(y_test, (np.ndarray, list)):
+        y_test = pd.Series(y_test, name=target)
+
+    if isinstance(y_test, pd.DataFrame):
+        # si c'est un DataFrame avec 1 seule colonne, on la convertit en Series
+        if y_test.shape[1] == 1:
+            y_test = y_test.iloc[:, 0]
+
+    # 2) Construire un DataFrame test complet pour PyCaret
+    test_df = X_test.copy()
+    test_df[target] = y_test
+
+    # 3) Prédictions uniquement sur le jeu de TEST
+    pred = clf_predict(model, data=test_df)
+
+    # 4) Récupérer les métriques calculées par PyCaret sur ce test set
     metrics = clf_pull().to_dict(orient="records")
 
+
     # y_true / y_pred / y_score
-    # y_true / y_pred
-    y_true = df[target]
+    # --- tiliser uniquement le jeu de TEST pour les plots ---
+
+    # y_true = vraies étiquettes du TEST set
+    y_true = y_test
+
+    # y_pred = prédictions du modèle sur le TEST set
     y_pred = None
     for col in ["Label", "prediction_label", "prediction", "predicted_label"]:
         if col in pred.columns:
             y_pred = pred[col]
             break
+
     if y_pred is None:
-        raise HTTPException(
-            status_code=500,
-            detail="No prediction label column in predict_model output."
+        raise ValueError(
+            "Impossible de trouver la colonne des prédictions dans 'pred'. "
+            "Colonnes disponibles : {}".format(list(pred.columns))
         )
 
-    # X pour le ROC / AUC
-    X_eval = df.drop(columns=[target])
+    # X_eval = features du TEST set pour les probabilités / ROC
+    X_eval = X_test
 
-    # y_score (proba d'une classe positive) binaire OU multiclass (one-vs-rest)
+    # y_score = scores/probas sur le TEST set
     y_score, proba_dbg = _get_proba_scores(y_true, pred, model, X_eval)
 
 
@@ -1949,19 +1988,46 @@ def deploy_model(
     model_name: str = Form(""),
     session_id: str = Form("")
 ):
-    # if already deployed → return existing information
-    if model_id in REGISTRY and REGISTRY[model_id]["status"] == "Deployed":
-        port = REGISTRY[model_id]["port"]
-        base = f"http://127.0.0.1:{port}"
-        return {"model_id": model_id, "status": "Deployed", "url": f"{base}/predict", "api": f"{base}/docs"}
+    """
+    Lance un sous-serveur FastAPI dédié au modèle PyCaret et retourne l’URL de prédiction + Swagger.
+    - model_id doit correspondre au basename utilisé par save_model (ex: 'lr__mon_dataset')
+    """
 
+    # 0) Si déjà déployé → on renvoie l’info existante
+    item = REGISTRY.get(model_id)
+    if item is not None and item.get("status") == "Deployed":
+        port = item["port"]
+        base = f"http://127.0.0.1:{port}"
+        return {
+            "model_id": model_id,
+            "status": item.get("status", "Deployed"),
+            "url": f"{base}/predict",
+            "api": f"{base}/docs",
+        }
+
+    # 1) Vérifier que le fichier du modèle existe bien
+    model_basename = model_id  # dans ton code, c’est le même nom que celui utilisé par save_model
+    pkl_path = (MODELS_DIR / f"{model_basename}.pkl").resolve()
+    if not pkl_path.exists():
+        # Erreur claire si le .pkl n'existe pas
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model file not found: {pkl_path}"
+        )
+
+    # 2) Démarrer un port libre + sous-processus
     port = find_free_port()
-    proc = multiprocessing.Process(target=serve_model, args=(port, model_id), daemon=True)
+    proc = multiprocessing.Process(
+        target=serve_model,
+        args=(port, model_id),
+        daemon=True,
+    )
     proc.start()
-    # wait for /openapi.json to respond (Swagger loaded)
+
+    # 3) Attendre que le sous-serveur soit prêt (Swagger dispo)
     ready = _wait_http_ok("127.0.0.1", port, "/openapi.json", timeout_s=8.0)
     if not ready:
-        # security: shut down if it doesn't boot
+        # sécurité : on coupe le process s’il n’a pas démarré correctement
         try:
             if proc.is_alive():
                 proc.terminate()
@@ -1970,15 +2036,23 @@ def deploy_model(
             pass
         raise HTTPException(status_code=500, detail="Model server failed to start.")
 
-    REGISTRY[model_id] = {"port": port, "proc": proc, "status": "Deployed", "code": (model_id.split("__",1)[0] if "__" in model_id else model_id)}
+    # 4) Enregistrer dans REGISTRY
+    REGISTRY[model_id] = {
+        "port": port,
+        "proc": proc,
+        "status": "Deployed",
+        "model_basename": model_basename,
+    }
+
+    # 5) Réponse pour le front (Shiny)
     base = f"http://127.0.0.1:{port}"
-    return {"model_id": model_id, "status": "Deployed", "url": f"{base}/predict", "api": f"{base}/docs"}
+    return {
+        "model_id": model_id,
+        "status": "Deployed",
+        "url": f"{base}/predict",
+        "api": f"{base}/docs",
+    }
 
-    #time.sleep(0.8)  # short boot time
-
-    #REGISTRY[model_id] = {"port": port, "proc": proc, "status": "Deployed"}
-    #base = f"http://127.0.0.1:{port}"
-    #return {"model_id": model_id, "status": "Deployed", "url": f"{base}/predict", "api": f"{base}/docs"}
 
 @app.post("/undeploy_model")
 def undeploy_model(model_id: str = Form(None)):
