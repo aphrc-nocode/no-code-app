@@ -4,8 +4,12 @@ options(shiny.maxRequestSize=300000*1024^2)
 source("R/utils_logging.R")
 
 # ----- FastAPI base URL local version -----
-api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
 
+# ----- FastAPI base URL - valeur par défaut (fallback) -----
+DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
+
+message("[ML API base default] ", DEFAULT_API_BASE)
 # ----- FastAPI base URL Docker v1 -----
 #api_base <- "http://localhost:3760"
 
@@ -19,7 +23,7 @@ api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
 # En local (sans Docker), FASTAPI_BASE n'est pas défini => fallback 127.0.0.1:8000
 # En Docker Compose, FASTAPI_BASE sera injecté via l'environnement.
 
-message("[ML API base] ", api_base)
+#message("[ML API base] ", api_base)
 
 
 source("server/automl_controls_server.R")
@@ -38,6 +42,20 @@ function(input, output, session){
   shinyjs::show("login")
   source("server/auth.R")
   user_auth(input, output, session)
+  
+  # ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
+  api_base <- reactive({
+    # input$fastapi_base vient du champ textInput dans feature_engineering_ui.R
+    val <- input$fastapi_base
+
+    # Si rien n'est saisi, on retombe sur la valeur par défaut (env var ou http://api:8000)
+    if (is.null(val) || !nzchar(trimws(val))) {
+      DEFAULT_API_BASE
+    } else {
+      trimws(val)
+    }
+    })
+
 
 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)

@@ -21,6 +21,13 @@ feature_engineering_ui = function() {
 				conditionalPanel(
 					condition = "input.modelling_framework_choices == 'Pycaret'",
 					#uiOutput("automl_module_ui")
+					# New files for put URL/IP of FastAPI + PyCaret
+					textInput(
+						inputId    = "fastapi_base",
+						label      = "FastAPI / PyCaret base URL",
+						value      = Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000"),
+						placeholder = "ex: http://127.0.0.1:8000 or YourServerIP:port"
+					),
 					automl_controls_ui("automl_controls")
 				)
 			),
