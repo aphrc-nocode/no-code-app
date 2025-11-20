@@ -334,7 +334,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
         setProgress(0.05, detail = "Training (PyCaret /automl)")
         res <- tryCatch(
           httr::POST(
-            url   = paste0(api_base, "/automl"),
+            url   = paste0(api_base(), "/automl"),
             body  = list(
               file          = httr::upload_file(tmpfile),
               target        = .scalar_chr_or_null(outcome),
@@ -408,7 +408,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
 
         res_test <- tryCatch(
           httr::POST(
-            url = paste0(api_base, "/test_leaderboard"),
+            url = paste0(api_base(), "/test_leaderboard"),
             body = list(
               file       = httr::upload_file(tmpfile, type = "text/csv"),
               target     = .scalar_chr_or_null(outcome),
@@ -550,7 +550,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
 
           res_eval <- tryCatch(
             httr::POST(
-              url = paste0(api_base, "/evaluate_model"),
+              url = paste0(api_base(), "/evaluate_model"),
               body = body_eval,
               encode = "multipart",
               httr::add_headers(`accept` = "application/json"),
@@ -627,7 +627,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
           )
 
           # 4) synchronous call (calculated immediately)
-          res <- try(httr::POST(paste0(api_base, "/evaluate_model"),
+          res <- try(httr::POST(paste0(api_base(), "/evaluate_model"),
                                 body = body_eval, encode = "multipart",
                                 httr::timeout(600)), silent = TRUE)
           if (!inherits(res, "try-error") && !httr::http_error(res)) {

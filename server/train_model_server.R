@@ -341,7 +341,7 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
 
         res <- tryCatch(
           httr::POST(
-            url   = paste0(api_base, "/evaluate_model"),
+            url   = paste0(api_base(), "/evaluate_model"),
             body  = body_eval,
             encode = "multipart",
             httr::timeout(600),

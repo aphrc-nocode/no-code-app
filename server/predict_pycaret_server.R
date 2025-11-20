@@ -179,7 +179,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
 
       tryCatch({
         res <- httr::POST(
-          url = paste0(api_base, "/predict_deployed_model"),
+          url = paste0(api_base(), "/predict_deployed_model"),
           body = list(
             model_name = model_name,
             file       = httr::upload_file(test_path)
