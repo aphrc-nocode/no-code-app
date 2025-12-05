@@ -721,6 +721,27 @@ model_training_caret_train_all_server = function() {
 
 					if (is.null(rv_training_results$train_metrics_df)) return()
 
+					## Save training performance metrics locally
+					
+					save_training = tryCatch({
+						Rautoml::save_rautoml_csv(object=rv_training_results$train_metrics_df
+							, name="training_performance_metrics"
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_training)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)	
+						return()
+					}
+					
 					## Test metrics
 					rv_training_results$test_metrics_objs=tryCatch({
 						Rautoml::boot_estimates_multiple(
@@ -744,16 +765,50 @@ model_training_caret_train_all_server = function() {
 					})
 
 					if (is.null(rv_training_results$test_metrics_objs)) return()
+					
+					## Save test performance metrics
+					
+					save_test = tryCatch({
+						Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+							, sub_dir="test_metrics"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_test)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
+					
 					## Generate logs
-					Rautoml::create_model_logs(
-						df_name=rv_ml_ai$dataset_id
-						, session_name=rv_ml_ai$session_id
-						, outcome=rv_ml_ai$outcome
-						, framework=input$modelling_framework_choices
-						, train_result=rv_training_results$test_metrics_objs$all
-						, timestamp=Sys.time()
-						, path=".log_files"
-					)
+					save_logs = tryCatch({
+						Rautoml::create_model_logs(
+							df_name=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, outcome=rv_ml_ai$outcome
+							, framework=input$modelling_framework_choices
+							, train_result=rv_training_results$test_metrics_objs$all
+							, timestamp=Sys.time()
+							, path=".log_files"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_logs)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
+
 
 					## More metrics 
 					### Post metrics
@@ -769,8 +824,27 @@ model_training_caret_train_all_server = function() {
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
-					
+
 					if (is.null(rv_training_results$post_model_metrics_objs)) return()
+					
+					## Save post model objects
+					save_post = tryCatch({
+						Rautoml::save_post_metrics_plots(metric_list=rv_training_results$post_model_metrics_objs
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_post)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
 
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				} else {

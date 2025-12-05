@@ -10,7 +10,16 @@ model_training_caret_train_metrics_server = function() {
 
 					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({
-						plot(rv_training_results$train_metrics_df)	
+						p1 = plot(rv_training_results$train_metrics_df)	
+						Rautoml::save_rautoml_plot(objects=p1
+							, name="training_performance_metrics"
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+							, metric_type="training_metrics"
+						)
+						p1
 					})
 					
 					
@@ -71,6 +80,24 @@ model_training_caret_train_metrics_server = function() {
 						})
 					
 						if (is.null(test_plots)) return()
+						
+						## Save test metric plots
+						save_test_plots = tryCatch({
+							Rautoml::save_rautoml_plot(objects=test_plots
+								, name="test_performance_metrics"
+								, dataset_id=rv_ml_ai$dataset_id
+								, session_name=rv_ml_ai$session_id
+								, timestamp=Sys.time()
+								, output_dir="outputs"
+								, metric_type="test_metrics"
+							)
+							invisible(TRUE)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+
+						if (is.null(save_test_plots)) return()
 
 						output$model_training_caret_test_metrics_plot_specifics = renderPlot({
 							test_plots$specifics
@@ -433,14 +460,57 @@ model_training_caret_train_metrics_server = function() {
 								
 								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
 								
-								rv_training_results$test_metrics_objs_filtered = Rautoml::extract_more_metrics(
-									object=rv_training_results$test_metrics_objs
-									, model_name=input$model_training_caret_test_metrics_trained_models_shap
-									, metric_name=input$model_training_caret_test_metrics_trained_models_options
-								)
+								rv_training_results$test_metrics_objs_filtered = tryCatch({
+									Rautoml::extract_more_metrics(
+										object=rv_training_results$test_metrics_objs
+										, model_name=input$model_training_caret_test_metrics_trained_models_shap
+										, metric_name=input$model_training_caret_test_metrics_trained_models_options
+									)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+								
+								if (is.null(rv_training_results$test_metrics_objs_filtered)) return()
+								
+								## Save explore test performance metrics
+								save_more = tryCatch({
+									Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs_filtered
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, sub_dir="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+
+								if (is.null(save_more)) return()
 								
 								if (NROW(rv_training_results$test_metrics_objs_filtered$all)) {
 									test_plots_filtered = plot(rv_training_results$test_metrics_objs_filtered)
+									
+									## Save filtered plots
+									save_more_plots = tryCatch({
+										Rautoml::save_rautoml_plot(objects=test_plots_filtered
+											, name="explore_performance_metrics"
+											, dataset_id=rv_ml_ai$dataset_id
+											, session_name=rv_ml_ai$session_id
+											, timestamp=Sys.time()
+											, output_dir="outputs"
+											, metric_type="explore_trained_models"
+										)
+										invisible(TRUE)
+									}, error=function(e) {
+										shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+										return(NULL)
+									})
+
+									if (is.null(save_more_plots)) return()
+
 									output$model_training_caret_test_metrics_plot_all_filtered = renderPlot({
 										req(!is.null(test_plots_filtered$all))
 										test_plots_filtered$all	
@@ -603,7 +673,40 @@ model_training_caret_train_metrics_server = function() {
 								})
 							
 								if (is.null(rv_training_results$shap_plots)) return()
+								
+								## Save SHAP objects and plots
+								save_shap = tryCatch({
+									Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs_shap
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, sub_dir="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
 
+								if (is.null(save_shap)) return()
+									
+								save_shap_plots = tryCatch({
+									Rautoml::save_rautoml_plot(objects=rv_training_results$shap_plots
+										, name="explore_performance_metrics"
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, metric_type="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+
+								if (is.null(save_shap_plots)) return()
 								
 								## Variable importance
 								output$model_training_caret_test_metrics_shap_values_varimp = renderPlot({
