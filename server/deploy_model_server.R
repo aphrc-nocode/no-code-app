@@ -108,7 +108,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
     #    /deployments: list of models already deployed (status)
     # ------------------------------------------------------------
     .get_saved_models <- function() {
-      url <- paste0(api_base, "/saved_models")
+      url <- paste0(api_base(), "/saved_models")
       res <- try(httr::GET(url), silent = TRUE)
       if (inherits(res, "try-error") || httr::http_error(res)) return(NULL)
       txt <- httr::content(res, as = "text", encoding = "UTF-8")
@@ -118,7 +118,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
       j$items  # list of items (each is a named list)
     }
     .get_deployments <- function() {
-      url <- paste0(api_base, "/deployments")
+      url <- paste0(api_base(), "/deployments")
       res <- try(httr::GET(url), silent = TRUE)
       if (inherits(res, "try-error") || httr::http_error(res)) return(data.frame())
       txt <- httr::content(res, as = "text", encoding = "UTF-8")
@@ -411,6 +411,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
           # key = model code (lowercase, no spaces)
           norm_code <- function(x) tolower(gsub("\\s+", "", trimws(x)))
           sub$model <- norm_code(sub$model)
+
           choose_display <- function(sn, sid) {
             sn  <- as.character(sn);  sn[!nzchar(sn)]  <- NA_character_
             sid <- as.character(sid); sid[!nzchar(sid)] <- NA_character_
@@ -429,14 +430,15 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
             INDEX= sub$model,
             FUN  = function(ix) choose_display(sub$session_name[ix], sub$session_id[ix])
           )
-          map <- as.character(map)
+          map  <- as.character(map)
           keys <- names(map)
 
-          # applies to the displayed DF
-          df$model_id  <- norm_code(df$model_id)
-          disp <- map[ match(df$model_id, keys) ]
+          # Ici on calcule des CODES pour la jointure,
+          # mais on ne modifie PAS df$model_id
+          tmp_codes <- norm_code(df$model_id)
+          disp <- map[ match(tmp_codes, keys) ]
 
-          # fallback: keep the original if nothing is found in the index
+          # fallback: garder l'ancienne colonne session_id si pas de match
           orig <- as.character(df$session_id)
           disp[is.na(disp) | !nzchar(disp)] <- orig[is.na(disp) | !nzchar(disp)]
 
@@ -444,10 +446,18 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
         }
       }
 
+
       df$swagger <- vapply(seq_len(nrow(df)), function(i) {
-        api <- df$api[i] %||% ""
-        if (nzchar(api)) sprintf("<a href='%s' target='_blank'>Swagger</a>", htmltools::htmlEscape(api)) else ""
+        #swagger_url <- paste0(api_base, "/docs")
+        swagger_url <- paste0(
+            api_base(),
+            "/docs#/default/predict_deployed_model_predict_deployed_model_post"
+          )
+
+        sprintf("<a href='%s' target='_blank'>Swagger</a>",
+                htmltools::htmlEscape(swagger_url))
       }, character(1))
+
 
       show_cols <- c("model_id","model_name","target","session_id","metric_name",
                     "metric_value","framework","created_at","swagger","status")
@@ -480,7 +490,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
 
     res <- try(
       httr::POST(
-        paste0(api_base, "/deploy_model"),
+        paste0(api_base(), "/deploy_model"),
         body   = list(model_id = input$deploy_model_id),
         encode = "multipart"
       ),
@@ -497,15 +507,15 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
     showNotification("Model deployed successfully.", type = "message")
 
     # Open Swagger if the API is returned by FastAPI
-    api_url <- tryCatch(httr::content(res, as = "parsed")$api, error = function(e) NULL)
-    if (!is.null(api_url) && nzchar(api_url)) {
-      session$sendCustomMessage("openSwagger", list(url = api_url))
-    }
+    # Open Swagger (adapté au mode Docker)
+    parsed <- tryCatch(httr::content(res, as = "parsed"), error = function(e) NULL)
+    api_url <- NULL
+    swagger_url <- paste0(
+      api_base(),
+      "/docs#/default/predict_deployed_model_predict_deployed_model_post"
+    )
+    session$sendCustomMessage("openSwagger", list(url = api_url))
 
-    # IMPORTANT: short wait to allow /deployments to reflect the “Deployed” status
-    later::later(function() {
-      refresh_key(isolate(refresh_key()) + 1)
-    }, delay = 0.8)
   })
 
   # ---- Stop (undeploy) ----
@@ -514,7 +524,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
 
     res <- try(
       httr::POST(
-        paste0(api_base, "/undeploy_model"),
+        paste0(api_base(), "/undeploy_model"),
         body = list(model_id = input$stop_model_id),
         encode = "multipart"
       ),

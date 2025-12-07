@@ -124,7 +124,6 @@ aphrcBody <- dashboardBody(
 		## Prediction UI
 		, predict_classify_ui()
 				  
-
 		## Deep learning UI
 		, deeplearning_ui()
 		

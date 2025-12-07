@@ -1,10 +1,30 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300*1024^2)
+options(shiny.maxRequestSize=300000*1024^2)
 
 source("R/utils_logging.R")
 
+# ----- FastAPI base URL local version -----
+#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+
+# ----- FastAPI base URL - valeur par défaut (fallback) -----
+DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
+
+message("[ML API base default] ", DEFAULT_API_BASE)
+# ----- FastAPI base URL Docker v1 -----
+#api_base <- "http://localhost:3760"
+
+# ----- FastAPI base URL Docker v2 -----
+#api_base <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
+
+# FASTAPI Linux
+#api_base <- "http://localhost:8000"
+
 # ----- FastAPI base URL -----
-api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
+# En local (sans Docker), FASTAPI_BASE n'est pas défini => fallback 127.0.0.1:8000
+# En Docker Compose, FASTAPI_BASE sera injecté via l'environnement.
+
+#message("[ML API base] ", api_base)
+
 
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")
@@ -22,15 +42,31 @@ function(input, output, session){
   shinyjs::show("login")
   source("server/auth.R")
   user_auth(input, output, session)
+  
+  # ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
+  api_base <- reactive({
+    # input$fastapi_base vient du champ textInput dans feature_engineering_ui.R
+    val <- input$fastapi_base
+
+    # Si rien n'est saisi, on retombe sur la valeur par défaut (env var ou http://api:8000)
+    if (is.null(val) || !nzchar(trimws(val))) {
+      DEFAULT_API_BASE
+    } else {
+      trimws(val)
+    }
+    })
+
 
 
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
+  data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
   deploy_models_caret_pb = Attendant$new("deploy_models_caret_pb", hide_on_max = TRUE)
   predict_models_caret_pb = Attendant$new("predict_models_caret_pb", hide_on_max = TRUE)
   predict_endpoint_models_caret_pb = Attendant$new("predict_endpoint_models_caret_pb", hide_on_max = TRUE)
   generate_research_questions_outcome_pb = Attendant$new("generate_research_questions_outcome_pb", hide_on_max = TRUE)
   generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
+  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
@@ -632,6 +668,18 @@ function(input, output, session){
 
   ## NNET
   model_training_caret_models_nnet_server()
+
+  ## TREEBAG
+  model_training_caret_models_treebag_server()
+
+  ## avNNet
+  model_training_caret_models_avNNet_server()
+
+  ## PLS
+  model_training_caret_models_pls_server()
+
+  ## GAM
+  model_training_caret_models_gam_server()
 
   #### ----- Train all models ----------------------------------- ####
   source("server/train_caret_models.R", local=TRUE)

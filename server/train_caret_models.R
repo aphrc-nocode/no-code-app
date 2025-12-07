@@ -160,6 +160,28 @@ model_training_caret_train_all_server = function() {
 		}
 	})
 
+	### avNNet
+	observeEvent(input$avNNet_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_avNNet_check)) {
+					rv_training_models$avNNet_param = TRUE			
+				}
+			}
+		}
+	})
+
+	### pls
+	observeEvent(input$pls_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_pls_check)) {
+					rv_training_models$pls_param = TRUE			
+				}
+			}
+		}
+	})
+
 
 	## Check selected models
 	observe({
@@ -174,7 +196,7 @@ model_training_caret_train_all_server = function() {
 						param_set=list(intercept=input$model_training_caret_models_ols_advance_intercept)
 					}
 					rv_training_models$ols_model = Rautoml::setup_caret( 
-						unname(rv_training_models$ols_name)
+						rv_training_models$ols_name
 						, param=rv_training_models$ols_param
 						, param_set=param_set
 					)
@@ -187,7 +209,7 @@ model_training_caret_train_all_server = function() {
 				## RF
 				if (isTRUE(input$model_training_caret_models_rf_check)) {
 					rv_training_models$rf_model = Rautoml::setup_caret( 
-						unname(rv_training_models$rf_name)
+						rv_training_models$rf_name
 						, param=rv_training_models$rf_param
 						, param_set=list(
 							mtry=as.numeric(input$model_training_caret_models_gbm_advance_params)
@@ -207,7 +229,7 @@ model_training_caret_train_all_server = function() {
 						shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
 					}
 					rv_training_models$gbm_model = Rautoml::setup_caret( 
-						unname(rv_training_models$gbm_name)
+						rv_training_models$gbm_name
 						, param=rv_training_models$gbm_param
 						, param_set=list(
 							n.trees=as.numeric(input$model_training_caret_models_gbm_advance_n.trees)
@@ -230,7 +252,7 @@ model_training_caret_train_all_server = function() {
 						eta = input$model_training_caret_models_xgbTree_advance_eta
 					}
 					rv_training_models$xgbTree_model = Rautoml::setup_caret( 
-						unname(rv_training_models$xgbTree_name)
+						rv_training_models$xgbTree_name
 						, param=rv_training_models$xgbTree_param
 						, param_set=list(
 							nrounds=as.numeric(input$model_training_caret_models_xgbTree_advance_nrounds)
@@ -257,7 +279,7 @@ model_training_caret_train_all_server = function() {
 						eta = input$model_training_caret_models_xgbLinear_advance_eta
 					}
 					rv_training_models$xgbLinear_model = Rautoml::setup_caret( 
-						unname(rv_training_models$xgbLinear_name)
+						rv_training_models$xgbLinear_name
 						, param=rv_training_models$xgbLinear_param
 						, param_set=list(
 							nrounds=as.numeric(input$model_training_caret_models_xgbLinear_advance_nrounds)
@@ -280,7 +302,7 @@ model_training_caret_train_all_server = function() {
 						sigma = input$model_training_caret_models_svmRadial_advance_sigma
 					}
 					rv_training_models$svmRadial_model = Rautoml::setup_caret( 
-						unname(rv_training_models$svmRadial_name)
+						rv_training_models$svmRadial_name
 						, param=rv_training_models$svmRadial_param
 						, param_set=list(
 							C=as.numeric(input$model_training_caret_models_svmRadial_advance_C)
@@ -295,7 +317,7 @@ model_training_caret_train_all_server = function() {
 				## svmLinear
 				if (isTRUE(input$model_training_caret_models_svmLinear_check)) {
 					rv_training_models$svmLinear_model = Rautoml::setup_caret( 
-						unname(rv_training_models$svmLinear_name)
+						rv_training_models$svmLinear_name
 						, param=rv_training_models$svmLinear_param
 						, param_set=list(
 							C=as.numeric(input$model_training_caret_models_svmLinear_advance_C)
@@ -316,7 +338,7 @@ model_training_caret_train_all_server = function() {
 						scale_ = input$model_training_caret_models_svmPoly_advance_scale
 					}
 					rv_training_models$svmPoly_model = Rautoml::setup_caret( 
-						unname(rv_training_models$svmPoly_name)
+						rv_training_models$svmPoly_name
 						, param=rv_training_models$svmPoly_param
 						, param_set=list(
 							degree=as.numeric(input$model_training_caret_models_svmPoly_advance_degree)
@@ -333,7 +355,7 @@ model_training_caret_train_all_server = function() {
 				## glmnet
 				if (isTRUE(input$model_training_caret_models_glmnet_check)) {
 					rv_training_models$glmnet_model = Rautoml::setup_caret( 
-						unname(rv_training_models$glmnet_name)
+						rv_training_models$glmnet_name
 						, param=rv_training_models$glmnet_param
 						, param_set=list(
 							alpha=as.numeric(input$model_training_caret_models_glmnet_advance_alpha)
@@ -350,7 +372,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_lasso_check)) {
 					rv_training_models$lasso_param = TRUE
 					rv_training_models$lasso_model = Rautoml::setup_caret( 
-						unname(rv_training_models$lasso_name)
+						rv_training_models$lasso_name
 						, param=TRUE#rv_training_models$lasso_param
 						, param_set=list(
 							alpha=as.numeric(input$model_training_caret_models_lasso_advance_alpha)
@@ -367,7 +389,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_ridge_check)) {
 					rv_training_models$ridge_param = TRUE
 					rv_training_models$ridge_model = Rautoml::setup_caret( 
-						unname(rv_training_models$ridge_name)
+						rv_training_models$ridge_name
 						, param=TRUE#rv_training_models$ridge_param
 						, param_set=list(
 							alpha=as.numeric(input$model_training_caret_models_ridge_advance_alpha)
@@ -383,7 +405,7 @@ model_training_caret_train_all_server = function() {
 				## knn
 				if (isTRUE(input$model_training_caret_models_knn_check)) {
 					rv_training_models$knn_model = Rautoml::setup_caret( 
-						unname(rv_training_models$knn_name)
+						rv_training_models$knn_name
 						, param=rv_training_models$knn_param
 						, param_set=list(
 							k=as.numeric(input$model_training_caret_models_knn_advance_k)
@@ -398,7 +420,7 @@ model_training_caret_train_all_server = function() {
 				## nnet
 				if (isTRUE(input$model_training_caret_models_nnet_check)) {
 					rv_training_models$nnet_model = Rautoml::setup_caret( 
-						unname(rv_training_models$nnet_name)
+						rv_training_models$nnet_name
 						, param=rv_training_models$nnet_param
 						, param_set=list(
 							size=as.numeric(input$model_training_caret_models_nnet_advance_size)
@@ -411,14 +433,70 @@ model_training_caret_train_all_server = function() {
 				}
 
 				
+				## treebag
+				if (isTRUE(input$model_training_caret_models_treebag_check)) {
+					rv_training_models$treebag_trained_model = rv_training_models$treebag_name
+					rv_training_models$treebag_model = Rautoml::setup_caret( 
+						rv_training_models$treebag_name
+						, param=FALSE
+						, param_set=NULL
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$treebag_model = NULL
+				}
+
+				## avNNet
+				if (isTRUE(input$model_training_caret_models_avNNet_check)) {
+					rv_training_models$avNNet_model = Rautoml::setup_caret( 
+						rv_training_models$avNNet_name
+						, param=rv_training_models$avNNet_param
+						, param_set=list(
+							bag = input$model_training_caret_models_avNNet_advance_bag
+							, size=as.numeric(input$model_training_caret_models_avNNet_advance_size)
+							, decay=as.numeric(input$model_training_caret_models_avNNet_advance_decay)
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$avNNet_model = NULL
+				}
+
+				## pls
+				if (isTRUE(input$model_training_caret_models_pls_check)) {
+					rv_training_models$pls_model = Rautoml::setup_caret( 
+						rv_training_models$pls_name
+						, param=rv_training_models$pls_param
+						, param_set=list(
+							ncomp=as.numeric(input$model_training_caret_models_pls_advance_ncomp)
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$pls_model = NULL
+				}
+
+				
+				## gam
+				if (isTRUE(input$model_training_caret_models_gam_check)) {
+					rv_training_models$gam_trained_model = rv_training_models$gam_name
+					rv_training_models$gam_model = Rautoml::setup_caret( 
+						rv_training_models$gam_name
+						, param=FALSE
+						, param_set=NULL
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$gam_model = NULL
+				}
+
+
 				## Update this for every model
-				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) ) {
+				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) & !isTRUE(input$model_training_caret_models_treebag_check) & !isTRUE(input$model_training_caret_models_avNNet_check) & !isTRUE(input$model_training_caret_models_pls_check) & !isTRUE(input$model_training_caret_models_gam_check) ) {
 					rv_ml_ai$at_least_one_model = FALSE
 				}
 			}
-		}
-
-		
+		}	
 	})
 
    ##	Train model action
@@ -512,6 +590,20 @@ model_training_caret_train_all_server = function() {
 									, uiOutput("model_training_caret_models_nnet_check")
 									, uiOutput("model_training_caret_models_nnet_advance_params")
 								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_treebag_check")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_avNNet_check")
+									, uiOutput("model_training_caret_models_avNNet_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_pls_check")
+									, uiOutput("model_training_caret_models_pls_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_gam_check")
+								)
 							 )
 							 , uiOutput("model_training_apply")
 					  )
@@ -542,6 +634,10 @@ model_training_caret_train_all_server = function() {
 						, rv_training_models$ridge_model
 						, rv_training_models$knn_model
 						, rv_training_models$nnet_model
+						, rv_training_models$treebag_model
+						, rv_training_models$avNNet_model
+						, rv_training_models$pls_model
+						, rv_training_models$gam_model
 					)
 					set.seed(rv_ml_ai$seed_value)
 					rv_training_results$training_completed = FALSE
@@ -647,9 +743,7 @@ model_training_caret_train_all_server = function() {
 						return(NULL)
 					})
 
-					
 					if (is.null(rv_training_results$test_metrics_objs)) return()
-
 					## Generate logs
 					Rautoml::create_model_logs(
 						df_name=rv_ml_ai$dataset_id
@@ -676,7 +770,6 @@ model_training_caret_train_all_server = function() {
 						return(NULL)
 					})
 					
-
 					if (is.null(rv_training_results$post_model_metrics_objs)) return()
 
 					close_progress_bar(att_new_obj=model_training_caret_pb)

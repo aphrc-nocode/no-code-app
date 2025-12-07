@@ -3,7 +3,7 @@ library(gsheet)
 
 ## Labelling files
 
-use_local = FALSE
+use_local = TRUE
 
 if (!use_local) {
 	labelling_file = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=1571856299#gid=1571856299", sheetid="ui_labels")
@@ -190,7 +190,9 @@ start_progress_bar = function(id="progress-bar", att_new_obj, text="Running ..."
 			 class = "top-progress",
 			 text = text,
 			 striped = TRUE,
-			 animated = TRUE
+			 animated = TRUE,
+			 color    = "success",
+			 bg_color = "light"  
 		  ),
 		  footer = NULL
 		)

@@ -1,6 +1,17 @@
-fastapi==0.115.14
-uvicorn==0.34.3
+
+# --- API stack ----
+fastapi
+uvicorn[standard]
+python-multipart
+
 pycaret==3.3.2
-pandas==2.1.4
-python-multipart==0.0.20
-shap==0.48.0
+
+scikit-learn
+numpy
+scipy
+pandas
+matplotlib
+shap
+lightgbm
+xgboost
+catboost
