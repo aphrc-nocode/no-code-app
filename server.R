@@ -31,6 +31,10 @@ function(input, output, session){
   
   observeEvent(USER$logged_in, {
     req(isTRUE(USER$logged_in))   # only proceed if logged in = TRUE
+    waiter_show(
+      html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+      color = "#FFF"
+    )
     
     if (authed_started()) return(NULL)
     authed_started(TRUE)
@@ -737,6 +741,8 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
+  
+  waiter_hide()
 
   }, ignoreInit = FALSE) 
   
