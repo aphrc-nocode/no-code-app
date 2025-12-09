@@ -1,47 +1,44 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300000*1024^2)
+options(shiny.maxRequestSize = 300000 * 1024^2)
 
 source("R/utils_logging.R")
 
-# ----- FastAPI base URL local version -----
-#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
-
-# ----- FastAPI base URL - valeur par défaut (fallback) -----
+# ----- FastAPI base URL - default / fallback -----
 DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
-
 message("[ML API base default] ", DEFAULT_API_BASE)
-# ----- FastAPI base URL Docker v1 -----
-#api_base <- "http://localhost:3760"
 
-# ----- FastAPI base URL Docker v2 -----
-#api_base <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
-
-# FASTAPI Linux
-#api_base <- "http://localhost:8000"
-
-# ----- FastAPI base URL -----
-# En local (sans Docker), FASTAPI_BASE n'est pas défini => fallback 127.0.0.1:8000
-# En Docker Compose, FASTAPI_BASE sera injecté via l'environnement.
-
-#message("[ML API base] ", api_base)
-
-
+# ---- Source server modules ----
 source("server/automl_controls_server.R")
 source("server/train_model_server.R")
 source("R/utils_api.R")
-source("server/deploy_model_server.R", local=TRUE)
-source("ui/deploy_model_ui.R", local=TRUE)
-source("server/predict_pycaret_server.R", local = TRUE)
+source("server/deploy_model_server.R",       local = TRUE)
+source("ui/deploy_model_ui.R",              local = TRUE)
+source("server/predict_pycaret_server.R",   local = TRUE)
 
+#Auth helper
+source("server/auth.R")
 function(input, output, session){
   waiter_show(
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     color = "#FFF"
   )
   
-  shinyjs::show("login")
-  source("server/auth.R")
-  user_auth(input, output, session)
+  #Authentication, get USER (reactiveValues)
+  USER <- user_auth(input, output, session)
+  
+  # 2) Run only once after login success
+  authed_started <- reactiveVal(FALSE)
+  
+  observeEvent(USER$logged_in, {
+    req(isTRUE(USER$logged_in))   # only proceed if logged in = TRUE
+    waiter_show(
+      html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+      color = "#FFF"
+    )
+    
+    if (authed_started()) return(NULL)
+    authed_started(TRUE)
+    
   
   # ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
   api_base <- reactive({
@@ -744,7 +741,10 @@ function(input, output, session){
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
-
-  waiter_hide()
   
+  waiter_hide()
+
+  }, ignoreInit = FALSE) 
+  
+  waiter_hide()
 }
