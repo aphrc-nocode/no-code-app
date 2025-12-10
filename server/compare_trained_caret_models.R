@@ -7,12 +7,34 @@ model_training_caret_train_metrics_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
+					
+					observe({
+						req(!is.null(rv_training_results$tuned_parameters))
+						req(!is.null(rv_training_results$control_parameters))
+						output$model_training_caret_train_tuned_parameters = renderUI({
+							txt = capture.output(str(rv_training_results$tuned_parameters))
+							pre(paste(txt, collapse = "\n"))
+						})
+
+						output$model_training_caret_train_training_control = renderUI({
+							txt = capture.output(str(rv_training_results$control_parameters))
+							pre(paste(txt, collapse = "\n"))
+						})
+					})
 
 					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({
-						plot(rv_training_results$train_metrics_df)	
+						p1 = plot(rv_training_results$train_metrics_df)	
+						Rautoml::save_rautoml_plot(objects=p1
+							, name="training_performance_metrics"
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+							, metric_type="training_metrics"
+						)
+						p1
 					})
-					
 					
 					output$model_training_caret_train_metrics_plotdown <- downloadHandler(
 					  filename = function(){
@@ -71,6 +93,24 @@ model_training_caret_train_metrics_server = function() {
 						})
 					
 						if (is.null(test_plots)) return()
+						
+						## Save test metric plots
+						save_test_plots = tryCatch({
+							Rautoml::save_rautoml_plot(objects=test_plots
+								, name="test_performance_metrics"
+								, dataset_id=rv_ml_ai$dataset_id
+								, session_name=rv_ml_ai$session_id
+								, timestamp=Sys.time()
+								, output_dir="outputs"
+								, metric_type="test_metrics"
+							)
+							invisible(TRUE)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+
+						if (is.null(save_test_plots)) return()
 
 						output$model_training_caret_test_metrics_plot_specifics = renderPlot({
 							test_plots$specifics
@@ -159,8 +199,15 @@ model_training_caret_train_metrics_server = function() {
 						  
 						)
 						
-					  rv_training_models$all_trained_models = Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
-					  
+                 rv_training_models$all_trained_models = tryCatch({
+                    Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
+                 }, error=function(e){
+                    shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+                    return(NULL)
+                 })
+
+                 if (is.null(rv_training_models$all_trained_models)) return()
+ 
 					  ## More options: SHAP values
 					  output$model_training_caret_more_options_shap = renderUI({
 							prettyRadioButtons(
@@ -171,6 +218,55 @@ model_training_caret_train_metrics_server = function() {
 									, status = "success"
 							)
 					  })
+					  
+					  ## Download results
+					  output$model_training_caret_metrics_download_all = renderUI({
+					  		ROOT_DIR = paste0("outputs/", rv_ml_ai$dataset_id, "/", rv_ml_ai$session_id)
+							p(
+								selectInput("model_training_caret_metrics_download_all"
+										, label = get_rv_labels("model_training_caret_metrics_download_all_ui")
+										, choices = unique(c(ROOT_DIR, fs::dir_ls(ROOT_DIR, type = "directory", recurse = FALSE)))
+										, selected = ROOT_DIR
+										, selectize = TRUE
+										, width="100%"
+								)
+								, br()
+								, downloadBttn("model_training_caret_metrics_download_all_zip", get_rv_labels("model_training_caret_metrics_download_all_zip"))
+							)
+					  })
+
+						output$model_training_caret_metrics_download_all_zip = downloadHandler(
+						 filename = function() {
+							paste0(basename(input$model_training_caret_metrics_download_all), ".zip")
+						 },
+						 content = function(file) {
+							start_progress_bar(id="model_training_caret_metrics_download_all_zip_pb", att_new_obj=model_training_caret_metrics_download_all_zip_pb, text=get_rv_labels("model_training_caret_metrics_download_all_zip"))
+							
+							folder = input$model_training_caret_metrics_download_all
+							
+							# Copy folder to tempdir
+							temp_folder = file.path(tempdir(), basename(folder))
+							if (dir_exists(temp_folder)) dir_delete(temp_folder)
+							dir_copy(folder, temp_folder)
+							
+							# Quietly create ZIP using utils::zip
+							old_wd = setwd(tempdir())
+							on.exit(setwd(old_wd), add = TRUE)
+							
+							# Redirect stdout and stderr to suppress console messages
+							suppressMessages(
+							  suppressWarnings(
+								 utils::zip(
+									zipfile = file,
+									files = basename(temp_folder),
+									extras = "-r"
+								 )
+							  )
+							)
+							close_progress_bar(model_training_caret_metrics_download_all_zip_pb)
+						 },
+						 contentType = "application/zip"
+						)
 					
 					} else {
 						output$model_training_caret_test_metrics_plot_specifics = NULL
@@ -188,6 +284,12 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_plot_all = NULL
 						output$model_training_caret_test_metrics_plot_roc = NULL
 						output$model_training_caret_test_metrics_df = NULL
+				
+						output$model_training_caret_train_tuned_parameters = NULL
+						output$model_training_caret_train_training_control = NULL
+
+						 output$model_training_caret_metrics_download_all = NULL
+						 output$model_training_caret_metrics_download_all_zip = NULL
 							
 					}
 
@@ -433,14 +535,57 @@ model_training_caret_train_metrics_server = function() {
 								
 								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
 								
-								rv_training_results$test_metrics_objs_filtered = Rautoml::extract_more_metrics(
-									object=rv_training_results$test_metrics_objs
-									, model_name=input$model_training_caret_test_metrics_trained_models_shap
-									, metric_name=input$model_training_caret_test_metrics_trained_models_options
-								)
+								rv_training_results$test_metrics_objs_filtered = tryCatch({
+									Rautoml::extract_more_metrics(
+										object=rv_training_results$test_metrics_objs
+										, model_name=input$model_training_caret_test_metrics_trained_models_shap
+										, metric_name=input$model_training_caret_test_metrics_trained_models_options
+									)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+								
+								if (is.null(rv_training_results$test_metrics_objs_filtered)) return()
+								
+								## Save explore test performance metrics
+								save_more = tryCatch({
+									Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs_filtered
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, sub_dir="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+
+								if (is.null(save_more)) return()
 								
 								if (NROW(rv_training_results$test_metrics_objs_filtered$all)) {
 									test_plots_filtered = plot(rv_training_results$test_metrics_objs_filtered)
+									
+									## Save filtered plots
+									save_more_plots = tryCatch({
+										Rautoml::save_rautoml_plot(objects=test_plots_filtered
+											, name="explore_performance_metrics"
+											, dataset_id=rv_ml_ai$dataset_id
+											, session_name=rv_ml_ai$session_id
+											, timestamp=Sys.time()
+											, output_dir="outputs"
+											, metric_type="explore_trained_models"
+										)
+										invisible(TRUE)
+									}, error=function(e) {
+										shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+										return(NULL)
+									})
+
+									if (is.null(save_more_plots)) return()
+
 									output$model_training_caret_test_metrics_plot_all_filtered = renderPlot({
 										req(!is.null(test_plots_filtered$all))
 										test_plots_filtered$all	
@@ -603,7 +748,40 @@ model_training_caret_train_metrics_server = function() {
 								})
 							
 								if (is.null(rv_training_results$shap_plots)) return()
+								
+								## Save SHAP objects and plots
+								save_shap = tryCatch({
+									Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs_shap
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, sub_dir="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
 
+								if (is.null(save_shap)) return()
+									
+								save_shap_plots = tryCatch({
+									Rautoml::save_rautoml_plot(objects=rv_training_results$shap_plots
+										, name="explore_performance_metrics"
+										, dataset_id=rv_ml_ai$dataset_id
+										, session_name=rv_ml_ai$session_id
+										, timestamp=Sys.time()
+										, output_dir="outputs"
+										, metric_type="explore_trained_models"
+									)
+									invisible(TRUE)
+								}, error=function(e) {
+									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+									return(NULL)
+								})
+
+								if (is.null(save_shap_plots)) return()
 								
 								## Variable importance
 								output$model_training_caret_test_metrics_shap_values_varimp = renderPlot({
@@ -802,6 +980,10 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
 							close_progress_bar(att_new_obj=model_metrics_caret_pb)
 						}
+						
+						## FIXME: Best way to reset SHAP values
+						rv_training_results$post_model_metrics_objs = NULL
+						rv_training_results$test_metrics_objs_shap = NULL		
 					})
 
 				} else {
@@ -837,6 +1019,9 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+					
+					output$model_training_caret_train_tuned_parameters = NULL
+					output$model_training_caret_train_training_control = NULL
 					close_progress_bar(att_new_obj=model_metrics_caret_pb)
 				}
 			} else {
@@ -872,6 +1057,9 @@ model_training_caret_train_metrics_server = function() {
 				output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+				
+				output$model_training_caret_train_tuned_parameters = NULL
+				output$model_training_caret_train_training_control = NULL
 				close_progress_bar(att_new_obj=model_metrics_caret_pb)
 			}
 		} else {
@@ -907,6 +1095,9 @@ model_training_caret_train_metrics_server = function() {
 			output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+						
+			output$model_training_caret_train_tuned_parameters = NULL
+			output$model_training_caret_train_training_control = NULL
 			close_progress_bar(att_new_obj=model_metrics_caret_pb)
 		}
 
@@ -916,6 +1107,8 @@ model_training_caret_train_metrics_server = function() {
 			req(!is.null(rv_current$working_df))
 			req(!is.null(rv_ml_ai$preprocessed))
 			req(!is.null(rv_training_results$train_metrics_df))
+			req(!is.null(rv_training_results$tuned_parameters))
+			req(!is.null(rv_training_results$control_parameters))
 			if (isTRUE(!is.null(rv_current$working_df))) {
 				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 					if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
@@ -924,7 +1117,31 @@ model_training_caret_train_metrics_server = function() {
 								, hr()
 								, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_metrics"), ":</b> <br/>"))
 								, tabsetPanel(
-									tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
+									tabPanel(get_rv_labels("model_training_caret_train_parameters_out")
+										, p(
+											br()
+											, box(title = NULL 
+												, status = "success",
+												style = "max-height: 650px; overflow-y: auto;"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													column(width = 6
+														, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_training_control"), "</b>"))
+														, uiOutput("model_training_caret_train_training_control")
+													)
+													, column(width = 6
+														, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_tuned_parameters"), "</b>"))
+														, uiOutput("model_training_caret_train_tuned_parameters")
+													)
+												)
+											)
+										)
+									)
+									
+									, tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
 										, p(
 											br()
 											, box(title = NULL 
@@ -1010,8 +1227,8 @@ model_training_caret_train_metrics_server = function() {
 										, p(
 											br()
 											, box(title = NULL 
-												, status = "success",
-												style = "max-height: 650px; overflow-y: auto;"
+												, status = "success"
+												, style = "max-height: 650px; overflow-y: auto;"
 												, solidHeader = TRUE
 												, collapsible = TRUE
 												, collapsed = FALSE
@@ -1036,7 +1253,26 @@ model_training_caret_train_metrics_server = function() {
 												, uiOutput("model_training_caret_test_metrics_shap_values_varimp_ui")
 												, uiOutput("model_training_caret_test_metrics_shap_values_varfreq_ui")
 												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
-												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
+												, uiOutput("model_training_caret_train_metrics_shap_values")
+											)
+										)
+									)
+
+									, tabPanel(get_rv_labels("model_training_caret_metrics_download_all")
+										, p(
+											br()
+											, box(title=NULL 
+												, status = "success"
+												, style = "max-height: 650px; overflow-y: auto;"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													 column(width=6
+														, uiOutput("model_training_caret_metrics_download_all")
+													)
+												)
 											)
 										)
 									)
@@ -1097,6 +1333,8 @@ model_training_caret_train_metrics_server = function() {
 			
 		})
 
+
 	})
  
+
 }

@@ -48,13 +48,14 @@ deep_learning = function() {
     # ==============================================================================
     
     # --- Fetch Model Registry on Startup ---
+	 ## FIXME: This should only happen if deeplearning module is activated
     observe({
         tryCatch({
             req <- request(paste0(api_url, "/models/list"))
             resp <- req_perform(req)
             model_registry(resp_body_json(resp))
         }, error = function(e) {
-            print(paste("Failed to fetch model registry:", e$message))
+            # print(paste("Failed to fetch model registry:", e$message))
             # TODO: Show a fatal error modal to the user
         })
     })

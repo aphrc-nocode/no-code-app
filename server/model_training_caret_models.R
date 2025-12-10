@@ -125,7 +125,7 @@ model_training_caret_models_rf_server = function() {
 						, collapsible = TRUE
 						, collapsed = TRUE
 						, width = 6
-						, selectInput("model_training_caret_models_rf_advance_params"
+						, selectInput("model_training_caret_models_rf_advance_params_mtry"
 							, get_rv_labels("model_training_caret_models_rf_advance_params")
 							, choices = 1:100
 							, selected = 5

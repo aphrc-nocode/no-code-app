@@ -20,7 +20,7 @@ model_training_caret_train_all_server = function() {
 		
 	})
 
-	### LM/GLM
+	### RF
 	observeEvent(input$rf_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
@@ -212,7 +212,7 @@ model_training_caret_train_all_server = function() {
 						rv_training_models$rf_name
 						, param=rv_training_models$rf_param
 						, param_set=list(
-							mtry=as.numeric(input$model_training_caret_models_gbm_advance_params)
+							mtry=as.numeric(input$model_training_caret_models_rf_advance_params_mtry)
 						)
 					)
 					rv_ml_ai$at_least_one_model = TRUE
@@ -640,11 +640,13 @@ model_training_caret_train_all_server = function() {
 						, rv_training_models$gam_model
 					)
 					set.seed(rv_ml_ai$seed_value)
+
 					rv_training_results$training_completed = FALSE
 
 					if (isTRUE(input$model_training_setup_start_clusters_check)) {
 						Rautoml::start_cluster()
 					}
+					
 					rv_training_results$models = tryCatch({
 						Rautoml::train_caret_models(
 							df=rv_ml_ai$preprocessed$train_df
@@ -670,7 +672,7 @@ model_training_caret_train_all_server = function() {
 					
 					if (isTRUE(input$model_training_setup_include_ensemble_check)) {
 						rv_training_results$models = tryCatch({
-							create_ensemble(
+							Rautoml::create_ensemble(
 								all.models = rv_training_results$models
 								, ctrl=reactiveValuesToList(rv_train_control_caret)
 								, metric=input$model_training_setup_eval_metric
@@ -710,6 +712,28 @@ model_training_caret_train_all_server = function() {
 					
 					if (isTRUE(is.null(rv_training_results$models))) return()
 					
+					rv_training_results$tuned_parameters = tryCatch({
+						Rautoml::get_tuned_params(rv_training_results$models)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return(NULL)
+					})
+					
+					if (is.null(rv_training_results$tuned_parameters)) return()
+
+					rv_training_results$control_parameters = tryCatch({
+						Rautoml::get_ctl_params(models=rv_training_results$models
+							, items=names(reactiveValuesToList(rv_train_control_caret))
+						)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return(NULL)
+					})
+					
+					if (is.null(rv_training_results$control_parameters)) return()
+				
 					rv_training_results$train_metrics_df=tryCatch({
 						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
 					}, error = function(e) {
@@ -721,6 +745,27 @@ model_training_caret_train_all_server = function() {
 
 					if (is.null(rv_training_results$train_metrics_df)) return()
 
+					## Save training performance metrics locally
+					
+					save_training = tryCatch({
+						Rautoml::save_rautoml_csv(object=rv_training_results$train_metrics_df
+							, name="training_performance_metrics"
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_training)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)	
+						return()
+					}
+					
 					## Test metrics
 					rv_training_results$test_metrics_objs=tryCatch({
 						Rautoml::boot_estimates_multiple(
@@ -744,16 +789,50 @@ model_training_caret_train_all_server = function() {
 					})
 
 					if (is.null(rv_training_results$test_metrics_objs)) return()
+					
+					## Save test performance metrics
+					
+					save_test = tryCatch({
+						Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+							, sub_dir="test_metrics"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_test)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
+					
 					## Generate logs
-					Rautoml::create_model_logs(
-						df_name=rv_ml_ai$dataset_id
-						, session_name=rv_ml_ai$session_id
-						, outcome=rv_ml_ai$outcome
-						, framework=input$modelling_framework_choices
-						, train_result=rv_training_results$test_metrics_objs$all
-						, timestamp=Sys.time()
-						, path=".log_files"
-					)
+					save_logs = tryCatch({
+						Rautoml::create_model_logs(
+							df_name=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, outcome=rv_ml_ai$outcome
+							, framework=input$modelling_framework_choices
+							, train_result=rv_training_results$test_metrics_objs$all
+							, timestamp=Sys.time()
+							, path=".log_files"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_logs)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
+
 
 					## More metrics 
 					### Post metrics
@@ -769,8 +848,27 @@ model_training_caret_train_all_server = function() {
 						close_progress_bar(att_new_obj=model_training_caret_pb)
 						return(NULL)
 					})
-					
+
 					if (is.null(rv_training_results$post_model_metrics_objs)) return()
+					
+					## Save post model objects
+					save_post = tryCatch({
+						Rautoml::save_post_metrics_plots(metric_list=rv_training_results$post_model_metrics_objs
+							, dataset_id=rv_ml_ai$dataset_id
+							, session_name=rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir="outputs"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_post)) {
+						close_progress_bar(att_new_obj=model_training_caret_pb)
+						return()
+					}
 
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				} else {
@@ -778,6 +876,9 @@ model_training_caret_train_all_server = function() {
 					rv_training_results$train_metrics_df = NULL
 					rv_training_results$test_metrics_objs = NULL
 					rv_training_results$post_model_metrics_objs = NULL
+					rv_training_results$tuned_parameters = NULL
+					rv_training_results$control_parameters = NULL
+
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				}
 			} else {
@@ -785,6 +886,8 @@ model_training_caret_train_all_server = function() {
 				rv_training_results$train_metrics_df = NULL
 				rv_training_results$test_metrics_objs = NULL
 				rv_training_results$post_model_metrics_objs = NULL
+				rv_training_results$tuned_parameters = NULL
+				rv_training_results$control_parameters = NULL
 				close_progress_bar(att_new_obj=model_training_caret_pb)
 			}
 		} else {
@@ -792,6 +895,8 @@ model_training_caret_train_all_server = function() {
 			rv_training_results$train_metrics_df = NULL
 			rv_training_results$test_metrics_objs = NULL
 			rv_training_results$post_model_metrics_objs = NULL
+			rv_training_results$tuned_parameters = NULL
+			rv_training_results$control_parameters = NULL
 			close_progress_bar(att_new_obj=model_training_caret_pb)
 		}
 	})	

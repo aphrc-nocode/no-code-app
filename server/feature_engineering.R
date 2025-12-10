@@ -123,7 +123,7 @@ feature_engineering_impute_missing_server = function() {
 							label = get_rv_labels("feature_engineering_perform_pca_steps_check"), 
 							status = "success",
 							right = TRUE,
-							value = TRUE
+							value = FALSE
 						 )
 					})
 
@@ -375,6 +375,18 @@ feature_engineering_impute_missing_server = function() {
 				})
 				output$feature_engineering_preprocessed_log = renderPrint({
 					cat(rv_ml_ai$feature_engineering_preprocessed_log, sep="\n")
+				})
+
+				output$feature_engineering_preprocessed_upsample_plot_ui = renderUI({
+					req(!is.null(rv_ml_ai$preprocessed$up_sample_plots))
+					p(
+						br()
+						, HTML(paste0("<b>",  get_rv_labels("feature_engineering_perform_upsample_steps_check"), ": ", input$feature_engineering_perform_upsample_steps_choices, "</b>"))
+					)
+				})
+				output$feature_engineering_preprocessed_upsample_plot = renderPlot({
+					req(!is.null(rv_ml_ai$preprocessed$up_sample_plots))
+					rv_ml_ai$preprocessed$up_sample_plots
 				})
 			} else {
 				rv_ml_ai$preprocessed = NULL
