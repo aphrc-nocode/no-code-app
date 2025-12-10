@@ -1,37 +1,5 @@
 library(Rautoml)
-options(shiny.maxRequestSize=300000*1024^2)
-
-source("R/utils_logging.R")
-
-# ----- FastAPI base URL local version -----
-#api_base <- Sys.getenv("FASTAPI_BASE", "http://127.0.0.1:8000")
-
-# ----- FastAPI base URL - valeur par défaut (fallback) -----
-DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
-
-message("[ML API base default] ", DEFAULT_API_BASE)
-# ----- FastAPI base URL Docker v1 -----
-#api_base <- "http://localhost:3760"
-
-# ----- FastAPI base URL Docker v2 -----
-#api_base <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
-
-# FASTAPI Linux
-#api_base <- "http://localhost:8000"
-
-# ----- FastAPI base URL -----
-# En local (sans Docker), FASTAPI_BASE n'est pas défini => fallback 127.0.0.1:8000
-# En Docker Compose, FASTAPI_BASE sera injecté via l'environnement.
-
-#message("[ML API base] ", api_base)
-
-
-source("server/automl_controls_server.R")
-source("server/train_model_server.R")
-source("R/utils_api.R")
-source("server/deploy_model_server.R", local=TRUE)
-source("ui/deploy_model_ui.R", local=TRUE)
-source("server/predict_pycaret_server.R", local = TRUE)
+options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
   waiter_show(
@@ -43,21 +11,7 @@ function(input, output, session){
   source("server/auth.R")
   user_auth(input, output, session)
   
-  # ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
-  api_base <- reactive({
-    # input$fastapi_base vient du champ textInput dans feature_engineering_ui.R
-    val <- input$fastapi_base
-
-    # Si rien n'est saisi, on retombe sur la valeur par défaut (env var ou http://api:8000)
-    if (is.null(val) || !nzchar(trimws(val))) {
-      DEFAULT_API_BASE
-    } else {
-      trimws(val)
-    }
-    })
-
-
-
+  
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
   data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
   model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
@@ -67,11 +21,34 @@ function(input, output, session){
   generate_research_questions_outcome_pb = Attendant$new("generate_research_questions_outcome_pb", hide_on_max = TRUE)
   generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
   feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
+  model_training_caret_metrics_download_all_zip_pb = Attendant$new("model_training_caret_metrics_download_all_zip_pb", hide_on_max = TRUE)
   
   #### ---- Input validators ---------------------------------------------------
   source("server/input_validators.R")
   #### ---- Create needed folders for datasets and logs ------------------------
   source("server/create_dirs.R")
+  
+  #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
+  source("R/utils_logging.R")
+
+  DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
+
+  source("server/automl_controls_server.R")
+  source("server/train_model_server.R")
+  source("R/utils_api.R")
+  source("server/deploy_model_server.R", local=TRUE)
+  source("ui/deploy_model_ui.R", local=TRUE)
+  source("server/predict_pycaret_server.R", local = TRUE)
+
+  api_base <- reactive({
+    val <- input$fastapi_base
+		 if (is.null(val) || !nzchar(trimws(val))) {
+			DEFAULT_API_BASE
+		 } else {
+			trimws(val)
+		 }
+  })
+
 
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------

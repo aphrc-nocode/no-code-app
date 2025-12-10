@@ -199,8 +199,15 @@ model_training_caret_train_metrics_server = function() {
 						  
 						)
 						
-					  rv_training_models$all_trained_models = Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
-					  
+                 rv_training_models$all_trained_models = tryCatch({
+                    Rautoml::get_rv_objects(pattern="_trained_model$", rv_training_models)
+                 }, error=function(e){
+                    shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+                    return(NULL)
+                 })
+
+                 if (is.null(rv_training_models$all_trained_models)) return()
+ 
 					  ## More options: SHAP values
 					  output$model_training_caret_more_options_shap = renderUI({
 							prettyRadioButtons(
@@ -211,6 +218,55 @@ model_training_caret_train_metrics_server = function() {
 									, status = "success"
 							)
 					  })
+					  
+					  ## Download results
+					  output$model_training_caret_metrics_download_all = renderUI({
+					  		ROOT_DIR = paste0("outputs/", rv_ml_ai$dataset_id, "/", rv_ml_ai$session_id)
+							p(
+								selectInput("model_training_caret_metrics_download_all"
+										, label = get_rv_labels("model_training_caret_metrics_download_all_ui")
+										, choices = unique(c(ROOT_DIR, fs::dir_ls(ROOT_DIR, type = "directory", recurse = FALSE)))
+										, selected = ROOT_DIR
+										, selectize = TRUE
+										, width="100%"
+								)
+								, br()
+								, downloadBttn("model_training_caret_metrics_download_all_zip", get_rv_labels("model_training_caret_metrics_download_all_zip"))
+							)
+					  })
+
+						output$model_training_caret_metrics_download_all_zip = downloadHandler(
+						 filename = function() {
+							paste0(basename(input$model_training_caret_metrics_download_all), ".zip")
+						 },
+						 content = function(file) {
+							start_progress_bar(id="model_training_caret_metrics_download_all_zip_pb", att_new_obj=model_training_caret_metrics_download_all_zip_pb, text=get_rv_labels("model_training_caret_metrics_download_all_zip"))
+							
+							folder = input$model_training_caret_metrics_download_all
+							
+							# Copy folder to tempdir
+							temp_folder = file.path(tempdir(), basename(folder))
+							if (dir_exists(temp_folder)) dir_delete(temp_folder)
+							dir_copy(folder, temp_folder)
+							
+							# Quietly create ZIP using utils::zip
+							old_wd = setwd(tempdir())
+							on.exit(setwd(old_wd), add = TRUE)
+							
+							# Redirect stdout and stderr to suppress console messages
+							suppressMessages(
+							  suppressWarnings(
+								 utils::zip(
+									zipfile = file,
+									files = basename(temp_folder),
+									extras = "-r"
+								 )
+							  )
+							)
+							close_progress_bar(model_training_caret_metrics_download_all_zip_pb)
+						 },
+						 contentType = "application/zip"
+						)
 					
 					} else {
 						output$model_training_caret_test_metrics_plot_specifics = NULL
@@ -231,6 +287,9 @@ model_training_caret_train_metrics_server = function() {
 				
 						output$model_training_caret_train_tuned_parameters = NULL
 						output$model_training_caret_train_training_control = NULL
+
+						 output$model_training_caret_metrics_download_all = NULL
+						 output$model_training_caret_metrics_download_all_zip = NULL
 							
 					}
 
@@ -921,6 +980,10 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
 							close_progress_bar(att_new_obj=model_metrics_caret_pb)
 						}
+						
+						## FIXME: Best way to reset SHAP values
+						rv_training_results$post_model_metrics_objs = NULL
+						rv_training_results$test_metrics_objs_shap = NULL		
 					})
 
 				} else {
@@ -1164,8 +1227,8 @@ model_training_caret_train_metrics_server = function() {
 										, p(
 											br()
 											, box(title = NULL 
-												, status = "success",
-												style = "max-height: 650px; overflow-y: auto;"
+												, status = "success"
+												, style = "max-height: 650px; overflow-y: auto;"
 												, solidHeader = TRUE
 												, collapsible = TRUE
 												, collapsed = FALSE
@@ -1190,7 +1253,26 @@ model_training_caret_train_metrics_server = function() {
 												, uiOutput("model_training_caret_test_metrics_shap_values_varimp_ui")
 												, uiOutput("model_training_caret_test_metrics_shap_values_varfreq_ui")
 												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
-												, uiOutput("model_training_caret_test_metrics_shap_values_vardep_ui")
+												, uiOutput("model_training_caret_train_metrics_shap_values")
+											)
+										)
+									)
+
+									, tabPanel(get_rv_labels("model_training_caret_metrics_download_all")
+										, p(
+											br()
+											, box(title=NULL 
+												, status = "success"
+												, style = "max-height: 650px; overflow-y: auto;"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													 column(width=6
+														, uiOutput("model_training_caret_metrics_download_all")
+													)
+												)
 											)
 										)
 									)
@@ -1251,6 +1333,8 @@ model_training_caret_train_metrics_server = function() {
 			
 		})
 
+
 	})
  
+
 }
