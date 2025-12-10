@@ -7,6 +7,20 @@ model_training_caret_train_metrics_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
+					
+					observe({
+						req(!is.null(rv_training_results$tuned_parameters))
+						req(!is.null(rv_training_results$control_parameters))
+						output$model_training_caret_train_tuned_parameters = renderUI({
+							txt = capture.output(str(rv_training_results$tuned_parameters))
+							pre(paste(txt, collapse = "\n"))
+						})
+
+						output$model_training_caret_train_training_control = renderUI({
+							txt = capture.output(str(rv_training_results$control_parameters))
+							pre(paste(txt, collapse = "\n"))
+						})
+					})
 
 					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({
@@ -21,7 +35,6 @@ model_training_caret_train_metrics_server = function() {
 						)
 						p1
 					})
-					
 					
 					output$model_training_caret_train_metrics_plotdown <- downloadHandler(
 					  filename = function(){
@@ -215,6 +228,9 @@ model_training_caret_train_metrics_server = function() {
 						output$model_training_caret_test_metrics_plot_all = NULL
 						output$model_training_caret_test_metrics_plot_roc = NULL
 						output$model_training_caret_test_metrics_df = NULL
+				
+						output$model_training_caret_train_tuned_parameters = NULL
+						output$model_training_caret_train_training_control = NULL
 							
 					}
 
@@ -940,6 +956,9 @@ model_training_caret_train_metrics_server = function() {
 					output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 					output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+					
+					output$model_training_caret_train_tuned_parameters = NULL
+					output$model_training_caret_train_training_control = NULL
 					close_progress_bar(att_new_obj=model_metrics_caret_pb)
 				}
 			} else {
@@ -975,6 +994,9 @@ model_training_caret_train_metrics_server = function() {
 				output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 				output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+				
+				output$model_training_caret_train_tuned_parameters = NULL
+				output$model_training_caret_train_training_control = NULL
 				close_progress_bar(att_new_obj=model_metrics_caret_pb)
 			}
 		} else {
@@ -1010,6 +1032,9 @@ model_training_caret_train_metrics_server = function() {
 			output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 			output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
+						
+			output$model_training_caret_train_tuned_parameters = NULL
+			output$model_training_caret_train_training_control = NULL
 			close_progress_bar(att_new_obj=model_metrics_caret_pb)
 		}
 
@@ -1019,6 +1044,8 @@ model_training_caret_train_metrics_server = function() {
 			req(!is.null(rv_current$working_df))
 			req(!is.null(rv_ml_ai$preprocessed))
 			req(!is.null(rv_training_results$train_metrics_df))
+			req(!is.null(rv_training_results$tuned_parameters))
+			req(!is.null(rv_training_results$control_parameters))
 			if (isTRUE(!is.null(rv_current$working_df))) {
 				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 					if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
@@ -1027,7 +1054,31 @@ model_training_caret_train_metrics_server = function() {
 								, hr()
 								, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_metrics"), ":</b> <br/>"))
 								, tabsetPanel(
-									tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
+									tabPanel(get_rv_labels("model_training_caret_train_parameters_out")
+										, p(
+											br()
+											, box(title = NULL 
+												, status = "success",
+												style = "max-height: 650px; overflow-y: auto;"
+												, solidHeader = TRUE
+												, collapsible = TRUE
+												, collapsed = FALSE
+												, width = 12
+												, fluidRow(
+													column(width = 6
+														, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_training_control"), "</b>"))
+														, uiOutput("model_training_caret_train_training_control")
+													)
+													, column(width = 6
+														, HTML(paste0("<b>", get_rv_labels("model_training_caret_train_tuned_parameters"), "</b>"))
+														, uiOutput("model_training_caret_train_tuned_parameters")
+													)
+												)
+											)
+										)
+									)
+									
+									, tabPanel(get_rv_labels("model_training_caret_train_metrics_training")
 										, p(
 											br()
 											, box(title = NULL 

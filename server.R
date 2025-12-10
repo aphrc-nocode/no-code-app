@@ -211,6 +211,9 @@ function(input, output, session){
 		models = NULL
 		, train_metrics_df = NULL
 		, test_metrics_objs = NULL
+		, post_model_metrics_objs = NULL
+		, control_parameters = NULL
+		, tuned_parameters = NULL
 	)
 
   # Update training results when a new model is trained

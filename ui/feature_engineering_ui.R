@@ -33,7 +33,9 @@ feature_engineering_ui = function() {
 			),
 			column(width = 9,
 				uiOutput("feature_engineering_preprocessed_log_ui"),
-				verbatimTextOutput("feature_engineering_preprocessed_log")
+				verbatimTextOutput("feature_engineering_preprocessed_log"),
+				uiOutput("feature_engineering_preprocessed_upsample_plot_ui"),
+				plotOutput("feature_engineering_preprocessed_upsample_plot", height="800px")
 			)
 		)
 	)
