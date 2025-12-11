@@ -982,7 +982,6 @@ model_training_caret_train_metrics_server = function() {
 						}
 						
 						## FIXME: Best way to reset SHAP values
-						rv_training_results$post_model_metrics_objs = NULL
 						rv_training_results$test_metrics_objs_shap = NULL		
 					})
 
