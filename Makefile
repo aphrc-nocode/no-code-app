@@ -21,12 +21,14 @@ Sources += $(wildcard WWW/*.js)
 Sources += $(wildcard server/*.R)
 Sources += $(wildcard ui/*.R)
 Sources += $(wildcard static_files/*.*)
+Sources += $(wildcard users_db/*.*)
 Sources += LICENSE
 
 Ignore += datasets/*
 Ignore += logs/*
 Ignore += *.RData*
 Ignore += output/*
+Ignore += users.sqlite
 
 ######################################################################
 

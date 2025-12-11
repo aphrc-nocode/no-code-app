@@ -5,7 +5,7 @@ user_auth <- function(input, output, session) {
   
   USER <- login::login_server(
     id = app_login_config$APP_ID,
-    db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users.sqlite'),
+    db_conn = DBI::dbConnect(RSQLite::SQLite(), 'users_db/users.sqlite'),
     emailer = login::emayili_emailer(
       email_host = app_login_config$email_host,
       email_port = app_login_config$email_port,
