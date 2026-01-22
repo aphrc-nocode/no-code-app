@@ -8,7 +8,8 @@ app_title = function() {
 #Footer Language convertion
 footer_language_translation = function() {
   output$app_footer_title = renderUI({
-    h4(get_rv_labels("footer_org_name"))
+    # h4(get_rv_labels("footer_org_name"))
+    h4(get_rv_labels("app_version"))
   })
 
   output$app_footer_contact = renderUI({

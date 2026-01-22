@@ -210,7 +210,7 @@ predict_trained_caret_models = function() {
 			
 			req(!is.null(rv_deploy_models$endpoint_objects))
 			r = rv_deploy_models$endpoint_objects$recipes
-			r = Rautoml::get_recipes(name=r, folder="recipes")
+			r = Rautoml::get_recipes(name=r, folder=paste0(app_username, "/recipes"))
 			u = input$predict_trained_caret_models_select_model
 			n = rv_deploy_models$deployed_models_list
 			n = names(n)[n %in% u]

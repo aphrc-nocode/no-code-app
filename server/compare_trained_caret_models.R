@@ -30,7 +30,7 @@ model_training_caret_train_metrics_server = function() {
 							, dataset_id=rv_ml_ai$dataset_id
 							, session_name=rv_ml_ai$session_id
 							, timestamp=Sys.time()
-							, output_dir="outputs"
+							, output_dir=paste0(app_username, "/outputs")
 							, metric_type="training_metrics"
 						)
 						p1
@@ -101,7 +101,7 @@ model_training_caret_train_metrics_server = function() {
 								, dataset_id=rv_ml_ai$dataset_id
 								, session_name=rv_ml_ai$session_id
 								, timestamp=Sys.time()
-								, output_dir="outputs"
+								, output_dir=paste0(app_username, "/outputs")
 								, metric_type="test_metrics"
 							)
 							invisible(TRUE)
@@ -221,7 +221,7 @@ model_training_caret_train_metrics_server = function() {
 					  
 					  ## Download results
 					  output$model_training_caret_metrics_download_all = renderUI({
-					  		ROOT_DIR = paste0("outputs/", rv_ml_ai$dataset_id, "/", rv_ml_ai$session_id)
+					  		ROOT_DIR = paste0(app_username, "/outputs/", rv_ml_ai$dataset_id, "/", rv_ml_ai$session_id)
 							p(
 								selectInput("model_training_caret_metrics_download_all"
 										, label = get_rv_labels("model_training_caret_metrics_download_all_ui")
@@ -554,7 +554,7 @@ model_training_caret_train_metrics_server = function() {
 										, dataset_id=rv_ml_ai$dataset_id
 										, session_name=rv_ml_ai$session_id
 										, timestamp=Sys.time()
-										, output_dir="outputs"
+										, output_dir=paste0(app_username, "/outputs")
 										, sub_dir="explore_trained_models"
 									)
 									invisible(TRUE)
@@ -575,7 +575,7 @@ model_training_caret_train_metrics_server = function() {
 											, dataset_id=rv_ml_ai$dataset_id
 											, session_name=rv_ml_ai$session_id
 											, timestamp=Sys.time()
-											, output_dir="outputs"
+											, output_dir=paste0(app_username, "/outputs")
 											, metric_type="explore_trained_models"
 										)
 										invisible(TRUE)
@@ -755,7 +755,7 @@ model_training_caret_train_metrics_server = function() {
 										, dataset_id=rv_ml_ai$dataset_id
 										, session_name=rv_ml_ai$session_id
 										, timestamp=Sys.time()
-										, output_dir="outputs"
+										, output_dir=paste0(app_username, "/outputs")
 										, sub_dir="explore_trained_models"
 									)
 									invisible(TRUE)
@@ -772,7 +772,7 @@ model_training_caret_train_metrics_server = function() {
 										, dataset_id=rv_ml_ai$dataset_id
 										, session_name=rv_ml_ai$session_id
 										, timestamp=Sys.time()
-										, output_dir="outputs"
+										, output_dir=paste0(app_username, "/outputs")
 										, metric_type="explore_trained_models"
 									)
 									invisible(TRUE)

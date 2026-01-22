@@ -1,17 +1,4 @@
 run_cohort_pipeline <- function() {
-  
-  library(dplyr)
-  library(lubridate)
-  library(glue)
-  library(plotly)
-  library(CDMConnector)
-  library(CodelistGenerator)
-  library(CohortConstructor)
-  library(shinyalert)
-  library(tidyr)
-  library(zip)
-  library(DT)
-  
   cohort_conn <- reactiveValues(
     schema_names   = NULL,
     cdm            = NULL,
@@ -258,10 +245,6 @@ run_cohort_pipeline <- function() {
       paste0("cohort_plots_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      library(webshot2)
-      library(plotly)
-      library(htmlwidgets)
-      library(zip)
       
       tmpdir <- tempdir()
       setwd(tmpdir)

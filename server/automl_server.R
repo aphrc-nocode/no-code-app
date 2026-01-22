@@ -1,6 +1,3 @@
-library(httr)
-library(readr)
-
 automl_server <- function(id, rv_current, rv_ml_ai) {
   moduleServer(id, function(input, output, session) {
     
@@ -122,8 +119,6 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
         print(readLines(tf))  # print file
         
         tryCatch({
-          library(readr)
-          
           df_pred <- tryCatch({
             read_csv(tf, show_col_types = FALSE)
           }, error = function(e1) {

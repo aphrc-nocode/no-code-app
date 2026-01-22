@@ -1,8 +1,8 @@
 ##### ---- Update logfiles based on existing datasets -------------------####
 update_logs_server = function() {
 	observe({
-	if (file.exists(".log_files/.automl-shiny-upload.main.log")) {
-		 logs = try(read.table(".log_files/.automl-shiny-upload.main.log", header = TRUE), silent = TRUE)
+	if (file.exists(paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"))) {
+		 logs = try(read.table(paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"), header = TRUE), silent = TRUE)
 		 if (!any(class(logs) %in% "try-error") & NROW(logs)) {
 		 	rv_metadata$upload_logs = logs
 			if (length(input$show_uploaded)) {

@@ -10,15 +10,15 @@ delete_uploaded_data_server = function() {
 	 dt_rw = stringi::stri_detect_regex(all_ids, pattern=id)
 	 rv_current$current_id = gsub("ytxxdeletezzyt_", "", input$current_id)
 	 rv_metadata$upload_logs = rv_metadata$upload_logs[dt_rw==FALSE, ]
-	 current_log = paste0(".log_files/", rv_current$current_id, "-upload.main.log")
-	 current_file = paste0("datasets/", rv_current$current_id)
+	 current_log = paste0(app_username, "/.log_files/", rv_current$current_id, "-upload.main.log")
+	 current_file = paste0(app_username, "/datasets/", rv_current$current_id)
 	 if (file.exists(current_log)) {
 		try(file.remove(current_log), silent = TRUE)
 	 }
 	 if (file.exists(current_file)) {
 		try(file.remove(current_file), silent = TRUE)
 	 }
-	 write.table(rv_metadata$upload_logs, file=".log_files/.automl-shiny-upload.main.log", row.names = FALSE)
+	 write.table(rv_metadata$upload_logs, file=paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"), row.names = FALSE)
 	 if (isTRUE(!NROW(rv_metadata$upload_logs))) {
 	 	updateCheckboxInput(session, "show_uploaded", value = FALSE)
 	 } 

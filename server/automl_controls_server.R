@@ -121,7 +121,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
     }
 
     .dir_models_logs <- function() {
-      d <- file.path(getwd(), "logs", "models")
+      d <- file.path(getwd(), app_username, "logs", "models")
       if (!dir.exists(d)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
       d
     }
@@ -649,7 +649,7 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
         pm <- .pick_primary_metric(rv_ml_ai$leaderboard, task_guess)
 
         best_path <- {
-          base <- file.path("models", paste0(tolower(best_code %||% gsub("[^a-z0-9]+","_", best_label)),
+          base <- file.path(app_username, "models", paste0(tolower(best_code %||% gsub("[^a-z0-9]+","_", best_label)),
                                             "__", slugify(dataset_id), ".pkl"))
           if (file.exists(base)) base else NA_character_
         }
