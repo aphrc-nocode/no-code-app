@@ -753,7 +753,7 @@ model_training_caret_train_all_server = function() {
 							, dataset_id=rv_ml_ai$dataset_id
 							, session_name=rv_ml_ai$session_id
 							, timestamp=Sys.time()
-							, output_dir="outputs"
+							, output_dir=paste0(app_username, "/outputs")
 						)
 						invisible(TRUE)
 					}, error=function(e) {
@@ -779,7 +779,8 @@ model_training_caret_train_all_server = function() {
 							, report= input$model_training_setup_eval_metric
 							, summary_fun=Rautoml::student_t_summary
 							, save_model = TRUE
-							, model_folder = "models"
+							, model_folder = paste0(app_username, "/models")
+							, recipe_folder = paste0(app_username, "/recipes")
 							, preprocesses = rv_ml_ai$preprocessed
 						)
 					}, error = function(e) {
@@ -797,7 +798,7 @@ model_training_caret_train_all_server = function() {
 							, dataset_id=rv_ml_ai$dataset_id
 							, session_name=rv_ml_ai$session_id
 							, timestamp=Sys.time()
-							, output_dir="outputs"
+							, output_dir=paste0(app_username, "/outputs")
 							, sub_dir="test_metrics"
 						)
 						invisible(TRUE)
@@ -820,7 +821,7 @@ model_training_caret_train_all_server = function() {
 							, framework=input$modelling_framework_choices
 							, train_result=rv_training_results$test_metrics_objs$all
 							, timestamp=Sys.time()
-							, path=".log_files"
+							, path=paste0(app_username, "/.log_files")
 						)
 						invisible(TRUE)
 					}, error=function(e) {
@@ -857,7 +858,7 @@ model_training_caret_train_all_server = function() {
 							, dataset_id=rv_ml_ai$dataset_id
 							, session_name=rv_ml_ai$session_id
 							, timestamp=Sys.time()
-							, output_dir="outputs"
+							, output_dir=paste0(app_username, "/outputs")
 						)
 						invisible(TRUE)
 					}, error=function(e) {

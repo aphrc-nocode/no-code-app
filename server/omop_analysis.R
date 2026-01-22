@@ -35,7 +35,7 @@ omop_analysis_server <- function(){
   cdmSourceName <- input$cdmSourceName
   numThreads <- 1 # on Redshift, 3 seems to work well
   sqlOnly <- FALSE # set to TRUE if you just want to get the SQL scripts and not actually run the queries
-  outputFolder <- "output"
+  outputFolder <- paste0(app_username, "/output")
   verboseMode <- TRUE # set to TRUE if you want to see activity written to the console
   writeToTable <- TRUE # set to FALSE if you want to skip writing to results table
   checkLevels <- c("TABLE", "FIELD", "CONCEPT")
@@ -43,7 +43,7 @@ omop_analysis_server <- function(){
   
   print(paste("db-omop:", input$cdm_schema))
   
-  folder <- file.path(getwd(),"output")
+  folder <- file.path(getwd(), app_username, "output")
   
   # To run DQD on the bg
   # Step 2: Launch in background
@@ -51,9 +51,6 @@ omop_analysis_server <- function(){
     func = function(db_host, db_name, db_user, db_pass, driver_path,
                     cdmSchema, resultsSchema, sourceName, threads, sqlFlag,
                     outFolder, verbose, writeFlag, levels, names) {
-      
-      library(DataQualityDashboard)
-      library(DatabaseConnector)
       
       connectionDetails <- createConnectionDetails(
         dbms = "postgresql",
@@ -151,7 +148,7 @@ omop_analysis_server <- function(){
       return(json_files[valid][which.max(datetime)])
     }
     
-    folder <- file.path(getwd(),"output")
+    folder <- file.path(getwd(), app_username, "output")
     
     path_to_json <- get_latest_json(folder)
 

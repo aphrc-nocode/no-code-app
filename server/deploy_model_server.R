@@ -128,7 +128,7 @@ deployment_server <- function(id, rv_ml_ai, rv_current, api_base) {
     }
 
     # Index of historical models: logs/models/index.csv
-    .index_path <- function() file.path(getwd(), "logs", "models", "index.csv")
+    .index_path <- function() file.path(getwd(), app_username, "logs", "models", "index.csv")
 
     index_map <- reactive({
       p <- .index_path()

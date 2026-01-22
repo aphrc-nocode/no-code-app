@@ -397,21 +397,21 @@ explore_data_update_data_server = function() {
 	})
 
 	observeEvent(input$explore_data_update_data_apply, {
-		write_data(get_data_class(paste0("datasets/", rv_current$dataset_id)), rv_current$working_df)
+		write_data(get_data_class(paste0(app_username, "/datasets/", rv_current$dataset_id)), rv_current$working_df)
 		rv_current$data = rv_current$working_df
 		rv_current$selected_vars = colnames(rv_current$data)
 		## Update logs
-		log_file_main = paste0(".log_files/", rv_current$dataset_id, "-upload.main.log")
+		log_file_main = paste0(app_username, "/.log_files/", rv_current$dataset_id, "-upload.main.log")
 		meta_data = read.csv(log_file_main)
 		meta_data$last_modified = format_date_time(Sys.time())
 		meta_data$observations = NROW(rv_current$data)
 		meta_data$features = NCOL(rv_current$data)
 		meta_data$size = object.size(rv_current$data)
 		write.csv(meta_data, log_file_main, row.names = FALSE)
-		upload_logs_current = collect_logs(".log_files", "*.upload.main.log")
+		upload_logs_current = collect_logs(paste0(app_username, "/.log_files"), "*.upload.main.log")
 		rv_metadata$upload_logs = upload_logs_current
 		rv_metadata$upload_logs$delete = create_btns(rv_metadata$upload_logs$file_name)
-		write.table(rv_metadata$upload_logs, file=".log_files/.automl-shiny-upload.main.log", row.names = FALSE)
+		write.table(rv_metadata$upload_logs, file=paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"), row.names = FALSE)
 		updateSelectInput(session=session, "manage_data_select_vars", choices=colnames(rv_current$data))
 		rv_current$current_filter_reset = TRUE
 		shinyalert::shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")

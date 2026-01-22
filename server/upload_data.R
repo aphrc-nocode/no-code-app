@@ -18,7 +18,7 @@ upload_data_server = function(){
 	     file_name_full = paste0(rv_database$schema_selected,rv_database$table_selected,".csv")
 	     file_name = paste0(rv_database$schema_selected,rv_database$table_selected)
 	     temp_name = paste0(file_name, "-", format_date_time(Sys.time(), "%d%m%Y%H%M%S"), ".", "csv")
-	     file_path = get_data_class(paste0("datasets", "/", temp_name))
+	     file_path = get_data_class(paste0(app_username, "/datasets", "/", temp_name))
 	     df = data.frame(rv_database$df_table_str)
 	     if(length(rv_database$df_table_str > 0)){
 	       write_data(file_path, df)
@@ -29,7 +29,7 @@ upload_data_server = function(){
 	     file_name_full = paste0(rv_database$query_table_name,".csv")
 	     file_name = paste0(rv_database$query_table_name)
 	     temp_name = paste0(file_name, "-", format_date_time(Sys.time(), "%d%m%Y%H%M%S"), ".", "csv")
-	     file_path = get_data_class(paste0("datasets", "/", temp_name))
+	     file_path = get_data_class(paste0(app_username, "/datasets", "/", temp_name))
 	     df = data.frame(rv_database$df_table)
 	     if(length(rv_database$df_table > 0)){
 	       write_data(file_path, df)
@@ -57,7 +57,7 @@ upload_data_server = function(){
 		  upload_time = format_date_time(upload_time)
 
 		  if (input$upload_type=="Local") {
-			 file_path = paste0("datasets", "/", temp_name)
+			 file_path = paste0(app_username, "/datasets", "/", temp_name)
 			 if (file.exists(input$files_with_ext$datapath)) {
 				file.copy(input$files_with_ext$datapath, file_path)
 				file.remove(input$files_with_ext$datapath)
@@ -77,7 +77,7 @@ upload_data_server = function(){
 		  } else {
 			 
 			 if (input$upload_type=="URL") {
-				file_path = get_data_class(paste0("datasets", "/", temp_name))
+				file_path = get_data_class(paste0(app_username, "/datasets", "/", temp_name))
 				write_data(file_path, df)
 			 }
 			 
@@ -89,9 +89,10 @@ upload_data_server = function(){
 				, additional_info=input$additional_info
 				, upload_time=upload_time
 				, last_modified = upload_time
+				, user = app_username
 			 )
 	 
-			 log_file_main = paste0(".log_files/", temp_name, "-upload.main.log")
+			 log_file_main = paste0(app_username, "/.log_files/", temp_name, "-upload.main.log")
 			 write.csv(meta_data, log_file_main, row.names = FALSE)
 			 shinyalert::shinyalert("", get_rv_labels("data_upload_successful_msg"), type = "success", inputId="upload_ok")
 		  }

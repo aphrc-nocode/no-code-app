@@ -4,7 +4,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
 
     # -------- Helpers--------
     .idx_csv <- reactive({
-      normalizePath(file.path("logs", "models", "index.csv"), mustWork = FALSE)
+      normalizePath(file.path(app_username, "logs", "models", "index.csv"), mustWork = FALSE)
     })
     .safe_read_csv <- function(path) {
       tryCatch(read.csv(path, stringsAsFactors = FALSE), error = function(e) NULL)
@@ -30,7 +30,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
       if (is.null(ds) || !nzchar(ds)) return(NULL)
       ds_slug <- slugify(ds)
 
-      idx <- file.path("logs","models","index.csv")
+      idx <- file.path(app_username, "logs","models","index.csv")
 
       # ---------- A) Path ‘index.csv’ (priority if usable) ----------
       if (file.exists(idx)) {
@@ -82,7 +82,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
             model_names <- vapply(seq_len(nrow(d)), build_model_name, character(1))
             # remove NA and obvious duplicates
             model_names <- unique(model_names[is.finite(nchar(model_names)) & nzchar(model_names)])
-            exists_vec  <- file.exists(file.path("models", model_names))
+            exists_vec  <- file.exists(file.path(app_username, "models", model_names))
 
             if (any(exists_vec, na.rm = TRUE)) {
               # 3) We choose the “best” based on metrics, if available.
@@ -114,7 +114,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
                   dt <- parse_dt(dt_col)
                   if (!all(is.na(dt))) return(order(dt, decreasing = TRUE, na.last = NA)[1])
                 }
-                mt <- file.info(file.path("models", model_names2))$mtime
+                mt <- file.info(file.path(app_username, "models", model_names2))$mtime
                 order(mt, decreasing = TRUE, na.last = NA)[1]
               }
 
@@ -129,7 +129,7 @@ predict_pycaret_server <- function(id, api_base, rv_current, rv_ml_ai) {
         }
       }
       # ---------- B) Fallback without index: search directly in models/ ----------
-      cand <- list.files("models", pattern = paste0("^.*__", ds_slug, "\\.pkl$"), full.names = TRUE)
+      cand <- list.files(paste0(app_username, "/models"), pattern = paste0("^.*__", ds_slug, "\\.pkl$"), full.names = TRUE)
       if (!length(cand)) return(NULL)
 
       mt <- file.info(cand)$mtime

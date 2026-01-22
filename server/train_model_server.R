@@ -233,7 +233,7 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
       })
               # --- after the AutoML run / train ---
         if (!is.null(rv_ml_ai$leaderboard) && NROW(rv_ml_ai$leaderboard) > 0) {
-          R.utils::mkdirs(file.path(getwd(), "logs", "models"))
+          R.utils::mkdirs(file.path(getwd(), app_username, "logs", "models"))
           save_best_model_log(
             leaderboard = rv_ml_ai$leaderboard,       # or rv_ml_ai$leaderboard_full if available
             session_name = rv_ml_ai$session_name,

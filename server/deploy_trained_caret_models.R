@@ -4,8 +4,8 @@ deploy_trained_caret_models = function() {
 	observeEvent({list(input$manage_data_apply, input$model_training_apply)}, {
 		req(!is.null(rv_current$working_df))
 		req(!is.null(rv_current$dataset_id))
-		req(isTRUE(Rautoml::check_logs(path=".log_files", pattern="-trained.model.main.log")))
-		rv_deploy_models$trained_models_table = isolate(Rautoml::collect_logs(path=".log_files", pattern="-trained.model.main.log"))
+		req(isTRUE(Rautoml::check_logs(path=paste0(app_username, "/.log_files"), pattern="-trained.model.main.log")))
+		rv_deploy_models$trained_models_table = isolate(Rautoml::collect_logs(path=paste0(app_username, "/.log_files"), pattern="-trained.model.main.log"))
 		rv_deploy_models$trained_models_table = Rautoml::filter_current_data(rv_deploy_models$trained_models_table, rv_current$dataset_id)
 		check_trained_data = Rautoml::check_value_exists(
 			df = rv_deploy_models$trained_models_table
@@ -145,7 +145,7 @@ deploy_trained_caret_models = function() {
 					if (isTRUE(is.null(m_check))) {
 						rv_deployed_models[[m]] = m
 						rv_deployed_models[[m]] = Rautoml::start_model_api(
-							folder="models"
+							folder=paste0(app_username, "/models")
 							, model_name=m
 							, host=input$deploy_trained_caret_models_hostname
 						)
@@ -226,7 +226,7 @@ deploy_trained_caret_models = function() {
 			 rv_deployed_models[[info$id]]$process$kill()
 		  } else {
 			 rv_deployed_models[[info$id]] = Rautoml::start_model_api(
-				folder="models"
+				folder=paste0(app_username, "/models")
 				, model_name=info$id
 				, host=input$deploy_trained_caret_models_hostname
 			 )

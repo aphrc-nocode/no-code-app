@@ -183,7 +183,7 @@ feature_extraction_pipeline <- function() {
       
       # --- Save dataset ---
       file_name <- paste0("feature_extracted_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv")
-      file_path <- file.path("datasets", file_name)
+      file_path <- file.path(paste0(app_username, "/datasets"), file_name)
       readr::write_csv(cov_wide %>% dplyr::filter(!is.na(person_id)), file_path)
       
       # --- Register as upload ---
@@ -198,7 +198,7 @@ feature_extraction_pipeline <- function() {
         last_modified = upload_time
       )
       
-      log_file_main <- paste0(".log_files/", file_name, "-upload.main.log")
+      log_file_main <- paste0(app_username, "/.log_files/", file_name, "-upload.main.log")
       write.csv(meta_data, log_file_main, row.names = FALSE)
       
       # Refresh uploads list

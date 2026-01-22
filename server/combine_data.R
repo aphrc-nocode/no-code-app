@@ -55,7 +55,7 @@ combine_data_list_datasets = function() {
 	observeEvent(input$combine_data_apply, {
 		if (isTRUE(!is.null(input$combine_data_list_datasets))) {
 			file_path = tryCatch({
-				get_data_class(paste0("datasets/", input$combine_data_list_datasets))
+				get_data_class(paste0(app_username, "/datasets/", input$combine_data_list_datasets))
 			}, error=function(e) {
 				shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
 				return(NULL)
