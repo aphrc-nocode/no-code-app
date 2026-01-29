@@ -1,0 +1,308 @@
+/* ==== FILE: Anon/www/custom.css (or your module assets path) ==== */
+/* IMPORTANT:
+   This version is "scoped" so it affects ONLY the anonymization module.
+   It assumes your module UI is wrapped with:
+   div(id = ns("anon_root"), class = "anon-root", ...)
+*/
+
+
+/* 0) Reset & base — scoped */
+.anon-root,
+.anon-root * ,
+.anon-root *::before,
+.anon-root *::after {
+  box-sizing: border-box;
+}
+
+.anon-root {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: auto;          /* module controls its own scroll areas */
+  font-family: Arial, sans-serif;
+  position: relative;        /* critical for landing overlay to stay inside module */
+}
+
+/* Allow nested overflow to work inside module */
+.anon-root #dashboard,
+.anon-root .tab-content,
+.anon-root .tab-pane.active,
+.anon-root .container-fluid,
+.anon-root .row,
+.anon-root #right-panel {
+  min-height: 0 !important;
+}
+
+/* 1) Bootstrap gutters — scoped */
+.anon-root .container-fluid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 2) Header bar (optional) */
+.anon-root .header-bar {
+  background-color: #2f7c31;
+  color: white;
+  padding: 20px;
+  font-size: 24px;
+  text-align: center;
+}
+
+/* 3) Main content wrapper (optional) */
+.anon-root .page-body.full-width {
+  padding: 10px 30px;
+  min-height: 80vh;
+  background-color: #f5f5f5;
+}
+
+/* 4) Misc containers */
+.anon-root .container-centered {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.anon-root .table-wrapper {
+  overflow-x: auto;
+  max-height: 500px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.anon-root .footer {
+  background-color: #2f7c31;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+}
+
+/* 5) Dark mode overrides — scoped */
+.anon-root.dark-mode {
+  background-color: #1e1e1e !important;
+  color: #fff;
+}
+
+.anon-root.dark-mode .container-centered,
+.anon-root.dark-mode .table-wrapper {
+  background-color: #2e2e2e;
+  color: #fff;
+}
+
+.anon-root.dark-mode .header-bar,
+.anon-root.dark-mode .footer {
+  background-color: #333 !important;
+  color: #eee;
+}
+
+/* 6) Floating copy buttons — scoped */
+.anon-root button[id^="copy_"]{
+  float: right;
+  font-size: 12px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 10;
+}
+
+.anon-root.dark-mode button[id^="copy_"]{
+  background-color: #444;
+  color: #fff;
+}
+
+/* 7) Landing page — IMPORTANT FIX
+   Previously: position:fixed + 100vh took over the whole browser.
+   Now: position:absolute + 100% stays within the module preview area.
+*/
+.anon-root #landing{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: url('Image10.png') center center / cover no-repeat !important;
+  z-index: 1000 !important;
+}
+
+.anon-root #landing .landing-gif{ display: none !important; }
+
+.anon-root .landing-overlay{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fff;
+}
+
+.anon-root .landing-overlay .btn{ margin: 0 10px; }
+
+/* 8) Offset constant
+   In a module, you SHOULD NOT assume 120px like a full-page header.
+   Use a smaller default or 0. Keep it customizable.
+*/
+.anon-root { --right-top-offset: 0px; }
+
+/* 9) LEFT PANEL — dedicated scroll (scoped)
+   Use 100% height of module instead of viewport units.
+*/
+.anon-root #left-panel {
+  height: calc(100% - var(--right-top-offset));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px; /* scrollbar breathing room */
+}
+
+.anon-root #left-panel::-webkit-scrollbar { width: 8px; }
+.anon-root #left-panel::-webkit-scrollbar-thumb { background: #c9c9c9; border-radius: 4px; }
+.anon-root #left-panel::-webkit-scrollbar-track { background: transparent; }
+.anon-root.dark-mode #left-panel::-webkit-scrollbar-thumb { background: #666; }
+
+/* 10) RIGHT COLUMN — TWO EQUAL HALVES (scoped)
+   Again: use module height, not 100vh.
+*/
+.anon-root #right-panel > .right-containers,
+.anon-root #right-panel > .right-split {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+
+  height: calc(100% - var(--right-top-offset)) !important;
+  overflow: hidden !important;
+}
+
+/* Child halves */
+.anon-root #right-panel > .right-containers > .right-box,
+.anon-root #right-panel > .right-split > .section {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Sticky headers */
+.anon-root #right-panel > .right-containers > .right-box > .right-header,
+.anon-root #right-panel > .right-split > .section > .section-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 8px 12px;
+}
+
+/* Scrollable bodies */
+.anon-root #right-panel > .right-containers > .right-box > .right-body,
+.anon-root #right-panel > .right-split > .section > .section-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Data table area: vertical + horizontal scroll */
+.anon-root #right-panel > .right-containers > .right-box > .right-body .table-wrap,
+.anon-root #right-panel > .right-split > .section > .section-body .table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.anon-root #preview-table table{ width: 100% !important; }
+
+/* Dark mode for right column */
+.anon-root.dark-mode #right-panel > .right-containers > .right-box,
+.anon-root.dark-mode #right-panel > .right-split > .section {
+  background:#2e2e2e;
+  color:#fff;
+  border-color:#444;
+}
+
+.anon-root.dark-mode #right-panel > .right-containers > .right-box > .right-header,
+.anon-root.dark-mode #right-panel > .right-split > .section > .section-header {
+  background:#2e2e2e;
+  border-bottom-color:#444;
+}
+
+.anon-root.dark-mode #right-panel > .right-containers > .right-box > .right-body,
+.anon-root.dark-mode #right-panel > .right-split > .section > .section-body {
+  color:#fff;
+}
+
+/* 11) Gauges styling */
+.anon-root .gauge .gauge-value,
+.anon-root .gauge .gauge-label{ display: none !important; }
+
+.anon-root #preview-gauges .gauge-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.anon-root #preview-gauges h4{ margin: 0 0 6px 0; }
+.anon-root #gauge_before,
+.anon-root #gauge_after{ margin: 0 auto; }
+
+/* 12) Slim scrollbars for right bodies */
+.anon-root #right-panel > .right-containers > .right-box > .right-body::-webkit-scrollbar,
+.anon-root #right-panel > .right-split > .section > .section-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.anon-root #right-panel > .right-containers > .right-box > .right-body::-webkit-scrollbar-thumb,
+.anon-root #right-panel > .right-split > .section > .section-body::-webkit-scrollbar-thumb {
+  background: #c9c9c9;
+  border-radius: 4px;
+}
+
+.anon-root #right-panel > .right-containers > .right-box > .right-body::-webkit-scrollbar-track,
+.anon-root #right-panel > .right-split > .section > .section-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.anon-root.dark-mode #right-panel > .right-containers > .right-box > .right-body::-webkit-scrollbar-thumb,
+.anon-root.dark-mode #right-panel > .right-split > .section > .section-body::-webkit-scrollbar-thumb {
+  background: #666;
+}
+
+/* 13) Sortable bucket lists responsive tweak */
+@media (max-width: 600px){
+  .anon-root .bucket_list,
+  .anon-root .bucket-list{
+    display: flex !important;
+    flex-direction: row !important;
+  }
+
+  .anon-root .bucket_list .rank-list-container,
+  .anon-root .bucket-list .rank-list-container{
+    flex: 1 1 48% !important;
+    margin-right: 2% !important;
+  }
+
+  .anon-root .bucket_list .rank-list-container:last-child,
+  .anon-root .bucket-list .rank-list-container:last-child{
+    margin-right: 0 !important;
+  }
+}

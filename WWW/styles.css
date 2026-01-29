@@ -77,10 +77,10 @@ input[type="radio"] {
       
       
   /* navbar (rest of the header) */
-  .skin-blue .main-header .navbar {
-  background-color:green;
+  /* .skin-blue .main-header .navbar {
+  background-color: green;
+} */
 
-  }
 
   /* main sidebar */
   .skin-blue .main-sidebar {
@@ -310,4 +310,112 @@ td {
     background-color: #7bc148 !important;
   }
 
+/* =========================================================
+   Prevent main app CSS from overriding anonymization module
+   ========================================================= */
 
+/* Tables inside anonymization are controlled by anon_assets/custom.css */
+.anon-root table,
+.anon-root th,
+.anon-root td,
+.anon-root thead,
+.anon-root tbody {
+  all: unset;
+}
+
+/* Re-apply safe defaults (so the table doesn't disappear) */
+.anon-root table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  display: table;
+}
+.anon-root thead { display: table-header-group; }
+.anon-root tbody { display: table-row-group; }
+.anon-root tr { display: table-row; }
+.anon-root th,
+.anon-root td {
+  display: table-cell;
+  padding: 6px 10px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+
+/* Make sure content wrapper padding doesn't break module width */
+.anon-root {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Remove the AdminLTE / shinydashboard top navbar strip only */
+.main-header,
+.main-header .navbar,
+.skin-blue .main-header .navbar,
+.skin-green .main-header .navbar {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove the space it leaves behind */
+body .wrapper {
+  padding-top: 0 !important;
+}
+.content-wrapper,
+.right-side {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Remove extra top spacing added for the AdminLTE header */
+.content-wrapper, .right-side, .content {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* ===== Fix sidebar icon/menu misalignment (top gap + centering) ===== */
+
+/* Remove AdminLTE default top padding inside sidebar */
+.main-sidebar .sidebar {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Remove default spacing above the menu list */
+.main-sidebar .sidebar-menu {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Remove any extra spacing per item */
+.main-sidebar .sidebar-menu > li {
+  margin: 0 !important;
+}
+
+/* Make each menu row a consistent height and center icon vertically */
+.main-sidebar .sidebar-menu > li > a {
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important; /* collapsed state */
+  padding: 0 !important;              /* remove AdminLTE padding that offsets icon */
+  line-height: 44px !important;
+}
+
+/* Center the icon itself */
+.main-sidebar .sidebar-menu > li > a > i {
+  margin: 0 !important;
+  width: auto !important;
+}
+
+/* Expanded state: align left and show label nicely */
+.main-sidebar:hover .sidebar-menu > li > a {
+  justify-content: flex-start !important;
+  padding: 0 15px !important;
+}
+
+.main-sidebar:hover .sidebar-menu > li > a > i {
+  margin-right: 10px !important;
+}

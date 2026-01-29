@@ -1,15 +1,34 @@
-library(Rautoml)
-options(shiny.maxRequestSize=3000000*1024^2)
+# server.R
 
-function(input, output, session){
+library(Rautoml)
+options(shiny.maxRequestSize = 3000000 * 1024^2)
+
+server <- function(input, output, session) {
+  
   waiter_show(
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+    html  = spin_loaders(id = 2, style = "width:56px;height:56px;color:#7BC148;"),
     color = "#FFF"
   )
   
   shinyjs::show("login")
   source("server/auth.R")
   user_auth(input, output, session)
+  
+
+  
+  # Load module definitions (UI/server) and its helper logic safely.
+  # NOTE: local = FALSE is important here because the module internally checks
+  # exists("anon_quant_server_logic", inherits=TRUE) and then calls it.
+  if (file.exists("modules/mod_quant_anonymization.R")) {
+    source("modules/mod_quant_anonymization.R", local = FALSE)
+  }
+  
+  # Call the module server (the module id must match what UI uses)
+  # If your UI uses mod_quant_anon_ui("quant_anon"), keep "quant_anon" here.
+  if (exists("mod_quant_anon_server", mode = "function", inherits = TRUE)) {
+    mod_quant_anon_server("quant_anon")
+  }
+  # =============================================================================
   
   
   model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
@@ -30,26 +49,26 @@ function(input, output, session){
   
   #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
   source("R/utils_logging.R")
-
+  
   DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
-
+  
   source("server/automl_controls_server.R")
   source("server/train_model_server.R")
   source("R/utils_api.R")
-  source("server/deploy_model_server.R", local=TRUE)
-  source("ui/deploy_model_ui.R", local=TRUE)
+  source("server/deploy_model_server.R", local = TRUE)
+  source("ui/deploy_model_ui.R", local = TRUE)
   source("server/predict_pycaret_server.R", local = TRUE)
-
+  
   api_base <- reactive({
     val <- input$fastapi_base
-		 if (is.null(val) || !nzchar(trimws(val))) {
-			DEFAULT_API_BASE
-		 } else {
-			trimws(val)
-		 }
+    if (is.null(val) || !nzchar(trimws(val))) {
+      DEFAULT_API_BASE
+    } else {
+      trimws(val)
+    }
   })
-
-
+  
+  
   #### ---- Placeholder for reactive values ------------------------------------
   ##### -------- Currently selected dataset ------------------------------------
   rv_current = reactiveValues(
@@ -63,12 +82,12 @@ function(input, output, session){
     , current_filter_reset = NULL
     , manage_data_title_explore = NULL
     , missing_prop = NULL
-	 , has_missing_data_check=FALSE
+    , has_missing_data_check = FALSE
     , manage_data_title_transform = NULL
     , merge_data_title_merge = NULL
     , transform_data_select_vars = NULL
     , vartype = NULL
-	 , changed_variable_type_log = NULL
+    , changed_variable_type_log = NULL
     , transform_data_plot_df = NULL
     , renamed_variable_log = NULL
     , transform_data_quick_plot_out = NULL
@@ -76,26 +95,25 @@ function(input, output, session){
     , missing_prop_df = NULL
     , created_missing_values_log = NULL
     , outlier_values = NULL
-	 , handle_missing_values_log = NULL
+    , handle_missing_values_log = NULL
     , handle_outlier_values_log = NULL
     , transform_data_plot_missing_data_out = NULL
-	 , quick_explore_summary = NULL
-	 , max_tockens = 10000
-	 , seed = 9991
-	 , outcome = NULL
-	 , vartype_all = NULL
+    , quick_explore_summary = NULL
+    , max_tockens = 10000
+    , seed = 9991
+    , outcome = NULL
+    , vartype_all = NULL
   )
   
   #####------------------Plots Reactive-------------------
-
   plots_sec_rv <- reactiveValues(
-    plot_rv=NULL
-    ,tab_rv=NULL
-    ,plot_bivariate_auto=NULL
-    ,plot_corr = NULL
+    plot_rv = NULL
+    , tab_rv = NULL
+    , plot_bivariate_auto = NULL
+    , plot_corr = NULL
   )
   
-
+  
   ##### --------- Meta data ---------------------------------------------
   rv_metadata = reactiveValues(
     upload_logs = NULL
@@ -105,136 +123,135 @@ function(input, output, session){
     , data_summary_summary = NULL
     , data_summary_summarytools = NULL
   )
-
-	rv_database <- reactiveValues(schema_list = NULL
-		, table_list = NULL
-		, conn = NULL
-		, schema_selected = NULL
-		, table_selected = NULL
-		, df_table = data.frame()
-		, df_table_str = NULL
-		, query_table_name = NULL
-		, database_host = NULL
-		, database_name = NULL
-		, database_user = NULL
-		, database_pass = NULL
-		, details = NULL
-	)
-
-	## ---
-	
-	rv_omop<- reactiveValues(
-	  url = NULL )
-	
-	
-	## LLM/GAI
-	rv_generative_ai = reactiveValues(
-		history = NULL
-	)
-
-	## Reactive values for ML/AI module
-	rv_ml_ai = reactiveValues(
-		session_id = NULL
-		, seed_value = NULL
-		, dataset_id = NULL 
-		, analysis_type = NULL
-		, task = NULL
-		, outcome = NULL
-		, model_formula = NULL
-		, partition_ratio = NULL
-		, predictors = NULL
-		, excluded_predictors = NULL
-		, ml_ai_setup_result = NULL
-		, history = NULL
-		, split = NULL
-		, train_df = NULL
-		, test_df = NULL
-		, preprocessed = NULL
-		, feature_engineering_preprocessed_log = NULL
-		, at_least_one_model = FALSE
-	)
-
-	## RV to hold UIs
-	rv_ui_models = reactiveValues(
-	   model_training_caret_models_ols_check = NULL
-		, model_training_caret_models_ols_advance_control = NULL
-	)
-		
-	## Train control caret
-	rv_train_control_caret = reactiveValues(
-		method = "cv"
-		, number = 5
-		, repeats = NA
-		, search = "grid"
-		, verboseIter = FALSE
-		, savePredictions = FALSE
-		, classProbs = TRUE
-	)
-   
-	## Trained models
-	rv_training_models = reactiveValues(
-		ols_model = NULL
-		, ols_param = FALSE
-		, ols_name = NULL
-		, ols_trained_model = NULL
-		, rf_model = NULL
-		, rf_param = FALSE
-		, rf_name = NULL
-		, rf_trained_model = NULL
-		, all_trained_models = NULL
-	)
-	
-	rv_training_results = reactiveValues(
-		models = NULL
-		, train_metrics_df = NULL
-		, test_metrics_objs = NULL
-		, post_model_metrics_objs = NULL
-		, control_parameters = NULL
-		, tuned_parameters = NULL
-	)
-
+  
+  rv_database <- reactiveValues(
+    schema_list = NULL
+    , table_list = NULL
+    , conn = NULL
+    , schema_selected = NULL
+    , table_selected = NULL
+    , df_table = data.frame()
+    , df_table_str = NULL
+    , query_table_name = NULL
+    , database_host = NULL
+    , database_name = NULL
+    , database_user = NULL
+    , database_pass = NULL
+    , details = NULL
+  )
+  
+  ## ---
+  rv_omop <- reactiveValues(
+    url = NULL
+  )
+  
+  ## LLM/GAI
+  rv_generative_ai = reactiveValues(
+    history = NULL
+  )
+  
+  ## Reactive values for ML/AI module
+  rv_ml_ai = reactiveValues(
+    session_id = NULL
+    , seed_value = NULL
+    , dataset_id = NULL
+    , analysis_type = NULL
+    , task = NULL
+    , outcome = NULL
+    , model_formula = NULL
+    , partition_ratio = NULL
+    , predictors = NULL
+    , excluded_predictors = NULL
+    , ml_ai_setup_result = NULL
+    , history = NULL
+    , split = NULL
+    , train_df = NULL
+    , test_df = NULL
+    , preprocessed = NULL
+    , feature_engineering_preprocessed_log = NULL
+    , at_least_one_model = FALSE
+  )
+  
+  ## RV to hold UIs
+  rv_ui_models = reactiveValues(
+    model_training_caret_models_ols_check = NULL
+    , model_training_caret_models_ols_advance_control = NULL
+  )
+  
+  ## Train control caret
+  rv_train_control_caret = reactiveValues(
+    method = "cv"
+    , number = 5
+    , repeats = NA
+    , search = "grid"
+    , verboseIter = FALSE
+    , savePredictions = FALSE
+    , classProbs = TRUE
+  )
+  
+  ## Trained models
+  rv_training_models = reactiveValues(
+    ols_model = NULL
+    , ols_param = FALSE
+    , ols_name = NULL
+    , ols_trained_model = NULL
+    , rf_model = NULL
+    , rf_param = FALSE
+    , rf_name = NULL
+    , rf_trained_model = NULL
+    , all_trained_models = NULL
+  )
+  
+  rv_training_results = reactiveValues(
+    models = NULL
+    , train_metrics_df = NULL
+    , test_metrics_objs = NULL
+    , post_model_metrics_objs = NULL
+    , control_parameters = NULL
+    , tuned_parameters = NULL
+  )
+  
   # Update training results when a new model is trained
   automl_controls_server(
-    id         = "automl_controls",
+    id = "automl_controls",
     rv_current = rv_current,
-    rv_ml_ai   = rv_ml_ai,
-    api_base   = api_base
+    rv_ml_ai = rv_ml_ai,
+    api_base = api_base
   )
-
+  
   train_model_server(
-    id         = "train_model",
+    id = "train_model",
     rv_current = rv_current,
-    rv_ml_ai   = rv_ml_ai,
-    api_base   = api_base
+    rv_ml_ai = rv_ml_ai,
+    api_base = api_base
   )
-
+  
   # End update training
   # ---- (A) Detect if a complete PyCaret run is available (leaderboard displayed) ----
   .can_show_by_train <- reactive({
     curr_ds <- rv_current$dataset_id %||% rv_ml_ai$dataset_id
-    isTRUE(rv_ml_ai$status %in% c("Finished","Finished_NoPlots")) &&
-    !is.null(rv_ml_ai$leaderboard) && NROW(rv_ml_ai$leaderboard) > 0 &&
-    isTRUE(nzchar(rv_ml_ai$trained_dataset_id)) &&
-    identical(rv_ml_ai$trained_dataset_id, curr_ds)
+    isTRUE(rv_ml_ai$status %in% c("Finished", "Finished_NoPlots")) &&
+      !is.null(rv_ml_ai$leaderboard) && NROW(rv_ml_ai$leaderboard) > 0 &&
+      isTRUE(nzchar(rv_ml_ai$trained_dataset_id)) &&
+      identical(rv_ml_ai$trained_dataset_id, curr_ds)
   })
-
+  
   observeEvent(rv_current$dataset_id, {
-  # If we change the dataset, we clean up the transient state linked to the previous train.
-  if (!identical(rv_current$dataset_id, rv_ml_ai$trained_dataset_id)) {
-    rv_ml_ai$leaderboard <- NULL
-    rv_ml_ai$leaderboard_full <- NULL
-    rv_ml_ai$test_leaderboard <- NULL
-    rv_ml_ai$test_leaderboard_full <- NULL
-    rv_ml_ai$models <- NULL
-    rv_ml_ai$eval_metrics <- NULL
-    rv_ml_ai$eval_plots <- NULL
-    rv_ml_ai$status <- NULL
-  }
-}, ignoreInit = FALSE)
-
-
-
-# ---- (B) Datasets with pre-trained models (historical) ----
+    # If we change the dataset, we clean up the transient state linked to the previous train.
+    if (!identical(rv_current$dataset_id, rv_ml_ai$trained_dataset_id)) {
+      rv_ml_ai$leaderboard <- NULL
+      rv_ml_ai$leaderboard_full <- NULL
+      rv_ml_ai$test_leaderboard <- NULL
+      rv_ml_ai$test_leaderboard_full <- NULL
+      rv_ml_ai$models <- NULL
+      rv_ml_ai$eval_metrics <- NULL
+      rv_ml_ai$eval_plots <- NULL
+      rv_ml_ai$status <- NULL
+    }
+  }, ignoreInit = FALSE)
+  
+  
+  # ---- (B) Datasets with pre-trained models (historical) ----
   .get_models_index_csv <- function() file.path(getwd(), "logs", "models", "index.csv")
   dataset_has_history <- reactive({
     idx <- .get_models_index_csv()
@@ -243,9 +260,9 @@ function(input, output, session){
     if (is.null(df) || !"dataset_id" %in% names(df)) return(FALSE)
     ds <- rv_ml_ai$dataset_id %||% rv_current$dataset_id
     if (is.null(ds) || !nzchar(ds)) return(FALSE)
-    any(df$dataset_id == ds & (df$framework %in% c("PyCaret","pycaret","Pycaret")))
+    any(df$dataset_id == ds & (df$framework %in% c("PyCaret", "pycaret", "Pycaret")))
   })
-
+  
   # Expose known datasets for the Deploy module (used in its selector)
   observe({
     idx <- .get_models_index_csv()
@@ -260,43 +277,41 @@ function(input, output, session){
   # (keep this if you still use it on the JS side)
   output$can_show_deploy <- reactive({ .can_show_deploy() })
   outputOptions(output, "can_show_deploy", suspendWhenHidden = FALSE)
-
+  
   # ---- Deploy tab UI container ----
   output$deploy_container <- renderUI({
     if (!isTRUE(.can_show_deploy())) return(NULL)  # => onglet totalement vide
     column(width = 12, deployment_ui("deploy"))
   })
-
+  
   outputOptions(output, "can_show_deploy", suspendWhenHidden = FALSE)
   ## Deployed models table
-	rv_deploy_models = reactiveValues(
-		trained_models_table = NULL
-	)
-
-	## Deployed models
-	rv_deployed_models = reactiveValues()
+  rv_deploy_models = reactiveValues(
+    trained_models_table = NULL
+  )
   
-	## Reactive values to stock AutoML leaderboard
-	rv_automl <- reactiveValues(
-	  leaderboard = NULL
-	)
-
-	#### ---- App title ----------------------------------------------------
-  source("server/header_footer_configs.R", local=TRUE)
+  ## Deployed models
+  rv_deployed_models = reactiveValues()
+  
+  ## Reactive values to stock AutoML leaderboard
+  rv_automl <- reactiveValues(
+    leaderboard = NULL
+  )
+  
+  #### ---- App title ----------------------------------------------------
+  source("server/header_footer_configs.R", local = TRUE)
   app_title()
   
   ###-------App Footer--------------------------
-  
   footer_language_translation()
   ###-------Menu Translate---------
-  
   menu_translation()
-
+  
   #### ---- Change language ----------------------------------------------------
   output$change_language = change_language
-
+  
   source("server/change_language_update.R", local = TRUE)
-  change_language_update() 
+  change_language_update()
   
   #### ---- Upload data UI --------------------------------------------
   source("ui/upload_data.R", local = TRUE)
@@ -315,7 +330,7 @@ function(input, output, session){
   output$study_country = study_country
   output$additional_info = additional_info
   output$submit_upload = submit_upload
- 
+  
   #### ---- Databse and API connection warning ---------------------
   db_api_con_future
   
@@ -326,7 +341,7 @@ function(input, output, session){
   #### ---- Database integration ----------------------------------------
   source("server/database_integration.R", local = TRUE)
   database_integration_server()
- 
+  
   #### --- Database related form elements ---###
   output$db_type = db_type
   output$db_host = db_host
@@ -347,10 +362,8 @@ function(input, output, session){
   omop_analysis_server()
   
   stderr_file_path <- file.path(getwd(), "output", "dq_stderr.txt")
+  stderr_content <- create_log_reader(stderr_file_path)
   
-  stderr_content<-create_log_reader(stderr_file_path)
-  
-
   #### ---- Collect logs ----------------------------------------
   source("server/collect_logs.R", local = TRUE)
   collect_logs_server()
@@ -358,7 +371,7 @@ function(input, output, session){
   #### ---- Display uploaded datasets ----------------------------------------
   source("server/display_uploaded_data.R", local = TRUE)
   display_uploaded_data_server()
-
+  
   #### ---- Delete uploaded dadatsets ----------------------------------------
   source("server/delete_uploaded_data.R", local = TRUE)
   delete_uploaded_data_server()
@@ -378,16 +391,16 @@ function(input, output, session){
   source("server/display_metadata.R", local = TRUE)
   display_selected_metadata_server()
   reset_display_selected_metadata_server()
-
+  
   ##### ---- Currently selected data ---------------------------------------------
   source("server/selected_data.R", local = TRUE)
   currently_selected_data_server()
-
+  
   ##### ----Generate summary stats for the row data -------------------
   source("server/manage_data_summary.R", local = TRUE)
   generate_data_summary_server()
   display_data_summary_server()
-
+  
   #### ----- Explore data -----------------------------------------------
   source("server/explore_data.R", local = TRUE)
   explore_data_server()
@@ -465,9 +478,8 @@ function(input, output, session){
   output$corrplot_title = corrplot_title
   output$user_download_autoreport = user_download_autoreport
   output$user_generatebivriate = user_generatebivriate
-
   
-
+  
   ##### ---- Explore data actions ----------------------------------
   explore_data_actions_server()
   
@@ -492,16 +504,16 @@ function(input, output, session){
   
   #### ---- Transform variables -------------------------------------- ####
   source("server/transform_data.R", local = TRUE)
-
+  
   ##### ---- Select variables to transform ------------------------------------###
   transform_data_select_variables_server()
-
+  
   ##### ---- Change type  -----------------------------------------------###
   transform_data_change_type_server()
-
+  
   ##### ---- Rename variables  -----------------------------------------------###
   transform_data_rename_variables_server()
-
+  
   ##### ---- Recode/change value labels ---------------------------------------###
   transform_data_quick_explore_recode_server()
   
@@ -528,22 +540,22 @@ function(input, output, session){
   
   ##### ---- Combine data options ------------------------------------------####
   combine_data_type()
-
+  
   ##### ---- Combine data mtch type ------------------------------------------####
   combine_data_match_type()
-
+  
   ##### ---- Combine data variables matched --------------------####
   combine_data_variable_matching()
   
   #### ----- Perform matching ---------------------------------####
   combine_data_perform_variable_match()
-
+  
   ##### ---- Combine data perform merging  --------------------####
   combine_data_perform_merging()
-
+  
   #### ---- Reset combine data --------------------------------####
   combine_data_reset()
-
+  
   ##### ---- Control Custom visualizations ------------------ #####
   source("server/user_defined_visualization.R", local = TRUE)
   user_defined_server()
@@ -559,138 +571,135 @@ function(input, output, session){
   feature_extraction_pipeline()
   
   #### ---- Achilles Integration -------------------####
-  
   source("server/run_achilles.R", local = TRUE)
   achilles_integration_server()
   
   ### ---- OMOP CDM Summaries---------------------------####
   source("server/omop_summaries.R", local = TRUE)
   omopVizServer()
-
+  
   #### ---- Generate Research Questions --------------------------------------####
   source("server/research_questions.R", local = TRUE)
   generate_research_questions_choices()
   
-
+  
   ##### ---- API Token ------------------ ####
   generate_research_questions_api_token()
   generate_research_questions_api_store()
-
+  
   #### ---- Addional prompts --------------- ####
   generate_research_questions_additional()
-
+  
   #### ---- Generate insights using Gemini --------------- ####
   generate_research_questions_gemini()
-
+  
   #### ---- Machine learning and AI --------------- ####
   
   ##### ----- Set ML/AI UI ------------------- ####
-  source("server/setup_models.R", local=TRUE)
+  source("server/setup_models.R", local = TRUE)
   setup_models_ui()
   
   ##### ----- Preprocessing ------------------- ####
-  source("server/feature_engineering.R", local=TRUE)
+  source("server/feature_engineering.R", local = TRUE)
   
   #### Preprocessing ------------------------------------------- ####
   feature_engineering_perform_preprocess_server()
-
+  
   #### ------ Missing value imputation -------------------------- ####
   feature_engineering_recipe_server()
   feature_engineering_impute_missing_server()
   
   #### ----- Modelling framework --------------------------------- ####
-
-  source("server/modelling_framework.R", local=TRUE)
+  source("server/modelling_framework.R", local = TRUE)
   modelling_framework_choices()
   
   #### ----- Model setup ----------------------------------------- ####
-  source("server/model_training_setup.R", local=TRUE)
+  source("server/model_training_setup.R", local = TRUE)
   model_training_setup_server()
-
+  
   #### ----- Caret models --------------------------------------- ####
-  source("server/model_training_caret_models.R", local=TRUE)
+  source("server/model_training_caret_models.R", local = TRUE)
   
   ## LM/GLM
   model_training_caret_models_ols_server()
-
+  
   ## RF
   model_training_caret_models_rf_server()
-
+  
   ## GBM
   model_training_caret_models_gbm_server()
-
+  
   ## xgbTree
   model_training_caret_models_xgbTree_server()
-
+  
   ## xgbLinear
   model_training_caret_models_xgbLinear_server()
-
+  
   ## svmRadial
   model_training_caret_models_svmRadial_server()
   
   ## svmLinear
   model_training_caret_models_svmLinear_server()
-
+  
   ## svmPoly
   model_training_caret_models_svmPoly_server()
-
+  
   ## glmnet
   model_training_caret_models_glmnet_server()
- 
+  
   ## LASSO
   model_training_caret_models_lasso_server()
-
+  
   ## Ridge
   model_training_caret_models_ridge_server()
-
+  
   ## KNN
   model_training_caret_models_knn_server()
-
+  
   ## NNET
   model_training_caret_models_nnet_server()
-
+  
   ## TREEBAG
   model_training_caret_models_treebag_server()
-
+  
   ## avNNet
   model_training_caret_models_avNNet_server()
-
+  
   ## PLS
   model_training_caret_models_pls_server()
-
+  
   ## GAM
   model_training_caret_models_gam_server()
-
+  
   #### ----- Train all models ----------------------------------- ####
-  source("server/train_caret_models.R", local=TRUE)
+  source("server/train_caret_models.R", local = TRUE)
   model_training_caret_train_all_server()
-
+  
   #### ----- Compare trained models ------------------------------ ####
-  source("server/compare_trained_caret_models.R", local=TRUE)
+  source("server/compare_trained_caret_models.R", local = TRUE)
   model_training_caret_train_metrics_server()
-
+  
   #### ----- Deploy trained models ------------------------------- ####
-  source("server/deploy_trained_caret_models.R", local=TRUE)
+  source("server/deploy_trained_caret_models.R", local = TRUE)
   deploy_trained_caret_models()
-
+  
   #### ---- Predict using no-code models ------------------------ ####
-  source("server/predict_trained_caret_models.R", local=TRUE)
+  source("server/predict_trained_caret_models.R", local = TRUE)
   predict_trained_caret_models()
-
+  
   #### ---- PyCaret Integration (API) ----------------------------------------------------
-
   # New ADD
   rv_ml_ai   <- rv_ml_ai   %||% reactiveValues(target = NULL, outcome = NULL)
   rv_current <- rv_current %||% reactiveValues(target = NULL)
-
-  deployment_server(id="deploy",rv_ml_ai=rv_ml_ai,rv_current = rv_current,api_base=api_base)
-  predict_pycaret_server("predict_pycaret", api_base , rv_current, rv_ml_ai)
-
+  
+  deployment_server(id = "deploy", rv_ml_ai = rv_ml_ai, rv_current = rv_current, api_base = api_base)
+  predict_pycaret_server("predict_pycaret", api_base, rv_current, rv_ml_ai)
+  
   # END NEW ADD
-  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
-  source("server/automl_server.R", local=TRUE)
+  #### ---- Call current dataset for FastAPI ---------------------------------------------------
+  source("server/automl_server.R", local = TRUE)
   automl_server("automl_module", rv_current, rv_ml_ai)
-
+  
   observe({
     req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
     
@@ -710,21 +719,20 @@ function(input, output, session){
   }, ignoreInit = FALSE)
   
   #### ---- Deep Learning Server ----- ###
-  source("server/deep_learning.R", local=TRUE)
+  source("server/deep_learning.R", local = TRUE)
   deep_learning()
   
   #### ---- Reset various components --------------------------------------####
   ## Various components come before this
   source("server/resets.R", local = TRUE)
-
+  
   ##### ---- Reset on delete or language change ------------------- ####
   reset_data_server()
-
+  
   #### ---- Activate required fields --------------------------------------####
   iv$enable()
   iv_url$enable()
   iv_ml$enable()
-
-  waiter_hide()
   
+  waiter_hide()
 }

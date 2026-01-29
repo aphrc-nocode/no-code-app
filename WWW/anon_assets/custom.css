@@ -1,0 +1,411 @@
+/* =======================================================================
+
+   ======================================================================= */
+
+
+/* -----------------------------------------------------------------------
+   0) Base reset + scope
+   ----------------------------------------------------------------------- */
+.anon-root,
+.anon-root *,
+.anon-root *::before,
+.anon-root *::after {
+  box-sizing: border-box;
+}
+
+.anon-root {
+  width: 100%;
+  min-height: 85vh;
+  position: relative;
+  overflow: hidden;              /* keep module self-contained */
+  font-family: Arial, sans-serif;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Allow children to shrink properly (important for scroll containers) */
+.anon-root .container-fluid,
+.anon-root .row,
+.anon-root [class*="col-"],
+.anon-root .tab-content,
+.anon-root .tab-pane,
+.anon-root .tab-pane.active {
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+
+/* -----------------------------------------------------------------------
+   1) Landing screen
+   ----------------------------------------------------------------------- */
+.anon-root .anon-landing {
+  position: relative;
+  width: 100%;
+  min-height: 85vh;
+  border-radius: 8px;
+  overflow: hidden;
+
+  /* reliable absolute path */
+  background: url("/anon_assets/Image10.png") center / cover no-repeat !important;
+}
+
+.anon-root .landing-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, 92%);
+  text-align: center;
+  color: #ffffff;
+  z-index: 5;
+}
+
+.anon-root .landing-overlay .btn {
+  margin: 0 10px;
+}
+
+.anon-root #logo {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 150px;
+  height: auto;
+  z-index: 10;
+}
+
+
+/* -----------------------------------------------------------------------
+   2) Dashboard container
+   ----------------------------------------------------------------------- */
+.anon-root .anon-dashboard {
+  min-height: 85vh;
+}
+
+/* tab content should not force the whole page to grow */
+.anon-root .anon-dashboard .tab-content {
+  min-height: 0 !important;
+}
+
+
+/* -----------------------------------------------------------------------
+   3) NO PAGE SCROLL while anonymization dashboard is active
+   IMPORTANT: this only works if your JS adds:
+     document.body.classList.add('anon-active')
+   ----------------------------------------------------------------------- */
+body.anon-active {
+  overflow: hidden !important;   /* removes the main scrollbar */
+}
+
+/* Keep module area from expanding the page */
+.anon-root {
+  /* Keep enough room for shinydashboard content header padding.
+     If your module is clipped or leaves a gap, tweak these numbers. */
+  max-height: calc(100vh - 120px);
+}
+
+
+/* -----------------------------------------------------------------------
+   4) LEFT PANEL: the ONLY vertical scroller
+   ----------------------------------------------------------------------- */
+.anon-root [id$="left-panel"] {
+  /* Give it a height so overflow can happen */
+  height: calc(100vh - 160px);
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding-right: 8px;
+}
+
+/* left scrollbar styling */
+.anon-root [id$="left-panel"]::-webkit-scrollbar { width: 8px; }
+.anon-root [id$="left-panel"]::-webkit-scrollbar-thumb { background: #c9c9c9; border-radius: 4px; }
+.anon-root [id$="left-panel"]::-webkit-scrollbar-track { background: transparent; }
+
+
+/* -----------------------------------------------------------------------
+   5) RIGHT PANEL: fixed/intact (no vertical scrolling)
+   ----------------------------------------------------------------------- */
+.anon-root .right-containers {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+
+  overflow: hidden !important;
+  min-height: 520px;
+}
+
+.anon-root .right-box {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+}
+
+/* Keep headers nice */
+.anon-root .right-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eeeeee;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.anon-root .right-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* IMPORTANT: do NOT scroll vertically on the right */
+.anon-root .right-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+
+  overflow-y: hidden !important;    /* <-- right side stays intact */
+  overflow-x: hidden !important;
+
+  padding: 10px 12px;
+}
+
+
+/* Preview table wrapper: allow horizontal scroll only */
+.anon-root .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  min-height: 0;
+}
+
+.anon-root table {
+  width: 100% !important;
+  border-collapse: collapse;
+}
+
+
+/* -----------------------------------------------------------------------
+   6) Risk summary cards
+   ----------------------------------------------------------------------- */
+.anon-root .risk-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.anon-root .summary-card {
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+
+/* -----------------------------------------------------------------------
+   7) Gauges
+   ----------------------------------------------------------------------- */
+.anon-root .gauge .gauge-value,
+.anon-root .gauge .gauge-label {
+  display: none !important;
+}
+
+.anon-root #preview-gauges .gauge-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.anon-root #preview-gauges h4 { margin: 0 0 6px 0; }
+
+
+/* -----------------------------------------------------------------------
+   8) Copy buttons (module-scoped)
+   ----------------------------------------------------------------------- */
+.anon-root button[id^="copy_"] {
+  float: right;
+  font-size: 12px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 10px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+  cursor: pointer;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 10;
+}
+
+
+/* -----------------------------------------------------------------------
+   9) Inline suppress icon button
+   ----------------------------------------------------------------------- */
+.anon-root .qid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.anon-root .icon-button {
+  background: #dc3545;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anon-root .icon-button:hover { opacity: 0.9; }
+.anon-root .icon-button .fa { pointer-events: none; }
+
+
+/* -----------------------------------------------------------------------
+   10) Leaflet map sizing
+   ----------------------------------------------------------------------- */
+.anon-root [id$="geo_map"] {
+  height: 420px;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
+/* -----------------------------------------------------------------------
+   11) Download note
+   ----------------------------------------------------------------------- */
+.anon-root .download-note {
+  font-size: 12px;
+  color: #444444;
+  background: #f7f7f7;
+  border: 1px dashed #dddddd;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 8px;
+}
+
+
+/* -----------------------------------------------------------------------
+   12) Dark mode
+   ----------------------------------------------------------------------- */
+.anon-root.dark-mode {
+  background-color: #1e1e1e !important;
+  color: #ffffff;
+}
+
+.anon-root.dark-mode .right-box {
+  background: #2a2a2a;
+  border-color: #444444;
+}
+
+.anon-root.dark-mode .right-header {
+  background: #2a2a2a;
+  border-bottom-color: #444444;
+}
+
+.anon-root.dark-mode .summary-card {
+  background: #2e2e2e;
+  border-color: #444444;
+}
+
+.anon-root.dark-mode button[id^="copy_"] {
+  background-color: #444444;
+  color: #ffffff;
+}
+
+
+/* -----------------------------------------------------------------------
+   13) Responsive adjustments
+   ----------------------------------------------------------------------- */
+@media (max-width: 992px) {
+  /* let the page scroll on small screens (mobile usability) */
+  body.anon-active {
+    overflow: auto !important;
+  }
+
+  .anon-root [id$="left-panel"] {
+    height: auto;
+    max-height: none;
+  }
+
+  .anon-root .risk-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .anon-root #logo {
+    width: 110px;
+    top: 12px;
+    right: 12px;
+  }
+}
+
+/* =========================================================
+   RIGHT PANEL: fill page height and split 50/50
+   ========================================================= */
+
+/* Make the entire anonymization dashboard row have a fixed height */
+.anon-root .anon-dashboard .tab-pane.active > .row {
+  height: calc(100vh - 160px);   /* same baseline as left-panel height */
+  overflow: hidden !important;
+}
+
+/* Right panel fills full available height */
+.anon-root [id$="right-panel"] {
+  height: 100%;
+  overflow: hidden !important;
+}
+
+/* Right containers stretch to full height */
+.anon-root .right-containers {
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Each box gets equal share */
+.anon-root .right-box {
+  flex: 1 1 0 !important;  /* <-- equal split */
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Header stays fixed, body scrolls */
+.anon-root .right-header {
+  flex: 0 0 auto !important;
+}
+
+/* Body becomes scroll container */
+.anon-root .right-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;     /* <-- enable vertical scroll inside preview/risk box */
+  overflow-x: hidden !important;
+}
+
+/* Preview table wrapper should scroll vertically within the preview box */
+.anon-root [id$="preview-table"] {
+  height: 100%;
+  min-height: 0 !important;
+  overflow: auto !important;       /* vertical + horizontal if needed */
+}
+
+/* Optional: keep tables clean */
+.anon-root table {
+  width: 100% !important;
+}
