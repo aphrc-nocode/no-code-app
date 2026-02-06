@@ -12,7 +12,7 @@ collapsible_panel <- function(title, ..., open = FALSE) {
 
 
 deeplearning_ui = function() {
-    tabItem(tabName = "cnndeep",
+	tabItem(tabName = "cnndeep",
 		fluidRow(
 			useShinyjs(),
 			
@@ -34,7 +34,30 @@ deeplearning_ui = function() {
 							h5("Object Detection Training", style="font-weight:bold; margin-top:20px; border-bottom: 1px solid #ddd; padding-bottom: 5px;"),
 							collapsible_panel("Paths & Naming", open = TRUE,
 								selectInput("obj_dataset_id", "Select Dataset", choices = c("Loading..." = "")),
-								selectInput("obj_model_arch", "Select Architecture", choices = c("Loading..." = "")),
+								selectInput("obj_model_arch", "Select Architecture", 
+									choices = list(
+										"Image Classification" = list(
+											"ResNet-18" = "resnet18",
+											"ResNet-50" = "resnet50", 
+											"VGG-16" = "vgg16",
+											"MobileNet" = "mobilenet",
+											"EfficientNet" = "efficientnet"
+										),
+										"Object Detection" = list(
+											"Faster R-CNN" = "faster_rcnn",
+											"YOLO" = "yolo"
+										),
+										"Segmentation" = list(
+											"U-Net" = "unet",
+											"DeepLab" = "deeplab"
+										),
+										"Transformers" = list(
+											"ViT (Vision Transformer)" = "vit",
+											"Swin Transformer" = "swin",
+											"DETR" = "detr"
+										)
+									),
+									selected = "resnet18"),
 								selectInput("obj_model_checkpoint", "Select Checkpoint", choices = NULL),
 								textInput("obj_run_name", "Run Name", "shiny-obj-run"),
 								textInput("obj_version", "Version", "1.0.0")
@@ -99,7 +122,7 @@ deeplearning_ui = function() {
 									textInput("obj_wandb_entity", "W&B Entity", "")
 								)
 							),
-							actionButton("start_obj_job", "Start Object Detection Job", class = "btn-primary", style="margin-top: 15px; width: 100%;")
+							actionButton("start_obj_job", "Start Object Detection Job", class = "btn-success", style="margin-top: 15px; width: 100%;")
 						)
 					),
 					
@@ -290,7 +313,7 @@ deeplearning_ui = function() {
 									textInput("seg_wandb_entity", "W&B Entity", "")
 								)
 							),
-							actionButton("start_seg_job", "Start Image Segmentation Job", class = "btn-info", style="margin-top: 15px; width: 100%;")
+							actionButton("start_seg_job", "Start Image Segmentation Job", class = "btn-success", style="margin-top: 15px; width: 100%;")
 						)
 					)
 				),
@@ -314,7 +337,7 @@ deeplearning_ui = function() {
 															"Image Segmentation" = "image_segmentation")
 									),
 									fileInput("new_data_zip", "Upload Data (zip file)", accept = ".zip"),
-									actionButton("start_data_upload", "Upload and Process Dataset", class = "btn-primary", style="width: 100%;"),
+									actionButton("start_data_upload", "Upload and Process Dataset", class = "btn-success", style="width: 100%;"),
 									br(),
 									textOutput("data_upload_status")
 								),
@@ -428,7 +451,7 @@ deeplearning_ui = function() {
 										numericInput("infer_obj_max_det", "Max Detections", 300, min = 1)
 									),		
 
-									actionButton("start_obj_inference", "Run Inference", class = "btn-info", style="margin-top: 10px;")
+									actionButton("start_obj_inference", "Run Inference", class = "btn-success", style="margin-top: 10px;")
 								),
 								hr(),
 								h5("Inference Result"),
@@ -442,7 +465,7 @@ deeplearning_ui = function() {
 									textInput("infer_asr_run_name", "Enter Run Name to Find Checkpoints", ""),
 									selectInput("infer_asr_checkpoint_dropdown", "Select Checkpoint", choices = NULL),
 									fileInput("infer_asr_audio_upload", "Upload Audio File", accept = c('audio/wav', 'audio/mp3', 'audio/flac')),
-									actionButton("start_asr_inference", "Run Inference", class = "btn-info", style="margin-top: 10px;")
+									actionButton("start_asr_inference", "Run Inference", class = "btn-success", style="margin-top: 10px;")
 								),
 								hr(),
 								h5("Transcription Result"),
@@ -459,7 +482,7 @@ deeplearning_ui = function() {
 									textInput("infer_img_class_run_name", "Enter Run Name to Find Checkpoints", ""),
 									selectInput("infer_img_class_checkpoint_dropdown", "Select Checkpoint", choices = NULL),
 									fileInput("infer_img_class_upload", "Upload Image for Classification"),
-									actionButton("start_img_class_inference", "Run Inference", class = "btn-info", style="margin-top: 10px;")
+									actionButton("start_img_class_inference", "Run Inference", class = "btn-success", style="margin-top: 10px;")
 								),
 								hr(),
 								h5("Prediction"),
@@ -477,7 +500,7 @@ deeplearning_ui = function() {
 									textInput("infer_seg_run_name", "Enter Run Name to Find Checkpoints", ""),
 									selectInput("infer_seg_checkpoint_dropdown", "Select Checkpoint", choices = NULL),
 									fileInput("infer_seg_image_upload", "Upload Image for Segmentation", accept = c('image/png', 'image/jpeg', 'image/jpg')),
-									actionButton("start_seg_inference", "Run Inference", class = "btn-info", style="margin-top: 10px;")
+									actionButton("start_seg_inference", "Run Inference", class = "btn-success", style="margin-top: 10px;")
 								),
 								hr(),
 								h5("Inference Result (Overlay)"),
@@ -490,20 +513,16 @@ deeplearning_ui = function() {
 			)
 		)
 	)
-	
-  
-# #CNN
-#     tabItem(tabName = "dashboard",
-#             fluidRow(
+}
 #               box(
-#                 title = "API Status", status = "primary", solidHeader = TRUE, width = 6,
-#                 actionButton("check_status", "Check API Status", class = "btn-primary"),
+#                 title = "API Status", status = "success", solidHeader = TRUE, width = 6,
+#                 actionButton("check_status", "Check API Status", class = "btn-success"),
 #                 br(), br(),
 #                 verbatimTextOutput("api_status")
 #               ),
 #               box(
-#                 title = "MLflow Server", status = "info", solidHeader = TRUE, width = 6,
-#                 actionButton("start_mlflow", "Start MLflow Server", class = "btn-info"),
+#                 title = "MLflow Server", status = "success", solidHeader = TRUE, width = 6,
+#                 actionButton("start_mlflow", "Start MLflow Server", class = "btn-success"),
 #                 br(), br(),
 #                 verbatimTextOutput("mlflow_output")
 #               )
@@ -518,7 +537,7 @@ deeplearning_ui = function() {
 #             ),
 #             fluidRow(
 #               box(
-#                 title = "Quick Info", status = "warning", solidHeader = TRUE, width = 12,
+#                 title = "Quick Info", status = "success", solidHeader = TRUE, width = 12,
 #                 h4("Welcome to the No-Code AI Platform"),
 #                 p("This R Shiny interface provides full functionality for the FastAPI backend."),
 #                 p("Available features:"),
@@ -544,7 +563,7 @@ deeplearning_ui = function() {
 #     tabItem(tabName = "create",
 #             fluidRow(
 #               box(
-#                 title = "Create New Pipeline", status = "primary", solidHeader = TRUE, width = 12,
+#                 title = "Create New Pipeline", status = "success", solidHeader = TRUE, width = 12,
 #                 fluidRow(
 #                   column(6,
 #                          textInput("pipeline_name", "Pipeline Name", value = "My Image Classifier"),
@@ -577,7 +596,7 @@ deeplearning_ui = function() {
 #                   )
 #                 ),
 #                 br(),
-#                 actionButton("create_pipeline", "Create Pipeline", class = "btn-primary btn-lg"),
+#                 actionButton("create_pipeline", "Create Pipeline", class = "btn-success btn-lg"),
 #                 br(), br(),
 #                 verbatimTextOutput("create_output")
 #               )
@@ -588,9 +607,9 @@ deeplearning_ui = function() {
 #     tabItem(tabName = "train",
 #             fluidRow(
 #               box(
-#                 title = "Current Job Status", status = "info", solidHeader = TRUE, width = 12,
+#                 title = "Current Job Status", status = "success", solidHeader = TRUE, width = 12,
 #                 p("Shows the most recently created job ready for training"),
-#                 actionButton("refresh_current_job", "Refresh Current Job", class = "btn-info"),
+#                 actionButton("refresh_current_job", "Refresh Current Job", class = "btn-success"),
 #                 br(), br(),
 #                 verbatimTextOutput("current_job_status")
 #               )
@@ -607,7 +626,7 @@ deeplearning_ui = function() {
 #                   column(6,
 #                          h4("Job Selection"),
 #                          selectInput("upload_job_dropdown", "Select Job for Dataset Upload", choices = list()),
-#                          actionButton("refresh_upload_jobs", "Refresh Jobs", class = "btn-info"),
+#                          actionButton("refresh_upload_jobs", "Refresh Jobs", class = "btn-success"),
 #                          br(), br(),
 #                          checkboxInput("is_coco_format_upload", "COCO Format Dataset (Object Detection)", value = FALSE)
 #                   ),
@@ -632,31 +651,31 @@ deeplearning_ui = function() {
 #             ),
 #             fluidRow(
 #               box(
-#                 title = "Link Dataset to Job", status = "primary", solidHeader = TRUE, width = 12,
+#                 title = "Link Dataset to Job", status = "success", solidHeader = TRUE, width = 12,
 #                 p("Connect a pending job to a dataset (either newly uploaded or existing)"),
 #                 fluidRow(
 #                   column(6,
 #                          selectInput("pending_job_dropdown", "Select Pending Job", choices = list()),
-#                          actionButton("refresh_pending_jobs", "Refresh Pending Jobs", class = "btn-info")
+#                          actionButton("refresh_pending_jobs", "Refresh Pending Jobs", class = "btn-success")
 #                   ),
 #                   column(6,
 #                          selectInput("dataset_dropdown", "Select Dataset", choices = list()),
 #                          actionButton("refresh_datasets_dropdown", "Refresh Datasets", class = "btn-success")
 #                   )
 #                 ),
-#                 actionButton("link_dataset", "Link Dataset to Job", class = "btn-primary"),
+#                 actionButton("link_dataset", "Link Dataset to Job", class = "btn-success"),
 #                 br(), br(),
 #                 verbatimTextOutput("link_output")
 #               )
 #             ),
 #             fluidRow(
 #               box(
-#                 title = "Start Training", status = "warning", solidHeader = TRUE, width = 12,
+#                 title = "Start Training", status = "success", solidHeader = TRUE, width = 12,
 #                 p("Start training jobs that have datasets linked"),
 #                 selectInput("trainable_job_dropdown", "Select Job Ready for Training", choices = list()),
-#                 actionButton("refresh_trainable_jobs", "Refresh Trainable Jobs", class = "btn-info"),
+#                 actionButton("refresh_trainable_jobs", "Refresh Trainable Jobs", class = "btn-success"),
 #                 br(), br(),
-#                 actionButton("start_training_btn", "Start Training", class = "btn-warning btn-lg"),
+#                 actionButton("start_training_btn", "Start Training", class = "btn-success btn-lg"),
 #                 br(), br(),
 #                 verbatimTextOutput("training_output")
 #               )
@@ -667,9 +686,9 @@ deeplearning_ui = function() {
 #     tabItem(tabName = "predict",
 #             fluidRow(
 #               box(
-#                 title = "Model Selection", status = "primary", solidHeader = TRUE, width = 12,
+#                 title = "Model Selection", status = "success", solidHeader = TRUE, width = 12,
 #                 selectInput("predict_job_dropdown", "Select Trained Model", choices = list()),
-#                 actionButton("refresh_prediction_models", "Refresh Available Models", class = "btn-info"),
+#                 actionButton("refresh_prediction_models", "Refresh Available Models", class = "btn-success"),
 #                 br(), br(),
 #                 verbatimTextOutput("prediction_models_status")
 #               )
@@ -697,7 +716,7 @@ deeplearning_ui = function() {
 #                   )
 #                 ),
 #                 br(),
-#                 actionButton("make_prediction", "Make Prediction", class = "btn-primary btn-lg"),
+#                 actionButton("make_prediction", "Make Prediction", class = "btn-success btn-lg"),
 #                 br(), br(),
 #                 fluidRow(
 #                   column(6,
@@ -719,8 +738,8 @@ deeplearning_ui = function() {
 #     tabItem(tabName = "jobs",
 #             fluidRow(
 #               box(
-#                 title = "All Jobs", status = "info", solidHeader = TRUE, width = 12,
-#                 actionButton("refresh_jobs", "Refresh Jobs List", class = "btn-info"),
+#                 title = "All Jobs", status = "success", solidHeader = TRUE, width = 12,
+#                 actionButton("refresh_jobs", "Refresh Jobs List", class = "btn-success"),
 #                 br(), br(),
 #                 DT::dataTableOutput("jobs_table")
 #               )
@@ -752,25 +771,27 @@ deeplearning_ui = function() {
 #     tabItem(tabName = "delete",
 #             fluidRow(
 #               box(
-#                 title = "Delete Job", status = "danger", solidHeader = TRUE, width = 12,
-#                 div(class = "warning-box",
+#                 title = "Delete Job", status = "success", solidHeader = TRUE, width = 12,
+#                 div(class = "success-box",
 #                     strong("Warning: "),
 #                     "Deleting a job will permanently remove all associated data including trained models, datasets, and logs. This action cannot be undone."
 #                 ),
 #                 selectInput("delete_job_dropdown", "Select Job to Delete", choices = list()),
-#                 actionButton("refresh_delete_jobs", "Refresh Jobs List", class = "btn-info"),
+#                 actionButton("refresh_delete_jobs", "Refresh Jobs List", class = "btn-success"),
 #                 br(), br(),
-#                 actionButton("delete_job_btn", "Delete Selected Job", class = "btn-danger btn-lg"),
+#                 actionButton("delete_job_btn", "Delete Selected Job", class = "btn-success btn-lg"),
 #                 br(), br(),
 #                 verbatimTextOutput("delete_output")
 #               )
 #             )
 #     )
 #   
-  
-  
-  
-  
-  
-  
-}
+#   )
+# }
+# 
+# deeplearning_ui <- function() {
+#   tagList(
+#     tabItem(tabName = "cnndeep", ...),
+#     tabItem(tabName = "cnn_deep", ...)
+#   )
+# }

@@ -56,4 +56,5 @@ py/__pycache__
 static_files/
 ../env1
 logs.log
-
+./venv
+venv

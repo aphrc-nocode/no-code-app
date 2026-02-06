@@ -726,6 +726,10 @@ function(input, output, session){
 	  source("server/deep_learning.R", local=TRUE)
 	  deep_learning()
 	  
+	  #### ---- CNN Server ----- ###
+	  source("server/cnn_server.R", local=TRUE)
+	  deeplearning_cnn(input, output, session)
+	  
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this
 	  source("server/resets.R", local = TRUE)

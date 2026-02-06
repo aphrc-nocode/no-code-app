@@ -126,6 +126,7 @@ aphrcBody <- dashboardBody(
 				  
 		## Deep learning UI
 		, deeplearning_ui()
+		, cnn_ui()
 		
 		## Cohort constructor
 		, cohort_constructor_ui()

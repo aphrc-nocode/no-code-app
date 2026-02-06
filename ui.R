@@ -25,7 +25,7 @@ source(paste0(getwd(), "/ui/header.R"))
 #Load Footer
 source(paste0(getwd(), "/ui/footer.R"))
 source(paste0(getwd(), "/ui/homepage.R"))
-
+source("ui/cnn_ui.R")
 source("ui/dashboard_body.R")
 
 

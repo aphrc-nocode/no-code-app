@@ -93,11 +93,17 @@ menu_translation = function(){
 		    HTML(paste0("<span class='menu-label'>", get_rv_labels("transformers_deep"), "</span>")),
 		    tabName = "cnndeep",
 		    icon = icon("server", lib = "font-awesome")
+		  ),
+
+		  # --- CNN Deep ---
+		  menuItem(
+		    HTML("<span class='menu-label'>CNN</span>"),
+		    tabName = "cnn_deep",
+		    icon = icon("server", lib = "font-awesome")
 		  )
 		)
 		,
 		
-
 		menuItem(HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
 		br(),
 		div(
