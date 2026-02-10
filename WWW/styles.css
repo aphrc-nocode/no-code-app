@@ -1,146 +1,362 @@
-/* Media query for tablets */
-@media (min-width: 577px) and (max-width: 992px) {
-    .roundbuttons {
-        width: 50%; /* Adjust the width for tablets */
-    }
+/* ==========================================================================
+   APHRC — FINAL PERFECT CSS
+   - Outer sidebar transparent (no extra layer)
+   - Only inner pill visible
+   - Pill is dark blue/gray (AdminLTE-like)
+   - No dark ring around dashboard
+   ========================================================================== */
+
+/* =========================
+   0) Palette / globals
+   ========================= */
+:root{
+  --aphrc-green: #7BC148;
+  --aphrc-cyan:  #00BFC4;
+  --aphrc-text:  #333333;
+  --aphrc-bg:    #FFFFFF;
+
+  /* Layout constants */
+  --aphrc-topbar-height: 110px;   /* adjust if needed */
+  --aphrc-sidebar-collapsed: 56px;
+  --aphrc-sidebar-expanded: 240px;
+  --aphrc-transition-ms: 320ms;
+
+  /* Pill styling */
+  --aphrc-pill-color: #1f2d33;  /* dark blue/gray */
+  --aphrc-pill-radius: 18px;
+  --aphrc-pill-pad-y: 10px;
+  --aphrc-pill-pad-x: 8px;
 }
 
+html, body{ height: 100%; }
 
-input[type="radio"] {
+body{
+  color: var(--aphrc-text);
+  background: var(--aphrc-bg);
+  overflow-x: hidden;
+}
+
+/* =========================
+   1) Remove AdminLTE dark canvas/ring
+   ========================= */
+html,
+body,
+.wrapper,
+.content-wrapper,
+.right-side,
+.main-footer{
+  background-color: var(--aphrc-bg) !important;
+}
+
+.wrapper,
+.content-wrapper,
+.right-side{
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.content-wrapper{
+  border-left: 0 !important;
+}
+
+/* =========================
+   2) Remove AdminLTE header bar (you use .custom-header)
+   ========================= */
+.main-header,
+.main-header .navbar,
+.skin-blue .main-header .navbar,
+.skin-green .main-header .navbar{
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Make room for your custom header */
+body .wrapper{
+  padding-top: var(--aphrc-topbar-height) !important;
+}
+
+.content-wrapper, .right-side, .content{
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* =========================
+   3) Your custom header (.custom-header)
+   ========================= */
+.custom-header{
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 3000 !important;
+  background-color: var(--aphrc-green) !important;
+  color: #fff !important;
+  padding: 10px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Keep your older .header (white) if used elsewhere (login etc.) */
+.header{
+  background: #fff;
+  color: var(--aphrc-green);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.logo{
+  flex-shrink: 0;
+  margin-right: 20px;
+  max-height: 80%;
+  max-width: 80%;
+}
+
+.header-text h1{
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+}
+.header-text h3{
+  font-size: 20px;
+}
+
+/* =========================
+   4) Sidebar: transparent shell + dark pill only
+   ========================= */
+
+/* Sidebar shell (outer area) is TRANSPARENT and non-blocking */
+.main-sidebar,
+.left-side,
+.skin-green .main-sidebar,
+.skin-blue  .main-sidebar,
+.main-sidebar .sidebar{
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Fixed positioning and hover-expand */
+.main-sidebar{
+  position: fixed !important;
+  left: 0 !important;
+  top: var(--aphrc-topbar-height) !important;
+  height: calc(100vh - var(--aphrc-topbar-height)) !important;
+
+  width: var(--aphrc-sidebar-collapsed) !important;
+
+  overflow: visible !important; /* important: pill can have shadow */
+  z-index: 2000 !important;
+
+  transition: width var(--aphrc-transition-ms) cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: width;
+
+  pointer-events: none !important; /* outer shell won’t block footer/clicks */
+}
+
+.main-sidebar:hover{
+  width: var(--aphrc-sidebar-expanded) !important;
+}
+
+/* Content aligned to collapsed sidebar */
+.content-wrapper, .right-side, .main-footer{
+  margin-left: var(--aphrc-sidebar-collapsed) !important;
+  transition: margin-left var(--aphrc-transition-ms) cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.main-sidebar:hover ~ .content-wrapper,
+.main-sidebar:hover ~ .right-side,
+.main-sidebar:hover ~ .main-footer{
+  margin-left: var(--aphrc-sidebar-expanded) !important;
+}
+
+/* Sidebar inner container */
+.main-sidebar .sidebar{
+  padding-top: 8px !important;
+  margin-top: 0 !important;
+  overflow: visible !important;
+}
+
+/* Make ONLY the pill interactive */
+.main-sidebar .sidebar-menu{
+  pointer-events: auto !important;
+}
+
+/* Stop old rules that paint every <a> green */
+.skin-green .main-sidebar .sidebar .sidebar-menu a,
+.skin-blue  .main-sidebar .sidebar .sidebar-menu a{
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* The DARK PILL panel (height = content) */
+.main-sidebar .sidebar-menu{
+  background: var(--aphrc-pill-color) !important;
+  background-color: var(--aphrc-pill-color) !important;
+
+  margin: 12px var(--aphrc-pill-pad-x) !important;
+  padding: var(--aphrc-pill-pad-y) 0 !important;
+
+  border-radius: var(--aphrc-pill-radius) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18) !important;
+
+  overflow: hidden !important;
+  list-style: none !important;
+}
+
+/* Menu items */
+.main-sidebar .sidebar-menu > li{ margin: 0 !important; }
+
+.main-sidebar .sidebar-menu > li > a{
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  line-height: 44px !important;
+
+  /* collapsed: icons centered */
+  justify-content: center !important;
+  padding: 0 !important;
+
+  color: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+/* Icons */
+.main-sidebar .sidebar-menu > li > a > i{
+  font-size: 16px !important;
+  margin: 0 !important;
+  width: auto !important;
+}
+
+/* Hover/active (dark theme) */
+.main-sidebar .sidebar-menu > li > a:hover{
+  background: rgba(255,255,255,0.10) !important;
+}
+.main-sidebar .sidebar-menu > li.active > a,
+.main-sidebar .sidebar-menu > li > a:focus{
+  background: rgba(255,255,255,0.16) !important;
+}
+
+/* Collapsed: hide labels */
+.main-sidebar .sidebar-menu > li > a > span,
+.main-sidebar .sidebar-menu > li > a > .pull-right-container{
+  display: none !important;
+}
+
+/* Expanded hover: show labels and align left */
+.main-sidebar:hover .sidebar-menu > li > a{
+  justify-content: flex-start !important;
+  padding: 0 15px !important;
+}
+.main-sidebar:hover .sidebar-menu > li > a > i{
+  margin-right: 10px !important;
+}
+.main-sidebar:hover .sidebar-menu > li > a > span,
+.main-sidebar:hover .sidebar-menu > li > a > .pull-right-container{
+  display: inline-block !important;
+}
+
+/* Small screens: tighten pill */
+@media (max-width: 576px){
+  .main-sidebar .sidebar-menu{
+    border-radius: 16px !important;
+    margin: 10px 6px !important;
+  }
+}
+
+/* =========================
+   5) Content area styling
+   ========================= */
+.content-wrapper, .right-side{
+  background-color: #ffffff !important;
+  padding-left: 1.5em !important;
+}
+
+/* =========================
+   6) Tables / DataTables
+   ========================= */
+.dataTables_wrapper,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing{
+  color:#000000 !important;
+  background-color:#ffffff !important;
+}
+
+thead{
+  color: #ffffff !important;
+  font-size:1.2em !important;
+  background-color:#17a2b8 !important;
+}
+tbody{
+  color: #000000 !important;
+  font-size:1.2em !important;
+}
+
+table{
+  background-color: white !important;
+  color: black !important;
+  border: 1px solid #ddd !important;
+}
+th{
+  background-color: #17a2b8 !important;
+  color: white !important;
+}
+td{
+  background-color: #ffffff !important;
+  color: black !important;
+}
+
+/* =========================
+   7) Forms / inputs
+   ========================= */
+input[type="radio"]{
   width: 12px;
   height: 12px;
-  accent-color: #17a2b8; 
-  border: 1px solid #7bc148; /* Green border */
+  accent-color: #17a2b8;
+  border: 1px solid var(--aphrc-green);
   cursor: pointer;
 }
 
+.shiny-input-checkbox input[type='checkbox']{
+  background-color: #4CAF50;
+}
 
-.box.box-success > .box-header {
-    background-color:   #bde0a3   !important;  /* lighter green header */
-  }
+.bootstrap-switch{
+  background-color: #4CAF50 !important;
+}
 
+@media (min-width: 577px) and (max-width: 992px){
+  .roundbuttons{ width: 50%; }
+}
 
-.footer {
-        background-color: #7bc148;
-        color: white;
-        padding: 0px;
-        text-align: center;
-      }
+#primaryTabs{
+  color: var(--aphrc-green);
+  width: 100%;
+}
 
-    .socialform {
-       text-align: center;
-       padding: 10px;
-       }
-      .footer a {
-        margin: 0px;
-        color: white;
-      }
-      .footer a:hover {
-        color: #337ab7;
-      }
-
-     hr {
-        width: 100%; /* Adjust the percentage to control the length */
-        }
-
-
-    .header {
-        background: white;
-        color: #7bc148;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-        text-align:center;
-     }
-
-     hr {
-        width: 100%; /* Adjust the percentage to control the length */
-        }
-
-      .logo {
-        flex-shrink: 0;
-        margin-right: 20px;
-        max-height: 80%;
-        max-width: 80%;
-      }
-
-      .header-text h1 {
-        font-size: 30px;
-        font-weight: bold;
-        text-align:center;
-      }
-
-      .header-text h3 {
-        font-size: 20px;
-
-      }
-      
-      
-  /* navbar (rest of the header) */
-  .skin-blue .main-header .navbar {
-  background-color:green;
-
-  }
-
-  /* main sidebar */
-  .skin-blue .main-sidebar {
-  background-color: #7BC148;
-
-  }
-  /* active selected tab in the sidebarmenu */
-  .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
-  background-color:#7BC148;
-  }
-
-  /* other links in the sidebarmenu */
-  .skin-blue .main-sidebar .sidebar .sidebar-menu a{
-  background-color: #7BC148;
-  border-color: #7BC148;
-  color: #ffffff;
-  }
-
-  /* other links in the sidebarmenu when hovered */
-  .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
-  background-color: #2c3b41;
-  }
-  /* toggle button when hovered  */
-  .skin-blue .main-header .navbar .sidebar-toggle:hover{
-  background-color: #D37D28;
-  }
-  /* toggle button when hovered  */
-  .skin-blue .main-header .navbar .sidebar-toggle{
-  margin:1em;
-  }
-
-  /* body */
-  .content-wrapper, .right-side {
-  background-color: #ffffff;
-  padding-left: 1.5em;
-  }
-  
-  
-  /*Tables*/
-  
-.dataTables_wrapper , .dataTables_wrapper .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper{
-          color:#000000;
-          background-color:#ffffff;
-          }
-
-          thead {
-          color: #ffffff;
-          font-size:1.2em;
-          background-color:#17a2b8;
-          }
-
-          tbody {
-          color: #000000;
-          font-size:1.2em;
-          }
-          
+/* =========================
+   8) Upload / overview panels and cards
+   ========================= */
 #upload_form{
   padding-left: 1.2em;
   justify-content: left;
   align-items: left;
+
+  background: var(--aphrc-bg);
+  border: 2px solid var(--aphrc-green);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  padding: 14px 16px;
+  margin: 16px auto;
 }
 
 #OverViewMenu{
@@ -148,166 +364,161 @@ input[type="radio"] {
   overflow-y: auto;
 }
 
-table {
-    background-color: white;
-    color: black;
-    border: 1px solid #ddd;
+.aphrc-row{
+  background: var(--aphrc-bg);
+  border: 2px solid var(--aphrc-green);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  padding: 14px 16px;
+  margin: 16px auto;
 }
 
-th {
-    background-color: #17a2b8;
-    color: white;
+.aphrc-row:hover,
+.upload_form:hover,
+#aphrc-row1:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+  transition: all .18s ease-in-out;
 }
 
-td {
-    background-color: #ffffff;
-    color: black;
+/* =========================
+   9) Boxes
+   ========================= */
+.box.box-success > .box-header{
+  background-color: #bde0a3 !important;
 }
 
-.shiny-input-checkbox input[type='checkbox'] {
-        background-color: #4CAF50;
-  }
-      
-
-  .bootstrap-switch{
-  background-color: #4CAF50 !important;
+/* =========================
+   10) Footer (your custom .footer)
+   ========================= */
+.footer{
+  background-color: var(--aphrc-green);
+  color: white;
+  padding: 0px;
+  text-align: center;
 }
 
-#primaryTabs {
- color: #7bc148;
- width: 100%;
+.socialform{
+  text-align: center;
+  padding: 10px;
+}
+.footer a{
+  margin: 0px;
+  color: white;
+}
+.footer a:hover{
+  color: #337ab7;
 }
 
+/* =========================
+   11) HR
+   ========================= */
+hr{ width: 100%; }
 
-.auth-container {
+/* =========================
+   12) Auth / login page UI
+   ========================= */
+.auth-container{
   max-width: 400px;
   margin: 6% auto;
   padding: 30px 25px;
-  border-color:#7bc148;
+  border-color: var(--aphrc-green);
   border-radius: 15px;
-  border-width:2px;
+  border-width: 2px;
   background-color: #fff;
   box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
 }
 
-.auth-title {
+.auth-title{
   font-weight: 600;
   font-size: 24px;
   margin-bottom: 20px;
 }
 
-.toggle-buttons {
+.toggle-buttons{
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
 }
 
-.toggle-buttons button {
+.toggle-buttons button{
   margin: 0 5px;
-  background-color: #7bc148;
+  background-color: var(--aphrc-green);
 }
 
-#logoutID {
+#logoutID{
   background-color: white;
   color: gray;
   font-size: 18px;
   border: 2px solid gray;
   cursor: pointer;
 
-  /* Center icon */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-
-#logoutBtn:hover {
-    background-color: #c82333;
-  }
-
-#loading_screen {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: #ffffff;
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 40px;
-    color: #7bc148;
-  }
-  
-  
-#loader svg circle {
-    stroke-width: 20px !important;  /* increase this for a thicker ring */
-  }
-
- /* APHRC palette */
-:root{
-  --aphrc-green: #7BC148;
-  --aphrc-cyan:  #00BFC4;
-  --aphrc-text:  #333333;
-  --aphrc-bg:    #FFFFFF;
-}
-/* Row container with shadow + border */
-.aphrc-row {
-  background: var(--aphrc-bg);
-  border: 2px solid var(--aphrc-green);
-  border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
-  padding: 14px 16px;        /* space around row contents */
-  margin: 16px auto;         /* vertical rhythm */
-}
-/* Optional subtle hover lift */
-.aphrc-row:hover{
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  transform: translateY(-1px);
-  transition: all .18s ease-in-out;
+#logoutBtn:hover{
+  background-color: #c82333;
 }
 
-.aphrc-row:hover{
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  transform: translateY(-1px);
-  transition: all .18s ease-in-out;
+/* =========================
+   13) Loading screen / loader
+   ========================= */
+#loading_screen{
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: #ffffff;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  color: var(--aphrc-green);
 }
 
-
-
-#upload_form{
-  padding-left: 1.2em;
-  justify-content: left;
-  align-items: left;
-  background: var(--aphrc-bg);
-  border: 2px solid var(--aphrc-green);
-  border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
-  padding: 14px 16px;        /* space around row contents */
-  margin: 16px auto;         /* vertical rhythm */
+#loader svg circle{
+  stroke-width: 20px !important;
 }
 
-.upload_form:hover{
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  transform: translateY(-1px);
-  transition: all .18s ease-in-out;
+/* =========================
+   14) Progress bar
+   ========================= */
+.top-progress .progress-bar{
+  background-color: var(--aphrc-green) !important;
 }
 
-
-
-#aphrc-row1:hover{
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  transform: translateY(-1px);
-  transition: all .18s ease-in-out;
+/* =========================
+   15) Anonymization module isolation
+   ========================= */
+.anon-root table,
+.anon-root th,
+.anon-root td,
+.anon-root thead,
+.anon-root tbody{
+  all: unset;
 }
 
-#aphrc-row1:hover{
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  transform: translateY(-1px);
-  transition: all .18s ease-in-out;
+.anon-root table{
+  width: 100% !important;
+  border-collapse: collapse !important;
+  display: table;
 }
 
-.top-progress .progress-bar {
-    background-color: #7bc148 !important;
-  }
+.anon-root thead{ display: table-header-group; }
+.anon-root tbody{ display: table-row-group; }
+.anon-root tr{ display: table-row; }
 
+.anon-root th,
+.anon-root td{
+  display: table-cell;
+  padding: 6px 10px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
 
+.anon-root{
+  padding: 0 !important;
+  margin: 0 !important;
+}
