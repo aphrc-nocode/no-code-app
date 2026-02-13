@@ -56,4 +56,9 @@ py/__pycache__
 static_files/
 ../env1
 logs.log
+Domain_docs/
+../Domain_docs/
+*.md
+!README.md
+!issues.md
 
