@@ -810,6 +810,14 @@ def read_csv_flexible(path):
 
 app = FastAPI()
 
+try:
+    from celery_app import celery_app
+    from tasks import train_automl_task
+    CELERY_AVAILABLE = True
+except ImportError:
+    CELERY_AVAILABLE = False
+    celery_app = None
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -833,93 +841,102 @@ def automl(
     analysis_type: str = Form("supervised"),
     train_size: float = Form(0.8)
 ):
-    # Read uploaded CSV
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-        tmp.write(file.file.read())
-        tmp_path = tmp.name
-    df = read_csv_flexible(tmp_path)
-    os.remove(tmp_path)
-
-    if analysis_type != "supervised":
-        return JSONResponse(status_code=400, content={"error": "Only 'supervised' supported here."})
-
-       # après avoir lu df
-    stratify_flag, note = _decide_stratify_and_validate(df, target, train_size)
-
-    # Setup PyCaret en tenant compte de stratify_flag
-    try:
-        clf_setup(
-            data=df,
-            target=target,
-            session_id=int(session_id),
-            train_size=float(train_size),
-            data_split_shuffle=True,
-            data_split_stratify=stratify_flag,
-            fold=5,
-            html=False,
-            verbose=False,
-        )
-    except HTTPException:
-        # _decide_stratify_and_validate a déjà renvoyé un message clair
-        raise
-    except Exception as e:
-        # on renvoie un 400 lisible plutôt qu’un 500
-        raise HTTPException(status_code=400, detail=f"setup failed: {str(e)}")
-
-    # Entraîne tous les modèles possibles pour cette version de PyCaret
-    clf_compare(turbo=False)  # remplit le pull()
-
-
-    # Leaderboard CV
-    lb = clf_pull().reset_index(drop=True)
+    if not CELERY_AVAILABLE:
+        raise HTTPException(status_code=500, detail="Celery not available")
     
-        # --- Debug: si aucun modèle n'est sorti, on renvoie une erreur claire ----
-    if lb is None or lb.empty:
-        n_rows = df.shape[0]
-        n_cols = df.shape[1]
-        n_classes = df[target].nunique(dropna=True)
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"compare_models() returned an empty leaderboard. "
-                f"Check your data: n_rows={n_rows}, n_cols={n_cols}, "
-                f"n_classes(target)={n_classes}. "
-                f"Possible causes: target has 1 seule classe, "
-                f"trop peu de lignes, ou erreurs internes PyCaret."
-            )
-        )
+    file_data = file.file.read()
+    
+    task = train_automl_task.delay(
+        file_data=file_data,
+        target=target,
+        session_id=int(session_id),
+        analysis_type=analysis_type,
+        train_size=float(train_size)
+    )
+    
+    return JSONResponse(content={
+        "job_id": task.id,
+        "status": "queued",
+        "message": "Training started"
+    })
 
+@app.get("/automl/status/{job_id}")
+def get_automl_status(job_id: str):
+    if not CELERY_AVAILABLE:
+        raise HTTPException(status_code=500, detail="Celery not available")
+    
+    try:
+        task = celery_app.AsyncResult(job_id)
+        
+        try:
+            task_state = task.state
+        except (ValueError, KeyError) as e:
+            return JSONResponse(content={
+                "job_id": job_id,
+                "status": "error",
+                "message": "Task state corrupted in Redis. Task may have failed with invalid error data.",
+                "error": "Unable to retrieve task state"
+            })
+        except Exception as e:
+            return JSONResponse(content={
+                "job_id": job_id,
+                "status": "error",
+                "message": f"Error accessing task state: {str(e)}"
+            })
+        
+        if task_state == "PENDING":
+            response = {"job_id": job_id, "status": "queued", "progress": 0}
+        elif task_state == "PROCESSING":
+            try:
+                meta = task.info or {}
+            except Exception:
+                meta = {}
+            response = {
+                "job_id": job_id,
+                "status": "running",
+                "progress": meta.get("progress", 0),
+                "message": meta.get("message", "Processing")
+            }
+        elif task_state == "SUCCESS":
+            response = {
+                "job_id": job_id,
+                "status": "completed",
+                "progress": 100
+            }
+        elif task_state == "FAILURE":
+            try:
+                error_info = str(task.info) if task.info else "Unknown error"
+            except Exception:
+                error_info = "Task failed (error details unavailable)"
+            response = {
+                "job_id": job_id,
+                "status": "failed",
+                "error": error_info
+            }
+        else:
+            response = {"job_id": job_id, "status": task_state or "unknown"}
+        
+        return JSONResponse(content=response)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking job status: {str(e)}")
 
-    # === Build a RELIABLE label -> code mapping based on the installed version of PyCaret ===
-    # Official table of models (codes + labels) for YOUR version
-    md = _models_table()  # returns columns [‘model_id’,'Model'] (already defined above)
-    # Dictionary label(lower) -> code
-    name2code = {str(r["Model"]).strip().lower(): str(r["model_id"]).strip()
-                 for _, r in md.iterrows()}
-
-    # Harmonize the ‘Model’ column of the leaderboard
-    if "Model" not in lb.columns:
-        # Some versions use different names; at worst, we put a default label.
-        lb["Model"] = lb.get("model", lb.get("model_name", "Unknown"))
-
-    # For each line in the leaderboard, associate the code via name2code
-    codes = []
-    for nm in lb["Model"].astype(str).tolist():
-        key = nm.strip().lower()
-        codes.append(name2code.get(key, None))  # None if not found
-    lb["model_id"] = codes  # <-- HERE: we do not add suffixes _1, _2, etc. We keep the actual code.
-
-    # Cleaning: we also keep a dict label->code for the selector on the R side
-    model_map = {}
-    for nm, code in zip(lb["Model"].astype(str).tolist(), lb["model_id"].tolist()):
-        if code is not None and str(code):
-            model_map[str(nm)] = str(code)
-
-    payload = {
-        "leaderboard": lb.to_dict(orient="records"),
-        "models": model_map  # expected on the R side: names=labels, values=codes
-    }
-    return JSONResponse(content=clean_json(payload))
+@app.get("/automl/result/{job_id}")
+def get_automl_result(job_id: str):
+    if not CELERY_AVAILABLE:
+        raise HTTPException(status_code=500, detail="Celery not available")
+    
+    task = celery_app.AsyncResult(job_id)
+    
+    if task.state == "PENDING":
+        raise HTTPException(status_code=404, detail="Job not found")
+    elif task.state == "PROCESSING":
+        raise HTTPException(status_code=202, detail="Job still processing")
+    elif task.state == "FAILURE":
+        raise HTTPException(status_code=500, detail=f"Job failed: {str(task.info)}")
+    elif task.state == "SUCCESS":
+        return JSONResponse(content=task.result)
+    else:
+        raise HTTPException(status_code=500, detail=f"Unknown state: {task.state}")
 
 def _get_proba_scores(y_true, pred_df, model, X=None):
     """

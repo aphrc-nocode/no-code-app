@@ -330,22 +330,20 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
 
       withProgress(message = "Running AutoML pipeline…", value = 0, {
 
-        # ------------------------------ 1) /automl (TRAIN) ------------------------
-        setProgress(0.05, detail = "Training (PyCaret /automl)")
+        setProgress(0.05, detail = "Starting training job")
         res <- tryCatch(
           httr::POST(
             url   = paste0(api_base(), "/automl"),
             body  = list(
               file          = httr::upload_file(tmpfile),
               target        = .scalar_chr_or_null(outcome),
-              #session_id    = .scalar_chr_or_null(seed),
               session_id    = .scalar_chr_or_null(session_id_int),
               train_size    = .scalar_chr_or_null(train_ratio),
               task          = .scalar_chr_or_null(task_raw),
               analysis_type = .scalar_chr_or_null(analysis_type)
             ),
             encode = "multipart",
-            httr::timeout(600),
+            httr::timeout(30),
             verbose()
           ),
           error = function(e) e
@@ -361,13 +359,79 @@ automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
           showNotification(paste("HTTP error:", httr::status_code(res), substr(txt, 1, 200)), type = "error", duration = 10)
           return(invisible(NULL))
         }
-        out <- tryCatch(httr::content(res, as = "parsed", type = "application/json"),
+        job_response <- tryCatch(httr::content(res, as = "parsed", type = "application/json"),
                         error = function(e) NULL)
-        if (is.null(out)) {
+        if (is.null(job_response) || is.null(job_response$job_id)) {
           rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
-          showNotification("Invalid JSON payload from /automl.", type = "error", duration = 8)
+          showNotification("Invalid response from /automl.", type = "error", duration = 8)
           return(invisible(NULL))
         }
+        job_id <- job_response$job_id
+        rv_ml_ai$job_id <- job_id
+        
+        setProgress(0.1, detail = "Waiting for training to start")
+        max_polls <- 600
+        poll_count <- 0
+        while (poll_count < max_polls) {
+          Sys.sleep(2)
+          poll_count <- poll_count + 1
+          
+          status_res <- tryCatch(
+            httr::GET(paste0(api_base(), "/automl/status/", job_id), httr::timeout(10)),
+            error = function(e) NULL
+          )
+          
+          if (is.null(status_res) || httr::http_error(status_res)) {
+            next
+          }
+          
+          status_data <- tryCatch(
+            httr::content(status_res, as = "parsed", type = "application/json"),
+            error = function(e) NULL
+          )
+          
+          if (is.null(status_data)) next
+          
+          current_status <- status_data$status
+          progress_val <- status_data$progress %||% 0
+          message_text <- status_data$message %||% "Processing"
+          
+          setProgress(progress_val / 100, detail = message_text)
+          
+          if (current_status == "completed") {
+            result_res <- tryCatch(
+              httr::GET(paste0(api_base(), "/automl/result/", job_id), httr::timeout(30)),
+              error = function(e) NULL
+            )
+            
+            if (is.null(result_res) || httr::http_error(result_res)) {
+              rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
+              showNotification("Failed to retrieve results.", type = "error", duration = 8)
+              return(invisible(NULL))
+            }
+            
+            out <- tryCatch(httr::content(result_res, as = "parsed", type = "application/json"),
+                          error = function(e) NULL)
+            if (is.null(out)) {
+              rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
+              showNotification("Invalid result payload.", type = "error", duration = 8)
+              return(invisible(NULL))
+            }
+            break
+          } else if (current_status == "failed") {
+            rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
+            error_msg <- status_data$error %||% "Unknown error"
+            showNotification(paste("Training failed:", error_msg), type = "error", duration = 10)
+            return(invisible(NULL))
+          }
+        }
+        
+        if (poll_count >= max_polls) {
+          rv_ml_ai$status <- "Failed"; rv_ml_ai$busy$train <- FALSE
+          showNotification("Training timeout - job took too long.", type = "error", duration = 8)
+          return(invisible(NULL))
+        }
+        
         lb <- .parse_records_df(out$leaderboard)
         lb <- .normalize_metrics_df(lb)
         lb <- .std_metric_colnames(lb)
