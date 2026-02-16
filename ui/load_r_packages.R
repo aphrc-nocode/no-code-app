@@ -18,6 +18,14 @@ libraries <- c(
    "shinydashboardPlus",
    "shinycssloaders",
    "sjlabelled",
+	"sortable",  
+	"flexdashboard",
+	"shinyAce",
+	"leaflet",
+	"sdcMicro",
+	"rmarkdown",
+	"pagedown",
+	"data.table",
    "tidyr",
    "dplyr",
    "stringr",
@@ -92,25 +100,6 @@ libraries <- c(
 	"MLmetrics",
 	"fs"
 )
-library(shiny)
-library(shinyjs)
-library(sortable)     
-library(shinyWidgets) 
-library(flexdashboard)
-library(shinyAce)
-library(leaflet)
-library(dplyr)
-library(readr)
-library(readxl)
-library(openxlsx)
-library(haven)
-library(shinyjs)
-library(shiny)
-library(digest)
-library(sdcMicro)
-library(rmarkdown)
-library(pagedown)
-library(data.table)
 
 # Install missing CRAN packages
 missing <- setdiff(libraries, rownames(installed.packages()))

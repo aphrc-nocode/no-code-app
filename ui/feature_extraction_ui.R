@@ -18,7 +18,7 @@ feature_extraction_ui = function() {
 			),
 
 			# --- PAGE TITLE ---
-			titlePanel("Feature Extraction Tool"),
+#			titlePanel("Feature Extraction Tool"),
 
 			# --- "Click to connect" message just below the title ---
 			conditionalPanel(
