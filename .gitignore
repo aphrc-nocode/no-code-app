@@ -57,3 +57,8 @@ static_files/
 ../env1
 logs.log
 
+# Test scripts (local development only)
+test_*.sh
+test_*.R
+check_container_status.sh
+check_job_status.sh

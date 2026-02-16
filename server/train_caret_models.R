@@ -1,3 +1,20 @@
+redis_jobs_loaded <- FALSE
+if (file.exists("R/redis_jobs.R")) {
+  tryCatch({
+    source("R/redis_jobs.R", local=TRUE)
+    redis_jobs_loaded <- TRUE
+  }, error = function(e) {
+    warning("Failed to load redis_jobs.R: ", e$message)
+  })
+} else if (file.exists("/usr/no-code-app/R/redis_jobs.R")) {
+  tryCatch({
+    source("/usr/no-code-app/R/redis_jobs.R", local=TRUE)
+    redis_jobs_loaded <- TRUE
+  }, error = function(e) {
+    warning("Failed to load redis_jobs.R: ", e$message)
+  })
+}
+
 #### ---- Train all models ----------------------------------- ####
 model_training_caret_train_all_server = function() {
 
@@ -639,27 +656,267 @@ model_training_caret_train_all_server = function() {
 						, rv_training_models$pls_model
 						, rv_training_models$gam_model
 					)
-					set.seed(rv_ml_ai$seed_value)
 
-					rv_training_results$training_completed = FALSE
+					train_df <- isolate(rv_ml_ai$preprocessed$train_df)
+					test_df <- isolate(rv_ml_ai$preprocessed$test_df)
+					preprocessed_data <- isolate(rv_ml_ai$preprocessed)
+					model_form <- isolate(rv_ml_ai$model_formula)
+					ctrl_list <- isolate(reactiveValuesToList(rv_train_control_caret))
+					metric_val <- isolate(input$model_training_setup_eval_metric)
+					seed_val <- isolate(rv_ml_ai$seed_value)
+					use_cluster <- isTRUE(isolate(input$model_training_setup_start_clusters_check))
+					include_ensemble <- isTRUE(isolate(input$model_training_setup_include_ensemble_check))
+					dataset_id_val <- isolate(rv_ml_ai$dataset_id)
+					session_id_val <- isolate(rv_ml_ai$session_id)
+					outcome_val <- isolate(rv_ml_ai$outcome)
+					task_val <- isolate(rv_ml_ai$task)
+					app_username_val <- isolate(app_username)
+					framework_val <- isolate(input$modelling_framework_choices)
 
-					if (isTRUE(input$model_training_setup_start_clusters_check)) {
-						Rautoml::start_cluster()
-					}
+					use_async <- redis_jobs_loaded && exists("create_job_id") && exists("store_job_status")
 					
-					rv_training_results$models = tryCatch({
-						Rautoml::train_caret_models(
-							df=rv_ml_ai$preprocessed$train_df
-							, model_form=rv_ml_ai$model_formula
-							, ctrl=reactiveValuesToList(rv_train_control_caret)
-							, model_list=all_model_params
-							, metric=input$model_training_setup_eval_metric
+					if (use_async) {
+						job_id <- create_job_id()
+						rv_ml_ai$caret_job_id <- job_id
+						rv_training_results$training_completed <- FALSE
+						if (exists("store_job_status")) {
+							store_job_status(job_id, "queued", 0, "Training job queued")
+							store_job_status(job_id, "running", 5, "Starting training")
+						}
+					} else {
+						job_id <- NULL
+					}
+
+					safe_store_status <- function(job_id, status, progress, message, error = NULL) {
+						if (!is.null(job_id) && use_async && exists("store_job_status")) {
+							store_job_status(job_id, status, progress, message, error)
+						}
+					}
+
+					training_future <- future::future({
+						set.seed(seed_val)
+						
+						on.exit({
+							gc(verbose = FALSE)
+						}, add = TRUE)
+						
+						if (use_cluster) {
+							Rautoml::start_cluster()
+							on.exit(Rautoml::stop_cluster(), add = TRUE)
+						}
+
+						safe_store_status(job_id, "running", 10, "Training models")
+
+						models_result <- tryCatch({
+							Rautoml::train_caret_models(
+								df = train_df
+								, model_form = model_form
+								, ctrl = ctrl_list
+								, model_list = all_model_params
+								, metric = metric_val
+							)
+						}, error = function(e) {
+							safe_store_status(job_id, "failed", 0, "Training failed", error = e$message)
+							return(NULL)
+						})
+
+						if (is.null(models_result)) {
+							return(NULL)
+						}
+
+						safe_store_status(job_id, "running", 40, "Creating ensemble if needed")
+
+						if (include_ensemble) {
+							models_result <- tryCatch({
+								Rautoml::create_ensemble(
+									all.models = models_result
+									, ctrl = ctrl_list
+									, metric = metric_val
+								)
+							}, error = function(e) {
+								safe_store_status(job_id, "running", 45, "Ensemble creation failed, continuing")
+								return(models_result)
+							})
+						}
+
+						safe_store_status(job_id, "running", 50, "Extracting tuned parameters")
+
+						tuned_params <- tryCatch({
+							Rautoml::get_tuned_params(models_result)
+						}, error = function(e) {
+							return(NULL)
+						})
+
+						safe_store_status(job_id, "running", 55, "Extracting control parameters")
+
+						control_params <- tryCatch({
+							Rautoml::get_ctl_params(
+								models = models_result
+								, items = names(ctrl_list)
+							)
+						}, error = function(e) {
+							return(NULL)
+						})
+
+						safe_store_status(job_id, "running", 60, "Calculating training metrics")
+
+						train_metrics_df <- tryCatch({
+							Rautoml::extract_summary(models_result, summary_fun = Rautoml::student_t_summary)
+						}, error = function(e) {
+							return(NULL)
+						})
+
+						safe_store_status(job_id, "running", 65, "Saving training metrics")
+
+						if (!is.null(train_metrics_df)) {
+							tryCatch({
+								Rautoml::save_rautoml_csv(
+									object = train_metrics_df
+									, name = "training_performance_metrics"
+									, dataset_id = dataset_id_val
+									, session_name = session_id_val
+									, timestamp = Sys.time()
+									, output_dir = paste0(app_username_val, "/outputs")
+								)
+							}, error = function(e) NULL)
+						}
+
+						safe_store_status(job_id, "running", 70, "Calculating test metrics")
+
+						test_metrics_objs <- tryCatch({
+							Rautoml::boot_estimates_multiple(
+								models = models_result
+								, df = test_df
+								, outcome_var = outcome_val
+								, problem_type = task_val
+								, nreps = 100
+								, model_name = NULL
+								, type = "prob"
+								, report = metric_val
+								, summary_fun = Rautoml::student_t_summary
+								, save_model = TRUE
+								, model_folder = paste0(app_username_val, "/models")
+								, recipe_folder = paste0(app_username_val, "/recipes")
+								, preprocesses = preprocessed_data
+							)
+						}, error = function(e) {
+							return(NULL)
+						})
+
+						safe_store_status(job_id, "running", 80, "Saving test metrics")
+
+						if (!is.null(test_metrics_objs)) {
+							tryCatch({
+								Rautoml::save_boot_estimates(
+									boot_list = test_metrics_objs
+									, dataset_id = dataset_id_val
+									, session_name = session_id_val
+									, timestamp = Sys.time()
+									, output_dir = paste0(app_username_val, "/outputs")
+									, sub_dir = "test_metrics"
+								)
+							}, error = function(e) NULL)
+						}
+
+						safe_store_status(job_id, "running", 85, "Generating logs")
+
+						tryCatch({
+							Rautoml::create_model_logs(
+								df_name = dataset_id_val
+								, session_name = session_id_val
+								, outcome = outcome_val
+								, framework = framework_val
+								, train_result = test_metrics_objs$all
+								, timestamp = Sys.time()
+								, path = paste0(app_username_val, "/.log_files")
+							)
+						}, error = function(e) NULL)
+
+						safe_store_status(job_id, "running", 90, "Calculating post-model metrics")
+
+						post_model_metrics_objs <- tryCatch({
+							Rautoml::post_model_metrics(
+								models = models_result
+								, outcome = outcome_val
+								, df = test_df
+								, task = task_val
+							)
+						}, error = function(e) {
+							return(NULL)
+						})
+
+						safe_store_status(job_id, "running", 95, "Saving post-model metrics")
+
+						if (!is.null(post_model_metrics_objs)) {
+							tryCatch({
+								Rautoml::save_post_metrics_plots(
+									metric_list = post_model_metrics_objs
+									, dataset_id = dataset_id_val
+									, session_name = session_id_val
+									, timestamp = Sys.time()
+									, output_dir = paste0(app_username_val, "/outputs")
+								)
+							}, error = function(e) NULL)
+						}
+
+						result <- list(
+							models = models_result
+							, tuned_parameters = tuned_params
+							, control_parameters = control_params
+							, train_metrics_df = train_metrics_df
+							, test_metrics_objs = test_metrics_objs
+							, post_model_metrics_objs = post_model_metrics_objs
 						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
+
+						store_job_result(job_id, result)
+						safe_store_status(job_id, "completed", 100, "Training completed successfully")
+
+						result
+					})
+
+					poll_timer <- reactiveTimer(2000)
+					poll_count <- reactiveVal(0)
+					max_polls <- 1800
+
+					poll_status <- observe({
+						poll_timer()
+						
+						current_count <- poll_count()
+						if (current_count >= max_polls) {
+							safe_store_status(job_id, "failed", 0, "Training timeout")
+							close_progress_bar(att_new_obj = model_training_caret_pb)
+							poll_status$destroy()
+							return()
+						}
+
+						poll_count(current_count + 1)
+
+						status_data <- get_job_status(job_id)
+
+						if (status_data$status == "completed") {
+							result <- get_job_result(job_id)
+							if (!is.null(result)) {
+								rv_training_results$models <- result$models
+								rv_training_results$tuned_parameters <- result$tuned_parameters
+								rv_training_results$control_parameters <- result$control_parameters
+								rv_training_results$train_metrics_df <- result$train_metrics_df
+								rv_training_results$test_metrics_objs <- result$test_metrics_objs
+								rv_training_results$post_model_metrics_objs <- result$post_model_metrics_objs
+								rv_training_results$training_completed <- TRUE
+								rv_ml_ai$at_least_one_model <- FALSE
+							}
+							close_progress_bar(att_new_obj = model_training_caret_pb)
+							poll_status$destroy()
+							return()
+						}
+
+						if (status_data$status == "failed") {
+							error_msg <- status_data$error %||% "Unknown error"
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", error_msg), type = "error")
+							close_progress_bar(att_new_obj = model_training_caret_pb)
+							poll_status$destroy()
+							return()
+						}
 					})
 						
 					

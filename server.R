@@ -1,6 +1,20 @@
 library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
+if (requireNamespace("future", quietly = TRUE)) {
+  tryCatch({
+    max_workers <- as.integer(Sys.getenv("R_CARET_MAX_WORKERS", "4"))
+    if (max_workers > 0 && max_workers <= 50) {
+      future::plan(future::multisession, workers = max_workers)
+    } else {
+      warning("R_CARET_MAX_WORKERS out of range (1-50), using default: 4")
+      future::plan(future::multisession, workers = 4)
+    }
+  }, error = function(e) {
+    warning("Failed to set future plan: ", e$message, ". Using sequential execution.")
+  })
+}
+
 function(input, output, session){
   waiter_show(
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),

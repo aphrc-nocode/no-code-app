@@ -1,5 +1,9 @@
 library(dplyr)
-library(gsheet)
+if (requireNamespace("gsheet", quietly = TRUE)) {
+  library(gsheet)
+} else {
+  warning("gsheet package not available. Some Google Sheets features may not work.")
+}
 
 ## Labelling files
 

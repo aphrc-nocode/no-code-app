@@ -98,7 +98,15 @@ libraries <- c(
 missing <- setdiff(libraries, rownames(installed.packages()))
 if (length(missing) > 0) install.packages(missing, repos='https://cloud.r-project.org', dependencies = TRUE)
 
-invisible(lapply(libraries, library, character.only = TRUE))
+safe_library <- function(pkg) {
+  if (requireNamespace(pkg, quietly = TRUE)) {
+    library(pkg, character.only = TRUE)
+  } else {
+    warning("Package '", pkg, "' not available. Some features may not work.")
+  }
+}
+
+invisible(lapply(libraries, safe_library))
 
 st_options(footnote=NA, headings = FALSE)
 
