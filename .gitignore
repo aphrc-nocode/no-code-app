@@ -58,3 +58,15 @@ static_files/
 ../env1
 logs.log
 
+# Databases
+users_db/
+*.sqlite
+
+# Excel / local data
+static_files/*.xlsx
+
+# Editor backups
+*.save
+
+# Personal / output folders
+sylusooko7@gmail.com/
