@@ -63,7 +63,7 @@ source(file.path(.app_root, "ui", "dashboard_body.R"))
 # =============================================================================
 
 aphrcSiderbar <- shinydashboard::dashboardSidebar(
-  width = "240%",
+  width = 240,
   shinydashboard::sidebarMenuOutput("dynamic_meinu_aphrc")
 )
 

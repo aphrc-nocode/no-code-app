@@ -161,21 +161,54 @@ body .wrapper{
   pointer-events: none !important; /* outer shell won’t block footer/clicks */
 }
 
-.main-sidebar:hover{
+/* -------------------------
+   Sidebar behavior (manual)
+   ------------------------- */
+
+/* Expanded by default */
+.main-sidebar{
   width: var(--aphrc-sidebar-expanded) !important;
+  pointer-events: none !important;
 }
 
-/* Content aligned to collapsed sidebar */
+/* Expanded default content offset */
 .content-wrapper, .right-side, .main-footer{
-  margin-left: var(--aphrc-sidebar-collapsed) !important;
-  transition: margin-left var(--aphrc-transition-ms) cubic-bezier(0.22, 1, 0.36, 1) !important;
-}
-
-.main-sidebar:hover ~ .content-wrapper,
-.main-sidebar:hover ~ .right-side,
-.main-sidebar:hover ~ .main-footer{
   margin-left: var(--aphrc-sidebar-expanded) !important;
 }
+
+/* Collapsed state (user-controlled) */
+body.aphrc-sidebar-collapsed .main-sidebar{
+  width: var(--aphrc-sidebar-collapsed) !important;
+}
+body.aphrc-sidebar-collapsed .content-wrapper,
+body.aphrc-sidebar-collapsed .right-side,
+body.aphrc-sidebar-collapsed .main-footer{
+  margin-left: var(--aphrc-sidebar-collapsed) !important;
+}
+
+/* Only hide labels when collapsed */
+body.aphrc-sidebar-collapsed .main-sidebar .sidebar-menu > li > a > span,
+body.aphrc-sidebar-collapsed .main-sidebar .sidebar-menu > li > a > .pull-right-container{
+  display: none !important;
+}
+
+/* Collapsed icon centering only when collapsed */
+body.aphrc-sidebar-collapsed .main-sidebar .sidebar-menu > li > a{
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Expanded alignment (default) */
+body:not(.aphrc-sidebar-collapsed) .main-sidebar .sidebar-menu > li > a{
+  justify-content: flex-start !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+body:not(.aphrc-sidebar-collapsed) .main-sidebar .sidebar-menu > li > a > i{
+  margin-right: 8px !important;
+}
+
 
 /* Sidebar inner container */
 .main-sidebar .sidebar{
@@ -197,20 +230,41 @@ body .wrapper{
   border-color: transparent !important;
 }
 
-/* The DARK PILL panel (height = content) */
+/* The DARK PILL panel (tall but NOT to the footer) */
 .main-sidebar .sidebar-menu{
   background: var(--aphrc-pill-color) !important;
-  background-color: var(--aphrc-pill-color) !important;
 
   margin: 12px var(--aphrc-pill-pad-x) !important;
   padding: var(--aphrc-pill-pad-y) 0 !important;
 
-  border-radius: var(--aphrc-pill-radius) !important;
+  border-radius: var(--aphrc-pill-radius) !important; /* restore nice shape */
   box-shadow: 0 10px 24px rgba(0,0,0,0.18) !important;
 
-  overflow: hidden !important;
-  list-style: none !important;
+  height: calc((100vh - var(--aphrc-topbar-height)) * 0.82) !important;
+  max-height: calc((100vh - var(--aphrc-topbar-height)) * 0.82) !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
 }
+
+
+/* Optional: subtle inner highlight for “creative” polish */
+.main-sidebar .sidebar-menu::before{
+  content: "";
+  display: block;
+  height: 1px;
+  margin: 0 14px 10px 14px;
+  background: rgba(255,255,255,0.08);
+}
+
+#aphrcSidebarToggleBtn:hover{
+  background: rgba(255,255,255,0.26) !important;
+}
+#aphrcSidebarToggleBtn:active{
+  transform: translateY(1px);
+}
+
 
 /* Menu items */
 .main-sidebar .sidebar-menu > li{ margin: 0 !important; }
@@ -252,18 +306,6 @@ body .wrapper{
   display: none !important;
 }
 
-/* Expanded hover: show labels and align left */
-.main-sidebar:hover .sidebar-menu > li > a{
-  justify-content: flex-start !important;
-  padding: 0 15px !important;
-}
-.main-sidebar:hover .sidebar-menu > li > a > i{
-  margin-right: 10px !important;
-}
-.main-sidebar:hover .sidebar-menu > li > a > span,
-.main-sidebar:hover .sidebar-menu > li > a > .pull-right-container{
-  display: inline-block !important;
-}
 
 /* Small screens: tighten pill */
 @media (max-width: 576px){
@@ -521,4 +563,52 @@ hr{ width: 100%; }
 .anon-root{
   padding: 0 !important;
   margin: 0 !important;
+}
+
+/* --- Sign out button: match sidebar item behavior --- */
+
+/* Expanded: center it and make it look consistent */
+body:not(.aphrc-sidebar-collapsed) #logoutID,
+body:not(.aphrc-sidebar-collapsed) #logoutBtn{
+  width: calc(100% - 28px) !important;
+  margin: 14px auto 10px auto !important;
+  display: flex !important;
+  justify-content: center !important;  /* center */
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Collapsed: turn into icon-only circle */
+body.aphrc-sidebar-collapsed #logoutID,
+body.aphrc-sidebar-collapsed #logoutBtn{
+  width: 40px !important;
+  height: 40px !important;
+  margin: 14px auto 10px auto !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Hide text when collapsed */
+body.aphrc-sidebar-collapsed #logoutID,
+body.aphrc-sidebar-collapsed #logoutBtn{
+  font-size: 0 !important;  /* hides “Sign out” text */
+}
+
+/* Show a logout icon when collapsed */
+body.aphrc-sidebar-collapsed #logoutID::before,
+body.aphrc-sidebar-collapsed #logoutBtn::before{
+  content: \"\\f2f5\";                 /* Font Awesome 'sign-out' icon */
+  font-family: \"Font Awesome 6 Free\";
+  font-weight: 900;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Keep text normal when expanded */
+body:not(.aphrc-sidebar-collapsed) #logoutID,
+body:not(.aphrc-sidebar-collapsed) #logoutBtn{
+  font-size: 18px !important; /* your original */
 }
