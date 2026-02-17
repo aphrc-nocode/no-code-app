@@ -1,6 +1,7 @@
 # modules/mod_quant_anonymization.R
 
 # IMPORTANT: keep these global so anon_quant_server_logic() is visible
+#source(.anon_server_mod, local = FALSE)
 
 # ---- Quantitative anonymization module  ----
 mod_quant_anon_ui <- function(id) {

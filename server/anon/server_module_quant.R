@@ -1,14 +1,11 @@
-# server_module_quant.R
-
 anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   
   # ======================================================================
   # Quant Anon — Module-safe server with coordinate-safe risk + QGIS export
+  # FIXED: stable method codes + robust translated choices (no missing-choices error)
   # ======================================================================
   
   options(shiny.maxRequestSize = 1024^3)
-  
-  # ---- DEBUG: show full stack traces inside Shiny ----
   options(shiny.fullstacktrace = TRUE)
   
   if (requireNamespace("rlang", quietly = TRUE)) {
@@ -25,9 +22,337 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     })
   }
   
-  ns <- session$ns  # IMPORTANT: used for dynamic UI ids created in renderUI()
-  
+  ns <- session$ns
   `%||%` <- function(a, b) if (is.null(a)) b else a
+  
+  # ---------- Platform label helpers (no hardcoding) -----------------------
+  .lbl <- function(key) {
+    f <- get0("get_rv_labels", inherits = TRUE, ifnotfound = NULL)
+    if (is.function(f)) {
+      val <- tryCatch(f(key), error = function(e) NULL)
+      val <- if (!is.null(val)) as.character(val) else ""
+      if (nzchar(val)) return(val)
+    }
+    key
+  }
+  
+  .notify <- function(key, type = "message", duration = 5) {
+    shiny::showNotification(.lbl(key), type = type, duration = duration)
+  }
+  .notify_msg  <- function(key) .notify(key, type = "message", duration = 5)
+  .notify_warn <- function(key) .notify(key, type = "warning", duration = 6)
+  .notify_err  <- function(key, duration = NULL) .notify(key, type = "error", duration = duration)
+  
+  # --- Safe language getter (string, not reactive) -------------------------
+  .get_lang <- function(default = "English") {
+    rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
+    if (!is.null(rv)) {
+      for (nm in c("selected_language", "language", "lang")) {
+        if (!is.null(rv[[nm]]) && nzchar(as.character(rv[[nm]]))) return(as.character(rv[[nm]]))
+      }
+    }
+    for (nm in c("change_language", "language", "lang")) {
+      if (!is.null(input[[nm]]) && nzchar(as.character(input[[nm]]))) return(as.character(input[[nm]]))
+    }
+    default
+  }
+  
+  # --- Access platform "choices" df if present -----------------------------
+  .get_choices_df <- function() {
+    rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
+    if (!is.null(rv)) {
+      df <- tryCatch(rv$labelling_file_df$choices, error = function(e) NULL)
+      if (!is.null(df) && is.data.frame(df)) return(df)
+    }
+    f <- get0("get_choices_df", inherits = TRUE, ifnotfound = NULL)
+    if (is.function(f)) {
+      df <- tryCatch(f(), error = function(e) NULL)
+      if (!is.null(df) && is.data.frame(df)) return(df)
+    }
+    NULL
+  }
+  
+  # Build translated choice vectors from Excel "choices" sheet.
+  # Returned: named vector where names=display labels, values=stable codes in `label`.
+  # Build translated choice vectors from Excel "choices" sheet.
+  # Returned: named vector where names=display labels, values=stable codes in `label`.
+  # Build translated choice vectors from Excel "choices" sheet.
+  # Returned: named vector where names=display labels, values=stable codes in `label`.
+  .choice_vec <- function(variable, lang = NULL) {
+    `%||%` <- function(a, b) if (is.null(a)) b else a
+    lang <- lang %||% .get_lang("English")
+    
+    # Normalize language key to match lowercased column names
+    lang_key <- trimws(tolower(as.character(lang)))
+    
+    # Allow common variants
+    lang_map <- c(
+      "english" = "english", "en" = "english",
+      "french"  = "french",  "fr" = "french",
+      "swahili" = "swahili", "sw" = "swahili"
+    )
+    if (lang_key %in% names(lang_map)) lang_key <- lang_map[[lang_key]]
+    
+    # Helper: coerce a "choices source" into names=labels, values=codes
+    .as_choices <- function(x, known_codes = character()) {
+      if (is.null(x)) return(NULL)
+      
+      # data.frame input
+      if (is.data.frame(x)) {
+        df <- x
+        names(df) <- trimws(tolower(names(df)))
+        if ("var"  %in% names(df) && !"variable" %in% names(df)) df$variable <- df$var
+        if ("code" %in% names(df) && !"label"    %in% names(df)) df$label    <- df$code
+        if (!all(c("variable", "label") %in% names(df))) return(NULL)
+        return(df)
+      }
+      
+      # named atomic vector input
+      if (is.atomic(x) && !is.null(names(x)) && length(x) > 0) {
+        n <- trimws(as.character(names(x)))     # could be codes or labels
+        v <- trimws(as.character(unname(x)))    # could be labels or codes
+        
+        n_has_codes <- any(n %in% known_codes)
+        v_has_codes <- any(v %in% known_codes)
+        
+        # Case A: names=codes, values=labels  -> flip to names=labels, values=codes
+        if (n_has_codes && !v_has_codes) {
+          return(stats::setNames(n, v))
+        }
+        
+        # Case B: names=labels, values=codes  -> already correct
+        if (v_has_codes && !n_has_codes) {
+          return(stats::setNames(v, n))
+        }
+        
+        # Ambiguous: assume already correct (names=labels, values=codes)
+        return(stats::setNames(v, n))
+      }
+      
+      NULL
+    }
+    
+    # 1) Try platform helper first
+    df <- NULL
+    known_codes <- character()
+    
+    # If we can read known codes from the Excel choices df, do it early (helps auto-detect flips)
+    df0 <- .get_choices_df()
+    if (!is.null(df0) && is.data.frame(df0)) {
+      tmp <- df0
+      names(tmp) <- trimws(tolower(names(tmp)))
+      if ("var"  %in% names(tmp) && !"variable" %in% names(tmp)) tmp$variable <- tmp$var
+      if ("code" %in% names(tmp) && !"label"    %in% names(tmp)) tmp$label    <- tmp$code
+      if (all(c("variable", "label") %in% names(tmp))) {
+        tmp$variable <- trimws(as.character(tmp$variable))
+        tmp$label    <- trimws(as.character(tmp$label))
+        sub0 <- tmp[tmp$variable == trimws(variable), , drop = FALSE]
+        if (nrow(sub0)) known_codes <- unique(sub0$label[nzchar(sub0$label)])
+      }
+    }
+    
+    f <- get0("get_named_choices", inherits = TRUE, ifnotfound = NULL)
+    if (is.function(f)) {
+      out <- tryCatch(
+        f(input_choices_file, .get_lang("English"), variable),
+        error = function(e) NULL
+      )
+      
+      # If it's already a named vector, normalize shape robustly and return immediately
+      if (is.atomic(out) && !is.null(names(out)) && length(out) > 0) {
+        cv <- .as_choices(out, known_codes = known_codes)
+        if (!is.null(cv) && length(cv) > 0) return(cv)
+      }
+      
+      # If platform returns a df, keep it for the Excel-style path below
+      if (is.data.frame(out) && nrow(out) > 0) df <- out
+    }
+    
+    # 2) Otherwise fall back to platform-loaded choices df
+    if (is.null(df)) df <- .get_choices_df()
+    
+    if (is.null(df) || !is.data.frame(df)) return(NULL)
+    
+    # Normalize column names
+    names(df) <- trimws(tolower(names(df)))
+    if ("var"  %in% names(df) && !"variable" %in% names(df)) df$variable <- df$var
+    if ("code" %in% names(df) && !"label"    %in% names(df)) df$label    <- df$code
+    if (!all(c("variable", "label") %in% names(df))) return(NULL)
+    
+    df$variable <- trimws(as.character(df$variable))
+    df$label    <- trimws(as.character(df$label))
+    
+    sub <- df[df$variable == trimws(variable), , drop = FALSE]
+    if (!nrow(sub)) return(NULL)
+    
+    # Pick language column
+    lang_col <- NULL
+    if (!is.null(lang_key) && lang_key %in% names(sub)) lang_col <- lang_key
+    if (is.null(lang_col) && "english" %in% names(sub)) lang_col <- "english"
+    if (is.null(lang_col)) {
+      candidate_cols <- setdiff(names(sub), c("variable", "label"))
+      if (length(candidate_cols)) lang_col <- candidate_cols[1]
+    }
+    if (is.null(lang_col)) return(NULL)
+    
+    labs <- as.character(sub[[lang_col]])
+    
+    # Fallback to English if blank
+    if ("english" %in% names(sub)) {
+      labs_en <- as.character(sub[["english"]])
+      miss <- is.na(labs) | !nzchar(trimws(labs))
+      labs[miss] <- labs_en[miss]
+    }
+    
+    vals <- as.character(sub$label)
+    
+    ok <- !is.na(vals) & nzchar(trimws(vals)) & !is.na(labs) & nzchar(trimws(labs))
+    vals <- trimws(vals[ok])
+    labs <- trimws(labs[ok])
+    if (!length(vals)) return(NULL)
+    
+    # Final shape: names = display labels, values = stable code
+    stats::setNames(vals, labs)
+  }
+  
+  # --- Normalize method input to stable internal codes --------------------
+  .norm_method <- function(x) {
+    if (is.null(x) || !nzchar(as.character(x))) return("masking")
+    x0 <- trimws(as.character(x))
+    
+    known_codes <- c(
+      "masking","suppression","bucketing","pseudonymization","tokenization",
+      "kanonymity","generalization","anonymizecoordinates","ldiversity","tcloseness"
+    )
+    if (tolower(x0) %in% known_codes) return(tolower(x0))
+    
+    map <- c(
+      "Masking"               = "masking",
+      "Suppression"           = "suppression",
+      "Bucketing"             = "bucketing",
+      "Pseudonymization"      = "pseudonymization",
+      "Tokenization"          = "tokenization",
+      "K-Anonymity"           = "kanonymity",
+      "K Anonymity"           = "kanonymity",
+      "Generalization"        = "generalization",
+      "Anonymize Coordinates" = "anonymizecoordinates",
+      "L-Diversity"           = "ldiversity",
+      "L Diversity"           = "ldiversity",
+      "T-Closeness"           = "tcloseness",
+      "T Closeness"           = "tcloseness"
+    )
+    if (x0 %in% names(map)) return(map[[x0]])
+    
+    x1 <- tolower(gsub("[^a-z]", "", x0))
+    if (grepl("mask", x1)) return("masking")
+    if (grepl("supp", x1)) return("suppression")
+    if (grepl("bucket", x1)) return("bucketing")
+    if (grepl("pseudo", x1)) return("pseudonymization")
+    if (grepl("token", x1)) return("tokenization")
+    if (grepl("kanon", x1)) return("kanonymity")
+    if (grepl("general", x1)) return("generalization")
+    if (grepl("coord", x1) || grepl("geo", x1)) return("anonymizecoordinates")
+    if (grepl("ldiver", x1)) return("ldiversity")
+    if (grepl("tclose", x1)) return("tcloseness")
+    "masking"
+  }
+  
+  # Reactive invalidation on language change
+  .lang_tick <- shiny::reactive({
+    rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
+    if (!is.null(rv)) {
+      tryCatch({ rv$selected_language; rv$labelling_file_df }, error = function(e) NULL)
+    } else {
+      .get_lang("English")
+    }
+  })
+  
+  # ---------- Translatable UI outputs --------------------------------------
+  output$quant_anon_tab_dashboard    <- shiny::renderUI(shiny::span(.lbl("quant_anon_tab_dashboard")))
+  output$quant_anon_tab_codes        <- shiny::renderUI(shiny::span(.lbl("quant_anon_tab_codes")))
+  output$quant_anon_tab_descriptions <- shiny::renderUI(shiny::span(.lbl("quant_anon_tab_descriptions")))
+  
+  output$quant_anon_step0_title_ui              <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_step0_title")))
+  output$quant_anon_step0_use_platform_title_ui <- shiny::renderUI(shiny::tags$strong(.lbl("quant_anon_step0_use_platform_title")))
+  output$quant_anon_step1_title_ui              <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_step1_title")))
+  output$quant_anon_step2_title_ui              <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_step2_title")))
+  output$quant_anon_step3_title_ui              <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_step3_title")))
+  
+  output$quant_anon_data_preview_title_ui    <- shiny::renderUI(shiny::tags$h3(.lbl("quant_anon_tab_data_preview")))
+  output$quant_anon_risk_assessment_title_ui <- shiny::renderUI(shiny::tags$h3(.lbl("quant_anon_tab_risk")))
+  output$quant_anon_risk_before_title_ui     <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_risk_before")))
+  output$quant_anon_risk_after_title_ui      <- shiny::renderUI(shiny::tags$h4(.lbl("quant_anon_risk_after")))
+  
+  # Provide translated download buttons as UI outputs (use in UI to avoid hardcoding)
+  output$download_btn_csv_ui <- shiny::renderUI(
+    shiny::downloadButton(ns("download"), .lbl("quant_anon_download_csv"), class = "btn-block mb-1")
+  )
+  output$download_btn_excel_ui <- shiny::renderUI(
+    shiny::downloadButton(ns("download_excel"), .lbl("quant_anon_download_excel"), class = "btn-block mb-1")
+  )
+  output$download_btn_dta_ui <- shiny::renderUI(
+    shiny::downloadButton(ns("download_dta"), .lbl("quant_anon_download_stata"), class = "btn-block mb-1")
+  )
+  output$download_btn_report_ui <- shiny::renderUI(
+    shiny::downloadButton(ns("download_report"), .lbl("quant_anon_download_risk_pdf"), class = "btn-block mb-1")
+  )
+  
+  # Optional: expose copy strings (if UI reads them)
+  output$quant_anon_js_copy_txt   <- shiny::renderText(.lbl("quant_anon_copy"))
+  output$quant_anon_js_copied_txt <- shiny::renderText(.lbl("quant_anon_copied"))
+  
+  # Update labels + choices on language change
+  shiny::observeEvent(.lang_tick(), {
+    
+    shiny::updateActionButton(session, "use_platform_data", label = .lbl("quant_anon_step0_load_selected"))
+    shiny::updateActionButton(session, "apply",            label = .lbl("quant_anon_apply"))
+    shiny::updateActionButton(session, "undo",             label = .lbl("quant_anon_undo"))
+    shiny::updateActionButton(session, "reset",            label = .lbl("quant_anon_reset"))
+    shiny::updateActionButton(session, "advisor_run",      label = .lbl("quant_anon_show_suggestions"))
+    shiny::updateActionButton(session, "view_report", label = .lbl("quant_anon_view_report"))
+    
+    
+    
+    # --- FIX: robust method choices (no error toast, safe fallback) -------
+    ch_method <- .choice_vec("quant_anon_method", lang = .get_lang("English"))
+   
+    
+    if (is.null(ch_method) || length(ch_method) == 0) {
+      # fallback uses ui_labels keys (no English hardcoding)
+      ch_method <- stats::setNames(
+        c("masking","suppression","bucketing","pseudonymization","tokenization",
+          "kanonymity","generalization","anonymizecoordinates"),
+        c(.lbl("quant_anon_method_masking"),
+          .lbl("quant_anon_method_suppression"),
+          .lbl("quant_anon_method_bucketing"),
+          .lbl("quant_anon_method_pseudonymization"),
+          .lbl("quant_anon_method_tokenization"),
+          .lbl("quant_anon_method_kanonymity"),
+          .lbl("quant_anon_method_generalization"),
+          .lbl("quant_anon_method_anonymizecoordinates"))
+      )
+      
+      # warn only once, and do not append raw debug "(quant_anon_method)"
+      if (!isTRUE(isolate(session$userData$warned_missing_quant_method))) {
+        session$userData$warned_missing_quant_method <- TRUE
+        shiny::showNotification(.lbl("quant_anon_notif_missing_choices_method"), type = "warning", duration = 6)
+      }
+    }
+    
+    sel <- .norm_method(isolate(input$method))
+    if (is.null(sel) || !nzchar(sel) || !(sel %in% unname(ch_method))) {
+      sel <- unname(ch_method)[1]
+    }
+    
+    shiny::updateSelectInput(
+      session, "method",
+      label    = .lbl("quant_anon_method_label"),
+      choices  = ch_method,
+      selected = sel
+    )
+    
+    shiny::updateSelectInput(session, "advisor_var", label = .lbl("quant_anon_choose_numeric_var"))
+  }, ignoreInit = FALSE)
   
   # CRITICAL FIX: avoid htmlwidgets::validate masking shiny::validate
   vld  <- shiny::validate
@@ -37,10 +362,6 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     anon_col <- paste0(q, "_anon")
     if (anon_col %in% names(df_after)) anon_col else q
   }
-  
-  # (IDs kept harmlessly for backwards-compat; landing is removed in UI)
-  landing_dom   <- ns("landing")
-  dashboard_dom <- ns("dashboard")
   
   shinyjs::inlineCSS("
     .gauge-value { display: none !important; }
@@ -55,16 +376,16 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       if (e == "") return(NULL)
       
       parts <- strsplit(e, ":", fixed = TRUE)[[1]]
-      if (length(parts) != 2) stop(sprintf("Invalid entry '%s': must be of form lower-upper:label", e))
+      if (length(parts) != 2) stop(sprintf(.lbl("quant_anon_err_range_format"), e))
       
       range_part <- trimws(parts[1])
       label <- trimws(parts[2])
-      if (label == "") stop(sprintf("Label missing in entry '%s'", e))
+      if (label == "") stop(sprintf(.lbl("quant_anon_err_range_label_missing"), e))
       
       bounds <- strsplit(range_part, "-", fixed = TRUE)[[1]]
       if (length(bounds) == 1) {
         num <- as.numeric(bounds[1])
-        if (is.na(num)) stop(sprintf("Non-numeric bound in '%s'", range_part))
+        if (is.na(num)) stop(sprintf(.lbl("quant_anon_err_range_non_numeric_bound"), range_part))
         lower <- num
         upper <- num
       } else if (length(bounds) == 2) {
@@ -72,17 +393,17 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
         upper_raw <- trimws(bounds[2])
         lower <- if (lower_raw == "" || lower_raw == "-Inf") -Inf else as.numeric(lower_raw)
         upper <- if (upper_raw == "" || upper_raw == "Inf")  Inf else as.numeric(upper_raw)
-        if (is.na(lower) || is.na(upper)) stop(sprintf("Non-numeric bound in '%s'", range_part))
+        if (is.na(lower) || is.na(upper)) stop(sprintf(.lbl("quant_anon_err_range_non_numeric_bound"), range_part))
       } else {
-        stop(sprintf("Range part '%s' is malformed", range_part))
+        stop(sprintf(.lbl("quant_anon_err_range_malformed"), range_part))
       }
       
-      if (lower > upper) stop(sprintf("Range '%s' has lower > upper", label))
+      if (lower > upper) stop(sprintf(.lbl("quant_anon_err_range_lower_gt_upper"), label))
       list(lower = lower, upper = upper, label = label)
     })
     
     parsed <- Filter(Negate(is.null), parsed)
-    if (length(parsed) == 0) stop("No valid ranges found.")
+    if (length(parsed) == 0) stop(.lbl("quant_anon_err_range_none_valid"))
     
     df <- do.call(rbind, lapply(parsed, function(p) {
       data.frame(lower = p$lower, upper = p$upper, label = p$label, stringsAsFactors = FALSE)
@@ -92,10 +413,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     if (nrow(df) > 1) {
       for (i in seq_len(nrow(df) - 1)) {
         if (df$upper[i] >= df$lower[i + 1]) {
-          stop(sprintf(
-            "Ranges '%s' and '%s' overlap or touch; make upper of one < lower of next.",
-            df$label[i], df$label[i + 1]
-          ))
+          stop(sprintf(.lbl("quant_anon_err_range_overlap"), df$label[i], df$label[i + 1]))
         }
       }
     }
@@ -162,8 +480,8 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   }
   
   build_grid_agg <- function(pts_utm, cell_m) {
-    if (!inherits(pts_utm, "sf")) stop("pts_utm must be sf")
-    if (!inherits(sf::st_geometry(pts_utm), "sfc_POINT")) stop("pts_utm must be POINT geometries")
+    if (!inherits(pts_utm, "sf")) stop(.lbl("quant_anon_err_pts_not_sf"))
+    if (!inherits(sf::st_geometry(pts_utm), "sfc_POINT")) stop(.lbl("quant_anon_err_pts_not_points"))
     if (is.na(sf::st_crs(pts_utm))) sf::st_crs(pts_utm) <- 3857
     
     cell_m <- nz_pos(cell_m, default = 100)
@@ -203,65 +521,52 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   }
   
   # ---------- Reactives ---------------------------------------------------
-  raw_data             <- reactiveVal()
-  data                 <- reactiveVal()
-  anon_data            <- reactiveVal()
-  anonymized_cols      <- reactiveVal(character())
-  initial_qids         <- reactiveVal(character())
-  import_snip          <- reactiveVal(character())
-  import_stata_snip    <- reactiveVal(character())
-  import_py_snip       <- reactiveVal(character())
-  r_steps              <- reactiveVal(character())
-  stata_steps          <- reactiveVal(character())
-  python_steps         <- reactiveVal(character())
-  previous_data_stack  <- reactiveVal(list())
-  previous_r_stack     <- reactiveVal(list())
-  previous_stata_stack <- reactiveVal(list())
-  previous_py_stack    <- reactiveVal(list())
-  log_steps            <- reactiveVal(character())
-  k_bins               <- reactiveVal(list())
-  gen_assigned                <- reactiveVal(list())
-  previous_gen_assigned_stack <- reactiveVal(list())
-  last_method               <- reactiveVal(NULL)
-  report_temp               <- reactiveVal(NULL)
+  raw_data             <- shiny::reactiveVal()
+  data                 <- shiny::reactiveVal()
+  anon_data            <- shiny::reactiveVal()
+  anonymized_cols      <- shiny::reactiveVal(character())
+  initial_qids         <- shiny::reactiveVal(character())
+  import_snip          <- shiny::reactiveVal(character())
+  import_stata_snip    <- shiny::reactiveVal(character())
+  import_py_snip       <- shiny::reactiveVal(character())
+  r_steps              <- shiny::reactiveVal(character())
+  stata_steps          <- shiny::reactiveVal(character())
+  python_steps         <- shiny::reactiveVal(character())
+  previous_data_stack  <- shiny::reactiveVal(list())
+  previous_r_stack     <- shiny::reactiveVal(list())
+  previous_stata_stack <- shiny::reactiveVal(list())
+  previous_py_stack    <- shiny::reactiveVal(list())
+  log_steps            <- shiny::reactiveVal(character())
+  k_bins               <- shiny::reactiveVal(list())
+  gen_assigned                <- shiny::reactiveVal(list())
+  previous_gen_assigned_stack <- shiny::reactiveVal(list())
+  last_method               <- shiny::reactiveVal(NULL)
+  report_temp               <- shiny::reactiveVal(NULL)
   
-  r_obj_name  <- reactiveVal(NULL)
-  py_obj_name <- reactiveVal(NULL)
+  r_obj_name  <- shiny::reactiveVal(NULL)
+  py_obj_name <- shiny::reactiveVal(NULL)
   
-  geo_preview_layer   <- reactiveVal(NULL)
-  geo_after_layer     <- reactiveVal(NULL)
-  geo_lat_col         <- reactiveVal(NULL)
-  geo_lon_col         <- reactiveVal(NULL)
+  geo_preview_layer   <- shiny::reactiveVal(NULL)
+  geo_after_layer     <- shiny::reactiveVal(NULL)
   
-  # Perf: cache risk metrics so they don't recompute many times
-  risk_before_metrics <- reactiveVal(NULL)
-  risk_after_metrics  <- reactiveVal(NULL)
+  risk_before_metrics <- shiny::reactiveVal(NULL)
+  risk_after_metrics  <- shiny::reactiveVal(NULL)
   
-  # ======================================================================
-  # Landing removed: NO continue/manual handlers here
-  # (Descriptions tab still works via output$descriptions_panel below)
-  # ======================================================================
+  # FIX: always treat method as stable internal code
+  safe_method <- shiny::reactive(.norm_method(input$method))
+  safe_selected_qids <- shiny::reactive(input$selected_qids %||% character())
   
   # ======================================================================
-  # Guard against missing input$method/input$selected_qids
-  # ======================================================================
-  safe_method <- reactive(input$method %||% "Masking")
-  safe_selected_qids <- reactive(input$selected_qids %||% character())
-  
-  # ======================================================================
-  # NEW: Load data from MAIN PLATFORM (rv_current) instead of upload
-  # UI must provide actionButton(ns("use_platform_data"), ...)
+  # Load data from MAIN PLATFORM (rv_current) instead of upload
   # ======================================================================
   get_platform_df <- function() {
     if (is.null(rv_current)) return(NULL)
-    # Try common locations used in your app
     df <- rv_current$working_df %||% rv_current$data %||% rv_current$df %||% NULL
     if (is.null(df)) return(NULL)
     tryCatch(as.data.frame(df, stringsAsFactors = FALSE), error = function(e) NULL)
   }
   
   init_state_from_df <- function(df, source_label = "platform_dataset") {
-    # object names for code panes
     r_obj_name(make.names(source_label))
     py_obj_name(gsub("[^A-Za-z0-9_]", "_", source_label))
     
@@ -285,29 +590,26 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     
     geo_preview_layer(NULL)
     geo_after_layer(NULL)
-    geo_lat_col(NULL)
-    geo_lon_col(NULL)
     
     risk_before_metrics(NULL)
     risk_after_metrics(NULL)
     
-    # Code panes: platform load note
     import_snip(c(
-      "# Using dataset already loaded in the main platform",
+      .lbl("quant_anon_code_using_platform_ds"),
       "library(dplyr)",
-      "# (No file import step needed here)"
+      .lbl("quant_anon_code_no_import_needed")
     ))
     r_steps(import_snip())
     
     import_stata_snip(c(
-      "// Using dataset already loaded in the main platform",
-      "// (No file import step needed here)"
+      .lbl("quant_anon_code_using_platform_ds_stata"),
+      .lbl("quant_anon_code_no_import_needed_stata")
     ))
     stata_steps(import_stata_snip())
     
     import_py_snip(c(
-      "# Using dataset already loaded in the main platform",
-      "# (No file import step needed here)"
+      .lbl("quant_anon_code_using_platform_ds_py"),
+      .lbl("quant_anon_code_no_import_needed_py")
     ))
     python_steps(import_py_snip())
     
@@ -316,21 +618,21 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     shinyAce::updateAceEditor(session, "python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
   }
   
-  observeEvent(input$use_platform_data, {
+  shiny::observeEvent(input$use_platform_data, {
     df <- get_platform_df()
     if (is.null(df) || !nrow(df)) {
-      showNotification("No dataset found in the main platform. Upload/select data there first.", type = "error")
+      .notify_err("quant_anon_notif_no_platform_ds")
       return()
     }
     init_state_from_df(df, source_label = "platform_dataset")
-    showNotification("Dataset loaded from the main platform.", type = "message")
+    .notify_msg("quant_anon_notif_loaded_platform_ds")
   }, ignoreInit = TRUE)
   
   # ======================================================================
-  # (Optional) Keep your existing upload behavior — only runs if UI has fileInput
+  # Upload behavior (optional)
   # ======================================================================
-  observeEvent(input$file, {
-    req(input$file)
+  shiny::observeEvent(input$file, {
+    shiny::req(input$file)
     
     fname <- input$file$name
     ext   <- tools::file_ext(fname)
@@ -346,7 +648,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       csv  = data.table::fread(input$file$datapath, data.table = FALSE, showProgress = FALSE),
       xlsx = readxl::read_excel(input$file$datapath),
       dta  = haven::read_dta(input$file$datapath),
-      { showNotification("Unsupported file type.", type = "error"); return() }
+      { .notify_err("quant_anon_notif_unsupported_file"); return() }
     )
     
     raw_data(df)
@@ -369,8 +671,6 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     
     geo_preview_layer(NULL)
     geo_after_layer(NULL)
-    geo_lat_col(NULL)
-    geo_lon_col(NULL)
     
     risk_before_metrics(NULL)
     risk_after_metrics(NULL)
@@ -386,7 +686,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       sprintf("%s <- read_dta(%s)", r_name, shQuote(fname))
     }
     
-    import_snip(c("# Load data", r_pkg_base, r_pkg_read, r_read))
+    import_snip(c(.lbl("quant_anon_code_load_data"), r_pkg_base, r_pkg_read, r_read))
     r_steps(import_snip())
     
     stata_snip <- switch(
@@ -395,15 +695,14 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       xlsx = sprintf("import excel %s, clear",     shQuote(fname)),
       dta  = sprintf("use %s, clear",              shQuote(fname))
     )
-    
-    import_stata_snip(c("// Load data", stata_snip))
+    import_stata_snip(c(.lbl("quant_anon_code_load_data_stata"), stata_snip))
     stata_steps(import_stata_snip())
     
     python_snip <- switch(
       tolower(ext),
-      csv  = c("# Load data", "import pandas as pd", sprintf("%s = pd.read_csv(%s)", py_name, shQuote(fname))),
-      xlsx = c("# Load data", "import pandas as pd", sprintf("%s = pd.read_excel(%s)", py_name, shQuote(fname))),
-      dta  = c("# Load data", "import pandas as pd", "import pyreadstat",
+      csv  = c(.lbl("quant_anon_code_load_data_py"), "import pandas as pd", sprintf("%s = pd.read_csv(%s)", py_name, shQuote(fname))),
+      xlsx = c(.lbl("quant_anon_code_load_data_py"), "import pandas as pd", sprintf("%s = pd.read_excel(%s)", py_name, shQuote(fname))),
+      dta  = c(.lbl("quant_anon_code_load_data_py"), "import pandas as pd", "import pyreadstat",
                sprintf("%s, meta = pyreadstat.read_dta(%s)", py_name, shQuote(fname)))
     )
     
@@ -416,36 +715,36 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   })
   
   # ---------- Bin-Size Advisor -------------------------------------------
-  observe({
-    req(data())
+  shiny::observe({
+    shiny::req(data())
     nums <- names(data())[sapply(data(), is.numeric)]
-    updateSelectInput(
+    shiny::updateSelectInput(
       session, "advisor_var",
       choices  = nums,
       selected = if (length(nums) > 0) nums[1] else NULL
     )
   })
   
-  advisor_x <- reactive({
-    req(data(), input$advisor_var)
-    na.omit(data()[[input$advisor_var]])
+  advisor_x <- shiny::reactive({
+    shiny::req(data(), input$advisor_var)
+    stats::na.omit(data()[[input$advisor_var]])
   })
   
-  output$advisor_dist <- renderPlot({
-    req(advisor_x())
+  output$advisor_dist <- shiny::renderPlot({
+    shiny::req(advisor_x())
     x <- advisor_x()
     hist(
       x,
-      main   = paste("Histogram of", input$advisor_var),
+      main   = paste(.lbl("quant_anon_histogram_of"), input$advisor_var),
       xlab   = input$advisor_var,
       border = "white"
     )
   })
   
-  output$advisor_summary <- renderPrint({
-    req(advisor_x())
+  output$advisor_summary <- shiny::renderPrint({
+    shiny::req(advisor_x())
     x <- advisor_x()
-    stats <- c(
+    stats_out <- c(
       Mean   = mean(x),
       Median = median(x),
       IQR    = IQR(x),
@@ -453,11 +752,11 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       Min    = min(x),
       Max    = max(x)
     )
-    print(stats)
+    print(stats_out)
   })
   
-  bin_advice <- eventReactive(input$advisor_run, {
-    req(advisor_x())
+  bin_advice <- shiny::eventReactive(input$advisor_run, {
+    shiny::req(advisor_x())
     x <- advisor_x()
     n <- length(x)
     rng <- range(x)
@@ -478,22 +777,25 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     w_sqrt <- range_x / k_sqrt
     
     data.frame(
-      Method    = c("Sturges", "Freedman–Diaconis", "Scott", "Square root"),
+      Method    = c(.lbl("quant_anon_bins_method_sturges"),
+                    .lbl("quant_anon_bins_method_fd"),
+                    .lbl("quant_anon_bins_method_scott"),
+                    .lbl("quant_anon_bins_method_sqrt")),
       Bin_Width = c(w_sturges, w_fd, w_scott, w_sqrt),
       Num_Bins  = c(k_sturges, k_fd, k_scott, k_sqrt),
       stringsAsFactors = FALSE
     )
   })
   
-  output$advisor_table <- renderTable({
+  output$advisor_table <- shiny::renderTable({
     df <- bin_advice()
     df$Bin_Width <- round(df$Bin_Width, 2)
     df
   }, striped = TRUE, hover = TRUE, spacing = "l")
   
-  output$advisor_plot <- renderPlot({
+  output$advisor_plot <- shiny::renderPlot({
     df <- bin_advice()
-    req(nrow(df) > 0)
+    shiny::req(nrow(df) > 0)
     x <- advisor_x()
     
     old_par <- par(no.readonly = TRUE)
@@ -525,15 +827,15 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     )
   }
   
-  observeEvent(list(data(), initial_qids()), {
-    req(data(), initial_qids())
+  shiny::observeEvent(list(data(), initial_qids()), {
+    shiny::req(data(), initial_qids())
     q <- risk_qids(initial_qids())
     if (!length(q)) { risk_before_metrics(NULL); return() }
     risk_before_metrics(calc_risk_metrics(data(), q))
   }, ignoreInit = TRUE)
   
-  observeEvent(list(anon_data(), initial_qids()), {
-    req(anon_data(), initial_qids())
+  shiny::observeEvent(list(anon_data(), initial_qids()), {
+    shiny::req(anon_data(), initial_qids())
     q <- risk_qids(initial_qids())
     if (!length(q)) { risk_after_metrics(NULL); return() }
     df_a <- anon_data()
@@ -542,27 +844,27 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   }, ignoreInit = TRUE)
   
   # ---------- Risk AFTER (coords excluded) --------------------------------
-  output$risk_after <- renderUI({
-    req(anon_data(), initial_qids())
+  output$risk_after <- shiny::renderUI({
+    shiny::req(anon_data(), initial_qids())
     q <- risk_qids(initial_qids())
-    vld(need(length(q) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     m <- risk_after_metrics()
-    req(m)
+    shiny::req(m)
     
-    tags$p(sprintf(
-      "After: Average Risk: %.4f; Maximum Risk: %.4f; Percentage Unique: %.4f%%",
+    shiny::tags$p(sprintf(
+      .lbl("quant_anon_risk_after_text"),
       m$avg, m$max, m$pct_unique * 100
     ))
   })
   
   output$gauge_after <- flexdashboard::renderGauge({
-    req(anon_data(), initial_qids())
+    shiny::req(anon_data(), initial_qids())
     q <- risk_qids(initial_qids())
-    vld(need(length(q) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     m <- risk_after_metrics()
-    req(m)
+    shiny::req(m)
     
     pct <- round(m$avg * 100, 2)
     flexdashboard::gauge(
@@ -572,64 +874,30 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     )
   })
   
-  output$gauge_after_value <- renderText({
-    req(anon_data(), initial_qids())
+  output$gauge_after_value <- shiny::renderText({
+    shiny::req(anon_data(), initial_qids())
     q <- risk_qids(initial_qids())
-    vld(need(length(q) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     m <- risk_after_metrics()
-    req(m)
+    shiny::req(m)
     
     sprintf("%.2f%%", round(m$avg * 100, 2))
   })
   
-  # ---------- Descriptions (TRANSLATABLE) ------------------------------------
+  # ---------- Descriptions (TRANSLATABLE) ---------------------------------
   app_dir <- shiny::getShinyOption("appDir")
   if (is.null(app_dir) || !nzchar(app_dir)) app_dir <- getwd()
   
-  manual2_rmd <- normalizePath(
-    file.path(app_dir, "server", "anon", "docs", "descriptions1.Rmd"),
-    mustWork = FALSE
-  )
+  manual2_rmd <- normalizePath(file.path(app_dir, "server", "anon", "docs", "descriptions1.Rmd"), mustWork = FALSE)
+  labels_xlsx <- normalizePath(file.path(app_dir, "labelling_file_with_manual_full.xlsx"), mustWork = FALSE)
   
-  manual2_html <- normalizePath(
-    file.path(app_dir, "server", "anon", "www", "descriptions1.html"),
-    mustWork = FALSE
-  )
-  
-  
-  # Point to the SAME excel file your get_rv_labels() uses
-  labels_xlsx <- normalizePath(
-    file.path(app_dir, "labelling_file_with_manual_full.xlsx"),
-    mustWork = FALSE
-  )
-  
-  # ---- IMPORTANT: define a *reactive* language getter used by the rest of the app ----
-  # Replace the body of this function with your app's real language source.
-  get_current_language <- reactive({
-    # Common patterns (pick the one that matches your app):
-    # input$change_language
-    # input$language
-    # rv_labels$language
-    # rv_translation$lang
-    
-    # BEST fallback (won't break even if input doesn't exist):
-    lang <- NULL
-    if (!is.null(input$change_language) && nzchar(input$change_language)) lang <- input$change_language
-    if (!is.null(input$language) && nzchar(input$language)) lang <- input$language
-    if (is.null(lang)) lang <- "English"
-    
-    lang
-  })
-  
-  output$descriptions_panel <- renderUI({
-    lang <- get_current_language()   # <- THIS makes it reactive to language changes
-    req(file.exists(manual2_rmd))
-    req(file.exists(labels_xlsx))
+  output$descriptions_panel <- shiny::renderUI({
+    lang <- .get_lang("English")
+    shiny::req(file.exists(manual2_rmd))
+    shiny::req(file.exists(labels_xlsx))
     
     out_dir  <- tempdir()
-    
-    # Create a language-specific output name so it doesn't reuse the old HTML
     out_file <- file.path(out_dir, paste0("descriptions1_", lang, ".html"))
     
     ok <- TRUE
@@ -639,86 +907,37 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
         output_file   = basename(out_file),
         output_dir    = out_dir,
         output_format = "html_document",
-        params        = list(
-          language    = lang,
-          labels_path = labels_xlsx
-        ),
-        envir = new.env(parent = globalenv()),
+        params        = list(language = lang, labels_path = labels_xlsx),
+        envir         = new.env(parent = globalenv()),
         quiet         = TRUE
       )
     }, error = function(e) {
       ok <<- FALSE
-      showNotification(paste("Descriptions render error:", e$message), type = "error")
+      shiny::showNotification(sprintf("%s: %s", .lbl("quant_anon_desc_render_error"), e$message), type = "error")
     })
     
     if (!ok) return(NULL)
     
-    # Resource path must be unique per language (and optionally per render)
     res_name_tmp <- paste0("anon_docs_tmp_", gsub("[^A-Za-z0-9]", "_", lang), "_", session$token)
-    addResourcePath(res_name_tmp, out_dir)
+    shiny::addResourcePath(res_name_tmp, out_dir)
     
-    # Cache-bust so iframe reloads when switching languages
-    tags$iframe(
+    shiny::tags$iframe(
       src   = paste0(res_name_tmp, "/", basename(out_file), "?v=", as.integer(Sys.time())),
       style = "width:100%; height:calc(100vh - 150px); border:none;"
     )
   })
   
-  
-  
-  output$descriptions_panel <- renderUI({
-    res_name_html <- paste0("manuals2_", gsub("[^A-Za-z0-9]", "_", landing_dom))
-    res_name_tmp  <- paste0("manuals2_tmp_", gsub("[^A-Za-z0-9]", "_", landing_dom))
-    
-    if (file.exists(manual2_html)) {
-      addResourcePath(res_name_html, normalizePath(file.path("..", "Anon", "www"), mustWork = TRUE))
-      tags$iframe(
-        src   = paste0(res_name_html, "/", basename(manual2_html)),
-        style = "width:100%; height:calc(100vh - 150px); border:none;"
-      )
-      
-    } else if (file.exists(manual2_rmd)) {
-      out_dir  <- tempdir()
-      out_file <- file.path(out_dir, "descriptions1.html")
-      ok <- TRUE
-      
-      tryCatch({
-        rmarkdown::render(
-          manual2_rmd,
-          output_file   = basename(out_file),
-          output_dir    = out_dir,
-          output_format = "html_document",
-          quiet         = TRUE
-        )
-      }, error = function(e) {
-        ok <<- FALSE
-        showNotification(paste("Manual render error:", e$message), type = "error")
-      })
-      
-      if (!ok) return(NULL)
-      addResourcePath(res_name_tmp, out_dir)
-      
-      tags$iframe(
-        src   = paste0(res_name_tmp, "/", basename(out_file)),
-        style = "width:100%; height:calc(100vh - 150px); border:none;"
-      )
-      
-    } else {
-      tags$div(style = "padding:10px;", "Manual not available.")
-    }
-  })
-  
   # ---------- Suppress & Remove Direct Identifiers ------------------------
-  output$identifier_selector <- renderUI({
-    req(data())
-    tagList(
-      checkboxGroupInput(ns("direct_ids"), "Select Direct Identifiers to Remove:", choices = names(data())),
-      actionButton(ns("remove_ids"), "Suppress & Remove Identifiers", class = "btn btn-danger btn-block")
+  output$identifier_selector <- shiny::renderUI({
+    shiny::req(data())
+    shiny::tagList(
+      shiny::checkboxGroupInput(ns("direct_ids"), .lbl("quant_anon_select_direct_ids_remove"), choices = names(data())),
+      shiny::actionButton(ns("remove_ids"), .lbl("quant_anon_btn_remove_ids"), class = "btn btn-danger btn-block")
     )
   })
   
-  observeEvent(input$remove_ids, {
-    req(data(), input$direct_ids)
+  shiny::observeEvent(input$remove_ids, {
+    shiny::req(data(), input$direct_ids)
     
     previous_data_stack(c(previous_data_stack(), list(if (is.null(anon_data())) data() else anon_data())))
     previous_r_stack(c(previous_r_stack(), list(r_steps())))
@@ -739,137 +958,149 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     py_name <- py_obj_name() %||% "platform_dataset"
     
     code_r <- paste0(
-      "# Suppression\nlibrary(dplyr)\n",
+      "# ", .lbl("quant_anon_code_suppression"), "\nlibrary(dplyr)\n",
       r_name, " <- ", r_name, " %>% dplyr::select(-", paste(cols, collapse = ", -"), ")"
     )
-    code_s <- paste0("// Suppression\n", "drop ", paste(cols, collapse = " "))
+    code_s <- paste0("# ", .lbl("quant_anon_code_suppression"), "\n", "drop ", paste(cols, collapse = " "))
     code_py <- paste0(
-      "# Suppression\nimport pandas as pd\n",
+      "# ", .lbl("quant_anon_code_suppression"), "\nimport pandas as pd\n",
       py_name, ".drop(columns=[", paste(shQuote(cols), collapse = ", "), "], inplace=True)"
     )
     
     r_steps(c(r_steps(), code_r))
     stata_steps(c(stata_steps(), code_s))
     python_steps(c(python_steps(), code_py))
-    log_steps(c(log_steps(), paste(Sys.time(), "- Suppressed IDs")))
+    log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_ids_suppressed"))))
     
     shinyAce::updateAceEditor(session, "r_code_ace",      value = paste(r_steps(),      collapse = "\n\n"))
     shinyAce::updateAceEditor(session, "stata_code_ace",  value = paste(stata_steps(),  collapse = "\n\n"))
     shinyAce::updateAceEditor(session, "python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
     
-    showNotification("Identifiers suppressed & removed.", type = "message")
+    .notify_msg("quant_anon_notif_ids_removed")
   })
   
   # ---------- QID picker & sync -------------------------------------------
-  output$bucket_ui <- renderUI({
-    req(data())
+  output$bucket_ui <- shiny::renderUI({
+    shiny::req(data())
     avail <- setdiff(names(data()), safe_selected_qids())
     
     sortable::bucket_list(
-      header      = "Drag variables into QID bucket",
+      header      = .lbl("quant_anon_bucket_header"),
       group_name  = ns("qid_group"),
       orientation = "horizontal",
-      sortable::add_rank_list("Available Variables", ns("available_vars"), labels = avail),
-      sortable::add_rank_list("Selected QIDs",       ns("selected_qids"), labels = initial_qids())
+      sortable::add_rank_list(.lbl("quant_anon_bucket_available"), ns("available_vars"), labels = avail),
+      sortable::add_rank_list(.lbl("quant_anon_bucket_selected"),  ns("selected_qids"), labels = initial_qids())
     )
   })
   
-  observeEvent(input$selected_qids, {
+  shiny::observeEvent(input$selected_qids, {
     initial_qids(input$selected_qids %||% character())
   }, ignoreNULL = FALSE)
   
-  observe({
-    req(initial_qids())
-    if (!isTRUE(safe_method() == "Generalization")) return()
+  shiny::observe({
+    shiny::req(initial_qids())
+    if (!isTRUE(safe_method() == "generalization")) return()
     
     choices <- initial_qids()
     if (length(choices) == 0) return()
     
     current <- isolate(input$gen_var)
     if (is.null(current) || !(current %in% choices)) {
-      updateSelectInput(session, "gen_var", choices = choices, selected = choices[1])
+      shiny::updateSelectInput(session, "gen_var", choices = choices, selected = choices[1])
     } else {
-      updateSelectInput(session, "gen_var", choices = choices, selected = current)
+      shiny::updateSelectInput(session, "gen_var", choices = choices, selected = current)
     }
   })
   
   # ---------- Technique parameters UI (server side) -----------------------
-  output$k_num_picker <- renderUI({
-    req(data(), initial_qids())
+  output$k_num_picker <- shiny::renderUI({
+    shiny::req(data(), initial_qids())
     nq <- initial_qids()[sapply(data()[, initial_qids(), drop = FALSE], is.numeric)]
-    if (length(nq) == 0) return(helpText("No numeric QIDs to bucket."))
-    selectInput(ns("k_bucket_var"), "Numeric QID to bucket:", choices = nq, selected = nq[1])
+    if (length(nq) == 0) return(shiny::helpText(.lbl("quant_anon_no_numeric_qids")))
+    shiny::selectInput(ns("k_bucket_var"), .lbl("quant_anon_numeric_qid_to_bucket"), choices = nq, selected = nq[1])
   })
   
-  output$extra_input <- renderUI({
-    req(data())
+  output$extra_input <- shiny::renderUI({
+    shiny::req(data())
     cols <- names(data())
+    
+    # geo_mode choices
+    geo_choices <- .choice_vec("quant_anon_geo_mode", lang = .get_lang("English"))
+    if (is.null(geo_choices) || !length(geo_choices)) {
+      geo_choices <- stats::setNames(
+        c("aggregate", "truncate"),
+        c(.lbl("quant_anon_geo_mode_aggregate_fallback"),
+          .lbl("quant_anon_geo_mode_truncate_fallback"))
+      )
+    }
     
     switch(
       safe_method(),
       
-      "Masking"          = checkboxGroupInput(ns("mask_cols"), "Columns to mask:", choices = cols),
-      "Suppression"      = checkboxGroupInput(ns("supp_cols"), "Columns to suppress:", choices = cols),
-      "Pseudonymization" = checkboxGroupInput(ns("ps_cols"),   "Columns to pseudonymize:", choices = cols),
-      "Tokenization"     = checkboxGroupInput(ns("tok_cols"),  "Columns to tokenize:", choices = cols),
+      "masking"          = shiny::checkboxGroupInput(ns("mask_cols"), .lbl("quant_anon_cols_to_mask"), choices = cols),
+      "suppression"      = shiny::checkboxGroupInput(ns("supp_cols"), .lbl("quant_anon_cols_to_suppress"), choices = cols),
+      "pseudonymization" = shiny::checkboxGroupInput(ns("ps_cols"),   .lbl("quant_anon_cols_to_pseudonymize"), choices = cols),
+      "tokenization"     = shiny::checkboxGroupInput(ns("tok_cols"),  .lbl("quant_anon_cols_to_tokenize"), choices = cols),
       
-      "Bucketing" = tagList(
-        selectInput(ns("bucket_col"), "Column to bucket:", choices = cols),
-        numericInput(ns("bin_interval"), "Bin size:", value = 4, min = 1)
+      "bucketing" = shiny::tagList(
+        shiny::selectInput(ns("bucket_col"), .lbl("quant_anon_col_to_bucket"), choices = cols),
+        shiny::numericInput(ns("bin_interval"), .lbl("quant_anon_bin_size"), value = 4, min = 1)
       ),
       
-      "K-Anonymity" = tagList(
-        uiOutput(ns("k_num_picker")),
-        numericInput(ns("k_bin_size"), "Bin size:", value = 5, min = 1),
-        numericInput(ns("k_value"), "k threshold:", value = 2, min = 2)
+      "kanonymity" = shiny::tagList(
+        shiny::uiOutput(ns("k_num_picker")),
+        shiny::numericInput(ns("k_bin_size"), .lbl("quant_anon_bin_size"), value = 5, min = 1),
+        shiny::numericInput(ns("k_value"), .lbl("quant_anon_k_threshold"), value = 2, min = 2)
       ),
       
-      "L-Diversity" = tagList(
-        selectInput(ns("sensitive_attr"), "Sensitive attribute:", choices = cols),
-        numericInput(ns("l_value"), "l threshold:", value = 2, min = 2)
+      "ldiversity" = shiny::tagList(
+        shiny::selectInput(ns("sensitive_attr"), .lbl("quant_anon_sensitive_attribute"), choices = cols),
+        shiny::numericInput(ns("l_value"), .lbl("quant_anon_l_threshold"), value = 2, min = 2)
       ),
       
-      "T-Closeness" = tagList(
-        selectInput(ns("sensitive_attr_tc"), "Sensitive attribute:", choices = cols),
-        numericInput(ns("t_threshold"), "t threshold:", value = 0.1, min = 0, step = 0.01)
+      "tcloseness" = shiny::tagList(
+        shiny::selectInput(ns("sensitive_attr_tc"), .lbl("quant_anon_sensitive_attribute"), choices = cols),
+        shiny::numericInput(ns("t_threshold"), .lbl("quant_anon_t_threshold"), value = 0.1, min = 0, step = 0.01)
       ),
       
-      "Generalization" = tagList(
-        selectInput(ns("gen_var"), "Variable to generalize:", choices = initial_qids()),
-        uiOutput(ns("gen_groups_ui"))
+      "generalization" = shiny::tagList(
+        shiny::selectInput(ns("gen_var"), .lbl("quant_anon_variable_to_generalize"), choices = initial_qids()),
+        shiny::uiOutput(ns("gen_groups_ui"))
       ),
       
-      "Anonymize Coordinates" = tagList(
-        selectInput(ns("geo_lat_col"), "Latitude column:", choices = cols),
-        selectInput(ns("geo_lon_col"), "Longitude column:", choices = cols),
-        radioButtons(
-          ns("geo_mode"), "Mode:",
-          choices = c("Truncate decimals" = "truncate", "Aggregate to polygons" = "aggregate"),
+      "anonymizecoordinates" = shiny::tagList(
+        shiny::selectInput(ns("geo_lat_col"), .lbl("quant_anon_latitude_column"), choices = cols),
+        shiny::selectInput(ns("geo_lon_col"), .lbl("quant_anon_longitude_column"), choices = cols),
+        shiny::radioButtons(
+          ns("geo_mode"), .lbl("quant_anon_geo_mode_label"),
+          choices  = geo_choices,
           selected = "aggregate", inline = TRUE
         ),
-        conditionalPanel(
+        shiny::conditionalPanel(
           condition = sprintf("input['%s'] == 'truncate'", ns("geo_mode")),
-          numericInput(ns("geo_decimals"), "Keep this many decimals:", value = 3, min = 0, step = 1),
-          helpText("Truncation (not rounding): reduces precision to the specified number of decimals.")
+          shiny::numericInput(ns("geo_decimals"), .lbl("quant_anon_keep_decimals"), value = 3, min = 0, step = 1),
+          shiny::helpText(.lbl("quant_anon_truncate_help"))
         ),
-        conditionalPanel(
+        shiny::conditionalPanel(
           condition = sprintf("input['%s'] == 'aggregate'", ns("geo_mode")),
-          numericInput(ns("geo_grid_m"), "Grid cell size (meters):", value = 500, min = 10, step = 10),
-          helpText("Points are snapped to the grid cell centroid; polygons are drawn on the map.")
+          shiny::numericInput(ns("geo_grid_m"), .lbl("quant_anon_grid_cell_size_m"), value = 500, min = 10, step = 10),
+          shiny::helpText(.lbl("quant_anon_aggregate_help"))
         ),
-        helpText("Preview: original points + faint preview (for truncate). Apply: dataset updated; polygons drawn.")
+        shiny::helpText(.lbl("quant_anon_geo_preview_help"))
       ),
       
       NULL
     )
   })
   
-  # ---------- Apply anonymization (incl. GEO) --------------------------------
-  observeEvent(input$apply, {
-    req(data(), input$method)
-    if (input$method != "Anonymize Coordinates") req(initial_qids())
+  # ---------- Apply anonymization (incl. GEO) -----------------------------
+  shiny::observeEvent(input$apply, {
+    shiny::req(data(), input$method)
     
-    last_method(input$method)
+    method_code <- safe_method()
+    if (method_code != "anonymizecoordinates") shiny::req(initial_qids())
+    
+    last_method(method_code)
     
     previous_data_stack(c(previous_data_stack(), list(if (is.null(anon_data())) data() else anon_data())))
     previous_r_stack(c(previous_r_stack(), list(r_steps())))
@@ -882,23 +1113,23 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     r_name    <- r_obj_name() %||% "platform_dataset"
     py_name   <- py_obj_name() %||% "platform_dataset"
     
-    if (input$method == "Masking") {
+    if (method_code == "masking") {
       step_cols <- input$mask_cols
-      if (length(step_cols) == 0) { showNotification("Select columns to mask.", type="error"); return() }
+      if (length(step_cols) == 0) { .notify_err("quant_anon_notif_select_mask_cols"); return() }
       
       df[step_cols] <- lapply(df[step_cols], function(x)
         ifelse(is.na(x), NA_character_, strrep("*", 10))
       )
       
       code_r <- paste0(
-        "# Masking (strings & numerics)\nlibrary(dplyr)\n",
+        "# ", .lbl("quant_anon_code_masking"), "\nlibrary(dplyr)\n",
         r_name, " <- ", r_name, " %>% dplyr::mutate(across(all_of(c(",
         paste(shQuote(step_cols), collapse = ", "),
         ")), ~ ifelse(is.na(.), NA_character_, strrep(\"*\", 10))))"
       )
       
       code_s <- paste0(
-        "// Masking (strings & numerics)\n",
+        "* ", .lbl("quant_anon_code_masking"), "\n",
         "foreach v of varlist ", paste(step_cols, collapse = " "), " {\n",
         "  capture confirm numeric variable `v'\n",
         "  if !_rc { tostring `v', replace force }\n",
@@ -907,37 +1138,37 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       )
       
       code_py <- paste0(
-        "# Masking (strings & numerics)\n",
+        "# ", .lbl("quant_anon_code_masking"), "\n",
         "import pandas as pd\n",
         "for col in [", paste(shQuote(step_cols), collapse = ", "), "]:\n",
         "    ", py_name, "[col] = ", py_name, "[col].apply(lambda x: None if pd.isna(x) else '*'*10)"
       )
       
-    } else if (input$method == "Suppression") {
+    } else if (method_code == "suppression") {
       step_cols <- input$supp_cols
-      if (length(step_cols) == 0) { showNotification("Select columns to suppress.", type="error"); return() }
+      if (length(step_cols) == 0) { .notify_err("quant_anon_notif_select_suppress_cols"); return() }
       
       df <- df[, !names(df) %in% step_cols, drop = FALSE]
       
       code_r <- paste0(
-        "# Suppression\nlibrary(dplyr)\n",
+        "# ", .lbl("quant_anon_code_suppression"), "\nlibrary(dplyr)\n",
         r_name, " <- ", r_name, " %>% dplyr::select(-", paste(step_cols, collapse = ", -"), ")"
       )
-      code_s  <- paste0("// Suppression\n", "drop ", paste(step_cols, collapse = " "))
+      code_s  <- paste0("* ", .lbl("quant_anon_code_suppression"), "\n", "drop ", paste(step_cols, collapse = " "))
       code_py <- paste0(
-        "# Suppression\nimport pandas as pd\n",
+        "# ", .lbl("quant_anon_code_suppression"), "\nimport pandas as pd\n",
         py_name, ".drop(columns=[", paste(shQuote(step_cols), collapse = ", "), "], inplace=True)"
       )
       
-    } else if (input$method == "Bucketing") {
+    } else if (method_code == "bucketing") {
       step_cols <- input$bucket_col; b <- input$bin_interval
-      if (is.null(step_cols) || is.null(b)) { showNotification("Choose a column and bin size.", type="error"); return() }
+      if (is.null(step_cols) || is.null(b)) { .notify_err("quant_anon_notif_choose_col_bin"); return() }
       
       vals <- df[[step_cols]]
-      if (!is.numeric(vals)) { showNotification("Bucketing requires numeric column.", type = "error"); return() }
+      if (!is.numeric(vals)) { .notify_err("quant_anon_notif_bucket_requires_numeric"); return() }
       
       minv <- suppressWarnings(min(vals, na.rm = TRUE)); maxv <- suppressWarnings(max(vals, na.rm = TRUE))
-      if (!is.finite(minv) || !is.finite(maxv)) { showNotification("No finite values to bucket.", type="error"); return() }
+      if (!is.finite(minv) || !is.finite(maxv)) { .notify_err("quant_anon_notif_no_finite"); return() }
       
       start <- floor(minv / b) * b; end <- ceiling((maxv + 1) / b) * b
       brks <- seq(start, end, by = b)
@@ -946,14 +1177,14 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       df[[step_cols]] <- cut(vals, breaks = brks, labels = lbls, include.lowest = TRUE, right = FALSE)
       
       code_r <- paste0(
-        "# Bucketing\nlibrary(dplyr)\n",
+        "# ", .lbl("quant_anon_code_bucketing"), "\nlibrary(dplyr)\n",
         r_name, " <- ", r_name, " %>% dplyr::mutate(", step_cols, " = cut(", step_cols, ",\n",
         "  breaks = seq(", start, ", ", end, ", by=", b, "),\n",
         "  labels = c(", paste(shQuote(lbls), collapse = ", "), "), right=FALSE, include_lowest=TRUE))"
       )
       
       code_s <- paste0(
-        "// Bucketing\n",
+        "* ", .lbl("quant_anon_code_bucketing"), "\n",
         "gen long __b = floor(", step_cols, "/", b, ")*", b, "\n",
         "tostring __b, gen(__bstr)\n",
         "gen long __e = __b + ", b, " - 1\n",
@@ -963,7 +1194,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       )
       
       code_py <- paste0(
-        "# Bucketing\nimport pandas as pd\nimport numpy as np\n",
+        "# ", .lbl("quant_anon_code_bucketing"), "\nimport pandas as pd\nimport numpy as np\n",
         "b = ", b, "\n",
         "minv = int(np.floor(", py_name, "['", step_cols, "'].min()/b)*b)\n",
         "maxv = int(np.ceil((", py_name, "['", step_cols, "'].max()+1)/b)*b)\n",
@@ -972,28 +1203,27 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
         py_name, "['", step_cols, "'] = pd.cut(", py_name, "['", step_cols, "'], bins=bins, labels=labels, right=False, include_lowest=True)"
       )
       
-    } else if (input$method == "Pseudonymization") {
+    } else if (method_code == "pseudonymization") {
       step_cols <- input$ps_cols
-      if (length(step_cols) == 0) { showNotification("Select columns to pseudonymize.", type="error"); return() }
+      if (length(step_cols) == 0) { .notify_err("quant_anon_notif_select_pseudonymize_cols"); return() }
       
       salt_vec <- uuid::UUIDgenerate(n = nrow(df))
       hash_vec <- function(values, salts) {
         mapply(function(v, s) digest::digest(paste0(as.character(v), s), algo = "sha256"),
                values, salts, USE.NAMES = FALSE)
       }
-      
       for (col in step_cols) {
         x <- df[[col]]
         df[[col]] <- ifelse(is.na(x), NA_character_, hash_vec(x, salt_vec))
       }
       
-      code_r <- "# Pseudonymization applied in-app"
-      code_s <- "// Pseudonymization\n// no direct Stata analogue"
-      code_py <- "# Pseudonymization applied in-app"
+      code_r <- paste0("# ", .lbl("quant_anon_code_pseudonymization_applied"))
+      code_s <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_pseudonymization_applied"))
       
-    } else if (input$method == "Tokenization") {
+    } else if (method_code == "tokenization") {
       step_cols <- input$tok_cols
-      if (length(step_cols) == 0) { showNotification("Select columns to tokenize.", type="error"); return() }
+      if (length(step_cols) == 0) { .notify_err("quant_anon_notif_select_tokenize_cols"); return() }
       
       df <- dplyr::mutate(
         df,
@@ -1003,19 +1233,20 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
         )
       )
       
-      code_r <- "# Tokenization applied in-app"
-      code_s <- "// Tokenization\n// no direct Stata analogue"
-      code_py <- "# Tokenization applied in-app"
+      code_r <- paste0("# ", .lbl("quant_anon_code_tokenization_applied"))
+      code_s <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_tokenization_applied"))
       
-    } else if (input$method == "K-Anonymity") {
+    } else if (method_code == "kanonymity") {
+      # (unchanged from your original; method_code already equals "kanonymity")
       qids_all <- initial_qids()
       k_val    <- as.integer(input$k_value)
       var_now  <- input$k_bucket_var
       bin_size <- as.integer(input$k_bin_size)
       
       vld(
-        need(length(qids_all) > 0, "Select QIDs in step 2 first."),
-        need(!is.na(k_val) && k_val >= 2, "k must be ≥ 2")
+        need(length(qids_all) > 0, .lbl("quant_anon_need_select_qids_step2")),
+        need(!is.na(k_val) && k_val >= 2, .lbl("quant_anon_need_k_ge_2"))
       )
       
       bins <- k_bins()
@@ -1033,7 +1264,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       
       if (length(bins)) for (nm in names(bins)) if (nm %in% names(df)) df[[nm]] <- bucket_one(df[[nm]], bins[[nm]])
       k_qids_use <- intersect(names(bins), qids_all)
-      vld(need(length(k_qids_use) > 0, "Bucket at least one numeric QID before applying k-anonymity."))
+      vld(need(length(k_qids_use) > 0, .lbl("quant_anon_need_bucket_one_numeric_qid")))
       
       grouped_sizes <- df %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(k_qids_use))) %>%
@@ -1050,29 +1281,29 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       anon_data(df)
       anonymized_cols(union(anonymized_cols(), k_qids_use))
       
-      code_r  <- "# K-Anonymity applied in-app"
-      code_s  <- "* no Stata analogue"
-      code_py <- "# no Python analogue"
+      code_r  <- paste0("# ", .lbl("quant_anon_code_kanonymity_applied"))
+      code_s  <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_no_python_analogue"))
       
-    } else if (input$method == "T-Closeness") {
+    } else if (method_code == "tcloseness") {
       step_cols <- risk_qids(initial_qids())
-      vld(need(length(step_cols) > 0, "Select non-coordinate QIDs."))
+      vld(need(length(step_cols) > 0, .lbl("quant_anon_need_noncoord_qids")))
       
       df <- apply_t_closeness(df, qids = step_cols, sensitive = input$sensitive_attr_tc, t = input$t_threshold)
       
-      code_r  <- "# T-Closeness applied in-app"
-      code_s  <- "// T-Closeness\n// no direct Stata analogue"
-      code_py <- "# T-Closeness applied in-app"
+      code_r  <- paste0("# ", .lbl("quant_anon_code_tcloseness_applied"))
+      code_s  <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_tcloseness_applied"))
       
-    } else if (input$method == "Anonymize Coordinates") {
-      
+    } else if (method_code == "anonymizecoordinates") {
+      # (unchanged from your original; only switched to method_code)
       latc <- input$geo_lat_col; lonc <- input$geo_lon_col
       
       vld(
-        need(!is.null(latc) && !is.null(lonc), "Pick latitude & longitude columns first."),
-        need(latc %in% names(df) && lonc %in% names(df), "Invalid coordinate columns."),
-        need(is.numeric(df[[latc]]), "Latitude must be numeric."),
-        need(is.numeric(df[[lonc]]), "Longitude must be numeric.")
+        need(!is.null(latc) && !is.null(lonc), .lbl("quant_anon_need_pick_lat_lon")),
+        need(latc %in% names(df) && lonc %in% names(df), .lbl("quant_anon_need_valid_coord_cols")),
+        need(is.numeric(df[[latc]]), .lbl("quant_anon_need_lat_numeric")),
+        need(is.numeric(df[[lonc]]), .lbl("quant_anon_need_lon_numeric"))
       )
       
       pts_df <- df[, c(lonc, latc), drop = FALSE]
@@ -1081,7 +1312,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       pts_df <- pts_df[comp_mask_full, , drop = FALSE]
       
       if (!nrow(pts_df)) {
-        showNotification("No valid coordinate rows to anonymize.", type="error"); return()
+        .notify_err("quant_anon_notif_no_valid_coord_rows"); return()
       }
       
       pts_wgs <- sf::st_as_sf(pts_df, coords = c("lon","lat"), crs = 4326)
@@ -1124,11 +1355,11 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
           df[[latc]][df_rows_idx] <- lat_a
           cell_wkt_full[df_rows_idx] <- cell_wkt_new
         } else {
-          showNotification("No grid cells created (empty). Check decimals or data extent.", type="warning")
+          .notify_warn("quant_anon_notif_no_grid_cells_decimals")
         }
         
         anonymized_cols(union(anonymized_cols(), c(latc, lonc, "cell_wkt")))
-        showNotification("Coordinate anonymization (truncate) applied.", type = "message")
+        .notify_msg("quant_anon_notif_coord_truncate_applied")
         
       } else if (mode == "aggregate") {
         gsize <- nz_pos(input$geo_grid_m, 500)
@@ -1165,30 +1396,30 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
           cell_wkt_full[df_rows_idx] <- cell_wkt_new
           
         } else {
-          showNotification("No grid cells created (empty). Check grid size or data extent.", type="warning")
+          .notify_warn("quant_anon_notif_no_grid_cells_grid")
         }
         
         anonymized_cols(union(anonymized_cols(), c(latc, lonc, "cell_wkt")))
-        showNotification("Coordinate anonymization (aggregate to polygons) applied.", type = "message")
+        .notify_msg("quant_anon_notif_coord_aggregate_applied")
         
       } else {
-        showNotification("Unsupported mode selected.", type = "error"); return()
+        .notify_err("quant_anon_notif_unsupported_mode"); return()
       }
       
       df$cell_wkt <- cell_wkt_full
       df <- df[, setdiff(names(df), c(lonc, latc)), drop = FALSE]
       
       anon_data(df)
-      log_steps(c(log_steps(), paste(Sys.time(), "- Applied Anonymize Coordinates (mode:", mode, ")")))
+      log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_applied_coord"), mode)))
       geo_preview_layer(NULL)
       
-      code_r  <- "# Anonymize Coordinates applied in-app (cell_wkt added; lat/lon dropped)"
-      code_s  <- "* no direct Stata analogue"
-      code_py <- "# Anonymize Coordinates applied (cell_wkt added; lat/lon dropped)"
+      code_r  <- paste0("# ", .lbl("quant_anon_code_coord_applied"))
+      code_s  <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_coord_applied"))
     }
     
-    if (!is.null(step_cols) && input$method %in% c(
-      "Masking","Suppression","Bucketing","Pseudonymization","Tokenization","T-Closeness"
+    if (!is.null(step_cols) && method_code %in% c(
+      "masking","suppression","bucketing","pseudonymization","tokenization","tcloseness"
     )) {
       anon_data(df)
       anonymized_cols(union(anonymized_cols(), step_cols))
@@ -1198,8 +1429,8 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     if (!is.null(code_s))  stata_steps(c(stata_steps(), code_s))
     if (!is.null(code_py)) python_steps(c(python_steps(), code_py))
     
-    if (input$method != "Anonymize Coordinates") {
-      log_steps(c(log_steps(), paste(Sys.time(), "- Applied", input$method)))
+    if (method_code != "anonymizecoordinates") {
+      log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_applied_method"), method_code)))
     }
     
     shinyAce::updateAceEditor(session, "r_code_ace",      value = paste(r_steps(),      collapse = "\n\n"))
@@ -1207,70 +1438,85 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     shinyAce::updateAceEditor(session, "python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
   })
   
-  # ---------- K-Report --------------------------------------------------------
-  output$k_report <- renderUI({
-    req(last_method())
-    if (last_method() == "K-Anonymity") {
+  # ---------- K-Report ----------------------------------------------------
+  output$k_report <- shiny::renderUI({
+    shiny::req(last_method())
+    if (last_method() == "kanonymity") {
       bins <- k_bins(); k_val <- input$k_value
-      tags$div(
-        tags$h4("K-Anonymity Report"),
-        tags$p(paste0("Threshold k = ", k_val)),
+      shiny::tags$div(
+        shiny::tags$h4(.lbl("quant_anon_k_report_title")),
+        shiny::tags$p(paste0(.lbl("quant_anon_k_report_threshold_prefix"), " ", k_val)),
         if (length(bins) > 0)
-          tags$p(paste0("Bucket sizes: ",
-                        paste(paste0(names(bins)," = ",bins), collapse=", ")))
+          shiny::tags$p(paste0(.lbl("quant_anon_k_report_bucket_sizes_prefix"), " ",
+                               paste(paste0(names(bins)," = ",bins), collapse=", ")))
       )
     }
   })
   
-  # ---------- Generalization UI & Logic --------------------------------------
-  output$gen_groups_ui <- renderUI({
-    req(input$gen_var)
+  # ---------- Generalization UI & Logic -----------------------------------
+  output$gen_groups_ui <- shiny::renderUI({
+    shiny::req(input$gen_var)
     working <- if (!is.null(anon_data()) && input$gen_var %in% names(anon_data())) anon_data() else data()
     is_num <- is.numeric(working[[input$gen_var]])
     default_mode <- if (is_num) "numeric" else "categorical"
     
-    tagList(
-      radioButtons(
-        ns("gen_mode"), "Generalization mode:",
-        choices = c("Categorical (drag & drop)" = "categorical",
-                    "Custom numeric ranges"     = if (is_num) "numeric" else NULL),
-        selected = default_mode, inline = TRUE
+    choices <- stats::setNames(
+      c("categorical"),
+      c(.lbl("quant_anon_generalization_mode_categorical"))
+    )
+    if (is_num) {
+      choices <- c(
+        choices,
+        stats::setNames(
+          c("numeric"),
+          c(.lbl("quant_anon_generalization_mode_numeric"))
+        )
+      )
+    }
+    
+    shiny::tagList(
+      shiny::radioButtons(
+        ns("gen_mode"),
+        .lbl("quant_anon_generalization_mode"),
+        choices  = choices,
+        selected = default_mode,
+        inline   = TRUE
       ),
       
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = sprintf("input['%s'] == 'categorical'", ns("gen_mode")),
         {
           cats <- unique(as.character(working[[input$gen_var]]))
-          tagList(
+          shiny::tagList(
             sortable::bucket_list(
-              header     = "Drag values to collapse",
+              header     = .lbl("quant_anon_gen_drag_values"),
               group_name = ns("gen_group"),
               orientation= "horizontal",
-              sortable::add_rank_list("Available categories", ns("gen_available"), labels = cats),
-              sortable::add_rank_list("Selected categories",  ns("gen_selected"),  labels = NULL)
+              sortable::add_rank_list(.lbl("quant_anon_gen_available_categories"), ns("gen_available"), labels = cats),
+              sortable::add_rank_list(.lbl("quant_anon_gen_selected_categories"),  ns("gen_selected"),  labels = NULL)
             ),
-            textInput(ns("gen_new_label"), "New label for selected categories:"),
-            actionButton(ns("apply_generalization"), "Apply Generalization", class = "btn btn-primary btn-block")
+            shiny::textInput(ns("gen_new_label"), .lbl("quant_anon_gen_new_label")),
+            shiny::actionButton(ns("apply_generalization"), .lbl("quant_anon_apply_generalization"), class = "btn btn-primary btn-block")
           )
         }
       ),
       
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = sprintf("input['%s'] == 'numeric'", ns("gen_mode")),
-        tagList(
-          helpText("Define numeric buckets: e.g., '0-10:Group 1;11-40:Group 2;41-100:Group 3'"),
-          textInput(ns("gen_ranges_text"), "Ranges (lower-upper:label; semicolon separated):",
-                    value = "0-10:Group 1;11-40:Group 2;41-100:Group 3"),
-          helpText("Use '-Inf' or 'Inf' for open bounds. Ranges must not overlap or touch."),
-          actionButton(ns("apply_generalization"), "Apply Generalization", class = "btn btn-primary btn-block")
+        shiny::tagList(
+          shiny::helpText(.lbl("quant_anon_gen_numeric_help")),
+          shiny::textInput(ns("gen_ranges_text"), .lbl("quant_anon_gen_ranges_label"),
+                           value = "0-10:Group 1;11-40:Group 2;41-100:Group 3"),
+          shiny::helpText(.lbl("quant_anon_gen_ranges_rules")),
+          shiny::actionButton(ns("apply_generalization"), .lbl("quant_anon_apply_generalization"), class = "btn btn-primary btn-block")
         )
       )
     )
   })
   
-  observeEvent(input$apply_generalization, {
-    req(data(), input$gen_var, input$gen_mode)
-    last_method("Generalization")
+  shiny::observeEvent(input$apply_generalization, {
+    shiny::req(data(), input$gen_var, input$gen_mode)
+    last_method("generalization")
     
     previous_data_stack(c(previous_data_stack(), list(if (is.null(anon_data())) data() else anon_data())))
     previous_r_stack(c(previous_r_stack(), list(r_steps())))
@@ -1284,8 +1530,8 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     
     if (input$gen_mode == "categorical") {
       sel <- input$gen_selected; lab <- input$gen_new_label
-      if (is.null(sel) || length(sel) == 0) { showNotification("No categories selected to generalize.", type = "error"); return() }
-      if (is.null(lab) || trimws(lab) == "") { showNotification("Provide a new label.", type = "error"); return() }
+      if (is.null(sel) || length(sel) == 0) { .notify_err("quant_anon_notif_no_categories_selected"); return() }
+      if (is.null(lab) || trimws(lab) == "") { .notify_err("quant_anon_notif_provide_new_label"); return() }
       
       ga <- gen_assigned(); ga[[var]] <- unique(c(ga[[var]] %||% character(), sel)); gen_assigned(ga)
       df[[var]] <- as.character(df[[var]]); df[[var]][ df[[var]] %in% sel ] <- lab
@@ -1293,17 +1539,22 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       anon_data(df)
       anonymized_cols(union(anonymized_cols(), var))
       
-      code_r <- "# Generalization (categorical) applied in-app"
-      code_s <- "// Generalization\n// no direct Stata analogue"
-      code_py <- "# Generalization applied in-app"
+      code_r <- paste0("# ", .lbl("quant_anon_code_generalization_applied"))
+      code_s <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_generalization_applied"))
       
     } else if (input$gen_mode == "numeric") {
-      req(input$gen_ranges_text); range_txt <- input$gen_ranges_text
-      ranges_df <- tryCatch({ parse_ranges_text(range_txt) }, error = function(e) {
-        showNotification(paste("Range parse error:", e$message), type = "error"); NULL
+      shiny::req(input$gen_ranges_text); range_txt <- input$gen_ranges_text
+      ranges_df <- tryCatch(parse_ranges_text(range_txt), error = function(e) {
+        shiny::showNotification(sprintf("%s: %s", .lbl("quant_anon_range_parse_error"), e$message), type = "error")
+        NULL
       })
       if (is.null(ranges_df)) return()
-      if (!is.numeric(df[[var]])) { showNotification(sprintf("Variable '%s' must be numeric.", var), type = "error"); return() }
+      
+      if (!is.numeric(df[[var]])) {
+        shiny::showNotification(sprintf(.lbl("quant_anon_err_var_must_be_numeric"), var), type = "error")
+        return()
+      }
       
       x <- df[[var]]
       generalized <- rep(NA_character_, length(x))
@@ -1320,36 +1571,37 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       anon_data(df)
       anonymized_cols(union(anonymized_cols(), var))
       
-      code_r <- "# Generalization (numeric ranges) applied in-app"
-      code_s <- "// Generalization\n// no direct Stata analogue"
-      code_py <- "# Generalization applied in-app"
+      code_r <- paste0("# ", .lbl("quant_anon_code_generalization_applied"))
+      code_s <- paste0("* ", .lbl("quant_anon_code_no_stata_analogue"))
+      code_py <- paste0("# ", .lbl("quant_anon_code_generalization_applied"))
     }
     
     if (!is.null(code_r)) r_steps(c(r_steps(), code_r))
     if (!is.null(code_s)) stata_steps(c(stata_steps(), code_s))
     if (!is.null(code_py)) python_steps(c(python_steps(), code_py))
-    log_steps(c(log_steps(), paste(Sys.time(), "- Applied generalization (mode:", input$gen_mode, ") to", var)))
+    
+    log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_generalization_applied"), input$gen_mode, var)))
     
     shinyAce::updateAceEditor(session, "r_code_ace",      value = paste(r_steps(),      collapse = "\n\n"))
     shinyAce::updateAceEditor(session, "stata_code_ace",  value = paste(stata_steps(),  collapse = "\n\n"))
     shinyAce::updateAceEditor(session, "python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
     
-    showNotification("Generalization applied.", type = "message")
+    .notify_msg("quant_anon_notif_generalization_applied")
   })
   
-  # ---------- Copy buttons ----------------------------------------------------
-  observeEvent(input$copy_r, {
+  # ---------- Copy buttons ------------------------------------------------
+  shiny::observeEvent(input$copy_r, {
     shinyjs::runjs(sprintf("copyAce('%s','%s')", ns("r_code_ace"), ns("copy_r")))
   })
-  observeEvent(input$copy_stata, {
+  shiny::observeEvent(input$copy_stata, {
     shinyjs::runjs(sprintf("copyAce('%s','%s')", ns("stata_code_ace"), ns("copy_stata")))
   })
-  observeEvent(input$copy_py, {
+  shiny::observeEvent(input$copy_py, {
     shinyjs::runjs(sprintf("copyAce('%s','%s')", ns("python_code_ace"), ns("copy_py")))
   })
   
-  # ---------- Undo & Reset ----------------------------------------------------
-  observeEvent(input$undo, {
+  # ---------- Undo & Reset ------------------------------------------------
+  shiny::observeEvent(input$undo, {
     prev <- previous_data_stack(); pr <- previous_r_stack()
     ps   <- previous_stata_stack(); pp <- previous_py_stack()
     if (length(prev) > 0) {
@@ -1358,7 +1610,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       r_steps(pr[[idx]]); stata_steps(ps[[idx]]); python_steps(pp[[idx]])
       previous_data_stack(prev[-idx]); previous_r_stack(pr[-idx])
       previous_stata_stack(ps[-idx]); previous_py_stack(pp[-idx])
-      log_steps(c(log_steps(), paste(Sys.time(), "- Undid last step")))
+      log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_undo"))))
       
       pgs <- previous_gen_assigned_stack()
       if (length(pgs) > 0) {
@@ -1368,38 +1620,37 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
       
       geo_preview_layer(NULL); geo_after_layer(NULL)
       
-      showNotification("Undo successful.", type = "message")
+      .notify_msg("quant_anon_notif_undo_success")
       shinyAce::updateAceEditor(session,"r_code_ace",      value = paste(r_steps(),      collapse = "\n\n"))
       shinyAce::updateAceEditor(session,"stata_code_ace",  value = paste(stata_steps(),  collapse = "\n\n"))
       shinyAce::updateAceEditor(session,"python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
     }
   })
   
-  observeEvent(input$reset, {
-    req(raw_data())
+  shiny::observeEvent(input$reset, {
+    shiny::req(raw_data())
     data(raw_data()); anon_data(NULL)
     anonymized_cols(character()); initial_qids(character())
     r_steps(import_snip()); stata_steps(import_stata_snip()); python_steps(import_py_snip())
     previous_data_stack(list()); previous_r_stack(list())
     previous_stata_stack(list()); previous_py_stack(list())
-    log_steps(c(log_steps(), paste(Sys.time(),"- Reset complete")))
+    log_steps(c(log_steps(), paste(Sys.time(), "-", .lbl("quant_anon_log_reset"))))
     k_bins(list()); gen_assigned(list()); previous_gen_assigned_stack(list())
     
     geo_preview_layer(NULL); geo_after_layer(NULL)
-    geo_lat_col(NULL); geo_lon_col(NULL)
     
     risk_before_metrics(NULL)
     risk_after_metrics(NULL)
     
-    showNotification("Reset complete.", type = "warning")
+    .notify_warn("quant_anon_notif_reset_complete")
     shinyAce::updateAceEditor(session,"r_code_ace",      value = paste(r_steps(),      collapse = "\n\n"))
     shinyAce::updateAceEditor(session,"stata_code_ace",  value = paste(stata_steps(),  collapse = "\n\n"))
     shinyAce::updateAceEditor(session,"python_code_ace", value = paste(python_steps(), collapse = "\n\n"))
   })
   
-  # ---------- Preview merged table -------------------------------------------
-  output$preview_merged <- renderTable({
-    req(data())
+  # ---------- Preview merged table ----------------------------------------
+  output$preview_merged <- shiny::renderTable({
+    shiny::req(data())
     orig <- data()
     cur  <- if (is.null(anon_data())) orig else anon_data()
     
@@ -1415,9 +1666,9 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     head(as.data.frame(pr, stringsAsFactors = FALSE), 10)
   }, rownames = FALSE)
   
-  # ---------- Map (safe basemap + module-safe leafletProxy) -------------------
+  # ---------- Map (module-safe leafletProxy) ------------------------------
   output$geo_map <- leaflet::renderLeaflet({
-    req(input$method == "Anonymize Coordinates", data())
+    shiny::req(safe_method() == "anonymizecoordinates", data())
     
     m <- leaflet::leaflet(options = leaflet::leafletOptions(minZoom = 1)) |>
       leaflet::addTiles() |>
@@ -1440,7 +1691,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
             lng = df0$lon, lat = df0$lat,
             radius = 3, stroke = FALSE, fillOpacity = 0.6,
             clusterOptions = leaflet::markerClusterOptions(),
-            group = "Before (points)"
+            group = .lbl("quant_anon_map_group_before")
           )
         
         if (all(is.finite(range(df0$lon))) && all(is.finite(range(df0$lat)))) {
@@ -1455,59 +1706,59 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     
     m |>
       leaflet::addLayersControl(
-        overlayGroups = c("Before (points)", "After (areas)"),
+        overlayGroups = c(.lbl("quant_anon_map_group_before"), .lbl("quant_anon_map_group_after")),
         options = leaflet::layersControlOptions(collapsed = FALSE)
       )
   })
   
-  observe({
-    req(input$method == "Anonymize Coordinates")
+  shiny::observe({
+    shiny::req(safe_method() == "anonymizecoordinates")
     pol <- geo_after_layer()
     
-    prx <- leaflet::leafletProxy(session$ns("geo_map"), session = session)
+    prx <- leaflet::leafletProxy("geo_map", session = session)
     
     if (is.null(pol) || !inherits(pol, "sf") || nrow(pol) == 0) {
-      prx |> leaflet::clearGroup("After (areas)")
+      prx |> leaflet::clearGroup(.lbl("quant_anon_map_group_after"))
       return()
     }
     
     pol <- sf::st_make_valid(pol)
     pol <- sf::st_zm(pol, drop = TRUE, what = "ZM")
     pol <- pol[!sf::st_is_empty(pol), , drop = FALSE]
-    if (!nrow(pol)) { prx |> leaflet::clearGroup("After (areas)"); return() }
+    if (!nrow(pol)) { prx |> leaflet::clearGroup(.lbl("quant_anon_map_group_after")); return() }
     
     prx |>
-      leaflet::clearGroup("After (areas)") |>
+      leaflet::clearGroup(.lbl("quant_anon_map_group_after")) |>
       leaflet::addPolygons(
         data = pol,
         weight = 1, color = "#555555", fillOpacity = 0.5, fillColor = "#2A9D8F",
-        group = "After (areas)",
-        popup = ~paste0("n = ", n)
+        group = .lbl("quant_anon_map_group_after"),
+        popup = ~paste0(.lbl("quant_anon_map_popup_n_prefix"), " ", n)
       )
   })
   
-  # ---------- Risk BEFORE (coords excluded) ----------------------------------
-  output$risk_before <- renderUI({
-    req(data(), initial_qids())
+  # ---------- Risk BEFORE (coords excluded) --------------------------------
+  output$risk_before <- shiny::renderUI({
+    shiny::req(data(), initial_qids())
     q <- risk_qids(initial_qids())
-    vld(need(length(q) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     m <- risk_before_metrics()
-    req(m)
+    shiny::req(m)
     
-    tags$p(sprintf(
-      "Before: Average Risk: %.4f; Maximum Risk: %.4f; Percentage Unique: %.4f%%",
+    shiny::tags$p(sprintf(
+      .lbl("quant_anon_risk_before_text"),
       m$avg, m$max, m$pct_unique * 100
     ))
   })
   
   output$gauge_before <- flexdashboard::renderGauge({
-    req(data(), initial_qids())
+    shiny::req(data(), initial_qids())
     q <- risk_qids(initial_qids())
-    vld(need(length(q) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     m <- risk_before_metrics()
-    req(m)
+    shiny::req(m)
     
     pct <- round(m$avg * 100, 2)
     flexdashboard::gauge(
@@ -1517,60 +1768,57 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     )
   })
   
-  # ---------- Row counts / log -----------------------------------------------
-  output$n_obs_text <- renderText({
+  # ---------- Row counts / log --------------------------------------------
+  output$n_obs_text <- shiny::renderText({
     if (is.null(data())) return("")
-    after_txt <- if (!is.null(anon_data())) paste0(" | After: ", nrow(anon_data())) else ""
-    paste0("Rows: ", nrow(data()), after_txt)
+    after_txt <- if (!is.null(anon_data())) paste0(" | ", .lbl("quant_anon_rows_after_prefix"), " ", nrow(anon_data())) else ""
+    paste0(.lbl("quant_anon_rows_prefix"), " ", nrow(data()), after_txt)
   })
   
-  output$step_log <- renderText({ paste(log_steps(), collapse = "\n") })
+  output$step_log <- shiny::renderText({ paste(log_steps(), collapse = "\n") })
   
-  # ---------- Downloads -------------------------------------------------------
-  output$download <- downloadHandler(
+  # ---------- Downloads ----------------------------------------------------
+  output$download <- shiny::downloadHandler(
     filename = function() paste0("anonymized_", Sys.Date(), ".csv"),
     content  = function(file) {
       dat <- anon_data()
-      if (is.null(dat)) stop("No anonymized data available to download.")
+      if (is.null(dat)) stop(.lbl("quant_anon_err_no_anon_data_download"))
       utils::write.csv(drop_geo_cols(dat), file, row.names = FALSE)
     }
   )
   
-  output$download_excel <- downloadHandler(
+  output$download_excel <- shiny::downloadHandler(
     filename = function() paste0("anonymized_", Sys.Date(), ".xlsx"),
     content  = function(file) {
       dat <- anon_data()
-      if (is.null(dat)) stop("No anonymized data available to download.")
+      if (is.null(dat)) stop(.lbl("quant_anon_err_no_anon_data_download"))
       openxlsx::write.xlsx(drop_geo_cols(dat), file)
     }
   )
   
-  output$download_dta <- downloadHandler(
+  output$download_dta <- shiny::downloadHandler(
     filename = function() paste0("anonymized_", Sys.Date(), ".dta"),
     content  = function(file) {
       dat <- anon_data()
-      if (is.null(dat)) stop("No anonymized data available to download.")
+      if (is.null(dat)) stop(.lbl("quant_anon_err_no_anon_data_download"))
       haven::write_dta(drop_geo_cols(dat), file)
     }
   )
   
-  # ---------- Report preview/download ----------------------------------------
+  # ---------- Report preview/download -------------------------------------
   render_html_report <- function() {
-    req(data(), anon_data(), initial_qids())
+    shiny::req(data(), anon_data(), initial_qids())
     
-    tmpl <- normalizePath(
-      file.path(shiny::getShinyOption("appDir") %||% getwd(), "server", "anon", "docs", "report_template.Rmd"),
-      mustWork = FALSE
-    )
+    app_dir2 <- shiny::getShinyOption("appDir") %||% getwd()
+    tmpl <- normalizePath(file.path(app_dir2, "server", "anon", "docs", "report_template.Rmd"), mustWork = FALSE)
     
     if (!file.exists(tmpl)) {
-      showNotification(paste0("Missing report template: ", tmpl), type = "error")
+      shiny::showNotification(sprintf("%s: %s", .lbl("quant_anon_missing_report_template"), tmpl), type = "error")
       return(NULL)
     }
     
-    
     q_main <- risk_qids(initial_qids())
-    vld(need(length(q_main) > 0, "Select non-coordinate QIDs."))
+    vld(need(length(q_main) > 0, .lbl("quant_anon_need_noncoord_qids")))
     
     before_tbl <- data() %>%
       dplyr::group_by(dplyr::across(dplyr::all_of(q_main))) %>%
@@ -1648,35 +1896,37 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     tmp_html
   }
   
-  observeEvent(input$view_report, {
-    req(data(), anon_data(), initial_qids())
+  shiny::observeEvent(input$view_report, {
+    shiny::req(data(), anon_data(), initial_qids())
     
-    withProgress(message = "Building report...", value = 0.1, {
+    shiny::withProgress(message = .lbl("quant_anon_building_report"), value = 0.1, {
       path <- render_html_report()
       if (is.null(path)) return(NULL)
-      res_name <- paste0("reports_tmp_", gsub("[^A-Za-z0-9]", "_", landing_dom))
-      addResourcePath(res_name, dirname(path))
+      res_name <- paste0("reports_tmp_", gsub("[^A-Za-z0-9]", "_", session$token))
+      shiny::addResourcePath(res_name, dirname(path))
       report_temp(path)
+      session$userData$report_res_name <- res_name
     })
     
     if (is.null(report_temp())) return(NULL)
     
-    res_name <- paste0("reports_tmp_", gsub("[^A-Za-z0-9]", "_", landing_dom))
-    showModal(modalDialog(
-      title = "Risk Report Preview",
+    res_name <- session$userData$report_res_name %||% "reports_tmp"
+    
+    shiny::showModal(shiny::modalDialog(
+      title = .lbl("quant_anon_risk_report_preview_title"),
       size  = "l", easyClose = TRUE,
-      tags$iframe(
+      shiny::tags$iframe(
         src = paste0(res_name, "/", basename(report_temp())),
         style = "width:100%; height:600px; border:none;"
       ),
-      footer = modalButton("Close")
+      footer = shiny::modalButton(.lbl("quant_anon_close"))
     ))
   })
   
-  output$download_report <- downloadHandler(
+  output$download_report <- shiny::downloadHandler(
     filename = function() paste0("risk_report_", Sys.Date(), ".pdf"),
     content  = function(file) {
-      req(report_temp())
+      shiny::req(report_temp())
       if (requireNamespace("pagedown", quietly = TRUE)) {
         pagedown::chrome_print(input = report_temp(), output = file)
       } else {
