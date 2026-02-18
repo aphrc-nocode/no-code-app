@@ -72,6 +72,7 @@ achilles_ui.Rout: ui/achilles_ui.R
 feature_extraction_ui.Rout: ui/feature_extraction_ui.R
 omop_visualizations_ui.Rout: ui/omop_visualizations_ui.R
 add_resources_ui.Rout: ui/add_resources_ui.R
+load_r_packages.Rout: ui/load_r_packages.R
 
 ######################################################################
 
