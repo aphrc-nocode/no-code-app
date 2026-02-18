@@ -25,12 +25,6 @@ function(input, output, session){
     
     app_username = USER$username
     
-    # ---- Anonymization sources ----
-    source("modules/anonymization_functions.R", local = FALSE)
-    source("server/anon/server_module_quant.R", local = FALSE)
-    source("modules/mod_quant_anonymization.R", local = FALSE)
-    # ----  ----
-    
     model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
     data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
     model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
@@ -49,6 +43,12 @@ function(input, output, session){
     
     #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
     source("R/utils_logging.R")
+    
+    # ---- Anonymization sources ----
+    source("modules/anonymization_functions.R", local = TRUE)
+    source("server/anon/server_module_quant.R", local = TRUE)
+    source("modules/mod_quant_anonymization.R", local = TRUE)
+    # ----  ----
     
     DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
     
