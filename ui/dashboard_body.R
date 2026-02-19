@@ -1,24 +1,26 @@
 ## Load UI files
-source("ui/sourcedata_ui.R")
-source("ui/overview_ui.R")
-source("ui/explore_ui.R")
-source("ui/transform_ui.R")
-source("ui/combinedata_ui.R")
-source("ui/summarize_automatic_ui.R")
+source("ui/sourcedata_ui.R", local=TRUE)
+source("ui/overview_ui.R", local=TRUE)
+source("ui/explore_ui.R", local=TRUE)
+source("ui/transform_ui.R", local=TRUE)
+source("ui/combinedata_ui.R", local=TRUE)
+source("ui/summarize_automatic_ui.R", local=TRUE)
 source("ui/summarize_custom_ui.R", local = TRUE)
-source("ui/research_questions_ui.R")
-source("ui/setup_models_ui.R")
-source("ui/feature_engineering_ui.R")
-source("ui/evidence_quality_ui.R")
-source("ui/train_all_model_ui.R")
-source("ui/validate_deploy_model_ui.R")
-source("ui/predict_classify_ui.R")
-source("ui/deeplearning_ui.R")
-source("ui/cohort_constructor_ui.R")
-source("ui/achilles_ui.R")
-source("ui/feature_extraction_ui.R")
-source("ui/omop_visualizations_ui.R")
-source("ui/add_resources_ui.R")
+source("ui/research_questions_ui.R", local=TRUE)
+source("ui/setup_models_ui.R", local=TRUE)
+source("ui/feature_engineering_ui.R", local=TRUE)
+source("ui/evidence_quality_ui.R", local=TRUE)
+source("ui/train_all_model_ui.R", local=TRUE)
+source("ui/validate_deploy_model_ui.R", local=TRUE)
+source("ui/predict_classify_ui.R", local=TRUE)
+source("ui/deeplearning_ui.R", local=TRUE)
+source("ui/cohort_constructor_ui.R", local=TRUE)
+source("ui/achilles_ui.R", local=TRUE)
+source("ui/feature_extraction_ui.R", local=TRUE)
+source("ui/omop_visualizations_ui.R", local=TRUE)
+source("ui/mod_quant_anonymization.R", local=TRUE)
+source("ui/anonymization_ui.R", local=TRUE)
+source("ui/add_resources_ui.R", local=TRUE)
 source("ui/deploy_model_ui.R", local=TRUE)
 source("ui/predict_pycaret_ui.R", local = TRUE)
 
@@ -103,6 +105,22 @@ aphrcBody <- dashboardBody(
 		## Summarize data customize
 		, summarize_custom_ui()
 
+		## Cohort constructor
+		, cohort_constructor_ui()
+
+		## Achilles
+		, achilles_ui()
+
+		## Feature extraction
+		, feature_extraction_ui()
+
+		## OMOP visualization
+		, omop_visualizations_ui()
+
+		## Anonymization
+		, anonymization_quant_ui()
+		, anonymization_qual_ui()
+
 		## Research questions
 		, research_questions_ui()
 
@@ -127,18 +145,6 @@ aphrcBody <- dashboardBody(
 		## Deep learning UI
 		, deeplearning_ui()
 		
-		## Cohort constructor
-		, cohort_constructor_ui()
-
-		## Achilles
-		, achilles_ui()
-
-		## Feature extraction
-		, feature_extraction_ui()
-
-		## OMOP visualization
-		, omop_visualizations_ui()
-
 		## OMOP resources
 		, add_resources_ui()
 

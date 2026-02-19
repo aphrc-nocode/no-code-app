@@ -13,7 +13,7 @@ footer_language_translation = function() {
   })
 
   output$app_footer_contact = renderUI({
-    h4(HTML(paste0('<a href="mailto:example@aphrc.org" style="color: white;">',get_rv_labels("footer_contact"), ': example@aphrc.org</a>')))
+	h4(HTML(paste0('<a href="mailto:"', get_rv_labels("platform_contact_email"),  'style="color: white;">', get_rv_labels("footer_contact"), ": ", get_rv_labels("platform_contact_email"), '</a>')))    
   })
 
   output$app_footer_all_rights = renderUI({
@@ -46,6 +46,31 @@ menu_translation = function(){
       ),
       menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_summarizeCustom"), "</span>")), tabName = "summarizeCustom", icon = icon("chart-line"))),
       
+		  menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop_data"), "</span>")), tabName = "omopAnalysis", icon = icon("magnifying-glass-chart", lib = "font-awesome"),
+		  menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("evidenceQuality"), "</span>")), tabName = "evidenceQuality", icon = icon("server", lib = "font-awesome")),
+		  #menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("cohortConstruction"), "</span>")), tabName = "cohortConstruction", icon = icon("layer-group", lib = "font-awesome")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_achilles"), "</span>")), tabName = "achilles", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop"), "</span>")), tabName = "omop_visualizations", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Cohort_Constructor"), "</span>")), tabName = "CohortConstructor", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
+		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Feature_Extraction"), "</span>")), tabName = "FeatureExtraction", icon = icon("arrows-split-up-and-left", lib = "font-awesome"))
+		  
+		  
+		  ),
+
+		 menuItem(
+			text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_data_anonymization"), "</span>")),
+			icon = icon("user-shield", lib = "font-awesome"),
+			menuSubItem(
+			  text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_quant_anonymization"), "</span>")),
+			  tabName = "anonymization_quant",
+			  icon = icon("calculator")
+			),
+			menuSubItem(
+			  text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_qual_anonymization"), "</span>")),
+			  tabName = "anonymization_qual",
+			  icon = icon("align-left")
+			)
+		 ),
         
       menuItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_research_question"), "</span>")), tabName = "researchQuestions", icon = icon("file-import", lib = "font-awesome"), selected = FALSE),
 
@@ -58,16 +83,7 @@ menu_translation = function(){
         menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
         menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
       ),
-		  menuItem(text =  HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop_data"), "</span>")), tabName = "omopAnalysis", icon = icon("magnifying-glass-chart", lib = "font-awesome"),
-		  menuSubItem(text =HTML(paste0("<span class='menu-label'>", get_rv_labels("evidenceQuality"), "</span>")), tabName = "evidenceQuality", icon = icon("server", lib = "font-awesome")),
-		  #menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("cohortConstruction"), "</span>")), tabName = "cohortConstruction", icon = icon("layer-group", lib = "font-awesome")),
-		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_achilles"), "</span>")), tabName = "achilles", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
-		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_omop"), "</span>")), tabName = "omop_visualizations", icon = icon("glyphicon glyphicon-stats", lib = "glyphicon")),
-		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Cohort_Constructor"), "</span>")), tabName = "CohortConstructor", icon = icon("arrows-split-up-and-left", lib = "font-awesome")),
-		  menuSubItem(text = HTML(paste0("<span class='menu-label'>", get_rv_labels("menu_Feature_Extraction"), "</span>")), tabName = "FeatureExtraction", icon = icon("arrows-split-up-and-left", lib = "font-awesome"))
-		  
-		  
-		  ),
+		
 		menuItem(
 		  HTML(paste0("<span class='menu-label'>", get_rv_labels("deeplearning"), "</span>")),
 		  tabName = "deeplearning",

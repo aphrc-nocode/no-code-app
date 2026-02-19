@@ -48,6 +48,11 @@ fluidPage(
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     logo=  "WWW/aphrc.png"),
 
+  shiny::tags$head(
+    # anonymization CSS in WWW/anon_assets
+    shiny::tags$link(rel = "stylesheet", type = "text/css", href = "WWW/anon_custom.css?v=20260129")
+  ),
+
     div(
       id = "auth_wrapper1",   # <– will be shown after spinner
       login::is_logged_in(
