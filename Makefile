@@ -30,6 +30,8 @@ Ignore += logs/*
 Ignore += *.RData*
 Ignore += output/*
 Ignore += users.sqlite
+Ignore += *@*/
+Ignore += users_db/*
 
 ######################################################################
 
