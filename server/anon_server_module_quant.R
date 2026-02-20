@@ -22,17 +22,11 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   ns <- session$ns
   `%||%` <- function(a, b) if (is.null(a)) b else a
   
-  # ---------- Platform label helpers (no hardcoding) -----------------------
+  # ---------- Platform label helpers -----------------------
 
-  # FIXME: LOAD FUCTION DIRECTLY
   .lbl <- function(key) {
-    f <- get0("get_rv_labels", inherits = TRUE, ifnotfound = NULL)
-    if (is.function(f)) {
-      val <- tryCatch(f(key), error = function(e) NULL)
-      val <- if (!is.null(val)) as.character(val) else ""
-      if (nzchar(val)) return(val)
-    }
-    key
+    val <- tryCatch(as.character(get_rv_labels(key)), error = function(e) "")
+    if (nzchar(val)) val else key
   }
   
   .notify <- function(key, type = "message", duration = 5) {
@@ -85,13 +79,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     lang_key <- trimws(tolower(as.character(lang)))
     
     # Allow common variants
-	 ## FIXME: LANGUAGE lang_map = get_rv_labels("input_language")
-    lang_map <- c(
-      "english" = "english", "en" = "english",
-      "french"  = "french",  "fr" = "french",
-      "swahili" = "swahili", "sw" = "swahili"
-    )
-    if (lang_key %in% names(lang_map)) lang_key <- lang_map[[lang_key]]
+lang_map = get_rv_labels("input_language")
     
     # Helper: coerce a "choices source" into names=labels, values=codes
     .as_choices <- function(x, known_codes = character()) {
@@ -226,24 +214,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     )
     if (tolower(x0) %in% known_codes) return(tolower(x0))
     
-    map <- c(
-      "Masking"               = "masking",
-      "Suppression"           = "suppression",
-      "Bucketing"             = "bucketing",
-      "Pseudonymization"      = "pseudonymization",
-      "Tokenization"          = "tokenization",
-      "K-Anonymity"           = "kanonymity",
-      "K Anonymity"           = "kanonymity",
-      "Generalization"        = "generalization",
-      "Anonymize Coordinates" = "anonymizecoordinates",
-      "L-Diversity"           = "ldiversity",
-      "L Diversity"           = "ldiversity",
-      "T-Closeness"           = "tcloseness",
-      "T Closeness"           = "tcloseness"
-    )
-    if (x0 %in% names(map)) return(map[[x0]])
-	 
-	 # FIXME:: CHOICES map = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
+    map = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
     
     x1 <- tolower(gsub("[^a-z]", "", x0))
     if (grepl("mask", x1)) return("masking")
@@ -891,7 +862,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   app_dir <- shiny::getShinyOption("appDir")
   if (is.null(app_dir) || !nzchar(app_dir)) app_dir <- getwd()
   
-  manual2_rmd <- normalizePath(file.path(app_dir, "server", "anon", "docs", "descriptions1.Rmd"), mustWork = FALSE)
+  manual2_rmd <- normalizePath(file.path(app_dir, "static_files", "anon", "docs", "descriptions1.Rmd"), mustWork = FALSE)
   labels_xlsx <- normalizePath(file.path(app_dir, "labelling_file_with_manual_full.xlsx"), mustWork = FALSE)
   
   output$descriptions_panel <- shiny::renderUI({
@@ -1812,7 +1783,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
     shiny::req(data(), anon_data(), initial_qids())
     
     app_dir2 <- shiny::getShinyOption("appDir") %||% getwd()
-    tmpl <- normalizePath(file.path(app_dir2, "server", "anon", "docs", "report_template.Rmd"), mustWork = FALSE)
+    tmpl <- normalizePath(file.path(app_dir2, "static_files", "report_template.Rmd"), mustWork = FALSE)
     
     if (!file.exists(tmpl)) {
       shiny::showNotification(sprintf("%s: %s", .lbl("quant_anon_missing_report_template"), tmpl), type = "error")
