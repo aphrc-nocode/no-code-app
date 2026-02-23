@@ -108,19 +108,54 @@ safe_library <- function(pkg) {
 
 invisible(lapply(libraries, safe_library))
 
-st_options(footnote=NA, headings = FALSE)
+if (requireNamespace("summarytools", quietly = TRUE)) {
+  tryCatch({
+    summarytools::st_options(footnote=NA, headings = FALSE)
+  }, error = function(e) {
+    warning("Could not set summarytools options: ", e$message)
+  })
+}
 
 install_github_if_missing <- function(pkg, repo) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
-	 remotes::install_github(repo, , upgrade="never")
-	 library(pkg, character.only = TRUE)
+    tryCatch({
+      remotes::install_github(repo, upgrade="never", quiet=TRUE)
+      if (requireNamespace(pkg, quietly = TRUE)) {
+        library(pkg, character.only = TRUE)
+      } else {
+        warning("Package '", pkg, "' installation from GitHub failed. Some features may not work.")
+      }
+    }, error = function(e) {
+      warning("Failed to install '", pkg, "' from GitHub: ", e$message, ". Some features may not work.")
+    })
+  } else {
+    library(pkg, character.only = TRUE)
   }
 }
 
-install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
-install_github_if_missing("login", "jbryer/login")
-install_github_if_missing("Andromeda", "OHDSI/Andromeda")
-install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
+tryCatch({
+  install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
+}, error = function(e) {
+  warning("DataQualityDashboard installation failed: ", e$message)
+})
+
+tryCatch({
+  install_github_if_missing("login", "jbryer/login")
+}, error = function(e) {
+  warning("login package installation failed: ", e$message)
+})
+
+tryCatch({
+  install_github_if_missing("Andromeda", "OHDSI/Andromeda")
+}, error = function(e) {
+  warning("Andromeda installation failed: ", e$message)
+})
+
+tryCatch({
+  install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
+}, error = function(e) {
+  warning("FeatureExtraction installation failed: ", e$message)
+})
 
 
 

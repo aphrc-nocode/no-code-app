@@ -25,8 +25,8 @@ feature_engineering_ui = function() {
 					textInput(
 						inputId    = "fastapi_base",
 						label      = "FastAPI / PyCaret base URL",
-						value      = Sys.getenv("FASTAPI_BASE", "http://no-code-pycaret:8000"),
-						placeholder = "ex: http://no-code-pycaret:8000 or YourServerIP:port"
+						value      = Sys.getenv("FASTAPI_BASE", "http://localhost:8000"),
+						placeholder = "ex: http://localhost:8000 or YourServerIP:port"
 					),
 					automl_controls_ui("automl_controls")
 				)

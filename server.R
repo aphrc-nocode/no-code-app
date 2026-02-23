@@ -58,7 +58,7 @@ function(input, output, session){
 	  #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
 	  source("R/utils_logging.R")
 
-	  DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://api:8000")
+	  DEFAULT_API_BASE <- Sys.getenv("FASTAPI_BASE", "http://localhost:8000")
 
 	  source("server/automl_controls_server.R")
 	  source("server/train_model_server.R")
