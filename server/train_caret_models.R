@@ -876,7 +876,7 @@ model_training_caret_train_all_server = function() {
 
 					poll_timer <- reactiveTimer(2000)
 					poll_count <- reactiveVal(0)
-					max_polls <- 1800
+					max_polls <- 3600
 
 					poll_status <- observe({
 						poll_timer()

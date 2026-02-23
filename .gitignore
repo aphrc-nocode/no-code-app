@@ -62,3 +62,11 @@ test_*.sh
 test_*.R
 check_container_status.sh
 check_job_status.sh
+
+# Job files (runtime - created during execution)
+.caret_jobs/
+*.caret_jobs/
+
+# R plot outputs
+Rplots.pdf
+*.Rplots.pdf
