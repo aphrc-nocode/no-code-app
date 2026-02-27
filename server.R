@@ -52,6 +52,9 @@ function(input, output, session){
 	  source("server/deploy_model_server.R", local=TRUE)
 	  source("ui/deploy_model_ui.R", local=TRUE)
 	  source("server/predict_pycaret_server.R", local = TRUE)
+	  
+	  source("server/homepage_server.R")
+	  homepage_server(output, session)
 
 	  api_base <- reactive({
 		 val <- input$fastapi_base
