@@ -1,7 +1,7 @@
 # server.R
 
 # Increase max file upload size (e.g., to 2GB)
-options(shiny.maxRequestSize = 2000*1024^2)
+options(shiny.maxRequestSize = 3000000*1024^2)
 
 deep_learning = function() {
     
