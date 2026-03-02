@@ -4,20 +4,21 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   # Quant Anon — Module-safe server with coordinate-safe risk + QGIS export
   # FIXED: stable method codes + robust translated choices (no missing-choices error)
   # ======================================================================
-  
-  if (requireNamespace("rlang", quietly = TRUE)) {
-    options(error = function() {
-      message("\n--- ERROR TRACE (rlang::last_trace) ---\n")
-      try(print(rlang::last_trace()), silent = TRUE)
-      message("\n--- BASE TRACEBACK() ---\n")
-      traceback(2)
-    })
-  } else {
-    options(error = function() {
-      message("\n--- BASE TRACEBACK() ---\n")
-      traceback(2)
-    })
-  }
+
+# FIXME: I don't think we need this becase rlang is already being installed on loading
+##  if (requireNamespace("rlang", quietly = TRUE)) {
+##    options(error = function() {
+##      message("\n--- ERROR TRACE (rlang::last_trace) ---\n")
+##      try(print(rlang::last_trace()), silent = TRUE)
+##      message("\n--- BASE TRACEBACK() ---\n")
+##      traceback(2)
+##    })
+##  } else {
+##    options(error = function() {
+##      message("\n--- BASE TRACEBACK() ---\n")
+##      traceback(2)
+##    })
+##  }
   
   ns <- session$ns
   `%||%` <- function(a, b) if (is.null(a)) b else a
@@ -54,7 +55,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   .get_choices_df <- function() {
     rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
     if (!is.null(rv)) {
-      df <- tryCatch(rv$labelling_file_df$choices, error = function(e) NULL)
+      df <- tryCatch(input_choices_file, error = function(e) NULL)
       if (!is.null(df) && is.data.frame(df)) return(df)
     }
     f <- get0("get_choices_df", inherits = TRUE, ifnotfound = NULL)
@@ -214,20 +215,22 @@ lang_map = get_rv_labels("input_language")
     )
     if (tolower(x0) %in% known_codes) return(tolower(x0))
     
-    map = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
-    
-    x1 <- tolower(gsub("[^a-z]", "", x0))
-    if (grepl("mask", x1)) return("masking")
-    if (grepl("supp", x1)) return("suppression")
-    if (grepl("bucket", x1)) return("bucketing")
-    if (grepl("pseudo", x1)) return("pseudonymization")
-    if (grepl("token", x1)) return("tokenization")
-    if (grepl("kanon", x1)) return("kanonymity")
-    if (grepl("general", x1)) return("generalization")
-    if (grepl("coord", x1) || grepl("geo", x1)) return("anonymizecoordinates")
-    if (grepl("ldiver", x1)) return("ldiversity")
-    if (grepl("tclose", x1)) return("tcloseness")
-    "masking"
+    x1 = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
+	 x1
+   
+# FIXME: Remove if above fix is working
+##    x1 <- tolower(gsub("[^a-z]", "", x0))
+##    if (grepl("mask", x1)) return("masking")
+##    if (grepl("supp", x1)) return("suppression")
+##    if (grepl("bucket", x1)) return("bucketing")
+##    if (grepl("pseudo", x1)) return("pseudonymization")
+##    if (grepl("token", x1)) return("tokenization")
+##    if (grepl("kanon", x1)) return("kanonymity")
+##    if (grepl("general", x1)) return("generalization")
+##    if (grepl("coord", x1) || grepl("geo", x1)) return("anonymizecoordinates")
+##    if (grepl("ldiver", x1)) return("ldiversity")
+##    if (grepl("tclose", x1)) return("tcloseness")
+##    "masking"
   }
   
   # Reactive invalidation on language change
@@ -287,7 +290,9 @@ lang_map = get_rv_labels("input_language")
     
     
     # --- FIX: robust method choices (no error toast, safe fallback) -------
-    ch_method <- .choice_vec("quant_anon_method", lang = .get_lang("English"))
+    ## FIXME: This should be read directly from input_choices_file; the same way I did in the commented code, and swtiches automatically when new language is selected. Kindly correct and any other place there is a choice
+    x1 = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
+	 ch_method <- .choice_vec("quant_anon_method", lang = .get_lang("English")) # FIXME: Why preselect English? See my comment above
    
     
     if (is.null(ch_method) || length(ch_method) == 0) {
