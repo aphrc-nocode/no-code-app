@@ -210,13 +210,6 @@ mod_quant_anon_ui <- function(id) {
                   
                   # Downloads / Report
                   shiny::wellPanel(
-                    shiny::checkboxInput(
-                      ns("dark_mode"),
-                      label = NULL, # 
-                      value = FALSE
-                    ),
-                    
-                    shiny::tags$hr(),
                     shiny::uiOutput(ns("quant_anon_downloads_title_ui")),
                     
                     shiny::uiOutput(ns("download_btn_csv_ui")),
@@ -230,7 +223,6 @@ mod_quant_anon_ui <- function(id) {
                       class = "btn btn-default btn-block"
                     ),
                     
-                    # IMPORTANT: compare against stable code
                     shiny::conditionalPanel(
                       condition = sprintf("input['%s'] == 'anonymizecoordinates'", ns_method),
                       shiny::uiOutput(ns("quant_anon_coords_download_note_ui"))

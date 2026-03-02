@@ -5,21 +5,6 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   # FIXED: stable method codes + robust translated choices (no missing-choices error)
   # ======================================================================
 
-# FIXME: I don't think we need this becase rlang is already being installed on loading
-##  if (requireNamespace("rlang", quietly = TRUE)) {
-##    options(error = function() {
-##      message("\n--- ERROR TRACE (rlang::last_trace) ---\n")
-##      try(print(rlang::last_trace()), silent = TRUE)
-##      message("\n--- BASE TRACEBACK() ---\n")
-##      traceback(2)
-##    })
-##  } else {
-##    options(error = function() {
-##      message("\n--- BASE TRACEBACK() ---\n")
-##      traceback(2)
-##    })
-##  }
-  
   ns <- session$ns
   `%||%` <- function(a, b) if (is.null(a)) b else a
   
@@ -38,15 +23,17 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   .notify_err  <- function(key, duration = NULL) .notify(key, type = "error", duration = duration)
   
   # --- Safe language getter (string, not reactive) -------------------------
-  .get_lang <- function(default = "English") {
+  .get_lang <- function(default = NULL) {
     rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
     if (!is.null(rv)) {
       for (nm in c("selected_language", "language", "lang")) {
-        if (!is.null(rv[[nm]]) && nzchar(as.character(rv[[nm]]))) return(as.character(rv[[nm]]))
+        v <- rv[[nm]]
+        if (!is.null(v) && nzchar(as.character(v))) return(as.character(v))
       }
     }
     for (nm in c("change_language", "language", "lang")) {
-      if (!is.null(input[[nm]]) && nzchar(as.character(input[[nm]]))) return(as.character(input[[nm]]))
+      v <- input[[nm]]
+      if (!is.null(v) && nzchar(as.character(v))) return(as.character(v))
     }
     default
   }
@@ -74,7 +61,7 @@ anon_quant_server_logic <- function(input, output, session, rv_current = NULL) {
   # Returned: named vector where names=display labels, values=stable codes in `label`.
   .choice_vec <- function(variable, lang = NULL) {
     `%||%` <- function(a, b) if (is.null(a)) b else a
-    lang <- lang %||% .get_lang("English")
+    lang <- lang %||% .get_lang()
     
     # Normalize language key to match lowercased column names
     lang_key <- trimws(tolower(as.character(lang)))
@@ -143,7 +130,7 @@ lang_map = get_rv_labels("input_language")
     f <- get0("get_named_choices", inherits = TRUE, ifnotfound = NULL)
     if (is.function(f)) {
       out <- tryCatch(
-        f(input_choices_file, .get_lang("English"), variable),
+        f(input_choices_file, lang, variable),
         error = function(e) NULL
       )
       
@@ -206,42 +193,31 @@ lang_map = get_rv_labels("input_language")
   
   # --- Normalize method input to stable internal codes --------------------
   .norm_method <- function(x) {
-    if (is.null(x) || !nzchar(as.character(x))) return("masking")
-    x0 <- trimws(as.character(x))
+    x0 <- trimws(as.character(x %||% ""))
+    known <- c("masking","suppression","bucketing","pseudonymization","tokenization",
+               "kanonymity","generalization","anonymizecoordinates","ldiversity","tcloseness")
+    if (nzchar(x0) && tolower(x0) %in% known) return(tolower(x0))
     
-    known_codes <- c(
-      "masking","suppression","bucketing","pseudonymization","tokenization",
-      "kanonymity","generalization","anonymizecoordinates","ldiversity","tcloseness"
-    )
-    if (tolower(x0) %in% known_codes) return(tolower(x0))
+    x1 <- tryCatch(get_named_choices(input_choices_file, .get_lang(), "quant_anon_method"),
+                   error = function(e) NULL)
+    if (is.null(x1) || !length(x1)) return("masking")
     
-    x1 = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
-	 x1
+    # x1 is names=labels, values=codes -> map label back to code
+    unname(x1[match(x0, names(x1))] %||% "masking")
+  } 
+ #   x1 = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
+	# x1 # these work, only that we need to add it inside the function, the app crashes if outside
    
-# FIXME: Remove if above fix is working
-##    x1 <- tolower(gsub("[^a-z]", "", x0))
-##    if (grepl("mask", x1)) return("masking")
-##    if (grepl("supp", x1)) return("suppression")
-##    if (grepl("bucket", x1)) return("bucketing")
-##    if (grepl("pseudo", x1)) return("pseudonymization")
-##    if (grepl("token", x1)) return("tokenization")
-##    if (grepl("kanon", x1)) return("kanonymity")
-##    if (grepl("general", x1)) return("generalization")
-##    if (grepl("coord", x1) || grepl("geo", x1)) return("anonymizecoordinates")
-##    if (grepl("ldiver", x1)) return("ldiversity")
-##    if (grepl("tclose", x1)) return("tcloseness")
-##    "masking"
-  }
   
   # Reactive invalidation on language change
-  .lang_tick <- shiny::reactive({
-    rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
-    if (!is.null(rv)) {
-      tryCatch({ rv$selected_language; rv$labelling_file_df }, error = function(e) NULL)
-    } else {
-      .get_lang("English")
-    }
-  })
+	 .lang_tick <- shiny::reactive({
+	   rv <- get0("rv_lang", inherits = TRUE, ifnotfound = NULL)
+	   if (!is.null(rv)) {
+	     tryCatch({ rv$selected_language; rv$labelling_file_df }, error = function(e) NULL)
+	   } else {
+	     .get_lang()
+	   }
+	 })
   
   # ---------- Translatable UI outputs --------------------------------------
   output$quant_anon_tab_dashboard    <- shiny::renderUI(shiny::span(.lbl("quant_anon_tab_dashboard")))
@@ -287,16 +263,43 @@ lang_map = get_rv_labels("input_language")
     shiny::updateActionButton(session, "advisor_run",      label = .lbl("quant_anon_show_suggestions"))
     shiny::updateActionButton(session, "view_report", label = .lbl("quant_anon_view_report"))
     
+
+    # This part reads the choices from the excel, but at the same time does error handling
+    #It tries to read the method choices from the Excel file.
+    #If something goes wrong, it returns NULL instead of crashing the app
+    ch_method <- tryCatch(
+      get_named_choices(input_choices_file, .get_lang(), "quant_anon_method"),
+      error = function(e) NULL
+    )
     
+    # This sections helps us with error handling;
+    # If the Excel file doesn’t return any method choices, the dropdown would break.
+    #So this ensures the dropdown still works instead of crashing.
+    if (is.null(ch_method) || length(ch_method) == 0) {
+      ch_method <- stats::setNames(
+        c("masking","suppression","bucketing","pseudonymization","tokenization",
+          "kanonymity","generalization","anonymizecoordinates"),
+        c(.lbl("quant_anon_method_masking"),
+          .lbl("quant_anon_method_suppression"),
+          .lbl("quant_anon_method_bucketing"),
+          .lbl("quant_anon_method_pseudonymization"),
+          .lbl("quant_anon_method_tokenization"),
+          .lbl("quant_anon_method_kanonymity"),
+          .lbl("quant_anon_method_generalization"),
+          .lbl("quant_anon_method_anonymizecoordinates"))
+      )
+    }
     
-    # --- FIX: robust method choices (no error toast, safe fallback) -------
-    ## FIXME: This should be read directly from input_choices_file; the same way I did in the commented code, and swtiches automatically when new language is selected. Kindly correct and any other place there is a choice
-    x1 = get_named_choices(input_choices_file, input$change_language, "quant_anon_method")
-	 ch_method <- .choice_vec("quant_anon_method", lang = .get_lang("English")) # FIXME: Why preselect English? See my comment above
-   
+    # Then finally here we try to Keep selection stable
+    #When the language changes and we rebuild the dropdown, 
+    #this keeps the previously selected method if it still exists.
+    #If it no longer exists, it safely selects the first available method
+    sel <- .norm_method(isolate(input$method))
+    if (is.null(sel) || !nzchar(sel) || !(sel %in% unname(ch_method))) sel <- unname(ch_method)[1]
+    
     
     if (is.null(ch_method) || length(ch_method) == 0) {
-      # fallback uses ui_labels keys (no English hardcoding)
+      # fallback uses ui_labels keys (no English hardcoding as a fallback)
       ch_method <- stats::setNames(
         c("masking","suppression","bucketing","pseudonymization","tokenization",
           "kanonymity","generalization","anonymizecoordinates"),
@@ -867,11 +870,11 @@ lang_map = get_rv_labels("input_language")
   app_dir <- shiny::getShinyOption("appDir")
   if (is.null(app_dir) || !nzchar(app_dir)) app_dir <- getwd()
   
-  manual2_rmd <- normalizePath(file.path(app_dir, "static_files", "anon", "docs", "descriptions1.Rmd"), mustWork = FALSE)
+  manual2_rmd <- normalizePath(file.path(app_dir, "static_files","descriptions1.Rmd"), mustWork = FALSE)
   labels_xlsx <- normalizePath(file.path(app_dir, "labelling_file_with_manual_full.xlsx"), mustWork = FALSE)
   
   output$descriptions_panel <- shiny::renderUI({
-    lang <- .get_lang("English")
+    lang <- .get_lang()
     shiny::req(file.exists(manual2_rmd))
     shiny::req(file.exists(labels_xlsx))
     
@@ -1003,7 +1006,7 @@ lang_map = get_rv_labels("input_language")
     cols <- names(data())
     
     # geo_mode choices
-    geo_choices <- .choice_vec("quant_anon_geo_mode", lang = .get_lang("English"))
+    geo_choices <- get_named_choices(input_choices_file, .get_lang(), "quant_anon_geo_mode")
     if (is.null(geo_choices) || !length(geo_choices)) {
       geo_choices <- stats::setNames(
         c("aggregate", "truncate"),
