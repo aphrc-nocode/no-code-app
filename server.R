@@ -580,6 +580,10 @@ function(input, output, session){
 	  source("server/omop_summaries.R", local = TRUE)
 	  omopVizServer()
 
+	  ### ---- Data Anonymization ---------------------------####
+     source("server/anon_server_module_quant.R", local = TRUE)
+	  mod_quant_anon_server("quant_anon", rv_current = rv_current)
+
 	  #### ---- Generate Research Questions --------------------------------------####
 	  source("server/research_questions.R", local = TRUE)
 	  generate_research_questions_choices()

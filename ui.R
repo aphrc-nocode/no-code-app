@@ -48,6 +48,18 @@ fluidPage(
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     logo=  "WWW/aphrc.png"),
 
+  shiny::tags$head(
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "anon_custom.css?v=20260129"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    )
+  ),
+  
     div(
       id = "auth_wrapper1",   # <– will be shown after spinner
       login::is_logged_in(
@@ -95,4 +107,3 @@ fluidPage(
       )
     ))
   
-
