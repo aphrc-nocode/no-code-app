@@ -15,6 +15,7 @@ The app is designed to provide end-to-end AI/ML workflow. Specifically:
 - Visualization
 - Transformation
 - Data partitioning
+- Data anonymization
 - Feature engineering
 - Model selection
 - Hyperparameter tuning
