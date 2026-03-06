@@ -1,5 +1,7 @@
 libraries <- c(
    "remotes",
+   "leaflet",
+   "sdcMicro",
 	"plyr",
 	"e1071",
 	"nnet",
@@ -90,12 +92,7 @@ libraries <- c(
 	"duckdb",
 	"gbm",
 	"MLmetrics",
-	"fs",
-   "cookies",
-   "emayili",
-   "shinybusy",
-   "leaflet",
-   "sdcMicro"
+	"fs"
 )
 
 
