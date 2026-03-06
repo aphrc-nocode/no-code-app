@@ -1,4 +1,4 @@
-automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base) {
+automl_controls_server <- function(id, rv_current, rv_ml_ai, api_base, app_username) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

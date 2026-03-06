@@ -312,8 +312,9 @@ setup_models_ui = function() {
 			rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$setup_models_analysis_target_variable)
 			rv_ml_ai$excluded_predictors = input$setup_models_analysis_exclude_variables
 			
-			if (isTRUE(input$setup_models_analysis_exclude_variables!="") & isTRUE(!is.null(input$setup_models_analysis_exclude_variables))) {
+			if (isTRUE(!all(input$setup_models_analysis_exclude_variables %in% "")) & isTRUE(!is.null(input$setup_models_analysis_exclude_variables))) {
 				rv_current$working_df = Rautoml::drop_variables(rv_current$working_df, input$setup_models_analysis_exclude_variables)
+				rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$setup_models_analysis_target_variable)
 			}
 
 			rv_ml_ai$ml_ai_setup_result = paste0(

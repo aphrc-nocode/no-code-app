@@ -8,6 +8,8 @@ function(input, output, session){
   )
   
   source("server/auth.R")
+  source("Server/homepage_translation_labels.R", local = TRUE)
+  register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
   
@@ -52,7 +54,7 @@ function(input, output, session){
 	  source("server/deploy_model_server.R", local=TRUE)
 	  source("ui/deploy_model_ui.R", local=TRUE)
 	  source("server/predict_pycaret_server.R", local = TRUE)
-
+	  
 	  api_base <- reactive({
 		 val <- input$fastapi_base
 			 if (is.null(val) || !nzchar(trimws(val))) {
@@ -61,7 +63,38 @@ function(input, output, session){
 				trimws(val)
 			 }
 	  })
-
+	  observe({
+	    
+	    expand_label   <- get_rv_labels("sidebar_toggle_expand_menu")
+	    collapse_label <- get_rv_labels("sidebar_toggle_menu_aria")
+	    
+	    session$sendCustomMessage(
+	      type = "sidebarLabels",
+	      message = list(
+	        expand   = expand_label,
+	        collapse = collapse_label
+	      )
+	    )
+	    
+	  })
+	  
+	  # Send sidebar toggle labels to JS (reactive-safe)
+	  sent_sidebar_labels <- reactiveVal(FALSE)
+	  
+	  observe({
+	    req(rv_lang$labelling_file_df)    
+	    req(!sent_sidebar_labels())       
+	    
+	    expand_label   <- get_rv_labels("sidebar_toggle_expand_menu")
+	    collapse_label <- get_rv_labels("sidebar_toggle_menu_aria")
+	    
+	    session$sendCustomMessage(
+	      "sidebarLabels",
+	      list(expand = expand_label, collapse = collapse_label)
+	    )
+	    
+	    sent_sidebar_labels(TRUE)
+	  })
 
 	  #### ---- Placeholder for reactive values ------------------------------------
 	  ##### -------- Currently selected dataset ------------------------------------
@@ -211,7 +244,8 @@ function(input, output, session){
 		 id         = "automl_controls",
 		 rv_current = rv_current,
 		 rv_ml_ai   = rv_ml_ai,
-		 api_base   = api_base
+		 api_base   = api_base,
+		 app_username = app_username
 	  )
 
 	  train_model_server(
