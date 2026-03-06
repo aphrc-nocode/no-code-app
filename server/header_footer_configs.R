@@ -141,10 +141,20 @@ menu_translation = function(){
                 menuItem(HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
                 br(),
                 div(
-                  style="display: flex; justify-content: flex-start; gap: 10px; margin-top: 5px;",
-                  actionBttn("logoutID", label = get_rv_labels("logoutID"), class = "btn")
-                  #is_logged_in(
-                  # id = app_login_config$APP_ID,login::logout_button(id = "logout", label = "Sign out"))
+                  class = "logout-container",
+                  actionBttn(
+                    inputId = "logoutID",
+                    label = HTML(
+                      paste0(
+                        "<span class='logout-inner'>",
+                        "<i class='fa fa-right-from-bracket logout-icon'></i>",
+                        "<span class='logout-label'>", get_rv_labels("logoutID"), "</span>",
+                        "</span>"
+                      )
+                    ),
+                    class = "btn",
+                    title = get_rv_labels("logoutID")   # <- tooltip text
+                  )
                 )
                 
     )
