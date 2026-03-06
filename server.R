@@ -8,7 +8,7 @@ function(input, output, session){
   )
   
   source("server/auth.R")
-  source("Server/homepage_translation_labels.R", local = TRUE)
+  source("server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
@@ -740,7 +740,7 @@ function(input, output, session){
 	  # END NEW ADD
 	  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
 	  source("server/automl_server.R", local=TRUE)
-	  automl_server("automl_module", rv_current, rv_ml_ai)
+	  automl_server("automl_module", rv_current, rv_ml_ai, api_base)
 
 	  observe({
 		 req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist

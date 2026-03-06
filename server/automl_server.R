@@ -1,4 +1,4 @@
-automl_server <- function(id, rv_current, rv_ml_ai) {
+automl_server <- function(id, rv_current, rv_ml_ai, api_base) {
   moduleServer(id, function(input, output, session) {
     
     # start evaluate model Review position
@@ -43,7 +43,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
 
       res <- httr::POST(
         #url = "http://127.0.0.1:8000/evaluate_model",
-        url = paste0(api_base, "/evaluate_model"),
+        url = paste0(api_base(), "/evaluate_model"),
         body = list(
         file        = upload_file(tmpfile),
         target      = rv_ml_ai$outcome,
@@ -77,7 +77,7 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
         
         showNotification(paste("Model evaluation", input$selected_model, "done"), type = "message")
       } else {
-        showNotification("ErrOr during evaluation's model choosen", type = "error")
+        showNotification("Error during evaluation's model choosen", type = "error")
         evaluation_results(NULL)
         evaluation_raw_data(NULL)
       }
@@ -100,7 +100,8 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       model_code <- rv_ml_ai$model_mapping[[input$selected_model]]
       
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/predict_model",
+        # url = "http://127.0.0.1:8000/predict_model",
+        url = paste0(api_base(), "/predict_model"),
         body = list(
           train_file = upload_file(tmp_train),
           test_file = upload_file(test_path),
@@ -165,7 +166,8 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       print(paste("Task:", rv_ml_ai$task))
       
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/automl",
+        # url = "http://127.0.0.1:8000/automl",
+        url = paste0(api_base(), "/automl"),
         body = list(
           target = rv_ml_ai$outcome,
           session_id = rv_ml_ai$seed_value,
@@ -458,7 +460,8 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       write.csv(rv_current$working_df, tmpfile, row.names = FALSE)
       
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/automl",
+        # url = "http://127.0.0.1:8000/automl",
+        url = paste0(api_base(), "/automl"),
         body = list(
           file = upload_file(tmpfile),
           target = input$target
@@ -477,7 +480,8 @@ automl_server <- function(id, rv_current, rv_ml_ai) {
       write.csv(rv_current$working_df, tmpfile, row.names = FALSE)
       
       res <- httr::POST(
-        url = "http://127.0.0.1:8000/predict_deployed_model",
+        # url = "http://127.0.0.1:8000/predict_deployed_model",
+        url = paste0(api_base(), "/predict_deployed_model"),
         body = list(file = upload_file(tmpfile))
       )
       

@@ -90,7 +90,12 @@ libraries <- c(
 	"duckdb",
 	"gbm",
 	"MLmetrics",
-	"fs"
+	"fs",
+   "cookies",
+   "emayili",
+   "shinybusy",
+   "leaflet",
+   "sdcMicro"
 )
 
 
