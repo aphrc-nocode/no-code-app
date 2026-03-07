@@ -4,10 +4,11 @@ save_best_model_log <- function(leaderboard,
                                 session_id = NA_character_,
                                 dataset_id = NA_character_,
                                 outcome    = NA_character_,
-                                framework  = "PyCaret") {
+                                framework  = "PyCaret",
+										  app_username) {
 
   # ---------- Emplacement des logs ----------
-  logs_path <- file.path(getwd(), "logs", "models", "index.csv")
+  logs_path <- file.path(getwd(), app_username, "logs", "models", "index.csv")
   dir.create(dirname(logs_path), recursive = TRUE, showWarnings = FALSE)
 
   # ---------- Helpers robustes ----------
@@ -131,7 +132,7 @@ save_best_model_log <- function(leaderboard,
   # ---------- Append / écriture (en large) ----------
   if (!file.exists(logs_path)) {
      #utils::write.csv(row, logs_path, row.names = FALSE, na = "", fileEncoding = "UTF-8", qmethod = "double")
-    utils::write.table(out, logs_path,
+    utils::write.table(row, logs_path,
                    sep = ",", row.names = FALSE,
                    col.names = TRUE, qmethod = "escape")
 
