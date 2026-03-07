@@ -1,4 +1,4 @@
-train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
+train_model_server <- function(id, rv_ml_ai, rv_current, api_base, app_username) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -240,7 +240,8 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base) {
             session_id   = rv_ml_ai$session_id,
             dataset_id   = rv_ml_ai$dataset_id,
             outcome      = rv_ml_ai$target,
-            framework    = "PyCaret"
+            framework    = "PyCaret",
+				app_username = app_username
           )
         }
       # Selector based on the Top-N view

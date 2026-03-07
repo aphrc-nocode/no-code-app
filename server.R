@@ -252,7 +252,8 @@ function(input, output, session){
 		 id         = "train_model",
 		 rv_current = rv_current,
 		 rv_ml_ai   = rv_ml_ai,
-		 api_base   = api_base
+		 api_base   = api_base,
+		 app_username = app_username
 	  )
 
 	  # End update training
