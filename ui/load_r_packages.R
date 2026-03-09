@@ -1,6 +1,7 @@
 libraries <- c(
    "remotes",
    "leaflet",
+	"sortable"
    "sdcMicro",
 	"plyr",
 	"e1071",
