@@ -1,5 +1,6 @@
 .DS_Store
 users_db/users.sqlite
+.env
 # History files
 .Rhistory
 .Rapp.history

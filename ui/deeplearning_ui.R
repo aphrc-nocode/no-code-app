@@ -348,7 +348,7 @@ deeplearning_ui <- function() {
                                             conditionalPanel(
                                                 condition = "input.task_selector == 'semantic_segmentation'",
                                                 actionButton("start_seg_job", "Launch Segmentation Job", class = "btn btn-success btn-lg btn-block", icon = icon("rocket"))
-                                            ),
+                                            )
                                         ),
                                         br(),
                                         div(

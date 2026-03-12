@@ -1584,7 +1584,7 @@ deep_learning <- function() {
     # --- 7.1: Fetch Completed Jobs for Inference Dropdown ---
     observe({
         # Trigger when Inference tab is active
-        req(input$main_tabs == "Inference")
+        req(input$main_tabs == "Prediction")
 
         tryCatch(
             {
