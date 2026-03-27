@@ -1,122 +1,172 @@
 /* ==========================================================================
-   Workflow Stepper — horizontal progress bar in dashboard body
-   Non-breaking: sits above tabItems content area
+   Workflow Stepper — Premium design inspired by Vercel/Stripe
    ========================================================================== */
 
 .workflow-stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 20px 10px;
-  margin: 0 0 8px;
-  background: linear-gradient(135deg, #f7fff7 0%, #eef8ee 100%);
-  border-bottom: 2px solid #e0f0e0;
+  padding: 12px 24px;
+  margin: 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-bottom: 1px solid rgba(123, 193, 72, 0.2);
   overflow-x: auto;
   gap: 0;
+  position: relative;
+}
+
+/* Hidden on homepage and non-workflow tabs */
+.workflow-stepper.stepper-hidden {
+  display: none;
 }
 
 /* ---- Individual step ---- */
 .stepper-step {
   display: flex;
+  flex-direction: column;
   align-items: center;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  position: relative;
+  padding: 4px 8px;
 }
 
 .stepper-step:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.stepper-step:hover .stepper-circle {
+  box-shadow: 0 0 20px rgba(123, 193, 72, 0.3);
 }
 
 /* Circle */
 .stepper-circle {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
-  color: #999;
-  background: #e8e8e8;
-  border: 2px solid #d0d0d0;
-  transition: all 0.3s ease;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* Label */
 .stepper-label {
-  margin-left: 6px;
-  font-size: 12px;
+  margin-top: 5px;
+  font-size: 10px;
   font-weight: 500;
-  color: #888;
+  color: rgba(255,255,255,0.30);
   white-space: nowrap;
-  transition: color 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 /* Connector line between steps */
 .stepper-connector {
-  width: 30px;
+  width: 40px;
   height: 2px;
-  background: #d0d0d0;
-  margin: 0 4px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 2px;
+  margin-bottom: 18px;
   flex-shrink: 0;
-  transition: background 0.3s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1px;
+  position: relative;
+}
+
+/* Animated fill for completed connectors */
+.stepper-connector.completed {
+  background: linear-gradient(90deg, #00BFC4, #7BC148);
+  box-shadow: 0 0 8px rgba(0, 191, 196, 0.3);
 }
 
 /* ---- States ---- */
+
 /* Active / current step */
 .stepper-step.active .stepper-circle {
-  background: #7BC148;
-  border-color: #6aad3a;
+  background: linear-gradient(135deg, #7BC148, #5fa832);
+  border-color: #7BC148;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(123, 193, 72, 0.4);
+  box-shadow: 0 0 24px rgba(123, 193, 72, 0.5),
+              0 0 48px rgba(123, 193, 72, 0.15);
+  transform: scale(1.1);
 }
 
 .stepper-step.active .stepper-label {
-  color: #083B3F;
+  color: #7BC148;
   font-weight: 700;
+}
+
+/* Pulse animation on active step */
+.stepper-step.active .stepper-circle::after {
+  content: '';
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(123, 193, 72, 0.3);
+  animation: stepperPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes stepperPulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 /* Completed step */
 .stepper-step.completed .stepper-circle {
-  background: #00BFC4;
-  border-color: #00a8ad;
-  color: #fff;
+  background: rgba(0, 191, 196, 0.15);
+  border-color: #00BFC4;
+  color: #00BFC4;
 }
 
 .stepper-step.completed .stepper-label {
-  color: #555;
-  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
 }
 
-/* Connector turns green when the step before it is completed */
-.stepper-connector.completed {
-  background: #00BFC4;
+/* Completed checkmark icon */
+.stepper-step.completed .stepper-circle .fa-check {
+  font-size: 13px;
+  color: #00BFC4;
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 992px) {
+@media (max-width: 1100px) {
+  .stepper-connector {
+    width: 24px;
+  }
+  .stepper-step {
+    padding: 4px 4px;
+  }
+}
+
+@media (max-width: 768px) {
   .stepper-label {
     display: none;
   }
   .stepper-connector {
-    width: 18px;
+    width: 16px;
+    margin-bottom: 0;
   }
   .workflow-stepper {
-    padding: 10px 12px 8px;
+    padding: 10px 12px;
   }
-}
-
-@media (max-width: 576px) {
   .stepper-circle {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     font-size: 11px;
-  }
-  .stepper-connector {
-    width: 12px;
   }
 }
