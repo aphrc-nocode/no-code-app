@@ -2,8 +2,8 @@ library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
-  waiter_show(
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+  waiter::waiter_show(
+    html = waiter::spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     color = "#FFF"
   )
   
@@ -15,8 +15,8 @@ function(input, output, session){
 
   observeEvent(USER$logged_in, {
 	 req(isTRUE(USER$logged_in))
-	 waiter_show(
-		html = spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+	 waiter::waiter_show(
+		html = waiter::spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
 		color = "#FFF"
 	 )
 
@@ -750,9 +750,9 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
-	  waiter_hide()
+	  waiter::waiter_hide()
   }, ignoreInit = FALSE)
 
-  waiter_hide()
+  waiter::waiter_hide()
   
 }
