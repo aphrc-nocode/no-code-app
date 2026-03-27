@@ -217,6 +217,9 @@ session_persistence_server <- function(session, app_username,
     })
   })
 
-  # ---- INITIAL RESTORE (called once after login) ---------------------------
-  .do_restore()
+  # ---- INITIAL RESTORE (disabled — causes blank pages with renderMenu) ------
+  # TODO: Re-enable when a "Resume Session" button is added to the Home page
+  #       or Source Data page. Auto-restore during login conflicts with the
+  #       app's normal initialization flow and leaves the UI in a broken state.
+  # .do_restore()
 }
