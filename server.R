@@ -305,6 +305,18 @@ function(input, output, session){
 	  
 	  menu_translation()
 
+	  #### ---- Workflow Stepper (reactive rendering) ------------------------------
+	  output$workflow_stepper_bar <- renderUI({
+		active_tab <- input$dynamic_meinu_aphrc
+		current_step <- get_step_for_tab(active_tab)
+		render_stepper_html(current_step)
+	  })
+
+	  ## Stepper click navigation
+	  observeEvent(input$stepper_nav, {
+		shinydashboard::updateTabItems(session, "dynamic_meinu_aphrc", selected = input$stepper_nav)
+	  }, ignoreInit = TRUE)
+
 	  #### ---- Change language ----------------------------------------------------
 	  output$change_language = change_language
 

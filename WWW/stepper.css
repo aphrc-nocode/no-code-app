@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Workflow Stepper — horizontal progress bar in dashboard body
+   Non-breaking: sits above tabItems content area
+   ========================================================================== */
+
+.workflow-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px 10px;
+  margin: 0 0 8px;
+  background: linear-gradient(135deg, #f7fff7 0%, #eef8ee 100%);
+  border-bottom: 2px solid #e0f0e0;
+  overflow-x: auto;
+  gap: 0;
+}
+
+/* ---- Individual step ---- */
+.stepper-step {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.stepper-step:hover {
+  transform: translateY(-1px);
+}
+
+/* Circle */
+.stepper-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #999;
+  background: #e8e8e8;
+  border: 2px solid #d0d0d0;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* Label */
+.stepper-label {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+/* Connector line between steps */
+.stepper-connector {
+  width: 30px;
+  height: 2px;
+  background: #d0d0d0;
+  margin: 0 4px;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+/* ---- States ---- */
+/* Active / current step */
+.stepper-step.active .stepper-circle {
+  background: #7BC148;
+  border-color: #6aad3a;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(123, 193, 72, 0.4);
+}
+
+.stepper-step.active .stepper-label {
+  color: #083B3F;
+  font-weight: 700;
+}
+
+/* Completed step */
+.stepper-step.completed .stepper-circle {
+  background: #00BFC4;
+  border-color: #00a8ad;
+  color: #fff;
+}
+
+.stepper-step.completed .stepper-label {
+  color: #555;
+  font-weight: 600;
+}
+
+/* Connector turns green when the step before it is completed */
+.stepper-connector.completed {
+  background: #00BFC4;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 992px) {
+  .stepper-label {
+    display: none;
+  }
+  .stepper-connector {
+    width: 18px;
+  }
+  .workflow-stepper {
+    padding: 10px 12px 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .stepper-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+  .stepper-connector {
+    width: 12px;
+  }
+}

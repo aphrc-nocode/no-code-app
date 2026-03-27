@@ -1,4 +1,5 @@
 ## Load UI files
+source("ui/stepper_ui.R")
 source("ui/sourcedata_ui.R")
 source("ui/overview_ui.R")
 source("ui/explore_ui.R")
@@ -75,6 +76,10 @@ aphrcBody <- dashboardBody(
 		});
 		"))
 	),
+	## ---- Stepper CSS ----
+	tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "stepper.css")),
+	## ---- Workflow Stepper (above tab content) ----
+	stepper_ui(),
 
 	tabItems(
 		tabItem(tabName = "homePage"
