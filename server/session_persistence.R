@@ -150,19 +150,30 @@ session_persistence_server <- function(session, app_username,
       .list_to_rv(rv_ml_ai, snapshot$rv_ml_ai, rv_ml_ai_keys)
       .list_to_rv(rv_train_control_caret, snapshot$rv_train_ctrl, rv_train_control_keys)
 
-      # Restore sidebar tab — delay to let renderMenu() finish first
-      if (!is.null(snapshot$active_tab)) {
-        restored_tab <- snapshot$active_tab
-        shinyjs::delay(2000, {
-          shinydashboard::updateTabItems(session, "tabs", selected = restored_tab)
-        })
-      }
-
+      # Restore sidebar tab — use JavaScript to click the menu item directly
+      # (updateTabItems doesn't work with sidebarMenuOutput/renderMenu)
+      saved_tab <- snapshot$active_tab
       saved_time <- format(snapshot$saved_at, "%b %d, %H:%M")
-      showNotification(
-        paste0("\u267b\ufe0f Session restored from ", saved_time),
-        type = "message", duration = 5
-      )
+
+      if (!is.null(saved_tab) && saved_tab != "homePage") {
+        shinyjs::delay(2500, {
+          # Click the sidebar link whose data-value matches the saved tab
+          shinyjs::runjs(sprintf(
+            "var el = $('a[data-value=\"%s\"]'); if(el.length){ el.click(); }",
+            saved_tab
+          ))
+        })
+        showNotification(
+          paste0("\u267b\ufe0f Session restored from ", saved_time,
+                 " \u2014 navigating back to your workspace..."),
+          type = "message", duration = 5
+        )
+      } else {
+        showNotification(
+          paste0("\u267b\ufe0f Session restored from ", saved_time),
+          type = "message", duration = 5
+        )
+      }
       return(invisible(TRUE))
     }, error = function(e) {
       warning("[session-persistence] Restore failed: ", e$message)
