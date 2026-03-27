@@ -4,8 +4,12 @@
 # ============================================================================
 #
 # Saves key reactive values to <username>/session_state.rds so that if the
-# browser is closed (power failure, accidental tab close, etc.) the user's
-# workspace is restored on re-login.
+# browser is closed the user's workspace is restored on re-login.
+#
+# PERFORMANCE NOTES:
+# - Large objects (data, working_df) are saved lazily (5 min interval)
+# - Small metadata is saved more frequently (event-driven)
+# - All saves are debounced to prevent stacking
 # ============================================================================
 
 # ---------------------------------------------------------------------------
@@ -17,7 +21,6 @@
   out <- list()
   for (nm in all_names) {
     val <- tryCatch(isolate(rv[[nm]]), error = function(e) NULL)
-    # Skip non-serialisable objects (DB connections, environments, etc.)
     if (inherits(val, c("DBIConnection", "Pool", "environment", "R6"))) next
     out[[nm]] <- val
   }
@@ -28,6 +31,7 @@
 # Helper: restore values into a reactiveValues object
 # ---------------------------------------------------------------------------
 .list_to_rv <- function(rv, saved, keys = NULL) {
+  if (is.null(saved)) return()
   nms <- names(saved)
   if (!is.null(keys)) nms <- intersect(nms, keys)
   for (nm in nms) {
@@ -41,18 +45,6 @@
 # PUBLIC API — called from server.R
 # ===========================================================================
 
-# ---------------------------------------------------------------------------
-# session_persistence_server()
-#
-# Arguments:
-#   session       – Shiny session
-#   app_username  – character, the logged-in user name
-#   rv_current    – reactiveValues for the current dataset / transform state
-#   rv_metadata   – reactiveValues for upload logs & summaries
-#   rv_ml_ai      – reactiveValues for ML/AI setup
-#   rv_train_control_caret – reactiveValues for caret train control
-#   input         – Shiny input (to read active sidebar tab)
-# ---------------------------------------------------------------------------
 session_persistence_server <- function(session, app_username,
                                        rv_current, rv_metadata,
                                        rv_ml_ai, rv_train_control_caret,
@@ -62,9 +54,9 @@ session_persistence_server <- function(session, app_username,
   state_dir  <- file.path(getwd(), app_username)
   state_file <- file.path(state_dir, "session_state.rds")
 
-  # Keys we care about (avoid persisting huge/transient objects)
-  rv_current_keys <- c(
-    "dataset_id", "metadata_id", "data", "working_df",
+  # Keys — LIGHT (small scalars, saved on events)
+  rv_current_light_keys <- c(
+    "dataset_id", "metadata_id",
     "selected_vars", "selected_var",
     "current_filter", "current_filter_reset",
     "manage_data_title_explore", "manage_data_title_transform",
@@ -74,8 +66,11 @@ session_persistence_server <- function(session, app_username,
     "recoded_variable_labels_log", "missing_prop_df",
     "created_missing_values_log", "outlier_values",
     "handle_missing_values_log", "handle_outlier_values_log",
-    "quick_explore_summary", "outcome", "vartype_all"
+    "outcome", "vartype_all"
   )
+
+  # Keys — HEAVY (data frames, saved only on timer or session end)
+  rv_current_heavy_keys <- c("data", "working_df", "quick_explore_summary")
 
   rv_ml_ai_keys <- c(
     "session_id", "seed_value", "dataset_id",
@@ -96,21 +91,34 @@ session_persistence_server <- function(session, app_username,
     "data_summary_summary", "data_summary_summarytools"
   )
 
-  # ---- SAVE ----------------------------------------------------------------
-  .do_save <- function(silent = TRUE) {
+  # ---- Internal save guard (debounce) --------------------------------------
+  .last_save_time <- reactiveVal(Sys.time() - 10)
+
+  # ---- SAVE (light = metadata only, full = includes heavy keys) ------------
+  .do_save <- function(include_heavy = FALSE, silent = TRUE) {
+    # Debounce: skip if last save was < 5 seconds ago
+    elapsed <- as.numeric(difftime(Sys.time(), isolate(.last_save_time()), units = "secs"))
+    if (elapsed < 5) return(invisible())
+
     tryCatch({
       if (!dir.exists(state_dir)) dir.create(state_dir, recursive = TRUE)
 
+      # Always save light keys
+      current_keys <- rv_current_light_keys
+      if (include_heavy) current_keys <- c(current_keys, rv_current_heavy_keys)
+
       snapshot <- list(
         saved_at       = Sys.time(),
-        active_tab     = isolate(input$dynamic_meinu_aphrc),
-        rv_current     = .rv_to_list(rv_current, rv_current_keys),
+        active_tab     = isolate(input$tabs),
+        rv_current     = .rv_to_list(rv_current, current_keys),
         rv_metadata    = .rv_to_list(rv_metadata, rv_metadata_keys),
         rv_ml_ai       = .rv_to_list(rv_ml_ai, rv_ml_ai_keys),
-        rv_train_ctrl  = .rv_to_list(rv_train_control_caret, rv_train_control_keys)
+        rv_train_ctrl  = .rv_to_list(rv_train_control_caret, rv_train_control_keys),
+        has_heavy      = include_heavy
       )
 
       saveRDS(snapshot, file = state_file)
+      .last_save_time(Sys.time())
 
       if (!silent) {
         showNotification(
@@ -129,21 +137,23 @@ session_persistence_server <- function(session, app_username,
     tryCatch({
       snapshot <- readRDS(state_file)
 
-      # Sanity check — don't restore ancient snapshots (> 7 days)
+      # Don't restore ancient snapshots (> 7 days)
       if (difftime(Sys.time(), snapshot$saved_at, units = "days") > 7) {
         message("[session-persistence] Snapshot too old, skipping restore.")
         return(invisible(FALSE))
       }
 
-      .list_to_rv(rv_current, snapshot$rv_current, rv_current_keys)
+      # Restore light + heavy keys from rv_current
+      all_current_keys <- c(rv_current_light_keys, rv_current_heavy_keys)
+      .list_to_rv(rv_current, snapshot$rv_current, all_current_keys)
       .list_to_rv(rv_metadata, snapshot$rv_metadata, rv_metadata_keys)
       .list_to_rv(rv_ml_ai, snapshot$rv_ml_ai, rv_ml_ai_keys)
       .list_to_rv(rv_train_control_caret, snapshot$rv_train_ctrl, rv_train_control_keys)
 
-      # Restore sidebar tab
+      # Restore sidebar tab (use correct menu ID)
       if (!is.null(snapshot$active_tab)) {
         shinydashboard::updateTabItems(
-          session, "dynamic_meinu_aphrc", selected = snapshot$active_tab
+          session, "tabs", selected = snapshot$active_tab
         )
       }
 
@@ -159,35 +169,29 @@ session_persistence_server <- function(session, app_username,
     })
   }
 
-  # ---- AUTO-SAVE TIMER (every 60 seconds) ----------------------------------
+  # ---- AUTO-SAVE TIMER (every 5 minutes for heavy data) --------------------
   observe({
-    invalidateLater(60000, session)
-    # Only save if there is data loaded
+    invalidateLater(300000, session)  # 5 minutes instead of 60 seconds
     if (!is.null(isolate(rv_current$dataset_id))) {
-      .do_save(silent = TRUE)
+      .do_save(include_heavy = TRUE, silent = TRUE)
     }
   })
 
-  # ---- SAVE ON KEY EVENTS --------------------------------------------------
+  # ---- SAVE ON KEY EVENTS (light saves — fast) -----------------------------
   # After dataset upload
   observeEvent(rv_current$dataset_id, {
-    if (!is.null(rv_current$dataset_id)) .do_save(silent = FALSE)
+    if (!is.null(rv_current$dataset_id)) .do_save(include_heavy = TRUE, silent = FALSE)
   }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
-  # After data transformation (working_df changes)
-  observeEvent(rv_current$working_df, {
-    .do_save(silent = TRUE)
-  }, ignoreInit = TRUE, ignoreNULL = TRUE)
-
-  # After ML setup changes
+  # After ML setup changes (light only — fast)
   observeEvent(rv_ml_ai$outcome, {
-    .do_save(silent = TRUE)
+    .do_save(include_heavy = FALSE, silent = TRUE)
   }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
-  # ---- SAVE ON SESSION END -------------------------------------------------
+  # ---- SAVE ON SESSION END (full save) -------------------------------------
   session$onSessionEnded(function() {
     isolate({
-      tryCatch(.do_save(silent = TRUE), error = function(e) NULL)
+      tryCatch(.do_save(include_heavy = TRUE, silent = TRUE), error = function(e) NULL)
     })
   })
 
