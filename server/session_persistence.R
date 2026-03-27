@@ -150,11 +150,12 @@ session_persistence_server <- function(session, app_username,
       .list_to_rv(rv_ml_ai, snapshot$rv_ml_ai, rv_ml_ai_keys)
       .list_to_rv(rv_train_control_caret, snapshot$rv_train_ctrl, rv_train_control_keys)
 
-      # Restore sidebar tab (use correct menu ID)
+      # Restore sidebar tab — delay to let renderMenu() finish first
       if (!is.null(snapshot$active_tab)) {
-        shinydashboard::updateTabItems(
-          session, "tabs", selected = snapshot$active_tab
-        )
+        restored_tab <- snapshot$active_tab
+        shinyjs::delay(2000, {
+          shinydashboard::updateTabItems(session, "tabs", selected = restored_tab)
+        })
       }
 
       saved_time <- format(snapshot$saved_at, "%b %d, %H:%M")
