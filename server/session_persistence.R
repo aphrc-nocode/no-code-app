@@ -150,30 +150,40 @@ session_persistence_server <- function(session, app_username,
       .list_to_rv(rv_ml_ai, snapshot$rv_ml_ai, rv_ml_ai_keys)
       .list_to_rv(rv_train_control_caret, snapshot$rv_train_ctrl, rv_train_control_keys)
 
-      # Restore sidebar tab — use JavaScript to click the menu item directly
-      # (updateTabItems doesn't work with sidebarMenuOutput/renderMenu)
-      saved_tab <- snapshot$active_tab
+      # Build informative toast — don't auto-navigate (causes blank pages
+      # with renderMenu). Just tell the user their data is ready.
       saved_time <- format(snapshot$saved_at, "%b %d, %H:%M")
 
-      if (!is.null(saved_tab) && saved_tab != "homePage") {
-        shinyjs::delay(2500, {
-          # Click the sidebar link whose data-value matches the saved tab
-          shinyjs::runjs(sprintf(
-            "var el = $('a[data-value=\"%s\"]'); if(el.length){ el.click(); }",
-            saved_tab
-          ))
-        })
-        showNotification(
-          paste0("\u267b\ufe0f Session restored from ", saved_time,
-                 " \u2014 navigating back to your workspace..."),
-          type = "message", duration = 5
-        )
+      # Map tabName to readable section name
+      tab_labels <- c(
+        "sourcedata" = "Source Data",
+        "Overview" = "Manage Data > Overview",
+        "Explore" = "Manage Data > Explore",
+        "Transform" = "Manage Data > Transform",
+        "combineData" = "Manage Data > Combine",
+        "visualizeData" = "Visualize Data",
+        "summarizeAutomatic" = "Visualize > Auto Summary",
+        "summarizeCustom" = "Visualize > Custom",
+        "setupModels" = "Machine Learning > Initialize",
+        "featureEngineering" = "Machine Learning > Features",
+        "trainModel" = "Machine Learning > Train",
+        "validateDeployModel" = "Machine Learning > Validate",
+        "predictClassify" = "Machine Learning > Predict"
+      )
+
+      saved_tab <- snapshot$active_tab
+      section_name <- if (!is.null(saved_tab) && saved_tab %in% names(tab_labels)) {
+        tab_labels[[saved_tab]]
       } else {
-        showNotification(
-          paste0("\u267b\ufe0f Session restored from ", saved_time),
-          type = "message", duration = 5
-        )
+        NULL
       }
+
+      toast_msg <- paste0("\u267b\ufe0f Session restored from ", saved_time, ".")
+      if (!is.null(section_name)) {
+        toast_msg <- paste0(toast_msg, " Navigate to ", section_name, " to continue.")
+      }
+
+      showNotification(toast_msg, type = "message", duration = 8)
       return(invisible(TRUE))
     }, error = function(e) {
       warning("[session-persistence] Restore failed: ", e$message)
