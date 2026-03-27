@@ -1,28 +1,23 @@
 # ui/stepper_ui.R
 # ============================================================================
-# Workflow Stepper — premium progress bar in the dashboard body area
-# Hidden on homepage and non-workflow tabs, highlights active step
+# Workflow Stepper — clean text-based progress indicator
+# White background, checkmark text, section header with step count
 # ============================================================================
 
-# Define the workflow steps and their corresponding sidebar tabNames
 workflow_steps <- list(
-  list(num = 1, label = "Upload",       tabs = c("sourcedata")),
-  list(num = 2, label = "Explore",      tabs = c("Overview", "Explore")),
-  list(num = 3, label = "Transform",    tabs = c("Transform", "combineData")),
-  list(num = 4, label = "Visualize",    tabs = c("visualizeData", "summarizeAutomatic", "summarizeCustom")),
-  list(num = 5, label = "Model Setup",  tabs = c("setupModels", "featureEngineering")),
-  list(num = 6, label = "Train",        tabs = c("trainModel")),
-  list(num = 7, label = "Deploy",       tabs = c("validateDeployModel", "predictClassify"))
+  list(num = 1, label = "Upload",       section = "Data Upload",        tabs = c("sourcedata")),
+  list(num = 2, label = "Explore",      section = "Data Exploration",   tabs = c("Overview", "Explore")),
+  list(num = 3, label = "Transform",    section = "Data Transformation", tabs = c("Transform", "combineData")),
+  list(num = 4, label = "Visualize",    section = "Visualization",      tabs = c("visualizeData", "summarizeAutomatic", "summarizeCustom")),
+  list(num = 5, label = "Model Setup",  section = "Machine Learning / Model Setup", tabs = c("setupModels", "featureEngineering")),
+  list(num = 6, label = "Train",        section = "Model Training",     tabs = c("trainModel")),
+  list(num = 7, label = "Deploy",       section = "Validate & Deploy",  tabs = c("validateDeployModel", "predictClassify"))
 )
 
-# Tabs where stepper should NOT appear
 non_workflow_tabs <- c("homePage", "researchQuestions", "deeplearning", "cnndeep",
                        "evidenceQuality", "achilles", "omop_visualizations",
                        "CohortConstructor", "FeatureExtraction", "addResources")
 
-# ---------------------------------------------------------------------------
-# get_step_for_tab() — returns the step number for a given tabName
-# ---------------------------------------------------------------------------
 get_step_for_tab <- function(tab_name) {
   if (is.null(tab_name) || tab_name %in% non_workflow_tabs) return(0)
   for (step in workflow_steps) {
@@ -31,9 +26,6 @@ get_step_for_tab <- function(tab_name) {
   return(0)
 }
 
-# ---------------------------------------------------------------------------
-# stepper_ui() — container for the reactive stepper bar
-# ---------------------------------------------------------------------------
 stepper_ui <- function() {
   tags$div(
     id = "workflow-stepper-container",
@@ -41,52 +33,63 @@ stepper_ui <- function() {
   )
 }
 
-# ---------------------------------------------------------------------------
-# render_stepper_html() — builds stepper HTML given the active step number
-# ---------------------------------------------------------------------------
 render_stepper_html <- function(active_step) {
-  # Hide on non-workflow pages (active_step == 0)
   if (active_step == 0) {
     return(tags$div(class = "workflow-stepper stepper-hidden"))
   }
 
+  # Get current section name
+  current_section <- workflow_steps[[active_step]]$section
+  total_steps <- length(workflow_steps)
+
+  # Build step items
   step_elements <- list()
 
   for (i in seq_along(workflow_steps)) {
     step <- workflow_steps[[i]]
 
-    # Determine CSS class
-    css_class <- "stepper-step"
-    if (i < active_step)  css_class <- paste(css_class, "completed")
-    if (i == active_step) css_class <- paste(css_class, "active")
-
-    # Circle content: checkmark for completed, number for others
-    circle_content <- if (i < active_step) {
-      tags$i(class = "fa fa-check")
+    if (i < active_step) {
+      # Completed
+      el <- tags$span(
+        class = "stepper-item completed",
+        onclick = sprintf("Shiny.setInputValue('stepper_nav','%s',{priority:'event'});", step$tabs[1]),
+        tags$span(class = "stepper-icon", HTML("&#10004;")),
+        step$label
+      )
+    } else if (i == active_step) {
+      # Active
+      el <- tags$span(
+        class = "stepper-item active",
+        tags$span(class = "stepper-icon", HTML("&#9658;")),
+        step$label
+      )
     } else {
-      as.character(step$num)
+      # Inactive
+      el <- tags$span(
+        class = "stepper-item inactive",
+        onclick = sprintf("Shiny.setInputValue('stepper_nav','%s',{priority:'event'});", step$tabs[1]),
+        tags$span(class = "stepper-icon", HTML("&#9675;")),
+        step$label
+      )
     }
 
-    # Clickable step
-    step_el <- tags$div(
-      class = css_class,
-      onclick = sprintf(
-        "Shiny.setInputValue('stepper_nav', '%s', {priority: 'event'});",
-        step$tabs[1]
-      ),
-      tags$div(class = "stepper-circle", circle_content),
-      tags$span(class = "stepper-label", step$label)
-    )
+    step_elements <- c(step_elements, list(el))
 
-    step_elements <- c(step_elements, list(step_el))
-
-    # Connector line (except after last step)
-    if (i < length(workflow_steps)) {
-      conn_class <- "stepper-connector"
-      if (i < active_step) conn_class <- paste(conn_class, "completed")
-      step_elements <- c(step_elements, list(tags$div(class = conn_class)))
+    # Add separator (except after last)
+    if (i < total_steps) {
+      step_elements <- c(step_elements, list(tags$span(class = "stepper-sep", HTML("&middot;"))))
     }
   }
 
-  tags$div(class = "workflow-stepper", step_elements)
+  tags$div(
+    class = "workflow-stepper",
+    # Header row
+    tags$div(
+      class = "stepper-header",
+      tags$span(class = "stepper-section-name", current_section),
+      tags$span(class = "stepper-step-count", paste0("Step ", active_step, " of ", total_steps))
+    ),
+    # Steps row
+    tags$div(class = "stepper-items", step_elements)
+  )
 }
