@@ -2,8 +2,8 @@ library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
-  waiter_show(
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+  waiter::waiter_show(
+    html = waiter::spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     color = "#FFF"
   )
   
@@ -20,9 +20,9 @@ function(input, output, session){
 	 shinyjs::runjs("$('.auth-container').fadeOut(200);")
 
 	 # ---- Progress overlay with status messages ----
-	 waiter_show(
+	 waiter::waiter_show(
 		html = tagList(
-		  spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+		  waiter::spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
 		  tags$br(),
 		  tags$div(
 			id = "login-progress-text",
@@ -770,9 +770,9 @@ function(input, output, session){
 	  iv_ml$enable()
 
 	  update_progress("Ready!")
-	  waiter_hide()
+	  waiter::waiter_hide()
   }, ignoreInit = FALSE)
 
-  waiter_hide()
+  waiter::waiter_hide()
   
 }
