@@ -41,6 +41,9 @@ function(input, output, session){
 	  #### ---- Create needed folders for datasets and logs ------------------------
 	  source("server/create_dirs.R", local=TRUE)
 	  
+	  #### ---- Session persistence (auto-save / restore) -------------------------
+	  source("server/session_persistence.R", local=TRUE)
+	  
 	  #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
 	  source("R/utils_logging.R")
 
@@ -205,6 +208,17 @@ function(input, output, session){
 			, control_parameters = NULL
 			, tuned_parameters = NULL
 		)
+
+	  #### ---- Restore previous session (if any) --------------------------------
+	  session_persistence_server(
+		 session            = session,
+		 app_username       = app_username,
+		 rv_current         = rv_current,
+		 rv_metadata        = rv_metadata,
+		 rv_ml_ai           = rv_ml_ai,
+		 rv_train_control_caret = rv_train_control_caret,
+		 input              = input
+	  )
 
 	  # Update training results when a new model is trained
 	  automl_controls_server(
