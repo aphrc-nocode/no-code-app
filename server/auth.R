@@ -23,7 +23,7 @@ user_auth <- function(input, output, session) {
       "last_name"  = "Last Name"
     ),
     cookie_name     = "aphrc",
-    cookie_password = "aphrcpass1"
+    salt = "aphrcpass1"
   )
   
   # Show name somewhere if you want (e.g. in header)
