@@ -15,10 +15,28 @@ function(input, output, session){
 
   observeEvent(USER$logged_in, {
 	 req(isTRUE(USER$logged_in))
+
+	 # ---- Immediately hide login form so user sees transition ----
+	 shinyjs::runjs("$('.auth-container').fadeOut(200);")
+
+	 # ---- Progress overlay with status messages ----
 	 waiter_show(
-		html = spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+		html = tagList(
+		  spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+		  tags$br(),
+		  tags$div(
+			id = "login-progress-text",
+			style = "color:#083B3F;font-size:16px;font-weight:500;margin-top:18px;text-align:center;",
+			"Setting up your workspace..."
+		  )
+		),
 		color = "#FFF"
 	 )
+
+	 # Helper to update progress text
+	 update_progress <- function(msg) {
+		shinyjs::runjs(sprintf("$('#login-progress-text').text('%s');", msg))
+	 }
 
 	 if (authed_started()) return()
 	 authed_started(TRUE)
@@ -36,6 +54,8 @@ function(input, output, session){
 	  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
 	  model_training_caret_metrics_download_all_zip_pb = Attendant$new("model_training_caret_metrics_download_all_zip_pb", hide_on_max = TRUE)
 	  
+	  update_progress("Preparing workspace...")
+
 	  #### ---- Input validators ---------------------------------------------------
 	  source("server/input_validators.R")
 	  #### ---- Create needed folders for datasets and logs ------------------------
@@ -294,6 +314,8 @@ function(input, output, session){
 		  leaderboard = NULL
 		)
 
+	  update_progress("Loading dashboard...")
+
 		#### ---- App title ----------------------------------------------------
 	  source("server/header_footer_configs.R", local=TRUE)
 	  app_title()
@@ -401,6 +423,8 @@ function(input, output, session){
 	  generate_data_summary_server()
 	  display_data_summary_server()
 
+	  update_progress("Loading data tools...")
+
 	  #### ----- Explore data -----------------------------------------------
 	  source("server/explore_data.R", local = TRUE)
 	  explore_data_server()
@@ -503,35 +527,23 @@ function(input, output, session){
 	  ##### ---- Update data -----------------------------------------------
 	  explore_data_update_data_server()
 	  
-	  #### ---- Transform variables -------------------------------------- ####
-	  source("server/transform_data.R", local = TRUE)
-
-	  ##### ---- Select variables to transform ------------------------------------###
-	  transform_data_select_variables_server()
-
-	  ##### ---- Change type  -----------------------------------------------###
-	  transform_data_change_type_server()
-
-	  ##### ---- Rename variables  -----------------------------------------------###
-	  transform_data_rename_variables_server()
-
-	  ##### ---- Recode/change value labels ---------------------------------------###
-	  transform_data_quick_explore_recode_server()
-	  
-	  ##### ---- Handle missing data ---------------------------------------###
-	  transform_data_create_missing_values_server()
-	  
-	  ##### ---- Identify outliers ---------------------------------------###
-	  transform_data_identify_outliers_server()
-	  
-	  ##### ---- Handle missing values ---------------------------------------###
-	  transform_data_handle_missing_values_server()
-	  
-	  ##### ---- Plot transform data ----------------------------------------------###
-	  transform_data_quick_explore_plot_server()
-	  
-	  ##### ---- Plot missing data ----------------------------------------------###
-	  transform_data_plot_missing_data_server()
+	  #### ---- Transform variables (LAZY-LOADED) ------------------------------ ####
+	  .transform_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.transform_loaded && input$dynamic_meinu_aphrc == "Transform") {
+		  .transform_loaded <<- TRUE
+		  source("server/transform_data.R", local = TRUE)
+		  transform_data_select_variables_server()
+		  transform_data_change_type_server()
+		  transform_data_rename_variables_server()
+		  transform_data_quick_explore_recode_server()
+		  transform_data_create_missing_values_server()
+		  transform_data_identify_outliers_server()
+		  transform_data_handle_missing_values_server()
+		  transform_data_quick_explore_plot_server()
+		  transform_data_plot_missing_data_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Combine datasets with the existing one --------------------------------------####
 	  source("server/combine_data.R", local = TRUE)
@@ -557,9 +569,15 @@ function(input, output, session){
 	  #### ---- Reset combine data --------------------------------####
 	  combine_data_reset()
 
-	  ##### ---- Control Custom visualizations ------------------ #####
-	  source("server/user_defined_visualization.R", local = TRUE)
-	  user_defined_server()
+	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
+	  .viz_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.viz_loaded && input$dynamic_meinu_aphrc %in% c("summarizeCustom", "visualizeData")) {
+		  .viz_loaded <<- TRUE
+		  source("server/user_defined_visualization.R", local = TRUE)
+		  user_defined_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  ### ------- OMOP ------------------------------------------ #####
 	  
@@ -598,6 +616,7 @@ function(input, output, session){
 	  #### ---- Machine learning and AI --------------- ####
 	  
 	  ##### ----- Set ML/AI UI ------------------- ####
+	  update_progress("Loading ML modules...")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
 	  
@@ -678,9 +697,15 @@ function(input, output, session){
 	  source("server/train_caret_models.R", local=TRUE)
 	  model_training_caret_train_all_server()
 
-	  #### ----- Compare trained models ------------------------------ ####
-	  source("server/compare_trained_caret_models.R", local=TRUE)
-	  model_training_caret_train_metrics_server()
+	  #### ----- Compare trained models (LAZY-LOADED) --------------------- ####
+	  .compare_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.compare_loaded && input$dynamic_meinu_aphrc %in% c("validateDeployModel", "trainModel")) {
+		  .compare_loaded <<- TRUE
+		  source("server/compare_trained_caret_models.R", local = TRUE)
+		  model_training_caret_train_metrics_server()
+		}
+	  }, ignoreInit = TRUE)
 
 	  #### ----- Deploy trained models ------------------------------- ####
 	  source("server/deploy_trained_caret_models.R", local=TRUE)
@@ -722,9 +747,15 @@ function(input, output, session){
 		 rv_ml_ai$framework <- tolower(input$modelling_framework_choices %||% "")
 	  }, ignoreInit = FALSE)
 	  
-	  #### ---- Deep Learning Server ----- ###
-	  source("server/deep_learning.R", local=TRUE)
-	  deep_learning()
+	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
+	  .dl_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.dl_loaded && input$dynamic_meinu_aphrc %in% c("deeplearning", "cnndeep")) {
+		  .dl_loaded <<- TRUE
+		  source("server/deep_learning.R", local = TRUE)
+		  deep_learning()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this
@@ -738,6 +769,7 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
+	  update_progress("Ready!")
 	  waiter_hide()
   }, ignoreInit = FALSE)
 
