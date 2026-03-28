@@ -1,37 +1,48 @@
 header = tags$div(
   class = "custom-header",
   style = "background-color: #7BC148; color: white; padding: 10px;",
-  # Dropdown CSS inline (small, keeps it self-contained)
+  # Dropdown CSS — Vercel/Stripe-inspired, sharp and minimal
   tags$style(HTML("
-    .user-dropdown-wrap { position: relative; cursor: pointer; }
+    .user-dropdown-wrap { position: relative; cursor: pointer; user-select: none; }
     .user-dropdown-btn  {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 14px; border-radius: 6px;
-      transition: background .2s;
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 6px;
+      transition: background .15s ease;
+      font-size: 13px; font-weight: 500; letter-spacing: .01em;
     }
-    .user-dropdown-btn:hover { background: rgba(255,255,255,0.15); }
-    .user-dropdown-btn .fa-caret-down { font-size: 12px; opacity: .7; transition: transform .2s; }
-    .user-dropdown-wrap.open .fa-caret-down { transform: rotate(180deg); }
+    .user-dropdown-btn:hover { background: rgba(255,255,255,0.12); }
+    .user-dropdown-btn .fa-chevron-down {
+      font-size: 9px; opacity: .6; margin-left: 2px;
+      transition: transform .2s ease;
+    }
+    .user-dropdown-wrap.open .fa-chevron-down { transform: rotate(180deg); }
     .user-dropdown-menu {
-      display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
-      min-width: 180px; background: #fff; border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,.15); z-index: 9999;
-      overflow: hidden;
+      display: none; position: absolute; right: 0; top: calc(100% + 6px);
+      min-width: 170px; background: #fff; border-radius: 8px;
+      border: 1px solid #e5e5e5;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.1);
+      z-index: 9999; overflow: hidden;
+      animation: ddFadeIn .12s ease;
+    }
+    @keyframes ddFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .user-dropdown-wrap.open .user-dropdown-menu { display: block; }
-    .user-dropdown-menu .dd-header {
-      padding: 12px 16px; border-bottom: 1px solid #eee;
-      font-size: 11px; color: #999; text-transform: uppercase;
-      letter-spacing: .5px;
+    .user-dropdown-menu .dd-divider {
+      height: 1px; background: #f0f0f0; margin: 4px 0;
     }
     .user-dropdown-menu .dd-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px; color: #333; font-size: 13px;
-      cursor: pointer; transition: background .15s;
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; color: #444; font-size: 13px; font-weight: 450;
+      cursor: pointer; transition: all .12s ease;
+      letter-spacing: .01em;
     }
-    .user-dropdown-menu .dd-item:hover { background: #f5f5f5; }
-    .user-dropdown-menu .dd-item.logout { color: #e74c3c; }
-    .user-dropdown-menu .dd-item.logout:hover { background: #fdf0ef; }
+    .user-dropdown-menu .dd-item i { font-size: 13px; color: #888; width: 16px; text-align: center; }
+    .user-dropdown-menu .dd-item:hover { background: #fafafa; color: #111; }
+    .user-dropdown-menu .dd-item:hover i { color: #555; }
+    .user-dropdown-menu .dd-item.logout:hover { background: #fef2f2; color: #dc2626; }
+    .user-dropdown-menu .dd-item.logout:hover i { color: #dc2626; }
   ")),
   # Close dropdown when clicking elsewhere
   tags$script(HTML("
@@ -54,26 +65,26 @@ header = tags$div(
              br(),
              tags$div(
                class = "user-dropdown-wrap",
-               # Clickable button
+               # Clickable trigger
                tags$div(
                  class = "user-dropdown-btn",
-                 icon("user", style = "font-size: 16px; color: white;"),
+                 icon("user", style = "font-size: 14px; color: white;"),
                  uiOutput("userName", inline = TRUE),
-                 icon("caret-down", style = "color: white;")
+                 icon("chevron-down", style = "color: white;")
                ),
-               # Dropdown menu
+               # Dropdown
                tags$div(
                  class = "user-dropdown-menu",
-                 tags$div(class = "dd-header", "Account"),
                  tags$div(
                    class = "dd-item",
                    onclick = "Shiny.setInputValue('show_profile', Math.random())",
-                   icon("user-circle"), "Profile"
+                   icon("user"), "Profile"
                  ),
+                 tags$div(class = "dd-divider"),
                  tags$div(
                    class = "dd-item logout",
                    onclick = "Shiny.setInputValue('logoutID', Math.random(), {priority: 'event'})",
-                   icon("right-from-bracket"), "Sign out"
+                   icon("power-off"), "Sign out"
                  )
                )
              )
