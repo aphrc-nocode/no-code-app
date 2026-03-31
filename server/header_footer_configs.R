@@ -28,6 +28,23 @@ footer_language_translation = function() {
 #Menu and submenu conversion
 
 
+# Sidebar helper for non-navigating history commands
+history_sidebar_command_item <- function(action, label, icon_tag) {
+  tags$li(
+    class = "history-command-subitem",
+    tags$a(
+      href = "#",
+      role = "button",
+      onclick = sprintf(
+        "Shiny.setInputValue('history_sidebar_action', {action: '%s', nonce: Date.now()}, {priority: 'event'}); return false;",
+        action
+      ),
+      icon_tag,
+      tags$span(class = "menu-label", label)
+    )
+  )
+}
+
 menu_translation = function(){
   output$dynamic_meinu_aphrc <- renderMenu({
     sidebarMenu(id = "tabs",
@@ -134,11 +151,20 @@ menu_translation = function(){
                     tabName = "cnndeep",
                     icon = icon("server", lib = "font-awesome")
                   )
-                )
-                ,
-                
-                
+                ),
+                menuItem(
+                  HTML(paste0("<span class='menu-label'>", get_rv_labels("action_buttons"), "</span>")),
+                  icon = icon("clock-rotate-left", lib = "font-awesome"),
+                  startExpanded = FALSE,
+                  
+                  history_sidebar_command_item("undo",  get_rv_labels("undo"),  icon("rotate-left", lib = "font-awesome")),
+                  history_sidebar_command_item("redo",  get_rv_labels("redo"),  icon("rotate-right", lib = "font-awesome")),
+                  history_sidebar_command_item("reset", get_rv_labels("reset"), icon("arrows-rotate", lib = "font-awesome")),
+                  
+                  history_sidebar_command_item("save",  get_rv_labels("save"),  icon("floppy-disk", lib = "font-awesome"))
+                ),
                 menuItem(HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
+                
                 br(),
                 div(
                   class = "logout-container",
