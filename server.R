@@ -1,4 +1,4 @@
-library(Rautoml)
+	library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
@@ -8,7 +8,7 @@ function(input, output, session){
   )
   
   source("server/auth.R")
-  source("server/homepage_translation_labels.R", local = TRUE)
+  source("Server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
@@ -54,6 +54,11 @@ function(input, output, session){
 	  source("server/deploy_model_server.R", local=TRUE)
 	  source("ui/deploy_model_ui.R", local=TRUE)
 	  source("server/predict_pycaret_server.R", local = TRUE)
+	  
+	  source("server/history_actions.R", local = TRUE)
+	  source("server/history_transform_actions.R", local = TRUE)
+	  source("server/history_visualize_auto_actions.R", local = TRUE)
+	  source("server/history_visualize_custom_actions.R", local = TRUE)
 	  
 	  api_base <- reactive({
 		 val <- input$fastapi_base
@@ -132,6 +137,11 @@ function(input, output, session){
 		 , vartype_all = NULL
 	  )
 	  
+	  ##### ---- Sidebar history actions -----------------------------------
+	  history_actions_server(input, output, session, rv_current, get_rv_labels)
+	  history_transform_actions_server(input, output, session, rv_current, get_rv_labels)
+	  history_visualize_auto_actions_server(input, output, session, rv_current, plots_sec_rv, get_rv_labels)
+	  history_visualize_custom_actions_server(input, output, session, rv_current, plots_sec_rv, get_rv_labels)
 	  #####------------------Plots Reactive-------------------
 
 	  plots_sec_rv <- reactiveValues(
@@ -252,8 +262,7 @@ function(input, output, session){
 		 id         = "train_model",
 		 rv_current = rv_current,
 		 rv_ml_ai   = rv_ml_ai,
-		 api_base   = api_base,
-		 app_username = app_username
+		 api_base   = api_base
 	  )
 
 	  # End update training
@@ -331,6 +340,7 @@ function(input, output, session){
 
 		#### ---- App title ----------------------------------------------------
 	  source("server/header_footer_configs.R", local=TRUE)
+
 	  app_title()
 	  
 	  ###-------App Footer--------------------------
@@ -537,6 +547,7 @@ function(input, output, session){
 	  
 	  ##### ---- Update data -----------------------------------------------
 	  explore_data_update_data_server()
+
 	  
 	  #### ---- Transform variables -------------------------------------- ####
 	  source("server/transform_data.R", local = TRUE)
@@ -729,6 +740,7 @@ function(input, output, session){
 	  source("server/predict_trained_caret_models.R", local=TRUE)
 	  predict_trained_caret_models()
 
+
 	  #### ---- PyCaret Integration (API) ----------------------------------------------------
 
 	  # New ADD
@@ -741,7 +753,7 @@ function(input, output, session){
 	  # END NEW ADD
 	  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
 	  source("server/automl_server.R", local=TRUE)
-	  automl_server("automl_module", rv_current, rv_ml_ai, api_base)
+	  automl_server("automl_module", rv_current, rv_ml_ai)
 
 	  observe({
 		 req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
