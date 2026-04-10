@@ -101,15 +101,30 @@ libraries <- c(
 missing <- setdiff(libraries, rownames(installed.packages()))
 if (length(missing) > 0) install.packages(missing, repos='https://cloud.r-project.org', dependencies = TRUE)
 
-invisible(lapply(libraries, library, character.only = TRUE))
+# Load packages, handling tcltk/X11 issues gracefully
+for (pkg in libraries) {
+  tryCatch(
+    library(pkg, character.only = TRUE),
+    error = function(e) {
+      message(sprintf("Warning: Could not load '%s': %s", pkg, conditionMessage(e)))
+    }
+  )
+}
 
-st_options(footnote=NA, headings = FALSE)
+tryCatch(
+  st_options(footnote=NA, headings = FALSE),
+  error = function(e) message("Note: summarytools not available (install XQuartz for full support)")
+)
 
 install_github_if_missing <- function(pkg, repo) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-	 remotes::install_github(repo, , upgrade="never")
-	 library(pkg, character.only = TRUE)
-  }
+  tryCatch({
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      remotes::install_github(repo, upgrade="never")
+      library(pkg, character.only = TRUE)
+    }
+  }, error = function(e) {
+    message(sprintf("Warning: Could not install/load '%s': %s", pkg, conditionMessage(e)))
+  })
 }
 
 install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
