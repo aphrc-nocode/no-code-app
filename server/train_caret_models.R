@@ -615,6 +615,41 @@ model_training_caret_train_all_server = function() {
 
 	## Train models
 	observeEvent(input$model_training_apply, {
+		.update_training_status <- function(state = c("running", "success", "error", "hidden"), text = NULL, meta = NULL) {
+			state <- match.arg(state)
+			session$sendCustomMessage("caretTrainingStatus", list(
+				state = state,
+				text = if (is.null(text)) "" else text,
+				meta = if (is.null(meta)) "" else meta
+			))
+		}
+		start_progress_bar <- function(id, att_new_obj, text) {
+			rv_training_results$training_busy <- TRUE
+			rv_training_results$training_completed <- FALSE
+			.update_training_status(
+				"running",
+				text = "Model training in progress...",
+				meta = "Training is running inside this page. Results will appear below when complete."
+			)
+		}
+		close_progress_bar <- function(att_new_obj) {
+			if (!isTRUE(rv_training_results$training_busy)) return(invisible(NULL))
+			rv_training_results$training_busy <- FALSE
+			if (isTRUE(rv_training_results$training_completed)) {
+				.update_training_status(
+					"success",
+					text = "Model training complete",
+					meta = "Training finished. Review the metrics, trained models, and deployment options below."
+				)
+			} else {
+				.update_training_status(
+					"error",
+					text = "Model training stopped",
+					meta = "Training did not finish. Review the alert details, adjust the setup, and run again."
+				)
+			}
+		}
+
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(rv_ml_ai$at_least_one_model)) {
@@ -937,4 +972,3 @@ model_training_caret_train_all_server = function() {
 ## 					
 ## 	})
 }
-
