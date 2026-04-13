@@ -93,7 +93,10 @@ libraries <- c(
 	"duckdb",
 	"gbm",
 	"MLmetrics",
-	"fs"
+	"fs",
+	"rpart",
+	"RSNNS",
+	"naivebayes"
 )
 
 

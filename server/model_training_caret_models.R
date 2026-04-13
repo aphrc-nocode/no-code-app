@@ -1021,3 +1021,197 @@ model_training_caret_models_gam_server = function() {
 	
 }
 
+
+#### ---- rpart --------------------------------- ####
+model_training_caret_models_rpart_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+		output$model_training_caret_models_rpart_check = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+						temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_rpart")
+						rv_training_models$rpart_name = temp_label 
+						prettyCheckbox(
+							"model_training_caret_models_rpart_check"
+							, label = names(temp_label)
+							, status = "success"
+							, outline = FALSE
+							, inline = TRUE
+							, value=FALSE
+						)
+					}
+				}
+		 })
+	})
+	
+	
+	## rpart Model parameters
+	output$model_training_caret_models_rpart_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_rpart_check)) {
+					rv_training_models$rpart_trained_model = rv_training_models$rpart_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+	  					, sliderInput("model_training_caret_models_rpart_advance_cp"
+							, get_rv_labels("model_training_caret_models_rpart_advance_cp")
+							, min = 0.001
+							, max = 1
+							, value = c(0.001, 0.1)
+						)
+						, actionButton("rpart_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+
+#### ---- mlpWeightDecayML --------------------------------- ####
+model_training_caret_models_mlpWeightDecayML_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+		output$model_training_caret_models_mlpWeightDecayML_check = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+						temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_mlpWeightDecayML")
+						rv_training_models$mlpWeightDecayML_name = temp_label 
+						prettyCheckbox(
+							"model_training_caret_models_mlpWeightDecayML_check"
+							, label = names(temp_label)
+							, status = "success"
+							, outline = FALSE
+							, inline = TRUE
+							, value=FALSE
+						)
+					}
+				}
+		 })
+	})
+	
+	
+	## mlpWeightDecayML Model parameters
+	output$model_training_caret_models_mlpWeightDecayML_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_mlpWeightDecayML_check)) {
+					rv_training_models$mlpWeightDecayML_trained_model = rv_training_models$mlpWeightDecayML_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+	  					, sliderInput("model_training_caret_models_mlpWeightDecayML_advance_layer1"
+							, get_rv_labels("model_training_caret_models_mlpWeightDecayML_advance_layer1")
+							, min = 1
+							, max = 100
+							, value = c(1, 5)
+						)
+	  					, sliderInput("model_training_caret_models_mlpWeightDecayML_advance_layer2"
+							, get_rv_labels("model_training_caret_models_mlpWeightDecayML_advance_layer2")
+							, min = 0
+							, max = 100
+							, value = c(0, 2)
+						)
+	  					, sliderInput("model_training_caret_models_mlpWeightDecayML_advance_layer3"
+							, get_rv_labels("model_training_caret_models_mlpWeightDecayML_advance_layer3")
+							, min = 0
+							, max = 100
+							, value = c(0, 2)
+						)
+	  					, sliderInput("model_training_caret_models_mlpWeightDecayML_advance_decay"
+							, get_rv_labels("model_training_caret_models_mlpWeightDecayML_advance_decay")
+							, min = 0.001
+							, max = 1
+							, value = c(0.001, 0.1)
+						)
+						, actionButton("mlpWeightDecayML_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+
+}
+
+
+#### ---- naive_bayes --------------------------------- ####
+model_training_caret_models_naive_bayes_server = function() {
+	
+	observeEvent(input$feature_engineering_apply, {
+		
+		output$model_training_caret_models_naive_bayes_check = renderUI({
+			if (isTRUE(!is.null(rv_current$working_df))) {
+				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+						if (isTRUE(rv_ml_ai$task=="Classification")) {
+							temp_label = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_naive_bayes")
+							rv_training_models$naive_bayes_name = temp_label 
+							prettyCheckbox(
+								"model_training_caret_models_naive_bayes_check"
+								, label = names(temp_label)
+								, status = "success"
+								, outline = FALSE
+								, inline = TRUE
+								, value=FALSE
+							)
+						}
+					}
+				}
+		 })
+	})
+	
+	## naive_bayes Model parameters
+	output$model_training_caret_models_naive_bayes_advance_params = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_naive_bayes_check)) {
+					rv_training_models$naive_bayes_trained_model = rv_training_models$naive_bayes_name
+					box(title = get_rv_labels("model_training_caret_models_advance_options")
+						, status = "teal"
+						, solidHeader = TRUE
+						, collapsible = TRUE
+						, collapsed = TRUE
+						, width = 6
+	  					, sliderInput("model_training_caret_models_naive_bayes_advance_laplace"
+							, get_rv_labels("model_training_caret_models_naive_bayes_advance_laplace")
+							, min = 0
+							, max = 10
+							, value = c(0, 1)
+						)
+						, selectInput("model_training_caret_models_naive_bayes_advance_usekernel"
+							, get_rv_labels("model_training_caret_models_naive_bayes_advance_usekernel")
+							, choices = get_named_choices(input_choices_file, input$change_language,"model_training_caret_models_naive_bayes_advance_usekernel")
+							, selected = TRUE
+							, multiple = TRUE
+						) 
+	  					, sliderInput("model_training_caret_models_naive_bayes_advance_adjust"
+							, get_rv_labels("model_training_caret_models_naive_bayes_advance_adjust")
+							, min = 0
+							, max = 10
+							, value = c(1, 2)
+						)
+						, actionButton("naive_bayes_advance_control_apply_save"
+							, get_rv_labels("customize_train_control_apply_save") 
+						)
+					)			
+				}
+			}
+		}
+	})
+	
+}
+
+
