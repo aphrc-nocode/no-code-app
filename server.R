@@ -241,10 +241,92 @@ function(input, output, session){
 			, ols_param = FALSE
 			, ols_name = NULL
 			, ols_trained_model = NULL
+			
 			, rf_model = NULL
 			, rf_param = FALSE
 			, rf_name = NULL
 			, rf_trained_model = NULL
+			
+			, gbm_model = NULL
+			, gbm_param = FALSE
+			, gbm_name = NULL
+			, gbm_trained_model = NULL
+			
+			, xgbTree_model = NULL
+			, xgbTree_param = FALSE
+			, xgbTree_name = NULL
+			, xgbTree_trained_model = NULL
+			
+			, xgbLinear_model = NULL
+			, xgbLinear_param = FALSE
+			, xgbLinear_name = NULL
+			, xgbLinear_trained_model = NULL
+			
+			, svmRadial_model = NULL
+			, svmRadial_param = FALSE
+			, svmRadial_name = NULL
+			, svmRadial_trained_model = NULL
+			
+			, svmLinear_model = NULL
+			, svmLinear_param = FALSE
+			, svmLinear_name = NULL
+			, svmLinear_trained_model = NULL
+			
+			, svmPoly_model = NULL
+			, svmPoly_param = FALSE
+			, svmPoly_name = NULL
+			, svmPoly_trained_model = NULL
+			
+			, glmnet_model = NULL
+			, glmnet_param = FALSE
+			, glmnet_name = NULL
+			, glmnet_trained_model = NULL
+			
+			, lasso_model = NULL
+			, lasso_param = FALSE
+			, lasso_name = NULL
+			, lasso_trained_model = NULL
+			
+			, ridge_model = NULL
+			, ridge_param = FALSE
+			, ridge_name = NULL
+			, ridge_trained_model = NULL
+			
+			, knn_model = NULL
+			, knn_param = FALSE
+			, knn_name = NULL
+			, knn_trained_model = NULL
+			
+			, nnet_model = NULL
+			, nnet_param = FALSE
+			, nnet_name = NULL
+			, nnet_trained_model = NULL
+			
+			, avNNet_model = NULL
+			, avNNet_param = FALSE
+			, avNNet_name = NULL
+			, avNNet_trained_model = NULL
+			
+			, pls_model = NULL
+			, pls_param = FALSE
+			, pls_name = NULL
+			, pls_trained_model = NULL
+			
+			, rpart_model = NULL
+			, rpart_param = FALSE
+			, rpart_name = NULL
+			, rpart_trained_model = NULL
+			
+			, mlpWeightDecayML_model = NULL
+			, mlpWeightDecayML_param = FALSE
+			, mlpWeightDecayML_name = NULL
+			, mlpWeightDecayML_trained_model = NULL
+			
+			, naive_bayes_model = NULL
+			, naive_bayes_param = FALSE
+			, naive_bayes_name = NULL
+			, naive_bayes_trained_model = NULL
+			
 			, all_trained_models = NULL
 		)
 		
@@ -745,6 +827,15 @@ function(input, output, session){
 	  ## GAM
 	  model_training_caret_models_gam_server()
 
+	  ## DT (RPART)
+	  model_training_caret_models_rpart_server()
+
+	  ## mlpWeightDecayML (MLP)
+	  model_training_caret_models_mlpWeightDecayML_server()
+	  
+	  ## Naive Bayes
+	  model_training_caret_models_naive_bayes_server()
+	  
 	  #### ----- Train all models ----------------------------------- ####
 	  source("server/train_caret_models.R", local=TRUE)
 	  model_training_caret_train_all_server()

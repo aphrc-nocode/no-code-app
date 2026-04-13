@@ -182,6 +182,39 @@ model_training_caret_train_all_server = function() {
 		}
 	})
 
+	
+	### rpart
+	observeEvent(input$rpart_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_rpart_check)) {
+					rv_training_models$rpart_param = TRUE			
+				}
+			}
+		}
+	})
+
+	### mlpWeightDecayML
+	observeEvent(input$mlpWeightDecayML_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_mlpWeightDecayML_check)) {
+					rv_training_models$mlpWeightDecayML_param = TRUE			
+				}
+			}
+		}
+	})
+	
+	### naive_bayes
+	observeEvent(input$naive_bayes_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_naive_bayes_check)) {
+					rv_training_models$naive_bayes_param = TRUE			
+				}
+			}
+		}
+	})
 
 	## Check selected models
 	observe({
@@ -224,7 +257,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_gbm_check)) {
 					if (isTRUE(!is.null(input$model_training_caret_models_gbm_advance_shrinkage))) {
 						shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
-						shrinkage = seq(shrinkage[1], shrinkage[2], length.out=3)
+						shrinkage = seq(shrinkage[1], shrinkage[2], length.out=20)
 					} else {
 						shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
 					}
@@ -247,7 +280,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_xgbTree_check)) {
 					if (isTRUE(!is.null(input$model_training_caret_models_xgbTree_advance_eta))) {
 						eta = input$model_training_caret_models_xgbTree_advance_eta
-						eta = seq(eta[1], eta[2], length.out=3)
+						eta = seq(eta[1], eta[2], length.out=20)
 					} else {
 						eta = input$model_training_caret_models_xgbTree_advance_eta
 					}
@@ -274,7 +307,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_xgbLinear_check)) {
 					if (isTRUE(!is.null(input$model_training_caret_models_xgbLinear_advance_eta))) {
 						eta = input$model_training_caret_models_xgbLinear_advance_eta
-						eta = seq(eta[1], eta[2], length.out=3)
+						eta = seq(eta[1], eta[2], length.out=20)
 					} else {
 						eta = input$model_training_caret_models_xgbLinear_advance_eta
 					}
@@ -297,7 +330,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_svmRadial_check)) {
 					if (isTRUE(!is.null(input$model_training_caret_models_svmRadial_advance_sigma))) {
 						sigma = input$model_training_caret_models_svmRadial_advance_sigma
-						sigma = seq(sigma[1], sigma[2], length.out=3)
+						sigma = seq(sigma[1], sigma[2], length.out=20)
 					} else {
 						sigma = input$model_training_caret_models_svmRadial_advance_sigma
 					}
@@ -333,7 +366,7 @@ model_training_caret_train_all_server = function() {
 				if (isTRUE(input$model_training_caret_models_svmPoly_check)) {
 					if (isTRUE(!is.null(input$model_training_caret_models_svmPoly_advance_scale))) {
 						scale_ = input$model_training_caret_models_svmPoly_advance_scale
-						scale_ = seq(scale_[1], scale_[2], length.out=3)
+						scale_ = seq(scale_[1], scale_[2], length.out=20)
 					} else {
 						scale_ = input$model_training_caret_models_svmPoly_advance_scale
 					}
@@ -490,9 +523,86 @@ model_training_caret_train_all_server = function() {
 					rv_training_models$gam_model = NULL
 				}
 
+				## rpart
+				if (isTRUE(input$model_training_caret_models_rpart_check)) {
+					cp_ = input$model_training_caret_models_rpart_advance_cp
+					if (!is.null(cp_)) {
+						cp_ = runif(cp_, n=20)
+					}
+					rv_training_models$rpart_model = Rautoml::setup_caret( 
+						rv_training_models$rpart_name
+						, param=rv_training_models$rpart_param
+						, param_set=list(
+							cp=cp_
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$rpart_model = NULL
+				}
+				
+				## mlpWeightDecayML
+				if (isTRUE(input$model_training_caret_models_mlpWeightDecayML_check)) {
+					layer1_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer1
+					if (!is.null(layer1_)) {
+						layer1_ = floor(runif(layer1_, n=20))
+					}
+					layer2_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer2
+					if (!is.null(layer2_)) {
+						layer2_ = floor(runif(layer2_, n=20))
+					}
+					layer3_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer3
+					if (!is.null(layer3_)) {
+						layer3_ = floor(runif(layer3_, n=20))
+					}
+					decay_ = input$model_training_caret_models_mlpWeightDecayML_advance_decay
+					if (!is.null(decay_)) {
+						decay_ = runif(decay_, n=20)
+					}
+					rv_training_models$mlpWeightDecayML_model = Rautoml::setup_caret( 
+						rv_training_models$mlpWeightDecayML_name
+						, param=rv_training_models$mlpWeightDecayML_param
+						, param_set=list(
+							layer1=layer1_
+							, layer2=layer2_
+							, layer3=layer3_
+							, decay = decay_
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$mlpWeightDecayML_model = NULL
+				}
+				
+				
+				## naive_bayes
+				if (isTRUE(input$model_training_caret_models_naive_bayes_check)) {
+					laplace_ = input$model_training_caret_models_naive_bayes_advance_laplace
+					if (!is.null(laplace_)) {
+						laplace_ = runif(laplace_, n=20)
+					}
+					adjust_ = input$model_training_caret_models_naive_bayes_advance_adjust
+					if (!is.null(adjust_)) {
+						adjust_ = runif(adjust_, n=20)
+					}
+					usekernel_ = input$model_training_caret_models_naive_bayes_advance_usekernel
+					rv_training_models$naive_bayes_model = Rautoml::setup_caret( 
+						rv_training_models$naive_bayes_name
+						, param=rv_training_models$naive_bayes_param
+						, param_set=list(
+							laplace=laplace_
+							, adjust=adjust_
+							, usekernel=usekernel_
+						)
+					)
+					rv_ml_ai$at_least_one_model = TRUE
+				} else {
+					rv_training_models$naive_bayes_model = NULL
+				}
 
+				
 				## Update this for every model
-				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) & !isTRUE(input$model_training_caret_models_treebag_check) & !isTRUE(input$model_training_caret_models_avNNet_check) & !isTRUE(input$model_training_caret_models_pls_check) & !isTRUE(input$model_training_caret_models_gam_check) ) {
+				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) & !isTRUE(input$model_training_caret_models_treebag_check) & !isTRUE(input$model_training_caret_models_avNNet_check) & !isTRUE(input$model_training_caret_models_pls_check) & !isTRUE(input$model_training_caret_models_gam_check) & !isTRUE(input$model_training_caret_models_rpart_check) & !isTRUE(input$model_training_caret_models_mlpWeightDecayML_check) & !isTRUE(input$model_training_caret_models_naive_bayes_check) ) {
 					rv_ml_ai$at_least_one_model = FALSE
 				}
 			}
@@ -604,6 +714,18 @@ model_training_caret_train_all_server = function() {
 								, column(width=4
 									, uiOutput("model_training_caret_models_gam_check")
 								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_rpart_check")
+									, uiOutput("model_training_caret_models_rpart_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_mlpWeightDecayML_check")
+									, uiOutput("model_training_caret_models_mlpWeightDecayML_advance_params")
+								)
+								, column(width=4
+									, uiOutput("model_training_caret_models_naive_bayes_check")
+									, uiOutput("model_training_caret_models_naive_bayes_advance_params")
+								)
 							 )
 							 , uiOutput("model_training_apply")
 					  )
@@ -638,6 +760,9 @@ model_training_caret_train_all_server = function() {
 						, rv_training_models$avNNet_model
 						, rv_training_models$pls_model
 						, rv_training_models$gam_model
+						, rv_training_models$rpart_model
+						, rv_training_models$mlpWeightDecayML_model
+						, rv_training_models$naive_bayes_model
 					)
 					set.seed(rv_ml_ai$seed_value)
 
