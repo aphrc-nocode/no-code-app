@@ -2,10 +2,18 @@
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
-  waiter_show(
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-    color = "#FFF"
-  )
+  # ---- Progress overlay for cold-start feedback ----
+  update_progress <- function(msg) {
+    waiter::waiter_show(
+      html = tagList(
+        spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+        tags$br(),
+        tags$span(msg, style="color:#555;font-size:14px;margin-top:12px;display:block;")
+      ),
+      color = "#FFF"
+    )
+  }
+  update_progress("Loading packages...")
   
   source("server/auth.R")
   source("Server/homepage_translation_labels.R", local = TRUE)
@@ -576,8 +584,14 @@ function(input, output, session){
 	  ##### ---- Plot transform data ----------------------------------------------###
 	  transform_data_quick_explore_plot_server()
 	  
-	  ##### ---- Plot missing data ----------------------------------------------###
-	  transform_data_plot_missing_data_server()
+	  ##### ---- Plot missing data (LAZY-LOADED) --------------------------------###
+	  .missing_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.missing_loaded && input$dynamic_meinu_aphrc %in% c("manageData", "transformData")) {
+		  .missing_loaded <<- TRUE
+		  transform_data_plot_missing_data_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Combine datasets with the existing one --------------------------------------####
 	  source("server/combine_data.R", local = TRUE)
@@ -603,9 +617,15 @@ function(input, output, session){
 	  #### ---- Reset combine data --------------------------------####
 	  combine_data_reset()
 
-	  ##### ---- Control Custom visualizations ------------------ #####
-	  source("server/user_defined_visualization.R", local = TRUE)
-	  user_defined_server()
+	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
+	  .viz_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.viz_loaded && input$dynamic_meinu_aphrc %in% c("summarizeCustom", "visualizeData")) {
+		  .viz_loaded <<- TRUE
+		  source("server/user_defined_visualization.R", local = TRUE)
+		  user_defined_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  ### ------- OMOP ------------------------------------------ #####
 	  
@@ -648,6 +668,7 @@ function(input, output, session){
 	  #### ---- Machine learning and AI --------------- ####
 	  
 	  ##### ----- Set ML/AI UI ------------------- ####
+	  update_progress("Loading ML modules...")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
 	  
@@ -728,9 +749,15 @@ function(input, output, session){
 	  source("server/train_caret_models.R", local=TRUE)
 	  model_training_caret_train_all_server()
 
-	  #### ----- Compare trained models ------------------------------ ####
-	  source("server/compare_trained_caret_models.R", local=TRUE)
-	  model_training_caret_train_metrics_server()
+	  #### ----- Compare trained models (LAZY-LOADED) --------------------- ####
+	  .compare_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.compare_loaded && input$dynamic_meinu_aphrc %in% c("validateDeployModel", "trainModel")) {
+		  .compare_loaded <<- TRUE
+		  source("server/compare_trained_caret_models.R", local = TRUE)
+		  model_training_caret_train_metrics_server()
+		}
+	  }, ignoreInit = TRUE)
 
 	  #### ----- Deploy trained models ------------------------------- ####
 	  source("server/deploy_trained_caret_models.R", local=TRUE)
@@ -773,9 +800,15 @@ function(input, output, session){
 		 rv_ml_ai$framework <- tolower(input$modelling_framework_choices %||% "")
 	  }, ignoreInit = FALSE)
 	  
-	  #### ---- Deep Learning Server ----- ###
-	  source("server/deep_learning.R", local=TRUE)
-	  deep_learning()
+	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
+	  .dl_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.dl_loaded && input$dynamic_meinu_aphrc %in% c("deeplearning", "cnndeep")) {
+		  .dl_loaded <<- TRUE
+		  source("server/deep_learning.R", local = TRUE)
+		  deep_learning()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this
@@ -789,9 +822,10 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
-	  waiter_hide()
+	  update_progress("Ready!")
+	  waiter::waiter_hide()
   }, ignoreInit = FALSE)
 
-  waiter_hide()
+  waiter::waiter_hide()
   
 }
