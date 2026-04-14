@@ -381,16 +381,29 @@ function(input, output, session){
 
 
 
-	# ---- (B) Datasets with pre-trained models (historical) ----
+	  # ---- (B) Datasets with pre-trained models (historical) ----
 	  .get_models_index_csv <- function() file.path(getwd(), app_username, "logs", "models", "index.csv")
 	  dataset_has_history <- reactive({
-		 idx <- .get_models_index_csv()
-		 if (!file.exists(idx)) return(FALSE)
-		 df <- tryCatch(read.csv(idx, stringsAsFactors = FALSE), error = function(e) NULL)
-		 if (is.null(df) || !"dataset_id" %in% names(df)) return(FALSE)
 		 ds <- rv_ml_ai$dataset_id %||% rv_current$dataset_id
 		 if (is.null(ds) || !nzchar(ds)) return(FALSE)
-		 any(df$dataset_id == ds & (df$framework %in% c("PyCaret","pycaret","Pycaret")))
+
+		 pycaret_history <- tryCatch({
+			idx <- .get_models_index_csv()
+			if (!file.exists(idx)) return(FALSE)
+			df <- read.csv(idx, stringsAsFactors = FALSE)
+			if (is.null(df) || !"dataset_id" %in% names(df) || !"framework" %in% names(df)) return(FALSE)
+			any(df$dataset_id == ds & tolower(df$framework) == "pycaret")
+		 }, error = function(e) FALSE)
+
+		 caret_history <- tryCatch({
+			log_path <- paste0(app_username, "/.log_files")
+			if (!isTRUE(Rautoml::check_logs(path = log_path, pattern = "-trained.model.main.log"))) return(FALSE)
+			df <- Rautoml::collect_logs(path = log_path, pattern = "-trained.model.main.log")
+			if (is.null(df) || !"dataset_id" %in% names(df)) return(FALSE)
+			any(df$dataset_id == ds)
+		 }, error = function(e) FALSE)
+
+		 isTRUE(pycaret_history) || isTRUE(caret_history)
 	  })
 
 	  # Expose known datasets for the Deploy module (used in its selector)
@@ -439,6 +452,64 @@ function(input, output, session){
 	  ###-------Menu Translate---------
 	  
 	  menu_translation()
+
+	  .workflow_completed_steps <- reactive({
+		 has_dataset <- is.character(rv_current$dataset_id) && nzchar(rv_current$dataset_id)
+		 has_explore <- !is.null(rv_current$data_summary_str) ||
+			!is.null(rv_current$data_summary_skim) ||
+			!is.null(rv_current$data_summary_summary) ||
+			!is.null(rv_current$data_summary_summarytools) ||
+			!is.null(rv_current$quick_explore_summary) ||
+			!is.null(rv_current$missing_prop)
+		 has_transform <- !is.null(rv_current$changed_variable_type_log) ||
+			!is.null(rv_current$renamed_variable_log) ||
+			!is.null(rv_current$recoded_variable_labels_log) ||
+			!is.null(rv_current$created_missing_values_log) ||
+			!is.null(rv_current$handle_missing_values_log) ||
+			!is.null(rv_current$handle_outlier_values_log) ||
+			!is.null(rv_current$combine_df)
+		 has_visualize <- !is.null(plots_sec_rv$plot_rv) ||
+			!is.null(plots_sec_rv$plot_bivariate_auto) ||
+			!is.null(plots_sec_rv$plot_corr)
+		 has_setup <- is.character(rv_ml_ai$dataset_id) &&
+			nzchar(rv_ml_ai$dataset_id %||% "") &&
+			is.character(rv_ml_ai$analysis_type) &&
+			nzchar(rv_ml_ai$analysis_type %||% "") &&
+			is.character(rv_ml_ai$task) &&
+			nzchar(rv_ml_ai$task %||% "")
+		 has_train_live_caret <- !is.null(rv_training_results$models) &&
+			length(rv_training_results$models) > 0 &&
+			is.character(rv_ml_ai$dataset_id) &&
+			nzchar(rv_ml_ai$dataset_id %||% "") &&
+			identical(rv_ml_ai$dataset_id, rv_current$dataset_id)
+		 has_train <- isTRUE(.can_show_by_train()) ||
+			isTRUE(dataset_has_history()) ||
+			isTRUE(has_train_live_caret)
+		 has_deploy <- !is.null(rv_deploy_models$deployed_models_table) &&
+			NROW(rv_deploy_models$deployed_models_table) > 0
+
+		 completed <- integer()
+		 if (has_dataset) completed <- c(completed, 1L)
+		 if (has_explore) completed <- c(completed, 2L)
+		 if (has_transform) completed <- c(completed, 3L)
+		 if (has_visualize) completed <- c(completed, 4L)
+		 if (has_setup) completed <- c(completed, 5L)
+		 if (has_train) completed <- c(completed, 6L)
+		 if (has_deploy) completed <- c(completed, 7L)
+		 completed
+	  })
+
+	  output$workflow_stepper_bar <- renderUI({
+		 active_step <- get_step_for_tab(input$tabs)
+		 render_stepper_html(
+			active_step = active_step,
+			completed_steps = .workflow_completed_steps()
+		 )
+	  })
+
+	  observeEvent(input$stepper_nav, {
+		 shinydashboard::updateTabItems(session, "tabs", selected = input$stepper_nav)
+	  }, ignoreInit = TRUE)
 
 	  #### ---- Change language ----------------------------------------------------
 	  output$change_language = change_language

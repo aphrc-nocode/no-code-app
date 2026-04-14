@@ -1,4 +1,5 @@
 ## Load UI files
+source("ui/stepper_ui.R", local=TRUE)
 source("ui/sourcedata_ui.R", local=TRUE)
 source("ui/overview_ui.R", local=TRUE)
 source("ui/explore_ui.R", local=TRUE)
@@ -77,6 +78,8 @@ aphrcBody <- dashboardBody(
 		});
 		"))
 	),
+	tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "stepper.css")),
+	stepper_ui(),
 
 	tabItems(
 		tabItem(tabName = "homePage"
