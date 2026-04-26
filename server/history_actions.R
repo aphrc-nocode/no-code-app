@@ -96,7 +96,7 @@ history_actions_server <- function(input, output, session, rv_current, get_rv_la
     if (length(rv_history$undo) > 20) rv_history$undo <- tail(rv_history$undo, 20)
     rv_history$redo <- list()
     
-    rv_current$history_active_section <- "Explore"
+    rv_current$history_active_section <- "explore"
     invisible(TRUE)
   }
   
@@ -185,7 +185,7 @@ history_actions_server <- function(input, output, session, rv_current, get_rv_la
       
       rv_history$undo <- rv_history$undo[-length(rv_history$undo)]
       rv_history$redo <- c(rv_history$redo, list(entry))
-      rv_current$history_active_section <- "Explore"
+      rv_current$history_active_section <- "explore"
       return(invisible(TRUE))
     }
     
@@ -202,7 +202,7 @@ history_actions_server <- function(input, output, session, rv_current, get_rv_la
       
       rv_history$redo <- rv_history$redo[-length(rv_history$redo)]
       rv_history$undo <- c(rv_history$undo, list(entry))
-      rv_current$history_active_section <- "Explore"
+      rv_current$history_active_section <- "explore"
       return(invisible(TRUE))
     }
     
@@ -227,7 +227,7 @@ history_actions_server <- function(input, output, session, rv_current, get_rv_la
       rv_history$undo <- list()
       rv_history$redo <- list()
       rv_history$pending <- NULL
-      rv_current$history_active_section <- "Explore"
+      rv_current$history_active_section <- "explore"
       return(invisible(TRUE))
     }
     
@@ -244,7 +244,7 @@ history_actions_server <- function(input, output, session, rv_current, get_rv_la
       action <- payload[[1]]
     }
     
-    if (!identical(isolate(rv_current$history_active_section), "Explore")) return()
+    if (!identical(isolate(rv_current$history_active_section), "explore")) return()
     if (is.null(action) || !nzchar(action)) return()
     
     run_action(action)

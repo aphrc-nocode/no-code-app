@@ -162,7 +162,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
     if (length(rv_history$undo) > 20) rv_history$undo <- tail(rv_history$undo, 20)
     rv_history$redo <- list()
 
-    rv_current$history_active_section <- "Transform"
+    rv_current$history_active_section <- "transform"
     invisible(TRUE)
   }
 
@@ -199,7 +199,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
       action = "transform_apply",
       before = transform_snapshot()
     )
-    rv_current$history_active_section <- "Transform"
+    rv_current$history_active_section <- "transform"
   }, ignoreInit = TRUE, priority = 1000)
 
   observeEvent(input$transform_data_apply, {
@@ -226,7 +226,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
 
       rv_history$undo <- rv_history$undo[-length(rv_history$undo)]
       rv_history$redo <- c(rv_history$redo, list(entry))
-      rv_current$history_active_section <- "Transform"
+      rv_current$history_active_section <- "transform"
       return(invisible(TRUE))
     }
 
@@ -243,7 +243,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
 
       rv_history$redo <- rv_history$redo[-length(rv_history$redo)]
       rv_history$undo <- c(rv_history$undo, list(entry))
-      rv_current$history_active_section <- "Transform"
+      rv_current$history_active_section <- "transform"
       return(invisible(TRUE))
     }
 
@@ -268,7 +268,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
       rv_history$undo <- list()
       rv_history$redo <- list()
       rv_history$pending <- NULL
-      rv_current$history_active_section <- "Transform"
+      rv_current$history_active_section <- "transform"
       return(invisible(TRUE))
     }
 
@@ -285,7 +285,7 @@ history_transform_actions_server <- function(input, output, session, rv_current,
       action <- payload[[1]]
     }
 
-    if (!identical(isolate(rv_current$history_active_section), "Transform")) return()
+    if (!identical(isolate(rv_current$history_active_section), "transform")) return()
     if (is.null(action) || !nzchar(action)) return()
 
     run_action(action)

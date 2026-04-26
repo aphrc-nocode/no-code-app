@@ -1,4 +1,4 @@
-history_visualize_auto_actions_server <- function(input, output, session, rv_current, plots_sec_rv, get_rv_labels = function(x) x) {
+history_visualize_auto_actions_server <- function(input, output, session, rv_current, plots_auto_rv, get_rv_labels = function(x) x) {
   `%||%` <- function(x, y) if (is.null(x)) y else x
 
   deep_clone <- function(x) {
@@ -23,8 +23,8 @@ history_visualize_auto_actions_server <- function(input, output, session, rv_cur
 
   visualize_auto_snapshot <- function() {
     list(
-      plot_corr = deep_clone(plots_sec_rv$plot_corr),
-      plot_bivariate_auto = deep_clone(plots_sec_rv$plot_bivariate_auto),
+      plot_corr = deep_clone(plots_auto_rv$plot_corr),
+      plot_bivariate_auto = deep_clone(plots_auto_rv$plot_bivariate_auto),
       inputs = list(
         cboCorrFeatures = deep_clone(input$cboCorrFeatures),
         cboColorBrewerCorrplot = input$cboColorBrewerCorrplot %||% "",
@@ -50,8 +50,8 @@ history_visualize_auto_actions_server <- function(input, output, session, rv_cur
   }
 
   refresh_visualize_auto_outputs <- function() {
-    output$CorrPlotOutput <- renderPlot({ plots_sec_rv$plot_corr })
-    output$BivariatePlotOutput <- renderPlot({ plots_sec_rv$plot_bivariate_auto })
+    output$CorrPlotOutput <- renderPlot({ plots_auto_rv$plot_corr })
+    output$BivariatePlotOutput <- renderPlot({ plots_auto_rv$plot_bivariate_auto })
   }
 
   restore_visualize_auto_snapshot <- function(snap) {
@@ -60,8 +60,8 @@ history_visualize_auto_actions_server <- function(input, output, session, rv_cur
     rv_history$restoring <- TRUE
     on.exit({ rv_history$restoring <- FALSE }, add = TRUE)
 
-    plots_sec_rv$plot_corr <- deep_clone(snap$plot_corr)
-    plots_sec_rv$plot_bivariate_auto <- deep_clone(snap$plot_bivariate_auto)
+    plots_auto_rv$plot_corr <- deep_clone(snap$plot_corr)
+    plots_auto_rv$plot_bivariate_auto <- deep_clone(snap$plot_bivariate_auto)
 
     try(updateSelectInput(session, "cboCorrFeatures", selected = snap$inputs$cboCorrFeatures %||% NULL), silent = TRUE)
     try(updateSelectInput(session, "cboColorBrewerCorrplot", selected = snap$inputs$cboColorBrewerCorrplot %||% ""), silent = TRUE)

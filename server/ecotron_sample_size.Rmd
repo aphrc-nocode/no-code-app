@@ -1,0 +1,154 @@
+---
+title: "Sample Size Determination for the Ecotron Climate Study"
+author: "Prepared for the Ecotron project"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+    toc: false
+    number_sections: false
+---
+
+# Purpose
+
+This note gives the recommended formula for estimating the required **number of trees per climate condition** in the Ecotron pear study. The formula is aligned with the current project context:
+
+- 4 climate scenarios
+- treatment applied at the **ecotron** level
+- primary endpoint defined as the **count of good-quality pears per tree**
+- planned analysis based on a **Poisson mixed model with random ecotron effect**
+
+Because trees within the same ecotron are exposed to the same climate chamber conditions, they are **clustered** rather than fully independent. Therefore, the sample size must be inflated using a **design effect**.
+
+# Recommended planning formula
+
+For each comparison of Scenario 1 versus Scenario \(k\) (\(k = 2,3,4\)), use:
+
+$$
+n_{\text{trees},k}
+=
+\left[
+\frac{(z_{1-\alpha^*/2}+z_{1-\beta})^2(\mu_1+\mu_k)}
+{(\mu_k-\mu_1)^2}
+\right]
+\,[1+(m-1)\rho]
+$$
+
+where:
+
+- \(n_{\text{trees},k}\) = required number of trees **per climate condition** for comparing Scenario 1 with Scenario \(k\)
+- \(\mu_1\) = expected mean number of good-quality pears per tree in **Scenario 1** (control)
+- \(\mu_k\) = expected mean number of good-quality pears per tree in **Scenario \(k\)**
+- \(\alpha^*\) = adjusted significance level for multiple comparisons
+- \(1-\beta\) = desired power
+- \(m\) = average number of trees per ecotron
+- \(\rho\) = intra-ecotron correlation (ICC)
+
+Since the protocol compares each intervention scenario against Scenario 1, use:
+
+$$
+\alpha^* = \frac{0.05}{3}
+$$
+
+if a Bonferroni correction is adopted.
+
+# Design effect
+
+The clustering adjustment is:
+
+$$
+\text{Design Effect} = 1 + (m-1)\rho
+$$
+
+This is the direct project-specific adaptation of the effective sample size idea from clustered-data theory. In this study, the relevant cluster is the **ecotron**.
+
+# Number of ecotrons per climate condition
+
+Once the required number of trees per climate condition is obtained, convert it to the number of ecotrons as:
+
+$$
+J_{\text{ecotrons},k}
+=
+\left\lceil
+\frac{n_{\text{trees},k}}{m}
+\right\rceil
+$$
+
+where \(J_{\text{ecotrons},k}\) is the required number of ecotrons per climate condition for the comparison with Scenario \(k\).
+
+The final design should use:
+
+$$
+J_{\text{ecotrons}}
+=
+\max\left(
+J_{\text{ecotrons},2},
+J_{\text{ecotrons},3},
+J_{\text{ecotrons},4}
+\right)
+$$
+
+so that all three primary comparisons are adequately powered.
+
+# Why this is the right formula for this project
+
+This is the best formula to use at the planning stage because:
+
+1. the treatment is assigned at the **ecotron level**
+2. the endpoint is a **count per tree**
+3. the protocol already proposes a **Poisson mixed model**
+4. the main dependence that remains after aggregating pears to tree level is the similarity among trees within the same ecotron
+
+So the formula combines:
+
+- a **Poisson two-group comparison** for the mean count difference
+- a **design-effect inflation** to account for clustering within ecotrons
+
+# Practical interpretation
+
+The formula shows two important design principles:
+
+## 1. Ecotrons drive power more than trees
+
+Adding more ecotrons usually improves power more efficiently than adding more trees inside the same ecotron, because trees within one ecotron are correlated.
+
+## 2. The ICC matters a lot
+
+If \(\rho\) is close to 0, the design effect is small and trees behave almost independently.
+
+If \(\rho\) is moderate or large, the effective information from extra trees within the same ecotron is much smaller.
+
+# Recommended wording for the protocol
+
+You can insert the following paragraph directly into the protocol:
+
+> Sample size for the primary endpoint, defined as the count of good-quality pears per tree, will be determined using a Poisson-based comparison between Scenario 1 and each intervention scenario. Because trees are clustered within ecotrons, the initial sample size will be inflated by the design effect \(1 + (m-1)\rho\), where \(m\) denotes the average number of trees per ecotron and \(\rho\) the intra-ecotron correlation. The required number of trees per climate condition for comparison with Scenario \(k\) will be calculated as
+>
+> $$
+> n_{\text{trees},k}
+> =
+> \left[
+> \frac{(z_{1-\alpha^*/2}+z_{1-\beta})^2(\mu_1+\mu_k)}
+> {(\mu_k-\mu_1)^2}
+> \right]
+> \,[1+(m-1)\rho]
+> $$
+>
+> and converted to the required number of ecotrons per climate condition via
+>
+> $$
+> J_{\text{ecotrons},k}
+> =
+> \left\lceil
+> \frac{n_{\text{trees},k}}{m}
+> \right\rceil.
+> $$
+>
+> The final design will be based on the largest sample size requirement across the three primary comparisons: Scenario 2 versus 1, Scenario 3 versus 1, and Scenario 4 versus 1.
+
+# Important caveat
+
+This formula is appropriate as the **main planning formula**. However, if pilot or historical data show substantial **overdispersion** beyond Poisson variability, then a negative-binomial-based or dispersion-adjusted calculation should be used in a sensitivity analysis.
+
+# Optional next step
+
+Once estimates of \(\mu_1\), \(\mu_2\), \(\mu_3\), \(\mu_4\), \(m\), and \(\rho\) are available from pilot or historical Ecotron data, the formula can be turned into an explicit numerical sample size table for all four climate conditions.

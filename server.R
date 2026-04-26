@@ -140,17 +140,19 @@ function(input, output, session){
 	  ##### ---- Sidebar history actions -----------------------------------
 	  history_actions_server(input, output, session, rv_current, get_rv_labels)
 	  history_transform_actions_server(input, output, session, rv_current, get_rv_labels)
-	  history_visualize_auto_actions_server(input, output, session, rv_current, plots_sec_rv, get_rv_labels)
-	  history_visualize_custom_actions_server(input, output, session, rv_current, plots_sec_rv, get_rv_labels)
+	  history_visualize_auto_actions_server(input, output, session, rv_current, plots_auto_rv, get_rv_labels)
+	  history_visualize_custom_actions_server(input, output, session, rv_current, plots_custom_rv, get_rv_labels)
 	  #####------------------Plots Reactive-------------------
 
-	  plots_sec_rv <- reactiveValues(
-		 plot_rv=NULL
-		 ,tab_rv=NULL
-		 ,plot_bivariate_auto=NULL
-		 ,plot_corr = NULL
+	  plots_custom_rv <- reactiveValues(
+	    plot_rv = NULL,
+	    tab_rv = NULL
 	  )
 	  
+	  plots_auto_rv <- reactiveValues(
+	    plot_bivariate_auto = NULL,
+	    plot_corr = NULL
+	  )
 
 	  ##### --------- Meta data ---------------------------------------------
 	  rv_metadata = reactiveValues(
@@ -510,8 +512,6 @@ function(input, output, session){
 	  output$user_select_color_variable_single = user_select_color_variable_single
 	  output$user_select_color_parlet = user_select_color_parlet
 	  output$user_numeric_summary = user_numeric_summary
-	  output$user_tab_more_out = user_tab_more_out
-	  output$user_graph_more_out = user_tab_more_out
 	  
 	  output$bivariate_header_label = bivariate_header_label
 	  output$corrplot_header_label = corrplot_header_label
@@ -605,8 +605,18 @@ function(input, output, session){
 
 	  ##### ---- Control Custom visualizations ------------------ #####
 	  source("server/user_defined_visualization.R", local = TRUE)
-	  user_defined_server()
+	 
 	  
+	  user_defined_server(plots_custom_rv = plots_custom_rv)
+
+	  source("server/automatic_visualization_server.R", local = TRUE)
+	  automatic_visualization_server(
+	    input = input,
+	    output = output,
+	    session = session,
+	    plots_auto_rv = plots_auto_rv,
+	    rv_current = rv_current
+	  )
 	  ### ------- OMOP ------------------------------------------ #####
 	  
 	  #### ----- Cohort Constructor ---------#####
