@@ -236,6 +236,31 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     if (identical(label_value, "")) fallback_value else label_value
   }
   
+  bar_summary_fun <- function(choice) {
+    choice <- safe_scalar(choice, "Mean")
+    
+    switch(
+      choice,
+      "Total" = function(z) sum(z, na.rm = TRUE),
+      "Mean" = function(z) mean(z, na.rm = TRUE),
+      "Median" = function(z) stats::median(z, na.rm = TRUE),
+      "Count" = function(z) sum(!is.na(z)),
+      function(z) mean(z, na.rm = TRUE)
+    )
+  }
+  
+  format_bar_label <- function(x) {
+    ifelse(
+      is.na(x),
+      "",
+      ifelse(
+        abs(x) >= 1000,
+        format(round(x, 0), big.mark = ",", scientific = FALSE),
+        format(round(x, 2), trim = TRUE, scientific = FALSE)
+      )
+    )
+  }
+  
   build_faceted_plot_native <- function(df, chart_type, xvar, yvar, color_var, facet_var,
                                         txt_xlab, txt_ylab, txt_title, txt_legend,
                                         vertical_flag, stacked_flag, add_shapes_flag,
@@ -283,27 +308,71 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     
     if (identical(chart_type, "Bar")) {
       if (!non_blank(yvar)) {
+        
+        count_df <- as.data.frame(table(plot_df[[xvar]], plot_df[[facet_var]]))
+        names(count_df) <- c(xvar, facet_var, "value")
+        
         if (non_blank(color_var)) {
-          p <- ggplot2::ggplot(plot_df, ggplot2::aes_string(x = xvar, fill = color_var)) +
-            ggplot2::geom_bar(width = bar_width_val, position = if (stacked_flag) "stack" else ggplot2::position_dodge2(width = bar_width_val, preserve = "single"))
-        } else {
-          p <- ggplot2::ggplot(plot_df, ggplot2::aes_string(x = xvar)) +
-            ggplot2::geom_bar(width = bar_width_val, fill = single_color_val)
+          grouping <- c(xvar, facet_var, color_var)
+          count_df <- stats::aggregate(
+            rep(1, nrow(plot_df)),
+            plot_df[grouping],
+            sum
+          )
+          names(count_df)[names(count_df) == "x"] <- "value"
         }
+        
         y_label <- coalesce_label(txt_ylab, "Count")
+        
       } else {
+        
+        bar_summary_type_val <- "Mean"
+        summary_fun_bar <- bar_summary_fun(bar_summary_type_val)
+        
         grouping <- c(xvar, facet_var, if (non_blank(color_var)) color_var else NULL)
-        sum_df <- stats::aggregate(plot_df[[yvar]], plot_df[grouping], sum, na.rm = TRUE)
-        names(sum_df)[names(sum_df) == "x"] <- yvar
-        if (non_blank(color_var)) {
-          p <- ggplot2::ggplot(sum_df, ggplot2::aes_string(x = xvar, y = yvar, fill = color_var)) +
-            ggplot2::geom_col(width = bar_width_val, position = if (stacked_flag) "stack" else ggplot2::position_dodge2(width = bar_width_val, preserve = "single"))
-        } else {
-          p <- ggplot2::ggplot(sum_df, ggplot2::aes_string(x = xvar, y = yvar)) +
-            ggplot2::geom_col(width = bar_width_val, fill = single_color_val)
-        }
+        
+        count_df <- stats::aggregate(
+          plot_df[[yvar]],
+          plot_df[grouping],
+          summary_fun_bar
+        )
+        
+        names(count_df)[names(count_df) == "x"] <- "value"
+        
+        y_label <- coalesce_label(
+          txt_ylab,
+          paste("Average", yvar)
+        )
       }
-      p <- p + ggplot2::facet_wrap(stats::as.formula(paste0("~ `", facet_var, "`")), ncol = ncol_val)
+      
+      count_df$label <- format_bar_label(count_df$value)
+      
+      if (non_blank(color_var)) {
+        p <- ggplot2::ggplot(
+          count_df,
+          ggplot2::aes_string(x = xvar, y = "value", fill = color_var)
+        ) +
+          ggplot2::geom_col(
+            width = bar_width_val,
+            position = if (stacked_flag) "stack" else ggplot2::position_dodge2(width = bar_width_val, preserve = "single")
+          )
+      } else {
+        p <- ggplot2::ggplot(
+          count_df,
+          ggplot2::aes_string(x = xvar, y = "value")
+        ) +
+          ggplot2::geom_col(width = bar_width_val, fill = single_color_val) +
+          ggplot2::geom_text(
+            ggplot2::aes(label = label),
+            vjust = -0.3,
+            size = data_label_size_val
+          )
+      }
+      
+      p <- p +
+        ggplot2::facet_wrap(stats::as.formula(paste0("~ `", facet_var, "`")), ncol = ncol_val) +
+        ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.12)))
+      
       if (!vertical_flag) p <- p + ggplot2::coord_flip()
     }
     
@@ -531,12 +600,17 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     req(!is.null(rv_current$working_df))
     
     facet_choices <- facet_choices_for_chart()
+    current_selected <- input$cboFacetVar %||% facet_none_value
+    
+    if (is_blank(current_selected) || !current_selected %in% c(facet_none_value, facet_choices)) {
+      current_selected <- facet_none_value
+    }
     
     selectInput(
       inputId = "cboFacetVar",
       label = paste0(rv_label("wrap_by_variable"), ":"),
-      choices = c(select_placeholder(rv_label("select_variable")), facet_choices),
-      selected = keep_valid_single(input$cboFacetVar, facet_choices)
+      choices = c("None" = facet_none_value, facet_choices),
+      selected = current_selected
     )
   })
   
@@ -548,6 +622,13 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       shinyjs::hide("DivvisualizationMenu")
       shinyjs::showElement("Divcustomvisiz")
     }
+  })
+  
+  color_none_value <- "__NONE__"
+  
+  selected_color_var <- reactive({
+    val <- safe_scalar(input$cboColorVar, color_none_value)
+    if (identical(val, color_none_value)) "" else val
   })
   
   
@@ -645,22 +726,24 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       "Line" = names(numeric_df(df)),
       "Violin" = names(numeric_df(df)),
       "Boxplot" = if (x_type %in% c("categorical", "date")) names(numeric_df(df)) else character(0),
-      "Bar" = names(df),
+      "Bar" = names(numeric_df(df)),
       names(numeric_df(df))
     )
     
     setdiff(out, xvar)
   })
   
+  facet_none_value <- "__NONE__"
   selected_facet_var <- reactive({
-    safe_scalar(input$cboFacetVar, "")
+    val <- safe_scalar(input$cboFacetVar, facet_none_value)
+    if (identical(val, facet_none_value)) "" else val
   })
   
   color_choices_for_chart <- reactive({
     req(safe_df())
     setdiff(
       names(non_numric_non_date_df(safe_df())),
-      c(input$cboXVar %||% "", input$cboYVar %||% "", input$cboFacetVar %||% "")
+      c(input$cboXVar %||% "", input$cboYVar %||% "", selected_facet_var())
     )
   })
   
@@ -668,17 +751,35 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     req(safe_df())
     setdiff(
       names(non_numric_non_date_df(safe_df())),
-      c(input$cboXVar %||% "", input$cboYVar %||% "", input$cboColorVar %||% "")
+      c(input$cboXVar %||% "", input$cboYVar %||% "", selected_color_var())
     )
   })
   
   update_facet_inputs <- function(facet_choices) {
-    facet_choice_set <- c(select_placeholder(rv_label("select_variable")), facet_choices)
+    current_selected <- input$cboFacetVar %||% facet_none_value
+    
+    if (is_blank(current_selected) || !current_selected %in% c(facet_none_value, facet_choices)) {
+      current_selected <- facet_none_value
+    }
     
     safe_update_select(
       "cboFacetVar",
-      choices = facet_choice_set,
-      selected = keep_valid_single(input$cboFacetVar, facet_choices)
+      choices = c("None" = facet_none_value, facet_choices),
+      selected = current_selected
+    )
+  }
+
+  update_color_inputs <- function(color_choices) {
+    current_selected <- input$cboColorVar %||% color_none_value
+    
+    if (is_blank(current_selected) || !current_selected %in% c(color_none_value, color_choices)) {
+      current_selected <- color_none_value
+    }
+    
+    safe_update_select(
+      "cboColorVar",
+      choices = c("None" = color_none_value, color_choices),
+      selected = current_selected
     )
   }
   
@@ -745,16 +846,22 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       choices = c(select_placeholder(rv_label("select_variable")), nms),
       selected = ""
     )
+    
     updateSelectInput(
       session, "cboYVar",
       choices = c(select_placeholder(rv_label("select_variable")), names(numeric_df(df))),
       selected = ""
     )
-    updateSelectInput(
-      session, "cboColorVar",
-      choices = c(select_placeholder(rv_label("select_variable")), names(non_numric_non_date_df(df))),
-      selected = ""
-    )
+    
+    color_choices <- names(non_numric_non_date_df(df))
+    current_selected <- input$cboColorVar %||% color_none_value
+    
+    if (is_blank(current_selected) || !current_selected %in% c(color_none_value, color_choices)) {
+      current_selected <- color_none_value
+    }
+    color_none_value <- "__NONE_COLOR__"
+    update_color_inputs(color_choices)
+    
     update_facet_inputs(names(non_numric_non_date_df(df)))
     
     rv_custom$chart_type <- "Bar"
@@ -826,17 +933,13 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       selected = keep_valid_single(input$cboYVar, y_choices)
     )
     
-    updateSelectInput(
-      session, "cboColorVar",
-      choices = c(select_placeholder(rv_label("select_variable")), color_choices),
-      selected = keep_valid_single(input$cboColorVar, color_choices)
-    )
+    update_color_inputs(color_choices)
     
     update_facet_inputs(facet_choices)
     
     if (identical(input$btnChartType, "Pie")) {
       updateSelectInput(session, "cboYVar", selected = "")
-      updateSelectInput(session, "cboFacetVar", selected = "")
+      updateSelectInput(session, "cboFacetVar", selected = facet_none_value)
       rv_custom$plot_status <- rv_label("pie_chart_uses_only_x")
     }
     
@@ -1175,7 +1278,7 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     
     xvar <- input$cboXVar
     yvar <- input$cboYVar
-    color_var <- input$cboColorVar
+    color_var <- selected_color_var()
     facet_var <- selected_facet_var()
     
     txt_xlab <- safe_scalar(input$txtXlab, "")
@@ -1196,7 +1299,7 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
     line_type_val <- safe_scalar(input$cboLineType, "solid")
     line_join_val <- safe_scalar(input$cboLineJoin, "round")
     add_smooth_val <- safe_scalar(input$cboAddSmooth, "loess")
-    summary_type_val <- safe_scalar(input$rdoSummaryTye, "Total")
+    summary_type_val <- safe_scalar(input$rdoSummaryTye, "Mean")
     
     shape_val <- suppressWarnings(as.integer(safe_scalar(input$cboShapes, 16)))
     if (is.na(shape_val)) shape_val <- 16
@@ -1224,6 +1327,45 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       facet_plot_var <- facet_info$facet_var
       n_panels <- facet_info$n_panels
       
+      
+      if (non_blank(facet_plot_var)) {
+        return(build_faceted_plot_native(
+          df = df_plot,
+          chart_type = chart_type,
+          xvar = xvar,
+          yvar = yvar,
+          color_var = color_var,
+          facet_var = facet_plot_var,
+          txt_xlab = txt_xlab,
+          txt_ylab = txt_ylab,
+          txt_title = txt_title,
+          txt_legend = txt_legend,
+          vertical_flag = vertical_flag,
+          stacked_flag = stacked_flag,
+          add_shapes_flag = add_shapes_flag,
+          display_se_flag = display_se_flag,
+          add_line_type_flag = add_line_type_flag,
+          add_points_flag = add_points_flag,
+          line_type_val = line_type_val,
+          line_join_val = line_join_val,
+          add_smooth_val = add_smooth_val,
+          summary_type_val = summary_type_val,
+          shape_val = shape_val,
+          title_pos_val = title_pos_val,
+          title_size_val = title_size_val,
+          axis_title_size_val = axis_title_size_val,
+          axis_text_size_val = axis_text_size_val,
+          facet_title_size_val = facet_title_size_val,
+          data_label_size_val = data_label_size_val,
+          axis_text_angle_val = axis_text_angle_val,
+          bar_width_val = bar_width_val,
+          line_size_val = line_size_val,
+          conf_int_val = conf_int_val,
+          brewer_val = brewer_val,
+          single_color_val = single_color_val,
+          theme_fun = theme_fun
+        ))
+      }
       p <- NULL
       
       if (identical(chart_type, "Pie")) {
@@ -1275,29 +1417,87 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       }
       
       if (identical(chart_type, "Bar")) {
-        p <- Rautoml::custom_barplot(
-          df = df_plot,
-          xvar = xvar,
-          yvar = if (is_blank(yvar)) NULL else yvar,
-          xlab = txt_xlab,
-          ylab = txt_ylab,
-          bar_width = bar_width_val,
-          plot_title = txt_title,
-          vertical = vertical_flag,
-          stackedtype = stacked_flag,
-          colorVar = if (is_blank(color_var)) NULL else color_var,
-          title_pos = title_pos_val,
-          title_size = title_size_val,
-          custom_theme = theme_fun(),
-          axis_title_size = axis_title_size_val,
-          axis_text_size = axis_text_size_val,
-          data_label_size = data_label_size_val,
-          axistext_angle = axis_text_angle_val,
-          legend_title = txt_legend,
-          colorbrewer = brewer_val,
-          default_col = single_color_val
-        )
+        plot_df <- df_plot
+        plot_df <- plot_df[!is.na(plot_df[[xvar]]), , drop = FALSE]
+        
+        if (!non_blank(yvar)) {
+          
+          if (non_blank(color_var)) {
+            grouping <- c(xvar, color_var)
+            bar_df <- stats::aggregate(rep(1, nrow(plot_df)), plot_df[grouping], sum)
+            names(bar_df)[names(bar_df) == "x"] <- "value"
+          } else {
+            bar_df <- as.data.frame(table(plot_df[[xvar]]))
+            names(bar_df) <- c(xvar, "value")
+          }
+          
+          y_label <- coalesce_label(txt_ylab, "Count")
+          
+        } else {
+          
+          if (!yvar %in% names(plot_df)) return(NULL)
+          plot_df <- plot_df[!is.na(plot_df[[yvar]]), , drop = FALSE]
+          
+        
+          bar_summary_type_val <- "Mean"
+          summary_fun_bar <- bar_summary_fun(bar_summary_type_val)
+          
+          grouping <- c(xvar, if (non_blank(color_var)) color_var else NULL)
+          
+          bar_df <- stats::aggregate(plot_df[[yvar]], plot_df[grouping], summary_fun_bar)
+          names(bar_df)[names(bar_df) == "x"] <- "value"
+          
+          #y_label <- coalesce_label(txt_ylab, paste("Average", yvar))
+        }
+        
+        bar_df$label <- format_bar_label(bar_df$value)
+        
+        if (non_blank(color_var)) {
+          p <- ggplot2::ggplot(
+            bar_df,
+            ggplot2::aes_string(x = xvar, y = "value", fill = color_var)
+          ) +
+            ggplot2::geom_col(
+              width = bar_width_val,
+              position = if (stacked_flag) "stack" else ggplot2::position_dodge2(width = bar_width_val, preserve = "single")
+            )
+        } else {
+          p <- ggplot2::ggplot(
+            bar_df,
+            ggplot2::aes_string(x = xvar, y = "value")
+          ) +
+            ggplot2::geom_col(width = bar_width_val, fill = single_color_val) +
+            ggplot2::geom_text(
+              ggplot2::aes(label = label),
+              vjust = -0.3,
+              size = data_label_size_val
+            )
+        }
+        
+        p <- p +
+          ggplot2::labs(
+            x = coalesce_label(txt_xlab, xvar),
+            y = y_label,
+            title = txt_title,
+            fill = if (non_blank(txt_legend)) txt_legend else ggplot2::waiver()
+          ) +
+          theme_fun() +
+          ggplot2::theme(
+            plot.title = ggplot2::element_text(hjust = title_pos_val, size = title_size_val),
+            axis.title.x = ggplot2::element_text(size = axis_title_size_val),
+            axis.title.y = ggplot2::element_text(size = axis_title_size_val),
+            axis.text.x = ggplot2::element_text(size = axis_text_size_val, angle = axis_text_angle_val, hjust = if (axis_text_angle_val == 0) 0.5 else 1),
+            axis.text.y = ggplot2::element_text(size = axis_text_size_val)
+          ) +
+          ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.12)))
+        
+        if (non_blank(color_var)) {
+          p <- p + ggplot2::scale_fill_brewer(palette = brewer_val)
+        }
+        
+        if (!vertical_flag) p <- p + ggplot2::coord_flip()
       }
+        
       
       if (identical(chart_type, "Histogram")) {
         p <- Rautoml::custom_histogram(
@@ -1396,13 +1596,6 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
       }
       
       if (is.null(p)) return(NULL)
-      
-      p <- add_facet_to_plot(
-        p = p,
-        facet_var = facet_plot_var,
-        facet_title_size = facet_title_size_val,
-        n_panels = n_panels
-      )
       
       p
     }, error = function(e) {
