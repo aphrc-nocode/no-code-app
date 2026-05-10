@@ -2,10 +2,18 @@
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
-  waiter_show(
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-    color = "#FFF"
-  )
+  # ---- Progress overlay for cold-start feedback ----
+  update_progress <- function(msg) {
+    waiter::waiter_show(
+      html = tagList(
+        spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
+        tags$br(),
+        tags$span(msg, style="color:#555;font-size:14px;margin-top:12px;display:block;")
+      ),
+      color = "#FFF"
+    )
+  }
+  update_progress("Loading packages...")
   
   source("server/auth.R")
   source("Server/homepage_translation_labels.R", local = TRUE)
@@ -233,10 +241,92 @@ function(input, output, session){
 			, ols_param = FALSE
 			, ols_name = NULL
 			, ols_trained_model = NULL
+			
 			, rf_model = NULL
 			, rf_param = FALSE
 			, rf_name = NULL
 			, rf_trained_model = NULL
+			
+			, gbm_model = NULL
+			, gbm_param = FALSE
+			, gbm_name = NULL
+			, gbm_trained_model = NULL
+			
+			, xgbTree_model = NULL
+			, xgbTree_param = FALSE
+			, xgbTree_name = NULL
+			, xgbTree_trained_model = NULL
+			
+			, xgbLinear_model = NULL
+			, xgbLinear_param = FALSE
+			, xgbLinear_name = NULL
+			, xgbLinear_trained_model = NULL
+			
+			, svmRadial_model = NULL
+			, svmRadial_param = FALSE
+			, svmRadial_name = NULL
+			, svmRadial_trained_model = NULL
+			
+			, svmLinear_model = NULL
+			, svmLinear_param = FALSE
+			, svmLinear_name = NULL
+			, svmLinear_trained_model = NULL
+			
+			, svmPoly_model = NULL
+			, svmPoly_param = FALSE
+			, svmPoly_name = NULL
+			, svmPoly_trained_model = NULL
+			
+			, glmnet_model = NULL
+			, glmnet_param = FALSE
+			, glmnet_name = NULL
+			, glmnet_trained_model = NULL
+			
+			, lasso_model = NULL
+			, lasso_param = FALSE
+			, lasso_name = NULL
+			, lasso_trained_model = NULL
+			
+			, ridge_model = NULL
+			, ridge_param = FALSE
+			, ridge_name = NULL
+			, ridge_trained_model = NULL
+			
+			, knn_model = NULL
+			, knn_param = FALSE
+			, knn_name = NULL
+			, knn_trained_model = NULL
+			
+			, nnet_model = NULL
+			, nnet_param = FALSE
+			, nnet_name = NULL
+			, nnet_trained_model = NULL
+			
+			, avNNet_model = NULL
+			, avNNet_param = FALSE
+			, avNNet_name = NULL
+			, avNNet_trained_model = NULL
+			
+			, pls_model = NULL
+			, pls_param = FALSE
+			, pls_name = NULL
+			, pls_trained_model = NULL
+			
+			, rpart_model = NULL
+			, rpart_param = FALSE
+			, rpart_name = NULL
+			, rpart_trained_model = NULL
+			
+			, mlpWeightDecayML_model = NULL
+			, mlpWeightDecayML_param = FALSE
+			, mlpWeightDecayML_name = NULL
+			, mlpWeightDecayML_trained_model = NULL
+			
+			, naive_bayes_model = NULL
+			, naive_bayes_param = FALSE
+			, naive_bayes_name = NULL
+			, naive_bayes_trained_model = NULL
+			
 			, all_trained_models = NULL
 		)
 		
@@ -576,8 +666,14 @@ function(input, output, session){
 	  ##### ---- Plot transform data ----------------------------------------------###
 	  transform_data_quick_explore_plot_server()
 	  
-	  ##### ---- Plot missing data ----------------------------------------------###
-	  transform_data_plot_missing_data_server()
+	  ##### ---- Plot missing data (LAZY-LOADED) --------------------------------###
+	  .missing_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.missing_loaded && input$dynamic_meinu_aphrc %in% c("manageData", "transformData")) {
+		  .missing_loaded <<- TRUE
+		  transform_data_plot_missing_data_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Combine datasets with the existing one --------------------------------------####
 	  source("server/combine_data.R", local = TRUE)
@@ -603,9 +699,15 @@ function(input, output, session){
 	  #### ---- Reset combine data --------------------------------####
 	  combine_data_reset()
 
-	  ##### ---- Control Custom visualizations ------------------ #####
-	  source("server/user_defined_visualization.R", local = TRUE)
-	  user_defined_server()
+	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
+	  .viz_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.viz_loaded && input$dynamic_meinu_aphrc %in% c("summarizeCustom", "visualizeData")) {
+		  .viz_loaded <<- TRUE
+		  source("server/user_defined_visualization.R", local = TRUE)
+		  user_defined_server()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  ### ------- OMOP ------------------------------------------ #####
 	  
@@ -648,6 +750,7 @@ function(input, output, session){
 	  #### ---- Machine learning and AI --------------- ####
 	  
 	  ##### ----- Set ML/AI UI ------------------- ####
+	  update_progress("Loading ML modules...")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
 	  
@@ -724,13 +827,28 @@ function(input, output, session){
 	  ## GAM
 	  model_training_caret_models_gam_server()
 
+	  ## DT (RPART)
+	  model_training_caret_models_rpart_server()
+
+	  ## mlpWeightDecayML (MLP)
+	  model_training_caret_models_mlpWeightDecayML_server()
+	  
+	  ## Naive Bayes
+	  model_training_caret_models_naive_bayes_server()
+	  
 	  #### ----- Train all models ----------------------------------- ####
 	  source("server/train_caret_models.R", local=TRUE)
 	  model_training_caret_train_all_server()
 
-	  #### ----- Compare trained models ------------------------------ ####
-	  source("server/compare_trained_caret_models.R", local=TRUE)
-	  model_training_caret_train_metrics_server()
+	  #### ----- Compare trained models (LAZY-LOADED) --------------------- ####
+	  .compare_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.compare_loaded && input$dynamic_meinu_aphrc %in% c("validateDeployModel", "trainModel")) {
+		  .compare_loaded <<- TRUE
+		  source("server/compare_trained_caret_models.R", local = TRUE)
+		  model_training_caret_train_metrics_server()
+		}
+	  }, ignoreInit = TRUE)
 
 	  #### ----- Deploy trained models ------------------------------- ####
 	  source("server/deploy_trained_caret_models.R", local=TRUE)
@@ -773,9 +891,15 @@ function(input, output, session){
 		 rv_ml_ai$framework <- tolower(input$modelling_framework_choices %||% "")
 	  }, ignoreInit = FALSE)
 	  
-	  #### ---- Deep Learning Server ----- ###
-	  source("server/deep_learning.R", local=TRUE)
-	  deep_learning()
+	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
+	  .dl_loaded <- FALSE
+	  observeEvent(input$dynamic_meinu_aphrc, {
+		if (!.dl_loaded && input$dynamic_meinu_aphrc %in% c("deeplearning", "cnndeep")) {
+		  .dl_loaded <<- TRUE
+		  source("server/deep_learning.R", local = TRUE)
+		  deep_learning()
+		}
+	  }, ignoreInit = TRUE)
 	  
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this
@@ -789,9 +913,10 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
-	  waiter_hide()
+	  update_progress("Ready!")
+	  waiter::waiter_hide()
   }, ignoreInit = FALSE)
 
-  waiter_hide()
+  waiter::waiter_hide()
   
 }
