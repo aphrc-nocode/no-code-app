@@ -789,9 +789,17 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
+	  #### ---- Location modal + page tracking --------------------------------####
+	  source("server/location_modal.R", local = TRUE)
+	  location_modal_server(USER)
+
+	  #### ---- Admin dashboard -----------------------------------------------####
+	  source("server/admin_server.R", local = TRUE)
+	  admin_server(USER)
+
 	  waiter_hide()
   }, ignoreInit = FALSE)
 
   waiter_hide()
-  
+
 }
