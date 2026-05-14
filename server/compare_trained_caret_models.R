@@ -2,8 +2,10 @@
 model_training_caret_train_metrics_server = function() {
 	
 	
-	observeEvent(input$model_training_apply, {
-		
+	# Fire on button click AND when train_metrics_df is set after training completes
+	# (so inner outputs get registered even on first run in a fresh session)
+	observeEvent(list(input$model_training_apply, rv_training_results$train_metrics_df), {
+
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
