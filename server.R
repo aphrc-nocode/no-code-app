@@ -667,13 +667,8 @@ function(input, output, session){
 	  transform_data_quick_explore_plot_server()
 	  
 	  ##### ---- Plot missing data (LAZY-LOADED) --------------------------------###
-	  .missing_loaded <- FALSE
-	  observeEvent(input$tabs, {
-		if (!.missing_loaded && input$tabs %in% c("manageData", "transformData")) {
-		  .missing_loaded <<- TRUE
-		  transform_data_plot_missing_data_server()
-		}
-	  }, ignoreInit = TRUE)
+	  source("server/lazy_loaders.R", local = TRUE)
+	  lazy_load_missing_data()
 	  
 	  #### ---- Combine datasets with the existing one --------------------------------------####
 	  source("server/combine_data.R", local = TRUE)
@@ -700,14 +695,7 @@ function(input, output, session){
 	  combine_data_reset()
 
 	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
-	  .viz_loaded <- FALSE
-	  observeEvent(input$tabs, {
-		if (!.viz_loaded && input$tabs %in% c("summarizeCustom", "visualizeData")) {
-		  .viz_loaded <<- TRUE
-		  source("server/user_defined_visualization.R", local = TRUE)
-		  user_defined_server()
-		}
-	  }, ignoreInit = TRUE)
+	  lazy_load_custom_viz()
 	  
 	  ### ------- OMOP ------------------------------------------ #####
 	  
@@ -841,14 +829,7 @@ function(input, output, session){
 	  model_training_caret_train_all_server()
 
 	  #### ----- Compare trained models (LAZY-LOADED) --------------------- ####
-	  .compare_loaded <- FALSE
-	  observeEvent(input$tabs, {
-		if (!.compare_loaded && input$tabs %in% c("validateDeployModel", "trainModel")) {
-		  .compare_loaded <<- TRUE
-		  source("server/compare_trained_caret_models.R", local = TRUE)
-		  model_training_caret_train_metrics_server()
-		}
-	  }, ignoreInit = TRUE)
+	  lazy_load_compare_models()
 
 	  #### ----- Deploy trained models ------------------------------- ####
 	  source("server/deploy_trained_caret_models.R", local=TRUE)
@@ -892,14 +873,7 @@ function(input, output, session){
 	  }, ignoreInit = FALSE)
 	  
 	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
-	  .dl_loaded <- FALSE
-	  observeEvent(input$tabs, {
-		if (!.dl_loaded && input$tabs %in% c("deeplearning", "cnndeep")) {
-		  .dl_loaded <<- TRUE
-		  source("server/deep_learning.R", local = TRUE)
-		  deep_learning()
-		}
-	  }, ignoreInit = TRUE)
+	  lazy_load_deep_learning()
 	  
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this

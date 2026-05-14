@@ -8,11 +8,15 @@ admin_server <- function(USER) {
   output$admin_lbl_countries      <- renderUI({ h4(get_rv_labels("admin_countries_label"),      style="margin:0;color:#555;font-size:13px;text-transform:uppercase;") })
   output$admin_lbl_total_visits   <- renderUI({ h4(get_rv_labels("admin_total_visits_label"),   style="margin:0;color:#555;font-size:13px;text-transform:uppercase;") })
   output$admin_lbl_active_today   <- renderUI({ h4(get_rv_labels("admin_active_today_label"),   style="margin:0;color:#555;font-size:13px;text-transform:uppercase;") })
-  output$admin_lbl_funnel_title   <- renderUI({ get_rv_labels("admin_funnel_title") })
-  output$admin_lbl_users_box      <- renderUI({ get_rv_labels("admin_users_box_title") })
-  output$admin_lbl_visited_pages  <- renderUI({ get_rv_labels("admin_visited_pages_title") })
-  output$admin_lbl_daily_trend    <- renderUI({ get_rv_labels("admin_daily_trend_title") })
-  output$admin_lbl_activity_log   <- renderUI({ get_rv_labels("admin_activity_log_title") })
+  # Box titles styled darker for visibility on the light green header bar
+  .box_title <- function(key) {
+    tags$span(get_rv_labels(key), style = "color:#1a3a1a; font-weight:700;")
+  }
+  output$admin_lbl_funnel_title   <- renderUI({ .box_title("admin_funnel_title") })
+  output$admin_lbl_users_box      <- renderUI({ .box_title("admin_users_box_title") })
+  output$admin_lbl_visited_pages  <- renderUI({ .box_title("admin_visited_pages_title") })
+  output$admin_lbl_daily_trend    <- renderUI({ .box_title("admin_daily_trend_title") })
+  output$admin_lbl_activity_log   <- renderUI({ .box_title("admin_activity_log_title") })
 
   output$admin_btn_summary_download <- renderUI({
     downloadButton("admin_download_summary", get_rv_labels("admin_download_summary_btn"),
