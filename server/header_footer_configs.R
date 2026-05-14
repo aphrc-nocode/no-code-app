@@ -164,7 +164,11 @@ menu_translation = function(){
                   history_sidebar_command_item("save",  get_rv_labels("save"),  icon("floppy-disk", lib = "font-awesome"))
                 ),
                 menuItem(HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_additional_resources"), "</span>")), tabName = "addResources", icon = icon("book")),
-                
+
+                if (isTRUE(isolate(USER$username) %in% c("scygu@aphrc.org", "guest565@aphrc.org"))) {
+                  menuItem(get_rv_labels("admin_menu_label"), tabName = "adminPanel", icon = icon("shield-halved"))
+                },
+
                 br(),
                 div(
                   class = "logout-container",
