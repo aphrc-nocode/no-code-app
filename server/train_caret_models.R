@@ -737,6 +737,18 @@ model_training_caret_train_all_server = function() {
 
 	## Train models
 	observeEvent(input$model_training_apply, {
+		start_progress_bar <- function(id, att_new_obj, text) {
+			rv_training_results$training_busy <- TRUE
+			rv_training_results$training_completed <- FALSE
+		}
+		close_progress_bar <- function(att_new_obj) {
+			if (!isTRUE(rv_training_results$training_busy)) return(invisible(NULL))
+			rv_training_results$training_busy <- FALSE
+			session$sendCustomMessage("caretModelProgressComplete", list(
+				success = isTRUE(rv_training_results$training_completed)
+			))
+		}
+
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(rv_ml_ai$at_least_one_model)) {
@@ -811,6 +823,13 @@ model_training_caret_train_all_server = function() {
 
 					rv_training_results$training_completed = TRUE
 					rv_ml_ai$at_least_one_model = FALSE
+					for (cb in c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
+								 "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
+								 "nnet","treebag","avNNet","pls","gam")) {
+						updatePrettyCheckbox(session,
+							inputId = paste0("model_training_caret_models_", cb, "_check"),
+							value   = FALSE)
+					}
 				
 ## 					rv_training_models$ols_model = NULL
 ## 					rv_training_models$rf_model = NULL
@@ -1027,6 +1046,66 @@ model_training_caret_train_all_server = function() {
 		}
 	})	
 
+	## Reactive label outputs for the progress panel (reads from labelling file, updates on language change)
+	output$cmp_panel_title_ui <- renderUI({ get_rv_labels("cmp_panel_title") })
+	output$cmp_footer_ui <- renderUI({
+		tagList(tags$i(class = "fa fa-info-circle"), paste0(" ", get_rv_labels("cmp_footer_note")))
+	})
+	output$cmp_labels_json <- renderUI({
+		tags$div(
+			id    = "cmp-labels-data",
+			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
+			`data-word-training`    = get_rv_labels("cmp_word_training"),
+			`data-word-completed`   = get_rv_labels("cmp_word_completed"),
+			`data-status-training`  = get_rv_labels("cmp_status_training"),
+			`data-status-completed` = get_rv_labels("cmp_status_completed"),
+			`data-status-stopped`   = get_rv_labels("cmp_status_stopped"),
+			`data-badge-done`       = get_rv_labels("cmp_badge_done"),
+			`data-badge-failed`     = get_rv_labels("cmp_badge_failed")
+		)
+	})
+	outputOptions(output, "cmp_panel_title_ui", suspendWhenHidden = FALSE)
+	outputOptions(output, "cmp_footer_ui",      suspendWhenHidden = FALSE)
+	outputOptions(output, "cmp_labels_json",    suspendWhenHidden = FALSE)
+
+	## Provide selected model names as JSON for the JS click handler on the progress panel
+	output$caret_selected_models_json <- renderUI({
+		model_map <- list(
+			list(inp = "model_training_caret_models_ols_check",       rv = "ols_name"),
+			list(inp = "model_training_caret_models_rf_check",        rv = "rf_name"),
+			list(inp = "model_training_caret_models_gbm_check",       rv = "gbm_name"),
+			list(inp = "model_training_caret_models_xgbTree_check",   rv = "xgbTree_name"),
+			list(inp = "model_training_caret_models_xgbLinear_check", rv = "xgbLinear_name"),
+			list(inp = "model_training_caret_models_svmRadial_check", rv = "svmRadial_name"),
+			list(inp = "model_training_caret_models_svmLinear_check", rv = "svmLinear_name"),
+			list(inp = "model_training_caret_models_svmPoly_check",   rv = "svmPoly_name"),
+			list(inp = "model_training_caret_models_glmnet_check",    rv = "glmnet_name"),
+			list(inp = "model_training_caret_models_lasso_check",     rv = "lasso_name"),
+			list(inp = "model_training_caret_models_ridge_check",     rv = "ridge_name"),
+			list(inp = "model_training_caret_models_knn_check",       rv = "knn_name"),
+			list(inp = "model_training_caret_models_nnet_check",      rv = "nnet_name"),
+			list(inp = "model_training_caret_models_treebag_check",   rv = "treebag_name"),
+			list(inp = "model_training_caret_models_avNNet_check",    rv = "avNNet_name"),
+			list(inp = "model_training_caret_models_pls_check",       rv = "pls_name"),
+			list(inp = "model_training_caret_models_gam_check",       rv = "gam_name")
+		)
+		models_state <- reactiveValuesToList(rv_training_models)
+		models <- Filter(Negate(is.null), lapply(model_map, function(m) {
+			if (!isTRUE(input[[m$inp]])) return(NULL)
+			nm <- models_state[[m$rv]]
+			if (is.null(nm)) return(NULL)
+			disp <- if (!is.null(names(nm)) && nzchar(names(nm)[1])) names(nm)[1] else as.character(nm[1])
+			list(name = disp)
+		}))
+		models_json <- if (length(models) > 0) as.character(jsonlite::toJSON(models, auto_unbox = TRUE)) else "[]"
+		tags$div(
+			id = "caret-selected-models-data",
+			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
+			`data-models` = models_json
+		)
+	})
+	outputOptions(output, "caret_selected_models_json", suspendWhenHidden = FALSE)
+
 ## 	observe({
 ## 		req(!isTRUE(rv_training_results$training_completed), isTRUE(!is.null(rv_training_results$training_completed)))
 ## 		req(isTRUE(!is.null(rv_current$working_df)))
@@ -1062,4 +1141,3 @@ model_training_caret_train_all_server = function() {
 ## 					
 ## 	})
 }
-
