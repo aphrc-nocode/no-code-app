@@ -668,8 +668,8 @@ function(input, output, session){
 	  
 	  ##### ---- Plot missing data (LAZY-LOADED) --------------------------------###
 	  .missing_loaded <- FALSE
-	  observeEvent(input$dynamic_meinu_aphrc, {
-		if (!.missing_loaded && input$dynamic_meinu_aphrc %in% c("manageData", "transformData")) {
+	  observeEvent(input$tabs, {
+		if (!.missing_loaded && input$tabs %in% c("manageData", "transformData")) {
 		  .missing_loaded <<- TRUE
 		  transform_data_plot_missing_data_server()
 		}
@@ -701,8 +701,8 @@ function(input, output, session){
 
 	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
 	  .viz_loaded <- FALSE
-	  observeEvent(input$dynamic_meinu_aphrc, {
-		if (!.viz_loaded && input$dynamic_meinu_aphrc %in% c("summarizeCustom", "visualizeData")) {
+	  observeEvent(input$tabs, {
+		if (!.viz_loaded && input$tabs %in% c("summarizeCustom", "visualizeData")) {
 		  .viz_loaded <<- TRUE
 		  source("server/user_defined_visualization.R", local = TRUE)
 		  user_defined_server()
@@ -842,8 +842,8 @@ function(input, output, session){
 
 	  #### ----- Compare trained models (LAZY-LOADED) --------------------- ####
 	  .compare_loaded <- FALSE
-	  observeEvent(input$dynamic_meinu_aphrc, {
-		if (!.compare_loaded && input$dynamic_meinu_aphrc %in% c("validateDeployModel", "trainModel")) {
+	  observeEvent(input$tabs, {
+		if (!.compare_loaded && input$tabs %in% c("validateDeployModel", "trainModel")) {
 		  .compare_loaded <<- TRUE
 		  source("server/compare_trained_caret_models.R", local = TRUE)
 		  model_training_caret_train_metrics_server()
@@ -893,8 +893,8 @@ function(input, output, session){
 	  
 	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
 	  .dl_loaded <- FALSE
-	  observeEvent(input$dynamic_meinu_aphrc, {
-		if (!.dl_loaded && input$dynamic_meinu_aphrc %in% c("deeplearning", "cnndeep")) {
+	  observeEvent(input$tabs, {
+		if (!.dl_loaded && input$tabs %in% c("deeplearning", "cnndeep")) {
 		  .dl_loaded <<- TRUE
 		  source("server/deep_learning.R", local = TRUE)
 		  deep_learning()
