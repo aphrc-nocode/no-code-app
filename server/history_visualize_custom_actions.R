@@ -1,4 +1,4 @@
-history_visualize_custom_actions_server <- function(input, output, session, rv_current, plots_sec_rv, get_rv_labels = function(x) x) {
+history_visualize_custom_actions_server <- function(input, output, session, rv_current, plots_custom_rv, get_rv_labels = function(x) x) {
   `%||%` <- function(x, y) if (is.null(x)) y else x
 
   show_msg <- function(txt, type = c("message", "warning", "error")) {
@@ -19,8 +19,8 @@ history_visualize_custom_actions_server <- function(input, output, session, rv_c
 
   visualize_custom_snapshot <- function() {
     list(
-      plot_rv = plots_sec_rv$plot_rv,
-      tab_rv = plots_sec_rv$tab_rv
+      plot_rv = plots_custom_rv$plot_rv,
+      tab_rv = plots_custom_rv$tab_rv
     )
   }
 
@@ -39,14 +39,14 @@ history_visualize_custom_actions_server <- function(input, output, session, rv_c
 
   refresh_visualize_custom_outputs <- function() {
     output$GeneratedPlot <- renderPlot({
-      plots_sec_rv$plot_rv
+      plots_custom_rv$plot_rv
     })
 
-    if (!is.null(plots_sec_rv$tab_rv)) {
+    if (!is.null(plots_custom_rv$tab_rv)) {
       output$tabSummaries <- renderUI({
         div(
           style = "overflow-x:auto; width:100%;",
-          flextable::htmltools_value(plots_sec_rv$tab_rv)
+          flextable::htmltools_value(plots_custom_rv$tab_rv)
         )
       })
     } else {
@@ -60,8 +60,8 @@ history_visualize_custom_actions_server <- function(input, output, session, rv_c
     rv_history$restoring <- TRUE
     on.exit({ rv_history$restoring <- FALSE }, add = TRUE)
 
-    plots_sec_rv$plot_rv <- snap$plot_rv
-    plots_sec_rv$tab_rv <- snap$tab_rv
+    plots_custom_rv$plot_rv <- snap$plot_rv
+    plots_custom_rv$tab_rv <- snap$tab_rv
 
     refresh_visualize_custom_outputs()
     TRUE

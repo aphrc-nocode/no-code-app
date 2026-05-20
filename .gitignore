@@ -59,4 +59,9 @@ static_files/
 ../env1
 logs.log
 
+<<<<<<< HEAD
 venv/
+=======
+static_files/*
+!static_files/labelling_file.xlsx
+>>>>>>> f7f1675 (Add labelling file)
