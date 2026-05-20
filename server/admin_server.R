@@ -189,7 +189,7 @@ admin_server <- function(USER) {
            xlim = c(Sys.Date() - 30, Sys.Date()))
       axis.Date(1, at = seq(Sys.Date() - 30, Sys.Date(), by = "5 days"),
                 format = "%b %d", las = 2, cex.axis = 0.8)
-      grid(nx = NA, ny = NULL, col = "#eee", lty = 1)
+      grid(nx = NA, ny = NULL, col = "#eeeeee", lty = 1)
     })
 
     # ── Populate filter dropdowns ─────────────────────────────────────────────
