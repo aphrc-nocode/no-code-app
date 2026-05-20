@@ -1025,7 +1025,70 @@ automatic_visualization_server <- function(
     )
   })
   
+<<<<<<< HEAD
 >>>>>>> e54ce4f (Fix PDF download stability)
+=======
+  get_current_user_outputs_dir <- function() {
+    user_id <- NULL
+    
+    candidate_names <- c(
+      "email", "user_email", "username", "user_name",
+      "current_user", "logged_in_user", "user_id"
+    )
+    
+    for (nm in candidate_names) {
+      val <- tryCatch(rv_current[[nm]], error = function(e) NULL)
+      
+      if (!is.null(val) && length(val) > 0 && nzchar(as.character(val[1]))) {
+        user_id <- as.character(val[1])
+        break
+      }
+    }
+    
+    if (is.null(user_id) && exists("USER", inherits = TRUE)) {
+      USER_obj <- get("USER", inherits = TRUE)
+      
+      for (nm in candidate_names) {
+        val <- tryCatch(USER_obj[[nm]], error = function(e) NULL)
+        
+        if (!is.null(val) && length(val) > 0 && nzchar(as.character(val[1]))) {
+          user_id <- as.character(val[1])
+          break
+        }
+      }
+    }
+    
+    if (is.null(user_id)) return(NULL)
+    
+    user_id <- basename(user_id)
+    
+    output_dir <- file.path(getwd(), user_id, "outputs")
+    
+    if (!dir.exists(dirname(output_dir))) return(NULL)
+    
+    dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+    
+    output_dir
+  }
+  
+  copy_pdf_to_user_outputs <- function(file, filename) {
+    output_dir <- get_current_user_outputs_dir()
+    
+    if (is.null(output_dir)) {
+      warning("Could not find current user's outputs folder.")
+      return(invisible(FALSE))
+    }
+    
+    file.copy(
+      from = file,
+      to = file.path(output_dir, filename),
+      overwrite = TRUE
+    )
+    
+    invisible(TRUE)
+  }
+  
+>>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
   output$btnDownloadReportAutoPdf <- shiny::downloadHandler(
     filename = function() {
       paste0("automatic_visualization_report_", format(Sys.Date(), "%Y-%m-%d"), ".pdf")
@@ -1034,12 +1097,16 @@ automatic_visualization_server <- function(
       meta <- auto_report_meta()
       
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
       download_name <- paste0(
         "automatic_visualization_report_",
         format(Sys.Date(), "%Y-%m-%d"),
         ".pdf"
       )
       
+<<<<<<< HEAD
       grDevices::pdf(file = file, width = 14, height = 9, onefile = TRUE)
       
       on.exit(grDevices::dev.off(), add = TRUE)
@@ -1054,10 +1121,25 @@ automatic_visualization_server <- function(
       )
       
 =======
+=======
+>>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
       grDevices::pdf(file = file, width = 14, height = 9, onefile = TRUE)
+      
       on.exit(grDevices::dev.off(), add = TRUE)
       
+<<<<<<< HEAD
 >>>>>>> e54ce4f (Fix PDF download stability)
+=======
+      on.exit(
+        copy_pdf_to_user_outputs(
+          file = file,
+          filename = download_name
+        ),
+        add = TRUE,
+        after = TRUE
+      )
+      
+>>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
       graphics::plot.new()
       graphics::text(
         x = 0.5,
