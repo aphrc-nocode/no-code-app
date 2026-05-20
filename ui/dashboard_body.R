@@ -21,6 +21,7 @@ source("ui/omop_visualizations_ui.R", local=TRUE)
 source("ui/mod_quant_anonymization.R", local=TRUE)
 source("ui/anonymization_ui.R", local=TRUE)
 source("ui/add_resources_ui.R", local=TRUE)
+source("ui/admin_ui.R", local=TRUE)
 source("ui/deploy_model_ui.R", local=TRUE)
 source("ui/predict_pycaret_ui.R", local = TRUE)
 
@@ -148,6 +149,8 @@ aphrcBody <- dashboardBody(
 		## OMOP resources
 		, add_resources_ui()
 
+		## Admin dashboard (only rendered for admin user)
+		, admin_ui()
 
 	)
 )
