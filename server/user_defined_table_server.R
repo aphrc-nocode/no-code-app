@@ -146,7 +146,7 @@ user_defined_table_server <- function(input, output, session, rv_current, plots_
   table_has_minimum_inputs <- reactive({
     selected_vars <- input$cboCalcVar %||% character(0)
     selected_vars <- selected_vars[selected_vars != ""]
-    length(selected_vars) >= 1 && length(selected_vars) <= 5
+    length(selected_vars) >= 1
   })
   
   close_tab_more <- function() {
@@ -210,7 +210,7 @@ user_defined_table_server <- function(input, output, session, rv_current, plots_
   observe({
     selected_vars <- input$cboCalcVar %||% character(0)
     selected_vars <- selected_vars[selected_vars != ""]
-    if (length(selected_vars) == 0 || length(selected_vars) > 5) {
+    if (length(selected_vars) == 0) {
       shinyjs::disable("btnCreatetable")
     } else {
       shinyjs::enable("btnCreatetable")
@@ -218,32 +218,27 @@ user_defined_table_server <- function(input, output, session, rv_current, plots_
   })
   
   observeEvent(input$cboCalcVar, {
-    req(isTRUE(!is.null(rv_current$working_df)))
+    req(!is.null(rv_current$working_df))
     
-    valid_choices <- setdiff(names(rv_current$working_df), input$cboCalcVar %||% character(0))
+    selected_calc <- input$cboCalcVar %||% character(0)
+    selected_calc <- selected_calc[selected_calc != ""]
+    
+    valid_choices <- setdiff(names(rv_current$working_df), selected_calc)
+    
     updateSelectInput(
       session,
       "cboColVar",
       choices = c(select_placeholder(rv_label("select_variable")), valid_choices),
       selected = keep_valid_single(input$cboColVar, valid_choices)
     )
-    
-    selected_vars <- input$cboCalcVar %||% character(0)
-    selected_vars <- selected_vars[selected_vars != ""]
-    if (length(selected_vars) > 5) {
-      showModal(modalDialog(
-        h3(get_rv_labels("max_var_limit")),
-        style = "text-align: center;color: red",
-        h5(get_rv_labels("max_var_limit_description")),
-        footer = tagList(actionButton("dismissBtn", rv_label("close")))
-      ))
-    }
   }, ignoreInit = TRUE)
   
   observeEvent(input$cboColVar, {
-    req(isTRUE(!is.null(rv_current$working_df)))
+    req(!is.null(rv_current$working_df))
     
-    valid_choices <- setdiff(names(rv_current$working_df), input$cboColVar %||% "")
+    selected_group <- input$cboColVar %||% ""
+    valid_choices <- setdiff(names(rv_current$working_df), selected_group)
+    
     updateSelectInput(
       session,
       "cboCalcVar",
@@ -298,10 +293,6 @@ user_defined_table_server <- function(input, output, session, rv_current, plots_
     
     if (length(vars) == 0) {
       return(list(ok = FALSE, msg = rv_label("please_select_at_least_one_table_variable")))
-    }
-    
-    if (length(vars) > 5) {
-      return(list(ok = FALSE, msg = rv_label("select_maximum_5_cross_tab_variables")))
     }
     
     valid_names <- names(df)

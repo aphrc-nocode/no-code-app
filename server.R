@@ -707,7 +707,11 @@ function(input, output, session){
 	    output = output,
 	    session = session,
 	    plots_auto_rv = plots_auto_rv,
-	    rv_current = rv_current
+	    rv_current = rv_current,
+	    get_rv_labels = get_rv_labels,
+	    get_rv_choices = function(key) {
+	      get_named_choices(input_choices_file, input$change_language, key)
+	    }
 	  )
 	  ### ------- OMOP ------------------------------------------ #####
 	  

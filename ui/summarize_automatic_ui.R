@@ -57,6 +57,7 @@ summarize_automatic_ui <- function() {
             uiOutput("user_select_Bivariate_features"),
             uiOutput("user_select_color_parlet_bivariate"),
             uiOutput("bivariate_plot_title"),
+            uiOutput("auto_generate_button"),
             br()
           ),
           column(

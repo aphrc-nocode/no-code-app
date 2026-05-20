@@ -131,7 +131,6 @@ user_calc_var = renderUI({
     options = list(
       placeholder = rv_label("select_one_or_more_variables"),
       plugins = list("remove_button"),
-      maxItems = 5,
       closeAfterSelect = TRUE
     )
   )

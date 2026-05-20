@@ -2,27 +2,6 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
   
   `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
-  default_rv_choices <- function(key) {
-    defaults <- list(
-      user_output_type = c(Chart = "Chart", Table = "Table"),
-      yes_no_boolean = c(Yes = "TRUE", No = "FALSE"),
-      user_visual_orientation = c(Vertical = "vertical", Horizontal = "horizontal"),
-      user_report_numeric = c(Mean = "mean", Median = "median"),
-      user_numeric_summary = c(`Standard deviation` = "sd", `Min-max` = "min-max"),
-      user_y_variable_summary_type = c(Total = "Total", Mean = "Mean", Median = "Median", Count = "Count"),
-      user_select_line_type = c(Solid = "solid", Dashed = "dashed", Dotted = "dotted", Dotdash = "dotdash", Longdash = "longdash", Twodash = "twodash"),
-      user_select_shape = c(Circle = "16", Triangle = "17", Square = "15", Diamond = "18", Plus = "3", Cross = "4"),
-      user_add_smooth = c(None = "none", Loess = "loess", Linear = "lm"),
-      user_select_line_join = c(Round = "round", Mitre = "mitre", Bevel = "bevel"),
-      user_select_color_parlet = c(Dark2 = "Dark2", Set1 = "Set1", Set2 = "Set2", Set3 = "Set3", Paired = "Paired", Pastel1 = "Pastel1", Pastel2 = "Pastel2", Accent = "Accent"),
-      bivariate_palette = c(Dark2 = "Dark2", Set1 = "Set1", Set2 = "Set2", Set3 = "Set3", Paired = "Paired", Pastel1 = "Pastel1", Pastel2 = "Pastel2", Accent = "Accent"),
-      corrplot_palette = c(RdYlBu = "RdYlBu", RdBu = "RdBu", BrBG = "BrBG", PiYG = "PiYG", PRGn = "PRGn", Spectral = "Spectral"),
-      r_colors = c(Blue = "#1591a3", Red = "red", Green = "green", Black = "black", Orange = "orange", Purple = "purple", Grey = "grey", Brown = "brown", Pink = "pink"),
-      user_ggthemes = c(Grey = "theme_grey", Minimal = "theme_minimal", Classic = "theme_classic", Light = "theme_light", BW = "theme_bw")
-    )
-    defaults[[key]] %||% character(0)
-  }
-
   rv_choices <- function(key) {
     if (exists("get_rv_choices", mode = "function", inherits = TRUE)) {
       vals <- get_rv_choices(key)
@@ -1447,7 +1426,7 @@ user_defined_chart_server <- function(input, output, session, rv_current, plots_
           bar_df <- stats::aggregate(plot_df[[yvar]], plot_df[grouping], summary_fun_bar)
           names(bar_df)[names(bar_df) == "x"] <- "value"
           
-          #y_label <- coalesce_label(txt_ylab, paste("Average", yvar))
+          y_label <- coalesce_label(txt_ylab, paste("Average", yvar))
         }
         
         bar_df$label <- format_bar_label(bar_df$value)
