@@ -145,22 +145,33 @@ function(input, output, session){
 		 , vartype_all = NULL
 	  )
 	  
-	  ##### ---- Sidebar history actions -----------------------------------
-	  history_actions_server(input, output, session, rv_current, get_rv_labels)
-	  history_transform_actions_server(input, output, session, rv_current, get_rv_labels)
-	  history_visualize_auto_actions_server(input, output, session, rv_current, plots_auto_rv, get_rv_labels)
-	  history_visualize_custom_actions_server(input, output, session, rv_current, plots_custom_rv, get_rv_labels)
 	  #####------------------Plots Reactive-------------------
-
+	  
 	  plots_custom_rv <- reactiveValues(
 	    plot_rv = NULL,
-	    tab_rv = NULL
+	    tab_rv = NULL,
+	    plot_bivariate_auto = NULL,
+	    plot_corr = NULL
 	  )
 	  
 	  plots_auto_rv <- reactiveValues(
 	    plot_bivariate_auto = NULL,
 	    plot_corr = NULL
 	  )
+	  
+	  history_visualize_custom_actions_server(
+	    input = input,
+	    output = output,
+	    session = session,
+	    rv_current = rv_current,
+	    plots_custom_rv = plots_custom_rv,
+	    get_rv_labels = get_rv_labels
+	  )
+	  ##### ---- Sidebar history actions -----------------------------------
+	  history_actions_server(input, output, session, rv_current, get_rv_labels)
+	  history_transform_actions_server(input, output, session, rv_current, get_rv_labels)
+	  history_visualize_auto_actions_server(input, output, session, rv_current, plots_auto_rv, get_rv_labels)
+	  history_visualize_custom_actions_server(input, output, session, rv_current, plots_custom_rv, get_rv_labels)
 
 	  ##### --------- Meta data ---------------------------------------------
 	  rv_metadata = reactiveValues(
@@ -695,11 +706,7 @@ function(input, output, session){
 	  combine_data_reset()
 
 	  ##### ---- Custom visualizations (LAZY-LOADED) ------------------ #####
-	  lazy_load_custom_viz()
-	  ##### ---- Control Custom visualizations ------------------ #####
-	  source("server/user_defined_visualization.R", local = TRUE)
-	 
-	  user_defined_server(plots_custom_rv = plots_custom_rv)
+	  lazy_load_custom_viz(plots_custom_rv = plots_custom_rv)
 
 	  source("server/automatic_visualization_server.R", local = TRUE)
 	  automatic_visualization_server(
