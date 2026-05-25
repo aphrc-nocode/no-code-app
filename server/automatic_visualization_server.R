@@ -11,8 +11,6 @@ automatic_visualization_server <- function(
   `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
   
   rv_label <- function(key) {
-<<<<<<< HEAD
-<<<<<<< HEAD
     val <- NULL
     
     if (is.function(get_rv_labels)) {
@@ -23,23 +21,6 @@ automatic_visualization_server <- function(
       return(as.character(val[1]))
     }
     
-=======
-=======
-    val <- NULL
-    
->>>>>>> 137cfff (Improve visualization modules and report output handling)
-    if (is.function(get_rv_labels)) {
-      val <- tryCatch(get_rv_labels(key), error = function(e) NULL)
-    }
-<<<<<<< HEAD
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-    
-    if (!is.null(val) && length(val) > 0 && !is.na(val[1]) && nzchar(trimws(as.character(val[1])))) {
-      return(as.character(val[1]))
-    }
-    
->>>>>>> 137cfff (Improve visualization modules and report output handling)
     key
   }
   
@@ -503,8 +484,6 @@ automatic_visualization_server <- function(
     density_plot = NULL,
     qq_plot = NULL,
     pca_plot = NULL,
-<<<<<<< HEAD
-<<<<<<< HEAD
     pca_loadings_plot = NULL,
     plots_generated = FALSE
   )
@@ -514,22 +493,6 @@ automatic_visualization_server <- function(
   })
   outputOptions(output, "auto_plots_generated", suspendWhenHidden = FALSE)
   
-=======
-    pca_loadings_plot = NULL
-  )
-  
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-    pca_loadings_plot = NULL,
-    plots_generated = FALSE
-  )
-  
-  output$auto_plots_generated <- shiny::reactive({
-    isTRUE(plots_state$plots_generated)
-  })
-  outputOptions(output, "auto_plots_generated", suspendWhenHidden = FALSE)
-  
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   output$bivariate_header_label <- shiny::renderUI({
     shiny::tags$span(rv_label("automatic_bivariate_header_label"))
   })
@@ -538,14 +501,6 @@ automatic_visualization_server <- function(
     shiny::tags$span(rv_label("automatic_corrplot_header_label"))
   })
   
-  output$user_select_color_parlet_bivariate <- shiny::renderUI({
-    shiny::selectInput(
-      "cboColorBrewerBivariate",
-      paste0(rv_label("palette"), ":"),
-      choices = rv_choices("bivariate_palette"),
-      selected = "Dark2"
-    )
-  })
   
   output$user_select_color_parlet_corrplot <- shiny::renderUI({
     shiny::selectInput(
@@ -560,10 +515,6 @@ automatic_visualization_server <- function(
     shiny::textInput("txtPlotBivariateTitle", rv_label("plot_title"), value = "")
   })
   
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   output$auto_generate_button <- shiny::renderUI({
     shiny::div(
       style = "margin-top:25px;",
@@ -576,11 +527,6 @@ automatic_visualization_server <- function(
     )
   })
   
-<<<<<<< HEAD
-=======
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   output$user_select_corr_features <- shiny::renderUI({
     df <- get_df()
     num_cols <- names(df)[vapply(df, is_numeric_col, logical(1))]
@@ -633,10 +579,6 @@ automatic_visualization_server <- function(
       selected = utils::head(setdiff(cols, cols[1] %||% ""), 6)
     )
     
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
     plots_state$missing_plot <- NULL
     plots_state$hist_plot <- NULL
     plots_state$density_plot <- NULL
@@ -645,27 +587,10 @@ automatic_visualization_server <- function(
     plots_state$pca_loadings_plot <- NULL
     plots_state$bivariate_plot <- NULL
     plots_state$corr_plot <- NULL
-<<<<<<< HEAD
   }, ignoreInit = FALSE)
   
   plots_state$plots_generated <- FALSE
   
-=======
-    plots_state$missing_plot <- build_missing_profile_plot(df)
-    plots_state$hist_plot <- build_hist_plot(df)
-    plots_state$density_plot <- build_density_plot(df)
-    plots_state$qq_plot <- build_qq_plot(df)
-    plots_state$pca_plot <- build_pca_plot(df)
-    plots_state$pca_loadings_plot <- build_pca_loadings_plot(df)
-  }, ignoreInit = FALSE)
-  
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-  }, ignoreInit = FALSE)
-  
-  plots_state$plots_generated <- FALSE
-  
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   observeEvent(input$cboBivariateOutcome, {
     df <- get_df()
     outcome <- safe_scalar(input$cboBivariateOutcome, "")
@@ -680,8 +605,6 @@ automatic_visualization_server <- function(
     )
   }, ignoreInit = TRUE)
   
-<<<<<<< HEAD
-<<<<<<< HEAD
  # bivariate_request <- shiny::debounce(shiny::reactive({
   #  state <- bivariate_state()
     
@@ -694,34 +617,6 @@ automatic_visualization_server <- function(
   #    ncol = ncol(state$df)
    # )
   #}), 120)
-=======
-  bivariate_request <- shiny::debounce(shiny::reactive({
-    state <- bivariate_state()
-    
-    list(
-      outcome = state$outcome,
-      biv_features = sort(state$biv_features),
-      biv_palette = state$biv_palette,
-      biv_title = state$biv_title,
-      nrow = nrow(state$df),
-      ncol = ncol(state$df)
-    )
-  }), 120)
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
- # bivariate_request <- shiny::debounce(shiny::reactive({
-  #  state <- bivariate_state()
-    
-  #  list(
-  #    outcome = state$outcome,
-  #    biv_features = sort(state$biv_features),
-  #    biv_palette = state$biv_palette,
-  #    biv_title = state$biv_title,
-  #    nrow = nrow(state$df),
-  #    ncol = ncol(state$df)
-   # )
-  #}), 120)
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   
   corr_request <- shiny::debounce(shiny::reactive({
     state <- corr_state()
@@ -729,21 +624,11 @@ automatic_visualization_server <- function(
     list(
       corr_features = sort(state$corr_features),
       corr_palette = state$corr_palette,
-<<<<<<< HEAD
-<<<<<<< HEAD
      nrow = nrow(state$df),
-=======
-      nrow = nrow(state$df),
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-     nrow = nrow(state$df),
->>>>>>> 137cfff (Improve visualization modules and report output handling)
       ncol = ncol(state$df)
     )
   }), 120)
   
-<<<<<<< HEAD
-<<<<<<< HEAD
  # observeEvent(bivariate_request(), {
  #   state <- bivariate_state()
     
@@ -757,30 +642,6 @@ automatic_visualization_server <- function(
     
  #   plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
  # }, ignoreInit = FALSE)
-=======
-  observeEvent(bivariate_request(), {
-    state <- bivariate_state()
-=======
- # observeEvent(bivariate_request(), {
- #   state <- bivariate_state()
->>>>>>> 137cfff (Improve visualization modules and report output handling)
-    
- #   plots_state$bivariate_plot <- build_bivariate_plot(
- #     df = state$df,
-  #    outcome = state$outcome,
-  #    features = state$biv_features,
-  #    palette_name = state$biv_palette,
-  #    plot_title = state$biv_title
-  #  )
-    
-<<<<<<< HEAD
-    plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
-  }, ignoreInit = FALSE)
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
- #   plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
- # }, ignoreInit = FALSE)
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   
   observeEvent(corr_request(), {
     state <- corr_state()
@@ -794,47 +655,93 @@ automatic_visualization_server <- function(
     plots_auto_rv$plot_corr <- plots_state$corr_plot
   }, ignoreInit = FALSE)
   
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   observeEvent(input$btnGenerateAutoViz, {
-    df <- get_df()
-    
-    plots_state$missing_plot <- build_missing_profile_plot(df)
-    plots_state$hist_plot <- build_hist_plot(df)
-    plots_state$density_plot <- build_density_plot(df)
-    plots_state$qq_plot <- build_qq_plot(df)
-    plots_state$pca_plot <- build_pca_plot(df)
-    plots_state$pca_loadings_plot <- build_pca_loadings_plot(df)
-    
-    b_state <- bivariate_state()
-    plots_state$bivariate_plot <- build_bivariate_plot(
-      df = b_state$df,
-      outcome = b_state$outcome,
-      features = b_state$biv_features,
-      palette_name = b_state$biv_palette,
-      plot_title = b_state$biv_title
+    shiny::withProgress(
+      message = rv_label("generating_visualizations"),
+      detail = rv_label("building"),
+      value = 0,
+      {
+        df <- get_df()
+        
+        shiny::incProgress(
+          0.10,
+          detail = rv_label("building_missing_data_plot")
+        )
+        plots_state$missing_plot <- build_missing_profile_plot(df)
+        
+        shiny::incProgress(
+          0.20,
+          detail = rv_label("building_histogram")
+        )
+        plots_state$hist_plot <- build_hist_plot(df)
+        
+        shiny::incProgress(
+          0.35,
+          detail = rv_label("building_density_plot")
+        )
+        plots_state$density_plot <- build_density_plot(df)
+        
+        shiny::incProgress(
+          0.50,
+          detail = rv_label("building_qq_plot")
+        )
+        plots_state$qq_plot <- build_qq_plot(df)
+        
+        shiny::incProgress(
+          0.65,
+          detail = rv_label("building_pca_plot")
+        )
+        plots_state$pca_plot <- build_pca_plot(df)
+        
+        shiny::incProgress(
+          0.75,
+          detail = rv_label("building_pca_loadings")
+        )
+        plots_state$pca_loadings_plot <- build_pca_loadings_plot(df)
+        
+        shiny::incProgress(
+          0.85,
+          detail = rv_label("building_bivariate_plot")
+        )
+        
+        b_state <- bivariate_state()
+        
+        plots_state$bivariate_plot <- build_bivariate_plot(
+          df = b_state$df,
+          outcome = b_state$outcome,
+          features = b_state$biv_features,
+          plot_title = b_state$biv_title
+        )
+        
+        shiny::incProgress(
+          0.95,
+          detail = rv_label("building_correlation_plot")
+        )
+        
+        c_state <- corr_state()
+        
+        plots_state$corr_plot <- build_corrplot_gg(
+          df = c_state$df,
+          features = c_state$corr_features
+        )
+        
+        plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
+        plots_auto_rv$plot_corr <- plots_state$corr_plot
+        
+        plots_state$plots_generated <- TRUE
+        
+        shiny::incProgress(
+          1,
+          detail = rv_label("visualizations_ready")
+        )
+      }
     )
-    
-    c_state <- corr_state()
-    plots_state$corr_plot <- build_corrplot_gg(
-      df = c_state$df,
-      features = c_state$corr_features,
-      palette_name = c_state$corr_palette
-    )
-    
-    plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
-    plots_auto_rv$plot_corr <- plots_state$corr_plot
   }, ignoreInit = TRUE)
   
+  plots_auto_rv$plot_bivariate_auto <- plots_state$bivariate_plot
+  plots_auto_rv$plot_corr <- plots_state$corr_plot
   plots_state$plots_generated <- TRUE
   
-<<<<<<< HEAD
-=======
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   output$ReportBasicStatsTable <- shiny::renderTable({
     df <- get_df()
     
@@ -910,42 +817,23 @@ automatic_visualization_server <- function(
   
   output$auto_visualization_report_view <- shiny::renderUI({
     shiny::tagList(
-<<<<<<< HEAD
-<<<<<<< HEAD
       
-=======
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-      
->>>>>>> 137cfff (Improve visualization modules and report output handling)
       shiny::div(
         class = "auto-viz-report-section",
         shiny::tags$h3(rv_label("automatic_visualization_report"))
       ),
-<<<<<<< HEAD
-<<<<<<< HEAD
       
-=======
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-      
->>>>>>> 137cfff (Improve visualization modules and report output handling)
       shiny::div(
         class = "auto-viz-report-section",
         shiny::tags$h3(rv_label("basic_statistics")),
         shiny::div(class = "auto-viz-table-wrap", shiny::tableOutput("ReportBasicStatsTable"))
       ),
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
       conditionalPanel(
         condition = "output.auto_plots_generated",
         shiny::div(
           class = "auto-viz-report-section",
           shiny::tags$h3(rv_label("missing_data_profile")),
           shiny::plotOutput("ReportMissingPlot", height = "420px")
-<<<<<<< HEAD
         )
       ),
       conditionalPanel(
@@ -976,17 +864,6 @@ automatic_visualization_server <- function(
         condition = "output.auto_plots_generated",
         shiny::div(
           class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("correlation_analysis")),
-          shiny::tags$p(
-            style = "margin-bottom:0; color:#4b5563;",
-            rv_label("correlation_plot_note")
-          )
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
           shiny::tags$h3(rv_label("bivariate_visualization")),
           shiny::plotOutput("BivariatePlotOutputReport", height = "700px")
         )
@@ -1006,103 +883,6 @@ automatic_visualization_server <- function(
           shiny::tags$h3(rv_label("principal_component_loadings")),
           shiny::plotOutput("ReportPCALoadingsPlot", height = "700px")
         )
-=======
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("missing_data_profile")),
-        shiny::plotOutput("ReportMissingPlot", height = "420px")
-      ),
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("univariate_distribution")),
-        shiny::plotOutput("ReportHistPlot", height = "700px")
-      ),
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("density_estimates")),
-        shiny::plotOutput("ReportDensityPlot", height = "700px")
-      ),
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("qq_plot")),
-        shiny::plotOutput("ReportQQPlot", height = "700px")
-      ),
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("correlation_analysis")),
-        shiny::tags$p(
-          style = "margin-bottom:0; color:#4b5563;",
-          rv_label("correlation_plot_note")
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("univariate_distribution")),
-          shiny::plotOutput("ReportHistPlot", height = "700px")
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("density_estimates")),
-          shiny::plotOutput("ReportDensityPlot", height = "700px")
-        )
-      ),
-<<<<<<< HEAD
-      shiny::div(
-        class = "auto-viz-report-section",
-        shiny::tags$h3(rv_label("principal_component_loadings")),
-        shiny::plotOutput("ReportPCALoadingsPlot", height = "700px")
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("qq_plot")),
-          shiny::plotOutput("ReportQQPlot", height = "700px")
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("correlation_analysis")),
-          shiny::tags$p(
-            style = "margin-bottom:0; color:#4b5563;",
-            rv_label("correlation_plot_note")
-          )
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("bivariate_visualization")),
-          shiny::plotOutput("BivariatePlotOutputReport", height = "700px")
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("principal_component_analysis")),
-          shiny::plotOutput("ReportPCAPlot", height = "480px")
-        )
-      ),
-      conditionalPanel(
-        condition = "output.auto_plots_generated",
-        shiny::div(
-          class = "auto-viz-report-section",
-          shiny::tags$h3(rv_label("principal_component_loadings")),
-          shiny::plotOutput("ReportPCALoadingsPlot", height = "700px")
-        )
->>>>>>> 137cfff (Improve visualization modules and report output handling)
       )
     )
   })
@@ -1132,8 +912,6 @@ automatic_visualization_server <- function(
   output$user_download_autoreport <- shiny::renderUI({
     shiny::div(
       style = "display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;",
-<<<<<<< HEAD
-<<<<<<< HEAD
       shiny::downloadButton("btnDownloadReportAutoPdf", rv_label("download_pdf_report")),
       shiny::downloadButton("btnDownloadReportAutoHtml", rv_label("download_html_report"))
     )
@@ -1159,233 +937,215 @@ automatic_visualization_server <- function(
   }
   
   
-=======
-      shiny::downloadButton("btnDownloadReportAutoPdf", rv_label("download_pdf_report"))
-    )
-  })
-  
-<<<<<<< HEAD
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-=======
-      shiny::downloadButton("btnDownloadReportAutoPdf", rv_label("download_pdf_report")),
-      shiny::downloadButton("btnDownloadReportAutoHtml", rv_label("download_html_report"))
-    )
-  })
-  
-  
->>>>>>> 137cfff (Improve visualization modules and report output handling)
-  get_current_user_outputs_dir <- function() {
-    output_dir <- file.path(getwd(), app_username, "outputs")
-    dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-    output_dir
-  }
-  
-  copy_report_to_user_outputs <- function(file, filename) {
-    output_dir <- get_current_user_outputs_dir()
-    
-    file.copy(
-      from = file,
-      to = file.path(output_dir, filename),
-      overwrite = TRUE
-    )
-    
-    invisible(TRUE)
-  }
-  
-<<<<<<< HEAD
->>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
-=======
-  
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   output$btnDownloadReportAutoPdf <- shiny::downloadHandler(
     filename = function() {
       paste0("automatic_visualization_report_", format(Sys.Date(), "%Y-%m-%d"), ".pdf")
     },
     content = function(file) {
-      meta <- auto_report_meta()
-      
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
-      download_name <- paste0(
-        "automatic_visualization_report_",
-        format(Sys.Date(), "%Y-%m-%d"),
-        ".pdf"
+      shiny::withProgress(
+        message = rv_label("generating_pdf_report"),
+        detail = rv_label("building"),
+        value = 0,
+        {
+          meta <- auto_report_meta()
+          
+          download_name <- paste0(
+            "automatic_visualization_report_",
+            format(Sys.Date(), "%Y-%m-%d"),
+            ".pdf"
+          )
+          
+          grDevices::pdf(file = file, width = 14, height = 9, onefile = TRUE)
+          pdf_device_open <- TRUE
+          
+          on.exit({
+            if (isTRUE(pdf_device_open)) {
+              grDevices::dev.off()
+            }
+          }, add = TRUE)
+          
+          shiny::incProgress(0.10, detail = rv_label("adding_report_summary"))
+          
+          graphics::plot.new()
+          graphics::text(
+            x = 0.5,
+            y = 0.85,
+            labels = rv_label("automatic_visualization_report"),
+            cex = 2,
+            font = 2
+          )
+          
+          graphics::text(
+            x = 0.5,
+            y = 0.68,
+            labels = paste0(
+              rv_label("dataset_rows"), ": ", meta$rows, "\n",
+              rv_label("dataset_columns"), ": ", meta$cols, "\n",
+              rv_label("outcome"), ": ", meta$outcome, "\n",
+              rv_label("bivariate_features"), ": ", meta$biv_features, "\n",
+              rv_label("correlation_features"), ": ", meta$corr_features, "\n",
+              rv_label("generated"), ": ", meta$generated
+            ),
+            cex = 1.1
+          )
+          
+          plot_list <- Filter(
+            Negate(is.null),
+            list(
+              plots_state$missing_plot,
+              plots_state$hist_plot,
+              plots_state$density_plot,
+              plots_state$qq_plot,
+              plots_state$corr_plot,
+              plots_state$bivariate_plot,
+              plots_state$pca_plot,
+              plots_state$pca_loadings_plot
+            )
+          )
+          
+          n <- max(length(plot_list), 1)
+          
+          for (i in seq_along(plot_list)) {
+            shiny::incProgress(
+              0.75 / n,
+              detail = paste(
+                rv_label("adding_plot"),
+                i,
+                rv_label("of"),
+                n
+              )
+            )
+            
+            print(plot_list[[i]])
+          }
+          
+          shiny::incProgress(0.10, detail = rv_label("saving_pdf_report"))
+          
+          grDevices::dev.off()
+          pdf_device_open <- FALSE
+          
+          copy_report_to_user_outputs(
+            file = file,
+            filename = download_name
+          )
+          
+          shiny::incProgress(0.05, detail = rv_label("report_ready"))
+        }
       )
-      
-<<<<<<< HEAD
-      grDevices::pdf(file = file, width = 14, height = 9, onefile = TRUE)
-      
-      on.exit(grDevices::dev.off(), add = TRUE)
-      
-      on.exit(
-        copy_report_to_user_outputs(
-<<<<<<< HEAD
-          file = file,
-          filename = download_name
-        ),
-        add = TRUE,
-        after = TRUE
-      )
-      
-=======
-=======
->>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
-      grDevices::pdf(file = file, width = 14, height = 9, onefile = TRUE)
-      
-      on.exit(grDevices::dev.off(), add = TRUE)
-      
-<<<<<<< HEAD
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
-      on.exit(
-        copy_pdf_to_user_outputs(
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
-          file = file,
-          filename = download_name
-        ),
-        add = TRUE,
-        after = TRUE
-      )
-      
->>>>>>> 618f0b8 (Save the visualization pdf in output folder for the currently logged in user)
-      graphics::plot.new()
-      graphics::text(
-        x = 0.5,
-        y = 0.85,
-        labels = rv_label("automatic_visualization_report"),
-        cex = 2,
-        font = 2
-      )
-      
-      graphics::text(
-        x = 0.5,
-        y = 0.68,
-        labels = paste0(
-          rv_label("dataset_rows"), ": ", meta$rows, "\n",
-          rv_label("dataset_columns"), ": ", meta$cols, "\n",
-          rv_label("outcome"), ": ", meta$outcome, "\n",
-          rv_label("bivariate_features"), ": ", meta$biv_features, "\n",
-          rv_label("correlation_features"), ": ", meta$corr_features, "\n",
-          rv_label("generated"), ": ", meta$generated
-        ),
-        cex = 1.1
-      )
-      
-      plot_list <- Filter(
-        Negate(is.null),
-        list(
-          plots_state$missing_plot,
-          plots_state$hist_plot,
-          plots_state$density_plot,
-          plots_state$qq_plot,
-          plots_state$corr_plot,
-          plots_state$bivariate_plot,
-          plots_state$pca_plot,
-          plots_state$pca_loadings_plot
-        )
-      )
-      
-      for (p in plot_list) print(p)
     },
     contentType = "application/pdf"
   )
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
   
   output$btnDownloadReportAutoHtml <- shiny::downloadHandler(
     filename = function() {
       paste0("automatic_visualization_report_", format(Sys.Date(), "%Y-%m-%d"), ".html")
     },
     content = function(file) {
-      meta <- auto_report_meta()
-      
-      plot_list <- Filter(
-        Negate(is.null),
-        list(
-          missing_data_profile = plots_state$missing_plot,
-          univariate_distribution = plots_state$hist_plot,
-          density_estimates = plots_state$density_plot,
-          qq_plot = plots_state$qq_plot,
-          correlation_analysis = plots_state$corr_plot,
-          bivariate_visualization = plots_state$bivariate_plot,
-          principal_component_analysis = plots_state$pca_plot,
-          principal_component_loadings = plots_state$pca_loadings_plot
-        )
-      )
-      
-      tmp_dir <- tempfile("auto_report_html_")
-      dir.create(tmp_dir, recursive = TRUE)
-      
-      plot_tags <- lapply(names(plot_list), function(nm) {
-        img_file <- file.path(tmp_dir, paste0(nm, ".png"))
-        
-        ggplot2::ggsave(
-          filename = img_file,
-          plot = plot_list[[nm]],
-          width = 14,
-          height = 8,
-          dpi = 120
-        )
-        
-        img_data <- base64enc::dataURI(file = img_file, mime = "image/png")
-        
-        htmltools::tagList(
-          htmltools::tags$h2(rv_label(nm)),
-          htmltools::tags$img(
-            src = img_data,
-            style = "width:100%; max-width:1200px; border:1px solid #ddd; margin-bottom:30px;"
+      shiny::withProgress(
+        message = rv_label("generating_html_report"),
+        detail = rv_label("building"),
+        value = 0,
+        {
+          meta <- auto_report_meta()
+          
+          download_name <- paste0(
+            "automatic_visualization_report_",
+            format(Sys.Date(), "%Y-%m-%d"),
+            ".html"
           )
-        )
-      })
-      
-      html_doc <- htmltools::tags$html(
-        htmltools::tags$head(
-          htmltools::tags$title(rv_label("automatic_visualization_report")),
-          htmltools::tags$style(HTML("
-          body { font-family: Arial, sans-serif; margin: 30px; color: #111827; }
-          h1 { color: #003b49; }
-          h2 { color: #003b49; margin-top: 35px; }
-          .meta { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
-        "))
-        ),
-        htmltools::tags$body(
-          htmltools::tags$h1(rv_label("automatic_visualization_report")),
-          htmltools::tags$div(
-            class = "meta",
-            htmltools::tags$p(paste(rv_label("dataset_rows"), ":", meta$rows)),
-            htmltools::tags$p(paste(rv_label("dataset_columns"), ":", meta$cols)),
-            htmltools::tags$p(paste(rv_label("outcome"), ":", meta$outcome)),
-            htmltools::tags$p(paste(rv_label("bivariate_features"), ":", meta$biv_features)),
-            htmltools::tags$p(paste(rv_label("correlation_features"), ":", meta$corr_features)),
-            htmltools::tags$p(paste(rv_label("generated"), ":", meta$generated))
-          ),
-          plot_tags
-        )
-      )
-      
-      htmltools::save_html(html_doc, file = file)
-      download_name <- paste0(
-        "automatic_visualization_report_",
-        format(Sys.Date(), "%Y-%m-%d"),
-        ".html"
-      )
-      
-      copy_report_to_user_outputs(
-        file = file,
-        filename = download_name
+          
+          plot_list <- Filter(
+            Negate(is.null),
+            list(
+              missing_data_profile = plots_state$missing_plot,
+              univariate_distribution = plots_state$hist_plot,
+              density_estimates = plots_state$density_plot,
+              qq_plot = plots_state$qq_plot,
+              correlation_analysis = plots_state$corr_plot,
+              bivariate_visualization = plots_state$bivariate_plot,
+              principal_component_analysis = plots_state$pca_plot,
+              principal_component_loadings = plots_state$pca_loadings_plot
+            )
+          )
+          
+          tmp_dir <- tempfile("auto_report_html_")
+          dir.create(tmp_dir, recursive = TRUE)
+          
+          n <- max(length(plot_list), 1)
+          
+          plot_tags <- lapply(seq_along(plot_list), function(i) {
+            nm <- names(plot_list)[i]
+            
+            shiny::incProgress(
+              0.75 / n,
+              detail = paste(
+                rv_label("rendering"),
+                rv_label(nm),
+                paste0("(", i, "/", n, ")")
+              )
+            )
+            
+            img_file <- file.path(tmp_dir, paste0(nm, ".png"))
+            
+            ggplot2::ggsave(
+              filename = img_file,
+              plot = plot_list[[i]],
+              width = 14,
+              height = 8,
+              dpi = 120
+            )
+            
+            img_data <- base64enc::dataURI(file = img_file, mime = "image/png")
+            
+            htmltools::tagList(
+              htmltools::tags$h2(rv_label(nm)),
+              htmltools::tags$img(
+                src = img_data,
+                style = "width:100%; max-width:1200px; border:1px solid #ddd; margin-bottom:30px;"
+              )
+            )
+          })
+          
+          shiny::incProgress(0.10, detail = rv_label("building_html_document"))
+          
+          html_doc <- htmltools::tags$html(
+            htmltools::tags$head(
+              htmltools::tags$title(rv_label("automatic_visualization_report")),
+              htmltools::tags$style(htmltools::HTML("
+            body { font-family: Arial, sans-serif; margin: 30px; color: #111827; }
+            h1 { color: #003b49; }
+            h2 { color: #003b49; margin-top: 35px; }
+            .meta { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+          "))
+            ),
+            htmltools::tags$body(
+              htmltools::tags$h1(rv_label("automatic_visualization_report")),
+              htmltools::tags$div(
+                class = "meta",
+                htmltools::tags$p(paste(rv_label("dataset_rows"), ":", meta$rows)),
+                htmltools::tags$p(paste(rv_label("dataset_columns"), ":", meta$cols)),
+                htmltools::tags$p(paste(rv_label("outcome"), ":", meta$outcome)),
+                htmltools::tags$p(paste(rv_label("bivariate_features"), ":", meta$biv_features)),
+                htmltools::tags$p(paste(rv_label("correlation_features"), ":", meta$corr_features)),
+                htmltools::tags$p(paste(rv_label("generated"), ":", meta$generated))
+              ),
+              plot_tags
+            )
+          )
+          
+          shiny::incProgress(0.10, detail = rv_label("saving_html_report"))
+          
+          htmltools::save_html(html_doc, file = file)
+          
+          copy_report_to_user_outputs(
+            file = file,
+            filename = download_name
+          )
+          
+          shiny::incProgress(0.05, detail = rv_label("report_ready"))
+        }
       )
     },
     contentType = "text/html"
   )
-<<<<<<< HEAD
-=======
->>>>>>> e54ce4f (Fix PDF download stability)
-=======
->>>>>>> 137cfff (Improve visualization modules and report output handling)
 }

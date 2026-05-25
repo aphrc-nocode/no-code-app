@@ -14,15 +14,15 @@ lazy_load_missing_data <- function() {
 	}, ignoreInit = TRUE)
 }
 
-lazy_load_custom_viz <- function() {
-	loaded <- FALSE
-	observeEvent(input$tabs, {
-		if (!loaded && input$tabs %in% c("summarizeCustom", "visualizeData")) {
-			loaded <<- TRUE
-			source("server/user_defined_visualization.R", local = TRUE)
-			user_defined_server()
-		}
-	}, ignoreInit = TRUE)
+lazy_load_custom_viz <- function(plots_custom_rv) {
+  loaded <- FALSE
+  observeEvent(input$tabs, {
+    if (!loaded && input$tabs %in% c("summarizeCustom", "visualizeData")) {
+      loaded <<- TRUE
+      source("server/user_defined_visualization.R", local = TRUE)
+      user_defined_server(plots_custom_rv = plots_custom_rv)
+    }
+  }, ignoreInit = TRUE)
 }
 
 lazy_load_compare_models <- function() {
