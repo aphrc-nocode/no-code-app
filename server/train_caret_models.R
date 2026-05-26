@@ -825,7 +825,8 @@ model_training_caret_train_all_server = function() {
 					rv_ml_ai$at_least_one_model = FALSE
 					for (cb in c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
 								 "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
-								 "nnet","treebag","avNNet","pls","gam")) {
+								 "nnet","treebag","avNNet","pls","gam",
+								 "rpart","mlpWeightDecayML","naive_bayes")) {
 						updatePrettyCheckbox(session,
 							inputId = paste0("model_training_caret_models_", cb, "_check"),
 							value   = FALSE)
@@ -1086,8 +1087,11 @@ model_training_caret_train_all_server = function() {
 			list(inp = "model_training_caret_models_nnet_check",      rv = "nnet_name"),
 			list(inp = "model_training_caret_models_treebag_check",   rv = "treebag_name"),
 			list(inp = "model_training_caret_models_avNNet_check",    rv = "avNNet_name"),
-			list(inp = "model_training_caret_models_pls_check",       rv = "pls_name"),
-			list(inp = "model_training_caret_models_gam_check",       rv = "gam_name")
+			list(inp = "model_training_caret_models_pls_check",             rv = "pls_name"),
+			list(inp = "model_training_caret_models_gam_check",             rv = "gam_name"),
+			list(inp = "model_training_caret_models_rpart_check",           rv = "rpart_name"),
+			list(inp = "model_training_caret_models_mlpWeightDecayML_check", rv = "mlpWeightDecayML_name"),
+			list(inp = "model_training_caret_models_naive_bayes_check",     rv = "naive_bayes_name")
 		)
 		models_state <- reactiveValuesToList(rv_training_models)
 		models <- Filter(Negate(is.null), lapply(model_map, function(m) {
