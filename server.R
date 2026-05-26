@@ -16,7 +16,7 @@ function(input, output, session){
   update_progress("Loading packages...")
   
   source("server/auth.R")
-  source("Server/homepage_translation_labels.R", local = TRUE)
+  source("server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
