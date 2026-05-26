@@ -1,13 +1,3 @@
-# Central model registry — add new models here only.
-# Every other place in this file derives from this vector automatically.
-CARET_MODEL_IDS <- c(
-	"ols", "rf", "gbm", "xgbTree", "xgbLinear",
-	"svmRadial", "svmLinear", "svmPoly",
-	"glmnet", "lasso", "ridge", "knn",
-	"nnet", "treebag", "avNNet", "pls", "gam",
-	"rpart", "mlpWeightDecayML", "naive_bayes"
-)
-
 #### ---- Train all models ----------------------------------- ####
 model_training_caret_train_all_server = function() {
 
@@ -611,10 +601,13 @@ model_training_caret_train_all_server = function() {
 				}
 
 				
-				## Update this for every model
-				any_selected <- any(sapply(CARET_MODEL_IDS, function(id) {
+				## Track models for PB
+				rv_training_models$CARET_MODEL_IDS = gsub("_model$", "", grep("(?<!trained)_model$", names(rv_training_models), value = TRUE, perl = TRUE))
+				
+				any_selected <- any(sapply(rv_training_models$CARET_MODEL_IDS, function(id) {
 					isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])
 				}))
+				
 				if (!any_selected) {
 					rv_ml_ai$at_least_one_model = FALSE
 				}
@@ -769,7 +762,7 @@ model_training_caret_train_all_server = function() {
 					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
  
 					models_state    <- reactiveValuesToList(rv_training_models)
-					all_model_params <- do.call(c, Filter(Negate(is.null), lapply(CARET_MODEL_IDS, function(id) {
+					all_model_params <- do.call(c, Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
 						models_state[[paste0(id, "_model")]]
 					})))
 					set.seed(rv_ml_ai$seed_value)
@@ -819,7 +812,7 @@ model_training_caret_train_all_server = function() {
 
 					rv_training_results$training_completed = TRUE
 					rv_ml_ai$at_least_one_model = FALSE
-					for (cb in CARET_MODEL_IDS) {
+					for (cb in rv_training_models$CARET_MODEL_IDS) {
 						updatePrettyCheckbox(session,
 							inputId = paste0("model_training_caret_models_", cb, "_check"),
 							value   = FALSE)
@@ -1065,7 +1058,7 @@ model_training_caret_train_all_server = function() {
 	## Provide selected model names as JSON for the JS click handler on the progress panel
 	output$caret_selected_models_json <- renderUI({
 		models_state <- reactiveValuesToList(rv_training_models)
-		models <- Filter(Negate(is.null), lapply(CARET_MODEL_IDS, function(id) {
+		models <- Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
 			if (!isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])) return(NULL)
 			nm <- models_state[[paste0(id, "_name")]]
 			if (is.null(nm)) return(NULL)
