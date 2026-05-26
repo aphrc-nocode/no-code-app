@@ -1,3 +1,13 @@
+# Central model registry — add new models here only.
+# Every other place in this file derives from this vector automatically.
+CARET_MODEL_IDS <- c(
+	"ols", "rf", "gbm", "xgbTree", "xgbLinear",
+	"svmRadial", "svmLinear", "svmPoly",
+	"glmnet", "lasso", "ridge", "knn",
+	"nnet", "treebag", "avNNet", "pls", "gam",
+	"rpart", "mlpWeightDecayML", "naive_bayes"
+)
+
 #### ---- Train all models ----------------------------------- ####
 model_training_caret_train_all_server = function() {
 
@@ -602,7 +612,10 @@ model_training_caret_train_all_server = function() {
 
 				
 				## Update this for every model
-				if (!isTRUE(input$model_training_caret_models_ols_check) & !isTRUE(input$model_training_caret_models_rf_check) & !isTRUE(input$model_training_caret_models_gbm_check) & !isTRUE(input$model_training_caret_models_xgbTree_check) & !isTRUE(input$model_training_caret_models_xgbLinear_check) & !isTRUE(input$model_training_caret_models_svmRadial_check) & !isTRUE(input$model_training_caret_models_svmLinear_check) & !isTRUE(input$model_training_caret_models_svmPoly_check) & !isTRUE(input$model_training_caret_models_glmnet_check) & !isTRUE(input$model_training_caret_models_lasso_check) & !isTRUE(input$model_training_caret_models_ridge_check) & !isTRUE(input$model_training_caret_models_knn_check) & !isTRUE(input$model_training_caret_models_nnet_check) & !isTRUE(input$model_training_caret_models_treebag_check) & !isTRUE(input$model_training_caret_models_avNNet_check) & !isTRUE(input$model_training_caret_models_pls_check) & !isTRUE(input$model_training_caret_models_gam_check) & !isTRUE(input$model_training_caret_models_rpart_check) & !isTRUE(input$model_training_caret_models_mlpWeightDecayML_check) & !isTRUE(input$model_training_caret_models_naive_bayes_check) ) {
+				any_selected <- any(sapply(CARET_MODEL_IDS, function(id) {
+					isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])
+				}))
+				if (!any_selected) {
 					rv_ml_ai$at_least_one_model = FALSE
 				}
 			}
@@ -755,27 +768,10 @@ model_training_caret_train_all_server = function() {
 
 					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
  
-					all_model_params = c(rv_training_models$ols_model
-						, rv_training_models$rf_model
-						, rv_training_models$gbm_model
-						, rv_training_models$xgbTree_model
-						, rv_training_models$xgbLinear_model
-						, rv_training_models$svmRadial_model
-						, rv_training_models$svmLinear_model
-						, rv_training_models$svmPoly_model
-						, rv_training_models$glmnet_model
-						, rv_training_models$lasso_model
-						, rv_training_models$ridge_model
-						, rv_training_models$knn_model
-						, rv_training_models$nnet_model
-						, rv_training_models$treebag_model
-						, rv_training_models$avNNet_model
-						, rv_training_models$pls_model
-						, rv_training_models$gam_model
-						, rv_training_models$rpart_model
-						, rv_training_models$mlpWeightDecayML_model
-						, rv_training_models$naive_bayes_model
-					)
+					models_state    <- reactiveValuesToList(rv_training_models)
+					all_model_params <- do.call(c, Filter(Negate(is.null), lapply(CARET_MODEL_IDS, function(id) {
+						models_state[[paste0(id, "_model")]]
+					})))
 					set.seed(rv_ml_ai$seed_value)
 
 					rv_training_results$training_completed = FALSE
@@ -823,9 +819,7 @@ model_training_caret_train_all_server = function() {
 
 					rv_training_results$training_completed = TRUE
 					rv_ml_ai$at_least_one_model = FALSE
-					for (cb in c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
-								 "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
-								 "nnet","treebag","avNNet","pls","gam")) {
+					for (cb in CARET_MODEL_IDS) {
 						updatePrettyCheckbox(session,
 							inputId = paste0("model_training_caret_models_", cb, "_check"),
 							value   = FALSE)
@@ -1070,29 +1064,10 @@ model_training_caret_train_all_server = function() {
 
 	## Provide selected model names as JSON for the JS click handler on the progress panel
 	output$caret_selected_models_json <- renderUI({
-		model_map <- list(
-			list(inp = "model_training_caret_models_ols_check",       rv = "ols_name"),
-			list(inp = "model_training_caret_models_rf_check",        rv = "rf_name"),
-			list(inp = "model_training_caret_models_gbm_check",       rv = "gbm_name"),
-			list(inp = "model_training_caret_models_xgbTree_check",   rv = "xgbTree_name"),
-			list(inp = "model_training_caret_models_xgbLinear_check", rv = "xgbLinear_name"),
-			list(inp = "model_training_caret_models_svmRadial_check", rv = "svmRadial_name"),
-			list(inp = "model_training_caret_models_svmLinear_check", rv = "svmLinear_name"),
-			list(inp = "model_training_caret_models_svmPoly_check",   rv = "svmPoly_name"),
-			list(inp = "model_training_caret_models_glmnet_check",    rv = "glmnet_name"),
-			list(inp = "model_training_caret_models_lasso_check",     rv = "lasso_name"),
-			list(inp = "model_training_caret_models_ridge_check",     rv = "ridge_name"),
-			list(inp = "model_training_caret_models_knn_check",       rv = "knn_name"),
-			list(inp = "model_training_caret_models_nnet_check",      rv = "nnet_name"),
-			list(inp = "model_training_caret_models_treebag_check",   rv = "treebag_name"),
-			list(inp = "model_training_caret_models_avNNet_check",    rv = "avNNet_name"),
-			list(inp = "model_training_caret_models_pls_check",       rv = "pls_name"),
-			list(inp = "model_training_caret_models_gam_check",       rv = "gam_name")
-		)
 		models_state <- reactiveValuesToList(rv_training_models)
-		models <- Filter(Negate(is.null), lapply(model_map, function(m) {
-			if (!isTRUE(input[[m$inp]])) return(NULL)
-			nm <- models_state[[m$rv]]
+		models <- Filter(Negate(is.null), lapply(CARET_MODEL_IDS, function(id) {
+			if (!isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])) return(NULL)
+			nm <- models_state[[paste0(id, "_name")]]
 			if (is.null(nm)) return(NULL)
 			disp <- if (!is.null(names(nm)) && nzchar(names(nm)[1])) names(nm)[1] else as.character(nm[1])
 			list(name = disp)

@@ -153,6 +153,12 @@ train_all_model_ui = function() {
 					background: #fff3f2;
 					letter-spacing: 0.04em;
 					display: inline-block;
+					cursor: pointer;
+					transition: background 0.15s, color 0.15s;
+				}
+				.cmp-badge-error:hover {
+					background: #d9534f;
+					color: #fff;
 				}
 				.cmp-footer {
 					padding: 6px 15px;
@@ -247,21 +253,25 @@ train_all_model_ui = function() {
 						cmpComplete(msg && msg.success === true);
 					});
 
-					// Click DONE badge → dismiss that row, update counter, hide panel if empty
-					document.addEventListener('click', function (e) {
-						var badge = e.target.closest && e.target.closest('.cmp-badge-done');
-						if (!badge) return;
-						var panel = document.getElementById('caret-model-progress');
-						if (!panel) return;
-						var row = badge.closest('.cmp-row');
-						if (row) row.remove();
-						var remaining = panel.querySelectorAll('.cmp-row').length;
-						if (remaining === 0) {
-							panel.classList.remove('cmp-visible');
-						} else {
-							panel.querySelector('#cmp-count-done').textContent = remaining + ' ' + lbl('word-completed');
-						}
-					});
+					// Click DONE or FAILED badge → dismiss that row, hide panel if empty
+					function dismissBadgeRow(selector) {
+						document.addEventListener('click', function (e) {
+							var badge = e.target.closest && e.target.closest(selector);
+							if (!badge) return;
+							var panel = document.getElementById('caret-model-progress');
+							if (!panel) return;
+							var row = badge.closest('.cmp-row');
+							if (row) row.remove();
+							var remaining = panel.querySelectorAll('.cmp-row').length;
+							if (remaining === 0) {
+								panel.classList.remove('cmp-visible');
+							} else {
+								panel.querySelector('#cmp-count-done').textContent = remaining + ' ' + lbl('word-completed');
+							}
+						});
+					}
+					dismissBadgeRow('.cmp-badge-done');
+					dismissBadgeRow('.cmp-badge-error');
 				})();
 			"))
 		),
