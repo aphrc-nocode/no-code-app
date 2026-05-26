@@ -1,6 +1,6 @@
 *@*/
 users_db/*
-users.sqlite
+users_db/users.sqlite
 .DS_Store
 # History files
 .Rhistory
