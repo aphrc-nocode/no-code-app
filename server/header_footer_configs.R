@@ -99,15 +99,36 @@ menu_translation = function(){
                 ),
                 
                 menuItem(
-                  text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_data_anonymization"), "</span>")),
+                  text = HTML(
+                    paste0(
+                      "<span class='menu-label'>",
+                      get_rv_labels("menu_data_anonymization"),
+                      "</span>"
+                    )
+                  ),
+                  tabName = "anonymization",
                   icon = icon("user-shield", lib = "font-awesome"),
+                  
                   menuSubItem(
-                    text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_quant_anonymization"), "</span>")),
+                    text = HTML(
+                      paste0(
+                        "<span class='menu-label'>",
+                        get_rv_labels("menu_quant_anonymization"),
+                        "</span>"
+                      )
+                    ),
                     tabName = "anonymization_quant",
                     icon = icon("calculator")
                   ),
+                  
                   menuSubItem(
-                    text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_qual_anonymization"), "</span>")),
+                    text = HTML(
+                      paste0(
+                        "<span class='menu-label'>",
+                        get_rv_labels("menu_qual_anonymization"),
+                        "</span>"
+                      )
+                    ),
                     tabName = "anonymization_qual",
                     icon = icon("align-left")
                   )

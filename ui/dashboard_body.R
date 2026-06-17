@@ -38,6 +38,7 @@ aphrcBody <- dashboardBody(
 	headertag,
 	useShinyjs(),
 	useAttendant(),
+	nocode_tooltip_assets(),
 	# useWaiter(), #FIXME: Use better one
 	theme = appTheme,
 	# -- Handler JS pour capter les clics 'Deploy' dans la DataTable du module --
