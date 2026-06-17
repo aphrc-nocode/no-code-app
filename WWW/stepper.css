@@ -1,0 +1,130 @@
+/* Workflow stepper */
+
+.workflow-stepper {
+  padding: 10px 24px 8px;
+  margin: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.workflow-stepper.stepper-hidden {
+  display: none;
+}
+
+.stepper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stepper-section-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #083b3f;
+  letter-spacing: 0.2px;
+}
+
+.stepper-step-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+}
+
+.stepper-items {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 0;
+}
+
+.stepper-item {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.stepper-item:hover {
+  background: #f0f7f0;
+}
+
+.stepper-item.active {
+  cursor: default;
+}
+
+.stepper-item.active:hover {
+  background: #eef8ee;
+}
+
+.stepper-sep {
+  color: #d0d0d0;
+  font-size: 10px;
+  margin: 0 2px;
+  user-select: none;
+}
+
+.stepper-item.completed {
+  color: #00bfc4;
+  font-weight: 500;
+}
+
+.stepper-item.completed .stepper-icon {
+  color: #00bfc4;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.stepper-item.active {
+  color: #083b3f;
+  font-weight: 700;
+  background: #eef8ee;
+  border: 1px solid #7bc148;
+}
+
+.stepper-item.active .stepper-icon {
+  color: #7bc148;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.stepper-item.completed.active {
+  color: #083b3f;
+  background: #eef8ee;
+  border: 1px solid #7bc148;
+}
+
+.stepper-item.completed.active .stepper-icon {
+  color: #00bfc4;
+}
+
+.stepper-item.inactive {
+  color: #aaa;
+  font-weight: 400;
+}
+
+.stepper-item.inactive .stepper-icon {
+  color: #ccc;
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .stepper-items {
+    gap: 2px 0;
+  }
+
+  .stepper-item {
+    font-size: 11px;
+    padding: 2px 5px;
+  }
+
+  .stepper-section-name {
+    font-size: 12px;
+  }
+}
