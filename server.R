@@ -459,6 +459,11 @@ function(input, output, session){
 	  source("server/change_language_update.R", local = TRUE)
 	  change_language_update() 
 	  
+	  # ---- Sidebar tooltip labels ----
+	  nocode_tooltip_server(
+	    session = session,
+	    get_rv_labels = get_rv_labels
+	  )
 	  #### ---- Upload data UI --------------------------------------------
 	  source("ui/upload_data.R", local = TRUE)
 	  output$upload_type = upload_type

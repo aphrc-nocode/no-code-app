@@ -12,6 +12,8 @@ source("ui/automl_ui.R")
 source("ui/automl_controls_ui.R")
 source("ui/train_model_ui.R")
 
+source(paste0(getwd(), "/ui/tooltip.R"))
+
 # Load UI function before deploy_model_ui()
 source("ui/deploy_model_ui.R")
 #Load Headertag
