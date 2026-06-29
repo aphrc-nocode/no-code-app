@@ -148,8 +148,9 @@ aphrcBody <- dashboardBody(
 		, deeplearning_ui()
 		
 		## OMOP resources
-		, add_resources_ui()
-
+		, feedback_form_ui()
+		, user_manual_ui()
+		
 		## Admin dashboard (only rendered for admin user)
 		, admin_ui()
 
