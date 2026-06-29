@@ -68,6 +68,8 @@ function(input, output, session){
 	  source("server/history_visualize_auto_actions.R", local = TRUE)
 	  source("server/history_visualize_custom_actions.R", local = TRUE)
 	  
+	  add_resources_translation(output)
+	  
 	  api_base <- reactive({
 		 val <- input$fastapi_base
 			 if (is.null(val) || !nzchar(trimws(val))) {
