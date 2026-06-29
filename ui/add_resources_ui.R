@@ -61,6 +61,17 @@ user_manual_ui <- function() {
         
         uiOutput("user_manual_title_ui"),
         uiOutput("user_manual_description_ui"),
+        
+        tags$iframe(
+          src = "manuals/user_manual.pdf",
+          width = "100%",
+          height = "850px",
+          style = "border:none; border-radius:16px;",
+          loading = "lazy"
+        ),
+        
+        br(),
+        
         uiOutput("user_manual_button_ui")
       )
     )
@@ -121,7 +132,7 @@ add_resources_translation <- function() {
   output$user_manual_button_ui <- renderUI({
     tags$a(
       get_rv_labels("open_user_manual"),
-      href = "#",
+      href = "manuals/user_manual.pdf",
       target = "_blank",
       style = "
         display:inline-block;
