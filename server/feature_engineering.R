@@ -36,7 +36,30 @@ feature_engineering_perform_preprocess_server = function() {
 						, multiple=FALSE
 					)
 				})
-				
+			
+				## Longitudinal data partitioning 
+				output$feature_engineering_perform_partition_group = renderUI({
+					req(input$feature_engineering_perform_partition=="group")	
+					selectInput("feature_engineering_perform_partition_group"
+						, label = get_rv_labels("feature_engineering_perform_partition_group") 
+						, choices = rv_ml_ai$predictors
+						, selected = NULL
+						, multiple=TRUE
+					)
+				})
+
+				## Stratify by outcome 
+				output$feature_engineering_perform_partition_group_strata = renderUI({
+					req(input$feature_engineering_perform_partition_group!="")	
+					 materialSwitch(
+						inputId = "feature_engineering_perform_partition_group_strata_check",
+						label = get_rv_labels("feature_engineering_perform_partition_group_strata_check"), 
+						status = "success",
+						right = TRUE,
+						value = FALSE
+					 )
+				})
+
 				## Preprocess
 				output$feature_engineering_perform_preprocess = renderUI({
 					p(
@@ -63,9 +86,14 @@ feature_engineering_perform_preprocess_server = function() {
 				
 			output$feature_engineering_perform_partition = NULL
 			updateSelectInput(session, "feature_engineering_perform_partition", selected="")
+			
+			output$feature_engineering_perform_partition_group = NULL
+			updateSelectInput(session, "feature_engineering_perform_partition_group", selected="")
 		}
 	})
+
 }
+
 
 
 ##### ---- Impute missing values ------------------------ ####
@@ -293,25 +321,40 @@ feature_engineering_impute_missing_server = function() {
 				} else {
 					strata = NULL
 				}
+
+
+				if (isTRUE(!any(input$feature_engineering_perform_partition_group %in% "")) & isTRUE(!is.null(input$feature_engineering_perform_partition_group))) {
+					group = input$feature_engineering_perform_partition_group
+					if (isTRUE(input$feature_engineering_perform_partition_group_strata_check==FALSE)) {
+						strata = NULL
+					}
+				} else {
+					group = NULL	
+				}
+
 				partition_objs = tryCatch({
 					Rautoml::train_test_split(
 						data=rv_current$working_df
 						, type = input$feature_engineering_perform_partition
 						, prop=rv_ml_ai$partition_ratio
 						, strata = strata
+						, group = group#c("household_id", "individual_id", "community_id")#group
 					)
 				}, error = function(e) {
 					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_partition_error"), "\n", e$message), type = "error")
 					return(NULL)
 				})
 
+				
+#				rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$feature_engineering_perform_partition_group)
 				if (is.null(partition_objs)) return()
 				
 				
 				rv_ml_ai$split = partition_objs$split
 				rv_ml_ai$train_df = partition_objs$train_df
 				rv_ml_ai$test_df = partition_objs$test_df
-				
+				rv_ml_ai$fold_index = partition_objs$index
+			
 				start_progress_bar(id="feature_engineering_perform_preprocess_pb", att_new_obj=feature_engineering_perform_preprocess_pb, text=get_rv_labels("feature_engineering_perform_preprocess_pb"))
 				
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
