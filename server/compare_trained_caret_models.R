@@ -1,28 +1,26 @@
 #### ---- Compare model metrics ----------------------------------- ####
 model_training_caret_train_metrics_server = function() {
-	
-	
-	# Fire on button click AND when train_metrics_df is set after training completes
-	# (so inner outputs get registered even on first run in a fresh session)
-	observeEvent(list(input$model_training_apply, rv_training_results$train_metrics_df), {
+
+	## Hoisted out of observeEvent — nested observers accumulate on every fire
+	observe({
+		req(!is.null(rv_training_results$tuned_parameters))
+		req(!is.null(rv_training_results$control_parameters))
+		output$model_training_caret_train_tuned_parameters = renderUI({
+			txt = capture.output(str(rv_training_results$tuned_parameters))
+			pre(paste(txt, collapse = "\n"))
+		})
+		output$model_training_caret_train_training_control = renderUI({
+			txt = capture.output(str(rv_training_results$control_parameters))
+			pre(paste(txt, collapse = "\n"))
+		})
+	})
+
+	# Fire only when results are available after training completes
+	observeEvent(rv_training_results$train_metrics_df, {
 
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
-					
-					observe({
-						req(!is.null(rv_training_results$tuned_parameters))
-						req(!is.null(rv_training_results$control_parameters))
-						output$model_training_caret_train_tuned_parameters = renderUI({
-							txt = capture.output(str(rv_training_results$tuned_parameters))
-							pre(paste(txt, collapse = "\n"))
-						})
-
-						output$model_training_caret_train_training_control = renderUI({
-							txt = capture.output(str(rv_training_results$control_parameters))
-							pre(paste(txt, collapse = "\n"))
-						})
-					})
 
 					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({

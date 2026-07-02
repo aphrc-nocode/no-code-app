@@ -3,6 +3,9 @@
 
 model_training_setup_server = function() {
 
+	output$model_training_setup_presetup <- renderUI({ NULL })
+	outputOptions(output, "model_training_setup_presetup", suspendWhenHidden = FALSE)
+
 	observeEvent(input$feature_engineering_apply, {
 		
 		if (isTRUE(!is.null(rv_current$working_df))) {

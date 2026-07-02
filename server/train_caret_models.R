@@ -1,3 +1,5 @@
+source("server/caret_job_manager.R", local = TRUE)
+
 #### ---- Train all models ----------------------------------- ####
 model_training_caret_train_all_server = function() {
 
@@ -615,29 +617,70 @@ model_training_caret_train_all_server = function() {
 		}	
 	})
 
+	## Register placeholders so outputOptions can be called before the real renderUI
+	output$model_training_caret_models_ui <- renderUI({ NULL })
+	output$model_training_apply           <- renderUI({ NULL })
+	outputOptions(output, "model_training_caret_models_ui", suspendWhenHidden = FALSE)
+	outputOptions(output, "model_training_apply",           suspendWhenHidden = FALSE)
+
+	## After feature engineering fires, pre-warm all model checkbox/advance outputs
+	## so navigating to Train model does not trigger 40+ sequential round-trips.
+	observeEvent(input$feature_engineering_apply, {
+		req(!is.null(rv_ml_ai$preprocessed))
+		later::later(function() {
+			# Model IDs — match the keys used in model_training_caret_models.R
+			all_ids     <- c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
+			                 "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
+			                 "nnet","treebag","avNNet","pls","gam","rpart",
+			                 "mlpWeightDecayML","naive_bayes")
+			no_advance  <- c("treebag", "gam")  # these have no advance options panel
+			ols_special <- "ols"                 # ols uses a different suffix
+
+			check_ids   <- paste0("model_training_caret_models_", all_ids, "_check")
+			adv_std     <- paste0("model_training_caret_models_",
+			                      setdiff(all_ids, c(no_advance, ols_special)),
+			                      "_advance_params")
+			adv_ols     <- "model_training_caret_models_ols_advance_intercept"
+
+			for (id in c(check_ids, adv_std, adv_ols)) {
+				tryCatch(
+					outputOptions(output, id, suspendWhenHidden = FALSE),
+					error = function(e) NULL
+				)
+			}
+		}, delay = 0.25)
+	}, ignoreInit = TRUE)
+
    ##	Train model action
-	observe({
-		output$model_training_apply = renderUI({
-			if (isTRUE(!is.null(rv_current$working_df))) {
-				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-					if (isTRUE(rv_ml_ai$at_least_one_model)) {
-						p(br()
-							, actionBttn("model_training_apply"
-								, inline=TRUE
-								, block = FALSE
-								, color = "success"
-								, label = get_rv_labels("model_training_apply")
-							)
-						)
+	output$model_training_apply = renderUI({	# re-registers; outputOptions re-applied below
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(rv_ml_ai$at_least_one_model)) {
+					button_label <- if (isTRUE(rv_training_results$training_busy) || isTRUE(rv_training_results$training_completed)) {
+						add_label <- tryCatch(as.character(get_rv_labels("caret_jobs_add_selected")), error = function(e) NULL)
+						if (is.null(add_label) || !length(add_label) || is.na(add_label[[1]]) || !nzchar(add_label[[1]])) {
+							"Add selected models to queue"
+						} else {
+							add_label[[1]]
+						}
+					} else {
+						get_rv_labels("model_training_apply")
 					}
+					p(br()
+						, actionBttn("model_training_apply"
+							, inline=TRUE
+							, block = FALSE
+							, color = "success"
+							, label = button_label
+						)
+					)
 				}
 			}
-		})
+		}
 	})
 
 	## Model list
-	observe({
-		output$model_training_caret_models_ui = renderUI({
+	output$model_training_caret_models_ui = renderUI({
 			if (isTRUE(!is.null(rv_current$working_df))) {
 				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 					p(br()
@@ -738,343 +781,24 @@ model_training_caret_train_all_server = function() {
 					)
 				}
 			}
-		})
 	})
+	outputOptions(output, "model_training_caret_models_ui", suspendWhenHidden = FALSE)
+	outputOptions(output, "model_training_apply",           suspendWhenHidden = FALSE)
 
-	## Train models
-	observeEvent(input$model_training_apply, {
-		start_progress_bar <- function(id, att_new_obj, text) {
-			rv_training_results$training_busy <- TRUE
-			rv_training_results$training_completed <- FALSE
-		}
-		close_progress_bar <- function(att_new_obj) {
-			if (!isTRUE(rv_training_results$training_busy)) return(invisible(NULL))
-			rv_training_results$training_busy <- FALSE
-			session$sendCustomMessage("caretModelProgressComplete", list(
-				success = isTRUE(rv_training_results$training_completed)
-			))
-		}
-
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(rv_ml_ai$at_least_one_model)) {
-
-					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
- 
-					models_state    <- reactiveValuesToList(rv_training_models)
-					all_model_params <- do.call(c, Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
-						models_state[[paste0(id, "_model")]]
-					})))
-					set.seed(rv_ml_ai$seed_value)
-
-					rv_training_results$training_completed = FALSE
-
-					if (isTRUE(input$model_training_setup_start_clusters_check)) {
-						Rautoml::start_cluster()
-					}
-					
-					rv_training_results$models = tryCatch({
-						Rautoml::train_caret_models(
-							df=rv_ml_ai$preprocessed$train_df
-							, model_form=rv_ml_ai$model_formula
-							, ctrl=reactiveValuesToList(rv_train_control_caret)
-							, model_list=all_model_params
-							, metric=input$model_training_setup_eval_metric
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-						
-					
-					if (isTRUE(input$model_training_setup_start_clusters_check)) {
-						Rautoml::stop_cluster()
-					}
-					
-					
-					if (isTRUE(is.null(rv_training_results$models))) return()
-					
-					if (isTRUE(input$model_training_setup_include_ensemble_check)) {
-						rv_training_results$models = tryCatch({
-							Rautoml::create_ensemble(
-								all.models = rv_training_results$models
-								, ctrl=reactiveValuesToList(rv_train_control_caret)
-								, metric=input$model_training_setup_eval_metric
-							)
-						}, error = function(e) {
-							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-							close_progress_bar(att_new_obj=model_training_caret_pb)
-							return(NULL)
-						})
-					}
-
-					rv_training_results$training_completed = TRUE
-					rv_ml_ai$at_least_one_model = FALSE
-					for (cb in rv_training_models$CARET_MODEL_IDS) {
-						updatePrettyCheckbox(session,
-							inputId = paste0("model_training_caret_models_", cb, "_check"),
-							value   = FALSE)
-					}
-				
-## 					rv_training_models$ols_model = NULL
-## 					rv_training_models$rf_model = NULL
-## 					rv_training_models$gbm_model = NULL
-## 					rv_training_models$xgbTree_model = NULL
-## 					rv_training_models$xgbLinear_model = NULL
-## 					rv_training_models$svmRadial_model = NULL
-## 					rv_training_models$svmLinear_model = NULL
-## 					rv_training_models$svmPoly_model = NULL
-## 					rv_training_models$glmnet_model = NULL
-## 					rv_training_models$lasso_model = NULL
-## 					rv_training_models$ridge_model = NULL
-## 					rv_training_models$knn_model = NULL
-## 					rv_training_models$nnet_model = NULL
-## 
-## 					rv_train_control_caret$method = "cv"
-## 					rv_train_control_caret$number = 5
-## 					rv_train_control_caret$repeats = NA
-## 					rv_train_control_caret$search = "grid"
-## 					rv_train_control_caret$verboseIter = FALSE
-## 					rv_train_control_caret$savePredictions = FALSE
-## 					rv_train_control_caret$classProbs = TRUE
-## 				
-					
-					if (isTRUE(is.null(rv_training_results$models))) return()
-					
-					rv_training_results$tuned_parameters = tryCatch({
-						Rautoml::get_tuned_params(rv_training_results$models)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-					if (is.null(rv_training_results$tuned_parameters)) return()
-
-					rv_training_results$control_parameters = tryCatch({
-						Rautoml::get_ctl_params(models=rv_training_results$models
-							, items=names(reactiveValuesToList(rv_train_control_caret))
-						)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-					if (is.null(rv_training_results$control_parameters)) return()
-				
-					rv_training_results$train_metrics_df=tryCatch({
-						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-
-					if (is.null(rv_training_results$train_metrics_df)) return()
-
-					## Save training performance metrics locally
-					
-					save_training = tryCatch({
-						Rautoml::save_rautoml_csv(object=rv_training_results$train_metrics_df
-							, name="training_performance_metrics"
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_training)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)	
-						return()
-					}
-					
-					## Test metrics
-					rv_training_results$test_metrics_objs=tryCatch({
-						Rautoml::boot_estimates_multiple(
-							models=rv_training_results$models
-							, df=rv_ml_ai$preprocessed$test_df
-							, outcome_var=rv_ml_ai$outcome
-							, problem_type=rv_ml_ai$task
-							, nreps=100
-							, model_name=NULL
-							, type="prob"
-							, report= input$model_training_setup_eval_metric
-							, summary_fun=Rautoml::student_t_summary
-							, save_model = TRUE
-							, model_folder = paste0(app_username, "/models")
-							, recipe_folder = paste0(app_username, "/recipes")
-							, preprocesses = rv_ml_ai$preprocessed
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-
-					if (is.null(rv_training_results$test_metrics_objs)) return()
-					
-					## Save test performance metrics
-					
-					save_test = tryCatch({
-						Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-							, sub_dir="test_metrics"
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_test)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-					
-					## Generate logs
-					save_logs = tryCatch({
-						Rautoml::create_model_logs(
-							df_name=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, outcome=rv_ml_ai$outcome
-							, framework=input$modelling_framework_choices
-							, train_result=rv_training_results$test_metrics_objs$all
-							, timestamp=Sys.time()
-							, path=paste0(app_username, "/.log_files")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_logs)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-
-
-					## More metrics 
-					### Post metrics
-					rv_training_results$post_model_metrics_objs=tryCatch({
-						Rautoml::post_model_metrics(
-							models=rv_training_results$models
-							, outcome=rv_ml_ai$outcome
-							, df=rv_ml_ai$preprocessed$test_df
-							, task=rv_ml_ai$task
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-
-					if (is.null(rv_training_results$post_model_metrics_objs)) return()
-					
-					## Save post model objects
-					save_post = tryCatch({
-						Rautoml::save_post_metrics_plots(metric_list=rv_training_results$post_model_metrics_objs
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_post)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-
-					close_progress_bar(att_new_obj=model_training_caret_pb)
-				} else {
-					rv_training_results$models = NULL
-					rv_training_results$train_metrics_df = NULL
-					rv_training_results$test_metrics_objs = NULL
-					rv_training_results$post_model_metrics_objs = NULL
-					rv_training_results$tuned_parameters = NULL
-					rv_training_results$control_parameters = NULL
-
-					close_progress_bar(att_new_obj=model_training_caret_pb)
-				}
-			} else {
-				rv_training_results$models = NULL
-				rv_training_results$train_metrics_df = NULL
-				rv_training_results$test_metrics_objs = NULL
-				rv_training_results$post_model_metrics_objs = NULL
-				rv_training_results$tuned_parameters = NULL
-				rv_training_results$control_parameters = NULL
-				close_progress_bar(att_new_obj=model_training_caret_pb)
-			}
-		} else {
-			rv_training_results$models = NULL
-			rv_training_results$train_metrics_df = NULL
-			rv_training_results$test_metrics_objs = NULL
-			rv_training_results$post_model_metrics_objs = NULL
-			rv_training_results$tuned_parameters = NULL
-			rv_training_results$control_parameters = NULL
-			close_progress_bar(att_new_obj=model_training_caret_pb)
-		}
-	})	
-
-	## Reactive label outputs for the progress panel (reads from labelling file, updates on language change)
-	output$cmp_panel_title_ui <- renderUI({ get_rv_labels("cmp_panel_title") })
-	output$cmp_footer_ui <- renderUI({
-		tagList(tags$i(class = "fa fa-info-circle"), paste0(" ", get_rv_labels("cmp_footer_note")))
-	})
-	output$cmp_labels_json <- renderUI({
-		tags$div(
-			id    = "cmp-labels-data",
-			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
-			`data-word-training`    = get_rv_labels("cmp_word_training"),
-			`data-word-completed`   = get_rv_labels("cmp_word_completed"),
-			`data-status-training`  = get_rv_labels("cmp_status_training"),
-			`data-status-completed` = get_rv_labels("cmp_status_completed"),
-			`data-status-stopped`   = get_rv_labels("cmp_status_stopped"),
-			`data-badge-done`       = get_rv_labels("cmp_badge_done"),
-			`data-badge-failed`     = get_rv_labels("cmp_badge_failed")
+		caret_job_manager_server(
+			input = input,
+			output = output,
+			session = session,
+			rv_current = rv_current,
+			rv_ml_ai = rv_ml_ai,
+			rv_training_models = rv_training_models,
+			rv_train_control_caret = rv_train_control_caret,
+			rv_training_results = rv_training_results,
+			app_username = app_username,
+			get_rv_labels = get_rv_labels
 		)
-	})
-	outputOptions(output, "cmp_panel_title_ui", suspendWhenHidden = FALSE)
-	outputOptions(output, "cmp_footer_ui",      suspendWhenHidden = FALSE)
-	outputOptions(output, "cmp_labels_json",    suspendWhenHidden = FALSE)
 
-	## Provide selected model names as JSON for the JS click handler on the progress panel
-	output$caret_selected_models_json <- renderUI({
-		models_state <- reactiveValuesToList(rv_training_models)
-		models <- Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
-			if (!isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])) return(NULL)
-			nm <- models_state[[paste0(id, "_name")]]
-			if (is.null(nm)) return(NULL)
-			disp <- if (!is.null(names(nm)) && nzchar(names(nm)[1])) names(nm)[1] else as.character(nm[1])
-			list(name = disp)
-		}))
-		models_json <- if (length(models) > 0) as.character(jsonlite::toJSON(models, auto_unbox = TRUE)) else "[]"
-		tags$div(
-			id = "caret-selected-models-data",
-			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
-			`data-models` = models_json
-		)
-	})
-	outputOptions(output, "caret_selected_models_json", suspendWhenHidden = FALSE)
-
-## 	observe({
+	## 	observe({
 ## 		req(!isTRUE(rv_training_results$training_completed), isTRUE(!is.null(rv_training_results$training_completed)))
 ## 		req(isTRUE(!is.null(rv_current$working_df)))
 ## 		req(isTRUE(!is.null(rv_ml_ai$preprocessed)))
