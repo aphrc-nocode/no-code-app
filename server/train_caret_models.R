@@ -651,8 +651,20 @@ model_training_caret_train_all_server = function() {
 		}, delay = 0.25)
 	}, ignoreInit = TRUE)
 
+	observe({
+		req(!is.null(rv_ml_ai$preprocessed))
+		all_ids <- c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
+		             "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
+		             "nnet","treebag","avNNet","pls","gam","rpart",
+		             "mlpWeightDecayML","naive_bayes")
+		any_checked <- any(vapply(all_ids, function(id) {
+			isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])
+		}, logical(1)))
+		rv_ml_ai$at_least_one_model <- any_checked
+	})
+
    ##	Train model action
-	output$model_training_apply = renderUI({	# re-registers; outputOptions re-applied below
+	output$model_training_apply = renderUI({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(rv_ml_ai$at_least_one_model)) {
