@@ -15,6 +15,11 @@ model_training_caret_train_metrics_server = function() {
 		})
 	})
 
+	## Flag to ensure the SHAP Apply observer is only registered once.
+	## Without this, observeEvent(train_metrics_df) re-registers it on every
+	## model completion → progress bar fires N times for N completed models.
+	shap_apply_registered <- reactiveVal(FALSE)
+
 	# Fire only when results are available after training completes
 	observeEvent(rv_training_results$train_metrics_df, {
 
@@ -522,17 +527,18 @@ model_training_caret_train_metrics_server = function() {
 						}
 					})
 
-					observeEvent(input$model_training_caret_test_metrics_trained_shap_apply, {
-						req(!is.null(rv_training_results$post_model_metrics_objs))
-						req(!is.null(rv_training_models$all_trained_models))
-						req(!is.null(rv_training_results$test_metrics_objs))
-						req(!is.null(rv_training_models$all_trained_models))
-						req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
-						req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
-						req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
+						if (!isolate(shap_apply_registered())) {
+							shap_apply_registered(TRUE)
+							observeEvent(input$model_training_caret_test_metrics_trained_shap_apply, {
+								req(!is.null(rv_training_results$post_model_metrics_objs))
+								req(!is.null(rv_training_models$all_trained_models))
+								req(!is.null(rv_training_results$test_metrics_objs))
+								req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
+								req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
+								req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
 						if (((isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) & isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_options))) | isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
 							if (isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) {
-								
+
 								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
 								
 								rv_training_results$test_metrics_objs_filtered = tryCatch({
@@ -994,8 +1000,9 @@ model_training_caret_train_metrics_server = function() {
 						}
 						
 						## FIXME: Best way to reset SHAP values
-						rv_training_results$test_metrics_objs_shap = NULL		
-					})
+						rv_training_results$test_metrics_objs_shap = NULL
+					}, ignoreInit = TRUE)
+					}
 
 				} else {
 					output$model_training_caret_train_metrics_plot = NULL
