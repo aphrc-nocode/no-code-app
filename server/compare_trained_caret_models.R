@@ -718,11 +718,18 @@ model_training_caret_train_metrics_server = function() {
 							}
 						
 							if (isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
+								shap_test_df <- rv_ml_ai$preprocessed$test_df
+								name_map <- rv_training_results$model_safe_name_map
+								if (!is.null(name_map) && is.data.frame(shap_test_df)) {
+									idx <- match(names(shap_test_df), name_map$original)
+									valid <- !is.na(idx)
+									names(shap_test_df)[valid] <- name_map$safe[idx[valid]]
+								}
 								rv_training_results$test_metrics_objs_shap = tryCatch({
 									Rautoml::compute_shap(
 										models=rv_training_results$models
 										, model_names=gsub("\\ ", ".", input$model_training_caret_test_metrics_trained_models_shap)
-										, newdata=rv_ml_ai$preprocessed$test_df
+										, newdata=shap_test_df
 										, response=rv_ml_ai$outcome
 										, task=rv_ml_ai$task
 										, nsim=50
@@ -736,9 +743,11 @@ model_training_caret_train_metrics_server = function() {
 									return(NULL)
 								})
 
-								if (is.null(rv_training_results$test_metrics_objs_shap)) return()
-								
-								
+								if (is.null(rv_training_results$test_metrics_objs_shap)) {
+									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									return()
+								}
+
 								rv_training_results$shap_plots = tryCatch({
 									plot(rv_training_results$test_metrics_objs_shap)
 								}, error=function(e){
@@ -746,8 +755,11 @@ model_training_caret_train_metrics_server = function() {
 									close_progress_bar(att_new_obj=model_metrics_caret_pb)
 									return(NULL)
 								})
-							
-								if (is.null(rv_training_results$shap_plots)) return()
+
+								if (is.null(rv_training_results$shap_plots)) {
+									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									return()
+								}
 								
 								## Save SHAP objects and plots
 								save_shap = tryCatch({

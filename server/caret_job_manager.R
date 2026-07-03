@@ -443,14 +443,17 @@ caret_job_manager_server <- function(
 		results <- results[!vapply(results, is.null, logical(1))]
 		if (!length(results)) return(invisible(NULL))
 
-		models <- do.call(c, lapply(results, `[[`, "models"))
+		models_list <- lapply(results, `[[`, "models")
+		names(models_list) <- NULL
+		models <- do.call(c, models_list)
 		class(models) <- unique(c("caretList", class(models)))
 		rv_training_results$models <- models
 
 		tuned <- do.call(c, lapply(results, `[[`, "tuned_parameters"))
 		rv_training_results$tuned_parameters <- tuned
 
-		rv_training_results$control_parameters <- results[[1]]$control_parameters
+		rv_training_results$control_parameters     <- results[[1]]$control_parameters
+		rv_training_results$model_safe_name_map   <- results[[1]]$model_safe_name_map
 
 		train_metrics <- do.call(rbind, lapply(results, `[[`, "train_metrics_df"))
 		class(train_metrics) <- unique(c("Rautomlmetric", class(train_metrics)))
@@ -468,7 +471,9 @@ caret_job_manager_server <- function(
 		class(test_metrics) <- c("Rautomlmetric2", "list")
 		rv_training_results$test_metrics_objs <- test_metrics
 
-		post_metrics <- do.call(c, lapply(results, `[[`, "post_model_metrics_objs"))
+		post_list <- lapply(results, `[[`, "post_model_metrics_objs")
+		names(post_list) <- NULL
+		post_metrics <- do.call(c, post_list)
 		rv_training_results$post_model_metrics_objs <- post_metrics
 		invisible(NULL)
 	}
