@@ -3,7 +3,7 @@ library(gsheet)
 
 ## Labelling files
 
-use_local = FALSE
+use_local = TRUE
 
 if (!use_local) {
 	labelling_file = gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1i4QXJ4tC5efgzV7H0pgUL-7XI6ZKjqu8/edit?gid=1571856299#gid=1571856299", sheetid="ui_labels")
