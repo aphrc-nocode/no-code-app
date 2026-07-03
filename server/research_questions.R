@@ -113,36 +113,87 @@ generate_research_questions_api_token = function() {
 ##### ---- Store API Token ------------------ ####
 
 generate_research_questions_api_store = function() {
+	
+	## Store
 	observeEvent(input$generate_research_questions_api_token_apply, {
 		if (!isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 			if (isTRUE(input$generate_research_questions_api_token != "")) {
 				Rautoml::set_api("GEMINE_API_KEY", input$generate_research_questions_api_token)
 			 	shinyalert::shinyalert("", get_rv_labels("api_stored_success"), type = "success", inputId="api_stored_success")
+				rv_current$api_stored_success = TRUE
+				output$generate_research_questions_api_token_apply = NULL
+				output$generate_research_questions_api_token = NULL
+
+			}
+		}
+	})
+	
+	## Reset
+	observeEvent(input$generate_research_questions_reset_api, {
+		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
+			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY")) | isTRUE(rv_current$api_stored_success)) {
+				Rautoml::unset_api("GEMINE_API_KEY")		
+			 	shinyalert::shinyalert("", get_rv_labels("api_reset_success"), type = "success", inputId="api_reset_success")
+				rv_current$api_stored_success = FALSE
+				output$generate_research_questions_apply = NULL
+				output$generate_research_questions_models = NULL
+				updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
+				
+				output$generate_research_questions_additional = NULL
+				output$generate_research_questions_additional_analysis_ui = NULL
+			#	updateMaterialSwitch(session, inputId="generate_research_questions_additional_analysis", value = FALSE)
 			}
 		}
 	})
 }
-
 
 #### ---- Addional prompts --------------- ####
 
 generate_research_questions_additional = function() {
 	observe({
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
-			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
+			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY")) | isTRUE(rv_current$api_stored_success)) {
+				
+				output$generate_research_questions_models = renderUI({
+					p(
+						hr()
+						, HTML(paste0("<b>", get_rv_labels("generate_research_questions_models"), "</b>"))
+						, helpText(get_rv_labels("generate_research_questions_models_ht1"), " ", a(get_rv_labels("generate_research_questions_models_ht2"), href="https://ai.google.dev/gemini-api/docs/models/gemini", target="_blank"))
+						, textInput("generate_research_questions_models"
+							, label = NULL 
+							, value = ""
+							, width = "100%"
+							, placeholder = "e.g., 3.5-flash"
+						)
+					)
+				})	
 
 				output$generate_research_questions_apply = renderUI({
-					actionBttn("generate_research_questions_apply"
-						, inline=TRUE
-						, block = FALSE
-						, color = "success"
-						, label = get_rv_labels("generate_research_questions_apply"))
+
+					div(
+						style = "display: flex; gap: 10px; align-items: center;"	
+						, actionBttn("generate_research_questions_apply"
+							, inline=TRUE
+							, block = FALSE
+							, color = "success"
+							, label = get_rv_labels("generate_research_questions_apply")
+						)
+						, actionBttn("generate_research_questions_reset_api"
+							, inline=TRUE
+							, block = FALSE
+							, color = "warning"
+							, label = get_rv_labels("generate_research_questions_reset_api")
+						)
+					)
 				})
 			} else {
 				output$generate_research_questions_apply = NULL
+				output$generate_research_questions_models = NULL
+				
 			}
 		} else {
 			output$generate_research_questions_apply = NULL
+			output$generate_research_questions_models = NULL
 		}
 	})
 	
@@ -195,7 +246,11 @@ generate_research_questions_gemini = function() {
 
 #				showPageSpinner()
 				start_progress_bar(id="generate_research_questions_outcome_pb", att_new_obj=generate_research_questions_outcome_pb, text=get_rv_labels("generate_research_questions_outcome_pb"))
-				
+				if (isTRUE(is.null(input$generate_research_questions_models)| isTRUE(any(input$generate_research_questions_models %in% "")))) {
+					rv_current$gemini_model = "3.5-flash"
+				} else {
+					rv_current$gemini_model = input$generate_research_questions_models
+				}
 				if (isTRUE(!is.null(rv_current$outcome))) {
 					outcome_prompt = paste0(get_prompts("generate_research_questions_outcome"), " ", rv_current$outcome)
 				} else {
@@ -208,7 +263,8 @@ generate_research_questions_gemini = function() {
 					, add_info=paste0(get_prompts("generate_research_questions_gemini_add"), ".", outcome_prompt)
 				)
 				research_question_chat = tryCatch({
-					gemini.R::gemini_chat(explore_logs
+					gemini.R::gemini_chat(prompt = explore_logs
+						, model = rv_current$gemini_model
 						, maxOutputTokens = rv_current$max_tockens
 						, seed = rv_current$seed
 					)
@@ -236,6 +292,7 @@ generate_research_questions_gemini = function() {
 	})
 
 	observe({
+		req(isTRUE(input$generate_research_questions_additional_analysis))
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 				if (isTRUE(input$generate_research_questions_additional_analysis)) {
@@ -243,20 +300,21 @@ generate_research_questions_gemini = function() {
 						start_progress_bar(id="generate_research_questions_additional_analysis_pb", att_new_obj=generate_research_questions_additional_analysis_pb, text=get_rv_labels("generate_research_questions_additional_analysis_pb"))
 #						showPageSpinner()
 						analysis_prompt = get_prompts("generate_research_questions_additional_analysis")
-					suggest_analysis_chat = tryCatch({
-						gemini.R::gemini_chat(prompt = analysis_prompt
-							, history = rv_generative_ai$history
-							, maxOutputTokens = rv_current$max_tockens
-							, seed = rv_current$seed
-						)
-					}, error=function(e){
-						close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
-						return(
-							list(outputs = get_rv_labels("generate_research_questions_error")
-								, history = list()
+						suggest_analysis_chat = tryCatch({
+							gemini.R::gemini_chat(prompt = analysis_prompt
+								, model = rv_current$gemini_model
+								, history = rv_generative_ai$history
+								, maxOutputTokens = rv_current$max_tockens
+								, seed = rv_current$seed
 							)
-						)
-					})
+						}, error=function(e){
+							close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
+							return(
+								list(outputs = get_rv_labels("generate_research_questions_error")
+									, history = list()
+								)
+							)
+						})
 					
 					close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
 					output$generate_research_question_gemini_suggest_analysis = renderUI({

@@ -8,6 +8,7 @@ research_questions_ui = function() {
 				, uiOutput("generate_research_questions_choices")
 				, uiOutput("generate_research_questions_api_token")
 				, uiOutput("generate_research_questions_api_token_apply")
+				, uiOutput("generate_research_questions_models")
 				, uiOutput("generate_research_questions_apply")
 				, htmlOutput("generate_research_questions_additional")
 				, uiOutput("generate_research_questions_additional_analysis_ui")

@@ -773,6 +773,17 @@ model_training_caret_train_all_server = function() {
 						Rautoml::start_cluster()
 					}
 					
+					if (isTRUE(input$feature_engineering_perform_partition_group!="") & isTRUE(!is.null(input$feature_engineering_perform_partition_group))) {
+						if (isTRUE(!is.null(rv_ml_ai$fold_index))) {
+							k = rv_train_control_caret$number
+							print(k)
+							rv_train_control_caret$index = Rautoml::create_grouped_index(rv_ml_ai$fold_index, k = rv_train_control_caret$number)
+						} else {
+							rv_train_control_caret$index = NULL
+						}
+					}
+					print(rv_train_control_caret$index)
+					
 					rv_training_results$models = tryCatch({
 						Rautoml::train_caret_models(
 							df=rv_ml_ai$preprocessed$train_df
