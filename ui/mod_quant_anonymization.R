@@ -345,7 +345,7 @@ mod_quant_anon_ui <- function(id) {
                 
                 shinyAce::aceEditor(
                   outputId = ns_stata_ace,
-                  mode     = "stata",
+                  mode     = "plain_text",
                   theme    = "chrome",
                   readOnly = TRUE,
                   height   = "400px"
@@ -391,4 +391,3 @@ mod_quant_anon_ui <- function(id) {
     )
   )
 }
-

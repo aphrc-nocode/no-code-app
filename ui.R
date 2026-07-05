@@ -106,4 +106,3 @@ fluidPage(
         div(footer)
       )
     ))
-  
