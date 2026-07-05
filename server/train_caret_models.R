@@ -512,6 +512,25 @@ model_training_caret_train_all_server = function() {
 	outputOptions(output, "model_training_caret_models_ui", suspendWhenHidden = FALSE)
 	outputOptions(output, "model_training_apply",           suspendWhenHidden = FALSE)
 
+	## Instant client-side toggle for the Train button. The button is always
+	## rendered (hidden) and shown the moment a model checkbox is ticked, with no
+	## server round-trip -- so it feels instant on both RStudio and Docker. The
+	## server flag rv_ml_ai$at_least_one_model is unchanged and still guards the
+	## actual train action (Shiny processes the checkbox input before the click).
+	shinyjs::runjs("
+		(function() {
+			var SEL = \"input[id^='model_training_caret_models_'][id$='_check']\";
+			function refreshTrainBtn() {
+				var anyChecked = $(SEL).filter(':checked').length > 0;
+				$('#train_apply_wrap').css('display', anyChecked ? 'block' : 'none');
+			}
+			$(document).on('change', SEL, refreshTrainBtn);
+			$(document).on('shiny:value', function(e) {
+				if (e.name === 'model_training_apply') { setTimeout(refreshTrainBtn, 0); }
+			});
+		})();
+	")
+
 	## After feature engineering fires, pre-warm all model checkbox/advance outputs
 	## so navigating to Train model does not trigger 40+ sequential round-trips.
 	observeEvent(input$feature_engineering_apply, {
@@ -556,18 +575,20 @@ model_training_caret_train_all_server = function() {
 	output$model_training_apply = renderUI({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(rv_ml_ai$at_least_one_model)) {
-					button_label <- if (isTRUE(rv_training_results$training_busy) || isTRUE(rv_training_results$training_completed)) {
-						add_label <- tryCatch(as.character(get_rv_labels("caret_jobs_add_selected")), error = function(e) NULL)
-						if (is.null(add_label) || !length(add_label) || is.na(add_label[[1]]) || !nzchar(add_label[[1]])) {
-							"Add selected models to queue"
-						} else {
-							add_label[[1]]
-						}
+				button_label <- if (isTRUE(rv_training_results$training_busy) || isTRUE(rv_training_results$training_completed)) {
+					add_label <- tryCatch(as.character(get_rv_labels("caret_jobs_add_selected")), error = function(e) NULL)
+					if (is.null(add_label) || !length(add_label) || is.na(add_label[[1]]) || !nzchar(add_label[[1]])) {
+						"Add selected models to queue"
 					} else {
-						get_rv_labels("model_training_apply")
+						add_label[[1]]
 					}
-					p(br()
+				} else {
+					get_rv_labels("model_training_apply")
+				}
+				## Always rendered but hidden; the client-side handler above shows it
+				## instantly when a model checkbox is ticked (no server round-trip).
+				div(id = "train_apply_wrap", style = "display:none;"
+					, p(br()
 						, actionBttn("model_training_apply"
 							, inline=TRUE
 							, block = FALSE
@@ -575,7 +596,7 @@ model_training_caret_train_all_server = function() {
 							, label = button_label
 						)
 					)
-				}
+				)
 			}
 		}
 	})
