@@ -20,7 +20,9 @@ function(input, output, session){
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
-  
+  login_logged_in_output_id <- paste0(app_login_config$APP_ID, "-logged_in")
+  outputOptions(output, login_logged_in_output_id, suspendWhenHidden = FALSE)
+
   authed_started = reactiveVal(FALSE)
 
   observeEvent(USER$logged_in, {
@@ -30,7 +32,10 @@ function(input, output, session){
 		color = "#FFF"
 	 )
 
-	 if (authed_started()) return()
+	 if (authed_started()) {
+		 waiter::waiter_hide()
+		 return()
+	 }
 	 authed_started(TRUE)
 
 	 app_username = USER$username
@@ -925,6 +930,16 @@ function(input, output, session){
 
 	  update_progress("Ready!")
 	  waiter::waiter_hide()
+
+	  ## After the waiter hides, force the active sidebar tab to re-trigger.
+	  ## This un-suspends outputs inside the active tab that may have been
+	  ## suspended during the waiter overlay.
+	  shinyjs::runjs("
+		  setTimeout(function() {
+			  var active = $('ul.sidebar-menu li.active > a').first();
+			  if (active.length) { active.trigger('click'); }
+		  }, 400);
+	  ")
   }, ignoreInit = FALSE)
 
   waiter::waiter_hide()

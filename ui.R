@@ -18,6 +18,7 @@ source(paste0(getwd(), "/ui/tooltip.R"))
 source("ui/deploy_model_ui.R")
 #Load Headertag
 source(paste0(getwd(), "/ui/login_credentials.R"))
+login_logged_in_output_id <- paste0(app_login_config$APP_ID, "-logged_in")
 
 source(paste0(getwd(), "/ui/headertag.R"))
 #Load App Theme
@@ -47,6 +48,37 @@ fluidPage(
     color = "#FFF",
     html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
     logo=  "WWW/aphrc.png"),
+
+  tags$script(HTML(sprintf("
+    (function() {
+      var loggedInOutputId = %s;
+
+      function clearNocodeWaiter() {
+        try {
+          if (window.waiter && typeof window.waiter.hide === 'function') {
+            window.waiter.hide(null);
+          }
+        } catch (e) {}
+        if (window.jQuery) {
+          $('.waiter-overlay').remove();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(clearNocodeWaiter, 15000);
+      });
+
+      $(document).on('shiny:connected', function() {
+        setTimeout(clearNocodeWaiter, 3000);
+      });
+
+      $(document).on('shiny:value', function(event) {
+        if (event.name === loggedInOutputId) {
+          setTimeout(clearNocodeWaiter, 250);
+        }
+      });
+    })();
+  ", jsonlite::toJSON(login_logged_in_output_id, auto_unbox = TRUE)))),
 
   shiny::tags$head(
     tags$link(
@@ -106,4 +138,3 @@ fluidPage(
         div(footer)
       )
     ))
-  

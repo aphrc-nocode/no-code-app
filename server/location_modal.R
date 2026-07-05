@@ -32,7 +32,13 @@ location_modal_server <- function(USER) {
       params = list(USER$username))
     DBI::dbDisconnect(con)
     country_set <- nrow(row) > 0 && !is.na(row$country[1]) && nzchar(trimws(row$country[1]))
-    if (!country_set) showModal(country_modal_ui())
+    if (!country_set) {
+      modal_ui <- country_modal_ui()
+      session$onFlushed(function() {
+        waiter::waiter_hide()
+        showModal(modal_ui)
+      }, once = TRUE)
+    }
   })
 
   # Save country on submit
@@ -40,12 +46,28 @@ location_modal_server <- function(USER) {
     req(isTRUE(USER$logged_in))
     chosen <- input$user_country
     if (is.null(chosen) || !nzchar(chosen) || chosen == "--- Select ---") return()
-    con <- DBI::dbConnect(RSQLite::SQLite(), 'users_db/users.sqlite')
-    DBI::dbExecute(con,
-      "UPDATE users SET country = ? WHERE username = ?",
-      params = list(chosen, USER$username))
-    DBI::dbDisconnect(con)
-    removeModal()
+    tryCatch({
+      con <- DBI::dbConnect(RSQLite::SQLite(), 'users_db/users.sqlite')
+      on.exit(DBI::dbDisconnect(con), add = TRUE)
+      rows <- DBI::dbExecute(con,
+        "UPDATE users SET country = ? WHERE username = ?",
+        params = list(chosen, USER$username))
+      message(sprintf("Country saved for user '%s': %s (%s row(s) updated)", USER$username, chosen, rows))
+      removeModal()
+      shinyjs::runjs("
+        setTimeout(function() {
+          if (window.waiter && typeof window.waiter.hide === 'function') {
+            window.waiter.hide(null);
+          }
+          $('.waiter-overlay').remove();
+          $('.modal-backdrop').remove();
+          $('body').removeClass('modal-open').css('padding-right', '');
+        }, 250);
+      ")
+    }, error = function(e) {
+      message(sprintf("Country save failed for user '%s': %s", USER$username, conditionMessage(e)))
+      shinyalert::shinyalert("Error", paste0(get_rv_labels("general_error_alert"), "\n", conditionMessage(e)), type = "error")
+    })
   })
 
   # Log page visits using the sidebar tab input (server-side, no JS needed)
