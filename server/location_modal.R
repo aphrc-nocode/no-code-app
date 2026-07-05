@@ -54,15 +54,11 @@ location_modal_server <- function(USER) {
         params = list(chosen, USER$username))
       message(sprintf("Country saved for user '%s': %s (%s row(s) updated)", USER$username, chosen, rows))
       removeModal()
-      shinyjs::runjs("
-        setTimeout(function() {
-          if (window.waiter && typeof window.waiter.hide === 'function') {
-            window.waiter.hide(null);
-          }
-          $('.waiter-overlay').remove();
-          $('.modal-backdrop').remove();
-          $('body').removeClass('modal-open').css('padding-right', '');
-        }, 250);
+      ## Reveal the dashboard using the same content-ready logic as login
+      ## (no hardcoded delay), plus modal-specific cleanup.
+      hide_waiter_after_paint("
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css('padding-right', '');
       ")
     }, error = function(e) {
       message(sprintf("Country save failed for user '%s': %s", USER$username, conditionMessage(e)))

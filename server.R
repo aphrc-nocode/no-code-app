@@ -13,12 +13,52 @@ function(input, output, session){
       color = "#FFF"
     )
   }
+  ## Reveal the app only once Shiny has actually finished rendering outputs
+  ## (content-ready), instead of guessing with a fixed delay. This removes the
+  ## brief "skeleton" flash on refresh. A max-timeout fail-safe guarantees the
+  ## overlay is never left stuck (e.g. slow Docker cold start -> no white screen).
+  hide_waiter_after_paint <- function(extra_js = "", fallback_ms = 6000) {
+    shinyjs::runjs(sprintf("
+      (function() {
+        var revealed = false, idleTimer = null;
+        var STABLE_MS = 200; // reveal after outputs stay idle this long
+        function reveal() {
+          if (revealed) return;
+          revealed = true;
+          if (idleTimer) clearTimeout(idleTimer);
+          $(document).off('shiny:idle', onIdle);
+          $(document).off('shiny:busy', onBusy);
+          if (window.waiter && typeof window.waiter.hide === 'function') {
+            window.waiter.hide(null);
+          }
+          $('.waiter-overlay').remove();
+          %s
+        }
+        function onBusy() {
+          if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        }
+        function onIdle() {
+          if (idleTimer) clearTimeout(idleTimer);
+          idleTimer = setTimeout(function() { requestAnimationFrame(reveal); }, STABLE_MS);
+        }
+        $(document).on('shiny:busy', onBusy);
+        $(document).on('shiny:idle', onIdle);
+        onIdle(); // handle the already-idle case
+        setTimeout(reveal, %d); // absolute fail-safe
+      })();
+    ", extra_js, fallback_ms))
+  }
+  hide_waiter_after_flush <- function(extra_js = "") {
+    session$onFlushed(function() {
+      hide_waiter_after_paint(extra_js)
+    }, once = TRUE)
+  }
   update_progress("Loading packages...")
-  
+
   source("server/auth.R")
   source("server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
-  
+
   USER = user_auth(input, output, session)
   login_logged_in_output_id <- paste0(app_login_config$APP_ID, "-logged_in")
   outputOptions(output, login_logged_in_output_id, suspendWhenHidden = FALSE)
@@ -33,13 +73,13 @@ function(input, output, session){
 	 )
 
 	 if (authed_started()) {
-		 waiter::waiter_hide()
+		 hide_waiter_after_flush()
 		 return()
 	 }
 	 authed_started(TRUE)
 
 	 app_username = USER$username
-  
+
 	  model_training_caret_pb = Attendant$new("model_training_caret_pb", hide_on_max = TRUE)
 	  data_upload_id_pb = Attendant$new("data_upload_id_pb", hide_on_max = TRUE)
 	  model_metrics_caret_pb = Attendant$new("model_metrics_caret_pb", hide_on_max = TRUE)
@@ -50,12 +90,12 @@ function(input, output, session){
 	  generate_research_questions_additional_analysis_pb = Attendant$new("generate_research_questions_additional_analysis_pb", hide_on_max = TRUE)
 	  feature_engineering_perform_preprocess_pb = Attendant$new("feature_engineering_perform_preprocess_pb", hide_on_max = TRUE)
 	  model_training_caret_metrics_download_all_zip_pb = Attendant$new("model_training_caret_metrics_download_all_zip_pb", hide_on_max = TRUE)
-	  
+
 	  #### ---- Input validators ---------------------------------------------------
 	  source("server/input_validators.R")
 	  #### ---- Create needed folders for datasets and logs ------------------------
 	  source("server/create_dirs.R", local=TRUE)
-	  
+
 	  #### ---- FastAPI base URL réactif (lié au champ fastapi_base) ----
 	  source("R/utils_logging.R")
 
@@ -67,12 +107,12 @@ function(input, output, session){
 	  source("server/deploy_model_server.R", local=TRUE)
 	  source("ui/deploy_model_ui.R", local=TRUE)
 	  source("server/predict_pycaret_server.R", local = TRUE)
-	  
+
 	  source("server/history_actions.R", local = TRUE)
 	  source("server/history_transform_actions.R", local = TRUE)
 	  source("server/history_visualize_auto_actions.R", local = TRUE)
 	  source("server/history_visualize_custom_actions.R", local = TRUE)
-	  
+
 	  api_base <- reactive({
 		 val <- input$fastapi_base
 			 if (is.null(val) || !nzchar(trimws(val))) {
@@ -82,10 +122,10 @@ function(input, output, session){
 			 }
 	  })
 	  observe({
-	    
+
 	    expand_label   <- get_rv_labels("sidebar_toggle_expand_menu")
 	    collapse_label <- get_rv_labels("sidebar_toggle_menu_aria")
-	    
+
 	    session$sendCustomMessage(
 	      type = "sidebarLabels",
 	      message = list(
@@ -93,24 +133,24 @@ function(input, output, session){
 	        collapse = collapse_label
 	      )
 	    )
-	    
+
 	  })
-	  
+
 	  # Send sidebar toggle labels to JS (reactive-safe)
 	  sent_sidebar_labels <- reactiveVal(FALSE)
-	  
+
 	  observe({
-	    req(rv_lang$labelling_file_df)    
-	    req(!sent_sidebar_labels())       
-	    
+	    req(rv_lang$labelling_file_df)
+	    req(!sent_sidebar_labels())
+
 	    expand_label   <- get_rv_labels("sidebar_toggle_expand_menu")
 	    collapse_label <- get_rv_labels("sidebar_toggle_menu_aria")
-	    
+
 	    session$sendCustomMessage(
 	      "sidebarLabels",
 	      list(expand = expand_label, collapse = collapse_label)
 	    )
-	    
+
 	    sent_sidebar_labels(TRUE)
 	  })
 
@@ -149,21 +189,21 @@ function(input, output, session){
 		 , outcome = NULL
 		 , vartype_all = NULL
 	  )
-	  
+
 	  #####------------------Plots Reactive-------------------
-	  
+
 	  plots_custom_rv <- reactiveValues(
 	    plot_rv = NULL,
 	    tab_rv = NULL,
 	    plot_bivariate_auto = NULL,
 	    plot_corr = NULL
 	  )
-	  
+
 	  plots_auto_rv <- reactiveValues(
 	    plot_bivariate_auto = NULL,
 	    plot_corr = NULL
 	  )
-	  
+
 	  history_visualize_custom_actions_server(
 	    input = input,
 	    output = output,
@@ -204,11 +244,11 @@ function(input, output, session){
 		)
 
 		## ---
-		
+
 		rv_omop<- reactiveValues(
 		  url = NULL )
-		
-		
+
+
 		## LLM/GAI
 		rv_generative_ai = reactiveValues(
 			history = NULL
@@ -218,7 +258,7 @@ function(input, output, session){
 		rv_ml_ai = reactiveValues(
 			session_id = NULL
 			, seed_value = NULL
-			, dataset_id = NULL 
+			, dataset_id = NULL
 			, analysis_type = NULL
 			, task = NULL
 			, outcome = NULL
@@ -241,7 +281,7 @@ function(input, output, session){
 			model_training_caret_models_ols_check = NULL
 			, model_training_caret_models_ols_advance_control = NULL
 		)
-			
+
 		## Train control caret
 		rv_train_control_caret = reactiveValues(
 			method = "cv"
@@ -252,102 +292,102 @@ function(input, output, session){
 			, savePredictions = FALSE
 			, classProbs = TRUE
 		)
-		
+
 		## Trained models
 		rv_training_models = reactiveValues(
 			ols_model = NULL
 			, ols_param = FALSE
 			, ols_name = NULL
 			, ols_trained_model = NULL
-			
+
 			, rf_model = NULL
 			, rf_param = FALSE
 			, rf_name = NULL
 			, rf_trained_model = NULL
-			
+
 			, gbm_model = NULL
 			, gbm_param = FALSE
 			, gbm_name = NULL
 			, gbm_trained_model = NULL
-			
+
 			, xgbTree_model = NULL
 			, xgbTree_param = FALSE
 			, xgbTree_name = NULL
 			, xgbTree_trained_model = NULL
-			
+
 			, xgbLinear_model = NULL
 			, xgbLinear_param = FALSE
 			, xgbLinear_name = NULL
 			, xgbLinear_trained_model = NULL
-			
+
 			, svmRadial_model = NULL
 			, svmRadial_param = FALSE
 			, svmRadial_name = NULL
 			, svmRadial_trained_model = NULL
-			
+
 			, svmLinear_model = NULL
 			, svmLinear_param = FALSE
 			, svmLinear_name = NULL
 			, svmLinear_trained_model = NULL
-			
+
 			, svmPoly_model = NULL
 			, svmPoly_param = FALSE
 			, svmPoly_name = NULL
 			, svmPoly_trained_model = NULL
-			
+
 			, glmnet_model = NULL
 			, glmnet_param = FALSE
 			, glmnet_name = NULL
 			, glmnet_trained_model = NULL
-			
+
 			, lasso_model = NULL
 			, lasso_param = FALSE
 			, lasso_name = NULL
 			, lasso_trained_model = NULL
-			
+
 			, ridge_model = NULL
 			, ridge_param = FALSE
 			, ridge_name = NULL
 			, ridge_trained_model = NULL
-			
+
 			, knn_model = NULL
 			, knn_param = FALSE
 			, knn_name = NULL
 			, knn_trained_model = NULL
-			
+
 			, nnet_model = NULL
 			, nnet_param = FALSE
 			, nnet_name = NULL
 			, nnet_trained_model = NULL
-			
+
 			, avNNet_model = NULL
 			, avNNet_param = FALSE
 			, avNNet_name = NULL
 			, avNNet_trained_model = NULL
-			
+
 			, pls_model = NULL
 			, pls_param = FALSE
 			, pls_name = NULL
 			, pls_trained_model = NULL
-			
+
 			, rpart_model = NULL
 			, rpart_param = FALSE
 			, rpart_name = NULL
 			, rpart_trained_model = NULL
-			
+
 			, mlpWeightDecayML_model = NULL
 			, mlpWeightDecayML_param = FALSE
 			, mlpWeightDecayML_name = NULL
 			, mlpWeightDecayML_trained_model = NULL
-			
+
 			, naive_bayes_model = NULL
 			, naive_bayes_param = FALSE
 			, naive_bayes_name = NULL
 			, naive_bayes_trained_model = NULL
-			
+
 			, all_trained_models = NULL
 		)
-		
+
 		rv_training_results = reactiveValues(
 			models = NULL
 			, train_metrics_df = NULL
@@ -440,7 +480,7 @@ function(input, output, session){
 
 		## Deployed models
 		rv_deployed_models = reactiveValues()
-	  
+
 		## Reactive values to stock AutoML leaderboard
 		rv_automl <- reactiveValues(
 		  leaderboard = NULL
@@ -450,20 +490,20 @@ function(input, output, session){
 	  source("server/header_footer_configs.R", local=TRUE)
 
 	  app_title()
-	  
+
 	  ###-------App Footer--------------------------
-	  
+
 	  footer_language_translation()
 	  ###-------Menu Translate---------
-	  
+
 	  menu_translation()
 
 	  #### ---- Change language ----------------------------------------------------
 	  output$change_language = change_language
 
 	  source("server/change_language_update.R", local = TRUE)
-	  change_language_update() 
-	  
+	  change_language_update()
+
 	  # ---- Sidebar tooltip labels ----
 	  nocode_tooltip_server(
 	    session = session,
@@ -472,32 +512,32 @@ function(input, output, session){
 	  #### ---- Upload data UI --------------------------------------------
 	  source("ui/upload_data.R", local = TRUE)
 	  output$upload_type = upload_type
-	  
+
 	  #### ---- Upload dataset/files UI --------------------------------------------
 	  source("server/input_files.R", local = TRUE)
 	  output$input_files = input_files
-	  
+
 	  #### ---- Show uploaded datasets UI --------------------------------------------
 	  output$show_uploaded = show_uploaded
-	  
+
 	  #### ---- Data upload form -----------------------------------------------
 	  source("ui/upload_form.R", local = TRUE)
 	  output$study_name = study_name
 	  output$study_country = study_country
 	  output$additional_info = additional_info
 	  output$submit_upload = submit_upload
-	 
+
 	  #### ---- Databse and API connection warning ---------------------
 	  db_api_con_future
-	  
+
 	  #### ---- Upload datasets ----------------------------------------
 	  source("server/upload_data.R", local = TRUE)
 	  upload_data_server()
-	  
+
 	  #### ---- Database integration ----------------------------------------
 	  source("server/database_integration.R", local = TRUE)
 	  database_integration_server()
-	 
+
 	  #### --- Database related form elements ---###
 	  output$db_type = db_type
 	  output$db_host = db_host
@@ -513,19 +553,19 @@ function(input, output, session){
 	  output$db_disconnect = db_disconnect
 	  output$db_tab_query = db_tab_query
 	  output$existing_connection = existing_connection
-	  
+
 	  source("server/omop_analysis.R", local = TRUE)
 	  omop_analysis_server()
-	  
+
 	  stderr_file_path <- file.path(getwd(), app_username, "output", "dq_stderr.txt")
-	  
+
 	  stderr_content<-create_log_reader(stderr_file_path)
-	  
+
 
 	  #### ---- Collect logs ----------------------------------------
 	  source("server/collect_logs.R", local = TRUE)
 	  collect_logs_server()
-	  
+
 	  #### ---- Display uploaded datasets ----------------------------------------
 	  source("server/display_uploaded_data.R", local = TRUE)
 	  display_uploaded_data_server()
@@ -533,18 +573,18 @@ function(input, output, session){
 	  #### ---- Delete uploaded dadatsets ----------------------------------------
 	  source("server/delete_uploaded_data.R", local = TRUE)
 	  delete_uploaded_data_server()
-	  
+
 	  #### ---- Update logfiles based on existing datasets -------------------####
 	  source("server/update_logs.R", local = TRUE)
 	  update_logs_server()
-	  
+
 	  #### ---- Manage data ----------------------------------------------
-	  
+
 	  ##### ---- Select data ---------------------------------------------
 	  source("server/select_data.R", local = TRUE)
 	  select_data_server()
 	  manage_data_show_server()
-	  
+
 	  ##### ---- Display meta data for the selected dataset ---------------------------------------------
 	  source("server/display_metadata.R", local = TRUE)
 	  display_selected_metadata_server()
@@ -563,7 +603,7 @@ function(input, output, session){
 	  source("server/explore_data.R", local = TRUE)
 	  explore_data_server()
 	  explore_data_subactions_server()
-	  
+
 	  ##----User Defined Visualization section-----------------------
 	  source("ui/user_defined_visualization_header.R", local = TRUE)
 	  output$user_output_type = user_output_type
@@ -573,14 +613,14 @@ function(input, output, session){
 	  output$user_row_var = user_row_var
 	  output$usr_create_cross_tab = usr_create_cross_tab
 	  output$user_download_table = user_download_table
-	  
+
 	  output$user_table_options = user_table_options
 	  output$user_report_numeric = user_report_numeric
 	  output$user_add_p_value = user_add_p_value
 	  output$user_add_confidence_interval = user_add_confidence_interval
 	  output$user_drop_missing_values = user_drop_missing_values
 	  output$user_table_caption = user_table_caption
-	  
+
 	  output$user_plot_options = user_plot_options
 	  output$user_select_variable_on_x_axis = user_select_variable_on_x_axis
 	  output$user_select_variable_on_y_axis = user_select_variable_on_y_axis
@@ -589,7 +629,7 @@ function(input, output, session){
 	  output$user_y_axis_label = user_y_axis_label
 	  output$user_create = user_create
 	  output$user_download = user_download
-	  
+
 	  output$user_more_plot_options = user_more_plot_options
 	  output$user_transform_to_doughnut = user_transform_to_doughnut
 	  output$user_select_color_variable = user_select_color_variable
@@ -599,7 +639,7 @@ function(input, output, session){
 	  output$user_line_size = user_line_size
 	  output$user_select_line_type = user_select_line_type
 	  output$user_add_shapes = user_add_shapes
-	  
+
 	  output$user_select_shape = user_select_shape
 	  output$user_add_smooth = user_add_smooth
 	  output$user_display_confidence_interval = user_display_confidence_interval
@@ -609,7 +649,7 @@ function(input, output, session){
 	  output$user_add_points = user_add_points
 	  output$user_y_variable_summary_type = user_y_variable_summary_type
 	  output$user_title_position = user_title_position
-	  
+
 	  output$user_size_of_plot_title = user_size_of_plot_title
 	  output$user_axis_title_size = user_axis_title_size
 	  output$user_facet_title_size = user_facet_title_size
@@ -623,10 +663,10 @@ function(input, output, session){
 	  output$user_select_color_variable_single = user_select_color_variable_single
 	  output$user_select_color_parlet = user_select_color_parlet
 	  output$user_numeric_summary = user_numeric_summary
-	  
+
 	  output$bivariate_header_label = bivariate_header_label
 	  output$corrplot_header_label = corrplot_header_label
-	  
+
 	  output$user_select_bivariate_single_color = user_select_bivariate_single_color
 	  output$user_select_color_parlet_bivariate = user_select_color_parlet_bivariate
 	  output$user_select_color_parlet_corrplot = user_select_color_parlet_corrplot
@@ -635,31 +675,31 @@ function(input, output, session){
 	  output$user_download_autoreport = user_download_autoreport
 	  output$user_generatebivriate = user_generatebivriate
 
-	  
+
 
 	  ##### ---- Explore data actions ----------------------------------
 	  explore_data_actions_server()
-	  
+
 	  ##### ---- Filter data --------------------------------------------
 	  explore_data_filter_server()
 	  explore_data_apply_filter_server()
 	  explore_data_current_filter_server()
-	  
+
 	  ##### ---- Show/display -------------------------------------------------------
 	  explore_show_data_server()
 	  explore_data_reset_current_filter_server()
-	  
+
 	  ##### ---- Compute proportion of missing data ---------------------------
 	  explore_missing_data_server()
-	  
+
 	  ##### ---- Select variables ---------------------------------------------
 	  explore_data_select_variables_server()
 	  explore_data_selected_variables_server()
-	  
+
 	  ##### ---- Update data -----------------------------------------------
 	  explore_data_update_data_server()
 
-	  
+
 	  #### ---- Transform variables -------------------------------------- ####
 	  source("server/transform_data.R", local = TRUE)
 
@@ -674,29 +714,29 @@ function(input, output, session){
 
 	  ##### ---- Recode/change value labels ---------------------------------------###
 	  transform_data_quick_explore_recode_server()
-	  
+
 	  ##### ---- Handle missing data ---------------------------------------###
 	  transform_data_create_missing_values_server()
-	  
+
 	  ##### ---- Identify outliers ---------------------------------------###
 	  transform_data_identify_outliers_server()
-	  
+
 	  ##### ---- Handle missing values ---------------------------------------###
 	  transform_data_handle_missing_values_server()
-	  
+
 	  ##### ---- Plot transform data ----------------------------------------------###
 	  transform_data_quick_explore_plot_server()
-	  
+
 	  ##### ---- Plot missing data (LAZY-LOADED) --------------------------------###
 	  source("server/lazy_loaders.R", local = TRUE)
 	  lazy_load_missing_data()
-	  
+
 	  #### ---- Combine datasets with the existing one --------------------------------------####
 	  source("server/combine_data.R", local = TRUE)
-	  
+
 	  ##### ---- List of internal data ------------------------------------------####
 	  combine_data_list_datasets()
-	  
+
 	  ##### ---- Combine data options ------------------------------------------####
 	  combine_data_type()
 
@@ -705,7 +745,7 @@ function(input, output, session){
 
 	  ##### ---- Combine data variables matched --------------------####
 	  combine_data_variable_matching()
-	  
+
 	  #### ----- Perform matching ---------------------------------####
 	  combine_data_perform_variable_match()
 
@@ -731,20 +771,20 @@ function(input, output, session){
 	    }
 	  )
 	  ### ------- OMOP ------------------------------------------ #####
-	  
+
 	  #### ----- Cohort Constructor ---------#####
 	  source("server/run_cohort_pipeline.R", local = TRUE)
 	  run_cohort_pipeline()
-	  
+
 	  #### ----- Feature Extraction ---------#####
 	  source("server/feature_extraction_pipeline.R", local = TRUE)
 	  feature_extraction_pipeline()
-	  
+
 	  #### ---- Achilles Integration -------------------####
-	  
+
 	  source("server/run_achilles.R", local = TRUE)
 	  achilles_integration_server()
-	  
+
 	  ### ---- OMOP CDM Summaries---------------------------####
 	  source("server/omop_summaries.R", local = TRUE)
 	  omopVizServer()
@@ -756,7 +796,7 @@ function(input, output, session){
 	  #### ---- Generate Research Questions --------------------------------------####
 	  source("server/research_questions.R", local = TRUE)
 	  generate_research_questions_choices()
-	  
+
 
 	  ##### ---- API Token ------------------ ####
 	  generate_research_questions_api_token()
@@ -769,34 +809,34 @@ function(input, output, session){
 	  generate_research_questions_gemini()
 
 	  #### ---- Machine learning and AI --------------- ####
-	  
+
 	  ##### ----- Set ML/AI UI ------------------- ####
 	  update_progress("Loading ML modules...")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
-	  
+
 	  ##### ----- Preprocessing ------------------- ####
 	  source("server/feature_engineering.R", local=TRUE)
-	  
+
 	  #### Preprocessing ------------------------------------------- ####
 	  feature_engineering_perform_preprocess_server()
 
 	  #### ------ Missing value imputation -------------------------- ####
 	  feature_engineering_recipe_server()
 	  feature_engineering_impute_missing_server()
-	  
+
 	  #### ----- Modelling framework --------------------------------- ####
 
 	  source("server/modelling_framework.R", local=TRUE)
 	  modelling_framework_choices()
-	  
+
 	  #### ----- Model setup ----------------------------------------- ####
 	  source("server/model_training_setup.R", local=TRUE)
 	  model_training_setup_server()
 
 	  #### ----- Caret models --------------------------------------- ####
 	  source("server/model_training_caret_models.R", local=TRUE)
-	  
+
 	  ## LM/GLM
 	  model_training_caret_models_ols_server()
 
@@ -814,7 +854,7 @@ function(input, output, session){
 
 	  ## svmRadial
 	  model_training_caret_models_svmRadial_server()
-	  
+
 	  ## svmLinear
 	  model_training_caret_models_svmLinear_server()
 
@@ -823,7 +863,7 @@ function(input, output, session){
 
 	  ## glmnet
 	  model_training_caret_models_glmnet_server()
-	 
+
 	  ## LASSO
 	  model_training_caret_models_lasso_server()
 
@@ -853,10 +893,10 @@ function(input, output, session){
 
 	  ## mlpWeightDecayML (MLP)
 	  model_training_caret_models_mlpWeightDecayML_server()
-	  
+
 	  ## Naive Bayes
 	  model_training_caret_models_naive_bayes_server()
-	  
+
 	  #### ----- Train all models ----------------------------------- ####
 	  source("server/train_caret_models.R", local=TRUE)
 	  model_training_caret_train_all_server()
@@ -883,13 +923,13 @@ function(input, output, session){
 	  predict_pycaret_server("predict_pycaret", api_base , rv_current, rv_ml_ai)
 
 	  # END NEW ADD
-	  #### ---- Call current dataset for FastAPI ---------------------------------------------------  
+	  #### ---- Call current dataset for FastAPI ---------------------------------------------------
 	  source("server/automl_server.R", local=TRUE)
 	  automl_server("automl_module", rv_current, rv_ml_ai)
 
 	  observe({
 		 req(!is.null(rv_ml_ai$modelling_framework))  # Check if value exist
-		 
+
 		 if (tolower(rv_ml_ai$modelling_framework) == "pycaret") {
 			output$automl_module_ui <- renderUI({
 			  automl_ui("automl_module")
@@ -900,14 +940,14 @@ function(input, output, session){
 			})
 		 }
 	  })
-	  
+
 	  observeEvent(input$modelling_framework_choices, {
 		 rv_ml_ai$framework <- tolower(input$modelling_framework_choices %||% "")
 	  }, ignoreInit = FALSE)
-	  
+
 	  #### ---- Deep Learning Server (LAZY-LOADED) ----- ###
 	  lazy_load_deep_learning()
-	  
+
 	  #### ---- Reset various components --------------------------------------####
 	  ## Various components come before this
 	  source("server/resets.R", local = TRUE)
@@ -929,19 +969,19 @@ function(input, output, session){
 	  admin_server(USER)
 
 	  update_progress("Ready!")
-	  waiter::waiter_hide()
 
-	  ## After the waiter hides, force the active sidebar tab to re-trigger.
-	  ## This un-suspends outputs inside the active tab that may have been
-	  ## suspended during the waiter overlay.
-	  shinyjs::runjs("
-		  setTimeout(function() {
-			  var active = $('ul.sidebar-menu li.active > a').first();
-			  if (active.length) { active.trigger('click'); }
-		  }, 400);
+	  ## Hide the loader only after Shiny has flushed outputs and the browser
+	  ## has painted them. This avoids a brief textless dashboard flash.
+	  hide_waiter_after_flush("
+		  var active = $('ul.sidebar-menu li.active > a').first();
+		  if (active.length) { active.trigger('click'); }
 	  ")
   }, ignoreInit = FALSE)
 
-  waiter::waiter_hide()
+  session$onFlushed(function() {
+    if (!isTRUE(isolate(USER$logged_in))) {
+      hide_waiter_after_paint()
+    }
+  }, once = TRUE)
 
 }
