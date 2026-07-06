@@ -1,6 +1,8 @@
 #### ---- Deploy trained model ------------------------------------- ####
 
 deploy_trained_caret_models = function() {
+	deploy_observers_registered <- reactiveVal(FALSE)
+
 	observeEvent({list(input$manage_data_apply, input$model_training_apply)}, {
 		req(!is.null(rv_current$working_df))
 		req(!is.null(rv_current$dataset_id))
@@ -39,6 +41,11 @@ deploy_trained_caret_models = function() {
 			)	
 		})	
 		
+		## Register nested observers only once — prevents duplicate deploys
+		## when manage_data_apply or model_training_apply fires multiple times.
+		if (!isolate(deploy_observers_registered())) {
+			deploy_observers_registered(TRUE)
+
 		## Models in summary table
 		observeEvent(input$deploy_trained_caret_models_select_session, {
 			output$deploy_trained_caret_models_select_model = renderUI({
@@ -158,26 +165,20 @@ deploy_trained_caret_models = function() {
 					if (isTRUE(d_check)) {
 						u = rv_deployed_models[[m]]$url
 						d = rv_deployed_models[[m]]$docs
-						if (Rautoml::check_api_connection(d)) {
-							df$url = u 
-							df$api = d 
-							df$status = "Deployed" 
-						} else {
+						connected <- FALSE
+						for (.attempt in 1:5) {
+							if (Rautoml::check_api_connection(d)) { connected <- TRUE; break }
 							Sys.sleep(3)
-							if (Rautoml::check_api_connection(d)) {
-								df$url = u 
-								df$api = d 
-								df$status = "Deployed" 
-							} else {
-								df$url = "" 
-								df$api = "" 
-								df$status = "Stopped" 
-							}
+						}
+						if (connected) {
+							df$url = u; df$api = d; df$status = "Deployed"
+						} else {
+							df$url = ""; df$api = ""; df$status = "Stopped"
 						}
 					} else {
-						df$url = "" 
-						df$api = "" 
-						df$status = "Stopped" 
+						df$url = ""
+						df$api = ""
+						df$status = "Stopped"
 					}
 					deployed_df[[m]] = df
 				}
@@ -234,21 +235,15 @@ deploy_trained_caret_models = function() {
 				if (isTRUE(d_check)) {
 					u = rv_deployed_models[[info$id]]$url
 					d = rv_deployed_models[[info$id]]$docs
-					if (Rautoml::check_api_connection(d)) {
-						display$url[i] = u 
-						display$api[i] = d 
-						display$status[i] = "Deployed" 
-					} else {
+					connected <- FALSE
+					for (.attempt in 1:5) {
+						if (Rautoml::check_api_connection(d)) { connected <- TRUE; break }
 						Sys.sleep(3)
-						if (Rautoml::check_api_connection(d)) {
-							display$url[i] = u 
-							display$api[i] = d 
-							display$status[i] = "Deployed" 
-						} else {
-							display$url[i] = "" 
-							display$api[i] = "" 
-							display$status[i] = "Stopped" 
-						}
+					}
+					if (connected) {
+						display$url[i] = u; display$api[i] = d; display$status[i] = "Deployed"
+					} else {
+						display$url[i] = ""; display$api[i] = ""; display$status[i] = "Stopped"
 					}
 				} else {
 					display$url[i] = "" 
@@ -277,6 +272,8 @@ deploy_trained_caret_models = function() {
 			 )
 		  }, server = FALSE)
 		}, ignoreInit = TRUE)
+
+		} ## end deploy_observers_registered guard
 
 		## Output objects
 		output$deploy_trained_caret_models_box_ui = renderUI({

@@ -1,23 +1,69 @@
+source("server/caret_job_manager.R", local = TRUE)
+
 #### ---- Train all models ----------------------------------- ####
 model_training_caret_train_all_server = function() {
 
-	
+
 	## Check hyperparameter list
-	
+	param_values <- function(value) {
+		if (is.null(value)) return(NULL)
+		if (is.factor(value)) value <- as.character(value)
+		if (is.atomic(value)) {
+			value <- value[!is.na(value)]
+			if (is.character(value)) value <- value[nzchar(value)]
+			if (is.character(value) && length(value)) {
+				numeric_value <- suppressWarnings(as.numeric(value))
+				if (!anyNA(numeric_value)) value <- numeric_value
+			}
+		}
+		value
+	}
+
+	merge_param_set <- function(param_set = NULL, defaults = NULL) {
+		param_names <- unique(c(names(defaults), names(param_set)))
+		if (!length(param_names)) return(NULL)
+		stats::setNames(lapply(param_names, function(param_name) {
+			value <- param_values(param_set[[param_name]])
+			if (length(value)) return(value)
+			param_values(defaults[[param_name]])
+		}), param_names)
+	}
+
+	param_set_ready <- function(param_set) {
+		!is.null(param_set) &&
+			length(param_set) > 0 &&
+			all(vapply(param_set, function(value) length(param_values(value)) > 0, logical(1)))
+	}
+
+	setup_caret_safe <- function(model, param = FALSE, param_set = NULL, defaults = NULL) {
+		if (!isTRUE(param)) {
+			return(Rautoml::setup_caret(model, param = FALSE, param_set = NULL))
+		}
+		param_set <- merge_param_set(param_set, defaults)
+		if (!param_set_ready(param_set)) {
+			return(Rautoml::setup_caret(model, param = FALSE, param_set = NULL))
+		}
+		Rautoml::setup_caret(model, param = TRUE, param_set = param_set)
+	}
+
+	glmnet_lambda_grid <- function() {
+		c(seq(0.001, 0.1, length.out = 10), seq(0.1, 2, by = 0.1), seq(2, 5, 0.5), seq(5, 25, 1))
+	}
+
 	### LM/GLM
 	observeEvent(input$ols_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_ols_check)) {
 					if (rv_ml_ai$task=="Regression") {
-						rv_training_models$ols_param = TRUE			
+						rv_training_models$ols_param = TRUE
 					} else {
 						rv_training_models$ols_param = FALSE
 					}
 				}
 			}
 		}
-		
+
 	})
 
 	### RF
@@ -25,64 +71,64 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_rf_check)) {
-					rv_training_models$rf_param = TRUE			
+					rv_training_models$rf_param = TRUE
 				}
 			}
 		}
-		
+
 	})
-	
+
 	### GBM
 	observeEvent(input$gbm_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_gbm_check)) {
-					rv_training_models$gbm_param = TRUE			
-				}
-			}
-		}
-	})
-	
-	### xgbTree
-	observeEvent(input$xgbTree_advance_control_apply_save, {
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(input$model_training_caret_models_xgbTree_check)) {
-					rv_training_models$xgbTree_param = TRUE			
-				}
-			}
-		}
-	})
-	
-	### xgbLinear
-	observeEvent(input$xgbLinear_advance_control_apply_save, {
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(input$model_training_caret_models_xgbLinear_check)) {
-					rv_training_models$xgbLinear_param = TRUE			
-				}
-			}
-		}
-	})
-	
-	### svmRadial
-	observeEvent(input$svmRadial_advance_control_apply_save, {
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(input$model_training_caret_models_svmRadial_check)) {
-					rv_training_models$svmRadial_param = TRUE			
+					rv_training_models$gbm_param = TRUE
 				}
 			}
 		}
 	})
 
-	
+	### xgbTree
+	observeEvent(input$xgbTree_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_xgbTree_check)) {
+					rv_training_models$xgbTree_param = TRUE
+				}
+			}
+		}
+	})
+
+	### xgbLinear
+	observeEvent(input$xgbLinear_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_xgbLinear_check)) {
+					rv_training_models$xgbLinear_param = TRUE
+				}
+			}
+		}
+	})
+
+	### svmRadial
+	observeEvent(input$svmRadial_advance_control_apply_save, {
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				if (isTRUE(input$model_training_caret_models_svmRadial_check)) {
+					rv_training_models$svmRadial_param = TRUE
+				}
+			}
+		}
+	})
+
+
 	### svmLinear
 	observeEvent(input$svmLinear_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_svmLinear_check)) {
-					rv_training_models$svmLinear_param = TRUE			
+					rv_training_models$svmLinear_param = TRUE
 				}
 			}
 		}
@@ -94,7 +140,7 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_svmPoly_check)) {
-					rv_training_models$svmPoly_param = TRUE			
+					rv_training_models$svmPoly_param = TRUE
 				}
 			}
 		}
@@ -106,19 +152,19 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_glmnet_check)) {
-					rv_training_models$glmnet_param = TRUE			
+					rv_training_models$glmnet_param = TRUE
 				}
 			}
 		}
 	})
-	
+
 
 	### lasso
 	observeEvent(input$lasso_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_lasso_check)) {
-					rv_training_models$lasso_param = TRUE			
+					rv_training_models$lasso_param = TRUE
 				}
 			}
 		}
@@ -130,7 +176,7 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_ridge_check)) {
-					rv_training_models$ridge_param = TRUE			
+					rv_training_models$ridge_param = TRUE
 				}
 			}
 		}
@@ -142,7 +188,7 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_knn_check)) {
-					rv_training_models$knn_param = TRUE			
+					rv_training_models$knn_param = TRUE
 				}
 			}
 		}
@@ -154,7 +200,7 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_nnet_check)) {
-					rv_training_models$nnet_param = TRUE			
+					rv_training_models$nnet_param = TRUE
 				}
 			}
 		}
@@ -165,7 +211,7 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_avNNet_check)) {
-					rv_training_models$avNNet_param = TRUE			
+					rv_training_models$avNNet_param = TRUE
 				}
 			}
 		}
@@ -176,19 +222,19 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_pls_check)) {
-					rv_training_models$pls_param = TRUE			
+					rv_training_models$pls_param = TRUE
 				}
 			}
 		}
 	})
 
-	
+
 	### rpart
 	observeEvent(input$rpart_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_rpart_check)) {
-					rv_training_models$rpart_param = TRUE			
+					rv_training_models$rpart_param = TRUE
 				}
 			}
 		}
@@ -199,92 +245,125 @@ model_training_caret_train_all_server = function() {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_mlpWeightDecayML_check)) {
-					rv_training_models$mlpWeightDecayML_param = TRUE			
+					rv_training_models$mlpWeightDecayML_param = TRUE
 				}
 			}
 		}
 	})
-	
+
 	### naive_bayes
 	observeEvent(input$naive_bayes_advance_control_apply_save, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(input$model_training_caret_models_naive_bayes_check)) {
-					rv_training_models$naive_bayes_param = TRUE			
+					rv_training_models$naive_bayes_param = TRUE
 				}
 			}
 		}
 	})
 
-	## Check selected models
-	observe({
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				
+	## Build model specs — fires on preprocessing complete OR any advance option save.
+	## Does NOT depend on checkbox inputs so checkbox ticks are instant (fast observer).
+	observeEvent(
+		list(
+			rv_ml_ai$preprocessed,
+			## Re-run once the model names become available (they are set as a
+			## side-effect of the checkbox UIs rendering, slightly after
+			## `preprocessed`). Without these, the observer can fire before
+			## `ols_name` is set, hit the req() gate below, abort, and never
+			## rebuild -> specs stay NULL -> clicking Train creates no jobs and
+			## no progress panel. Names are only READ here, never written, so
+			## there is no self-trigger loop.
+			rv_training_models$ols_name,
+			rv_training_models$rf_name,
+			rv_training_models$gbm_name,
+			rv_training_models$xgbTree_name,
+			rv_training_models$xgbLinear_name,
+			rv_training_models$svmRadial_name,
+			rv_training_models$svmLinear_name,
+			rv_training_models$svmPoly_name,
+			rv_training_models$glmnet_name,
+			rv_training_models$lasso_name,
+			rv_training_models$ridge_name,
+			rv_training_models$knn_name,
+			rv_training_models$nnet_name,
+			rv_training_models$avNNet_name,
+			rv_training_models$pls_name,
+			rv_training_models$gam_name,
+			rv_training_models$rpart_name,
+			rv_training_models$treebag_name,
+			rv_training_models$mlpWeightDecayML_name,
+			rv_training_models$naive_bayes_name,
+			input$ols_advance_control_apply_save,
+			input$rf_advance_control_apply_save,
+			input$gbm_advance_control_apply_save,
+			input$xgbTree_advance_control_apply_save,
+			input$xgbLinear_advance_control_apply_save,
+			input$svmRadial_advance_control_apply_save,
+			input$svmLinear_advance_control_apply_save,
+			input$svmPoly_advance_control_apply_save,
+			input$glmnet_advance_control_apply_save,
+			input$lasso_advance_control_apply_save,
+			input$ridge_advance_control_apply_save,
+			input$knn_advance_control_apply_save,
+			input$nnet_advance_control_apply_save,
+			input$avNNet_advance_control_apply_save,
+			input$pls_advance_control_apply_save,
+			input$rpart_advance_control_apply_save,
+			input$mlpWeightDecayML_advance_control_apply_save,
+			input$naive_bayes_advance_control_apply_save
+		),
+		{
+		req(!is.null(rv_current$working_df))
+		req(!is.null(rv_ml_ai$preprocessed))
+		req(!is.null(rv_training_models$ols_name))
+		{
+
 				## LM/GLM
-				if (isTRUE(input$model_training_caret_models_ols_check)) {
+				if (!is.null(rv_training_models$ols_name)) {
 					if (isTRUE(rv_ml_ai$preprocessed$outcome_nlevels>2)) {
 						param_set = list(intercept=as.numeric(input$model_training_caret_models_ols_advance_decay))
 					} else {
 						param_set=list(intercept=input$model_training_caret_models_ols_advance_intercept)
 					}
-					rv_training_models$ols_model = Rautoml::setup_caret( 
+					rv_training_models$ols_model = setup_caret_safe(
 						rv_training_models$ols_name
 						, param=rv_training_models$ols_param
 						, param_set=param_set
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$ols_model = NULL
 				}
 
-				
+
 				## RF
-				if (isTRUE(input$model_training_caret_models_rf_check)) {
-					rv_training_models$rf_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$rf_name)) {
+					rv_training_models$rf_model = setup_caret_safe(
 						rv_training_models$rf_name
 						, param=rv_training_models$rf_param
-						, param_set=list(
-							mtry=as.numeric(input$model_training_caret_models_rf_advance_params_mtry)
-						)
+						, param_set=list(mtry=as.numeric(input$model_training_caret_models_rf_advance_params_mtry))
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$rf_model = NULL
 				}
 
 				## GBM
-				if (isTRUE(input$model_training_caret_models_gbm_check)) {
-					if (isTRUE(!is.null(input$model_training_caret_models_gbm_advance_shrinkage))) {
-						shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
-						shrinkage = seq(shrinkage[1], shrinkage[2], length.out=20)
-					} else {
-						shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
-					}
-					rv_training_models$gbm_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$gbm_name)) {
+					shrinkage = input$model_training_caret_models_gbm_advance_shrinkage
+					if (!is.null(shrinkage)) shrinkage = seq(shrinkage[1], shrinkage[2], length.out=20)
+					rv_training_models$gbm_model = setup_caret_safe(
 						rv_training_models$gbm_name
 						, param=rv_training_models$gbm_param
 						, param_set=list(
 							n.trees=as.numeric(input$model_training_caret_models_gbm_advance_n.trees)
-							, interaction.depth = as.numeric(input$model_training_caret_models_gbm_advance_interaction.depth)
-							, n.minobsinnode = as.numeric(input$model_training_caret_models_gbm_advance_n.minobsinnode)
-							, shrinkage = shrinkage 
+							, interaction.depth=as.numeric(input$model_training_caret_models_gbm_advance_interaction.depth)
+							, n.minobsinnode=as.numeric(input$model_training_caret_models_gbm_advance_n.minobsinnode)
+							, shrinkage=shrinkage
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$gbm_model = NULL
 				}
 
 				## xgbTree
-				if (isTRUE(input$model_training_caret_models_xgbTree_check)) {
-					if (isTRUE(!is.null(input$model_training_caret_models_xgbTree_advance_eta))) {
-						eta = input$model_training_caret_models_xgbTree_advance_eta
-						eta = seq(eta[1], eta[2], length.out=20)
-					} else {
-						eta = input$model_training_caret_models_xgbTree_advance_eta
-					}
-					rv_training_models$xgbTree_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$xgbTree_name)) {
+					eta = input$model_training_caret_models_xgbTree_advance_eta
+					if (!is.null(eta)) eta = seq(eta[1], eta[2], length.out=20)
+					rv_training_models$xgbTree_model = setup_caret_safe(
 						rv_training_models$xgbTree_name
 						, param=rv_training_models$xgbTree_param
 						, param_set=list(
@@ -297,21 +376,13 @@ model_training_caret_train_all_server = function() {
 							, subsample=as.numeric(input$model_training_caret_models_xgbTree_advance_subsample)
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$xgbTree_model = NULL
 				}
 
-
 				## xgbLinear
-				if (isTRUE(input$model_training_caret_models_xgbLinear_check)) {
-					if (isTRUE(!is.null(input$model_training_caret_models_xgbLinear_advance_eta))) {
-						eta = input$model_training_caret_models_xgbLinear_advance_eta
-						eta = seq(eta[1], eta[2], length.out=20)
-					} else {
-						eta = input$model_training_caret_models_xgbLinear_advance_eta
-					}
-					rv_training_models$xgbLinear_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$xgbLinear_name)) {
+					eta = input$model_training_caret_models_xgbLinear_advance_eta
+					if (!is.null(eta)) eta = seq(eta[1], eta[2], length.out=20)
+					rv_training_models$xgbLinear_model = setup_caret_safe(
 						rv_training_models$xgbLinear_name
 						, param=rv_training_models$xgbLinear_param
 						, param_set=list(
@@ -321,138 +392,96 @@ model_training_caret_train_all_server = function() {
 							, eta=eta
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$xgbLinear_model = NULL
 				}
 
 				## svmRadial
-				if (isTRUE(input$model_training_caret_models_svmRadial_check)) {
-					if (isTRUE(!is.null(input$model_training_caret_models_svmRadial_advance_sigma))) {
-						sigma = input$model_training_caret_models_svmRadial_advance_sigma
-						sigma = seq(sigma[1], sigma[2], length.out=20)
-					} else {
-						sigma = input$model_training_caret_models_svmRadial_advance_sigma
-					}
-					rv_training_models$svmRadial_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$svmRadial_name)) {
+					sigma = input$model_training_caret_models_svmRadial_advance_sigma
+					if (!is.null(sigma)) sigma = seq(sigma[1], sigma[2], length.out=20)
+					rv_training_models$svmRadial_model = setup_caret_safe(
 						rv_training_models$svmRadial_name
 						, param=rv_training_models$svmRadial_param
-						, param_set=list(
-							C=as.numeric(input$model_training_caret_models_svmRadial_advance_C)
-							, sigma=sigma
-						)
+						, param_set=list(C=as.numeric(input$model_training_caret_models_svmRadial_advance_C), sigma=sigma)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$svmRadial_model = NULL
 				}
 
 				## svmLinear
-				if (isTRUE(input$model_training_caret_models_svmLinear_check)) {
-					rv_training_models$svmLinear_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$svmLinear_name)) {
+					rv_training_models$svmLinear_model = setup_caret_safe(
 						rv_training_models$svmLinear_name
 						, param=rv_training_models$svmLinear_param
-						, param_set=list(
-							C=as.numeric(input$model_training_caret_models_svmLinear_advance_C)
-						)
+						, param_set=list(C=as.numeric(input$model_training_caret_models_svmLinear_advance_C))
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$svmLinear_model = NULL
 				}
 
-
 				## svmPoly
-				if (isTRUE(input$model_training_caret_models_svmPoly_check)) {
-					if (isTRUE(!is.null(input$model_training_caret_models_svmPoly_advance_scale))) {
-						scale_ = input$model_training_caret_models_svmPoly_advance_scale
-						scale_ = seq(scale_[1], scale_[2], length.out=20)
-					} else {
-						scale_ = input$model_training_caret_models_svmPoly_advance_scale
-					}
-					rv_training_models$svmPoly_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$svmPoly_name)) {
+					scale_ = input$model_training_caret_models_svmPoly_advance_scale
+					if (!is.null(scale_)) scale_ = seq(scale_[1], scale_[2], length.out=20)
+					rv_training_models$svmPoly_model = setup_caret_safe(
 						rv_training_models$svmPoly_name
 						, param=rv_training_models$svmPoly_param
 						, param_set=list(
 							degree=as.numeric(input$model_training_caret_models_svmPoly_advance_degree)
-							, C = as.numeric(input$model_training_caret_models_svmPoly_advance_C)
+							, C=as.numeric(input$model_training_caret_models_svmPoly_advance_C)
 							, scale=scale_
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$svmPoly_model = NULL
 				}
 
-
 				## glmnet
-				if (isTRUE(input$model_training_caret_models_glmnet_check)) {
-					rv_training_models$glmnet_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$glmnet_name)) {
+					rv_training_models$glmnet_model = setup_caret_safe(
 						rv_training_models$glmnet_name
 						, param=rv_training_models$glmnet_param
 						, param_set=list(
-							alpha=as.numeric(input$model_training_caret_models_glmnet_advance_alpha)
-							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
+							alpha=input$model_training_caret_models_glmnet_advance_alpha
+							, lambda=glmnet_lambda_grid()
 						)
+						, defaults=list(alpha=seq(0.1, 1, length.out = 10), lambda=glmnet_lambda_grid())
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$glmnet_model = NULL
 				}
 
-				
 				## lasso
-				if (isTRUE(input$model_training_caret_models_lasso_check)) {
+				if (!is.null(rv_training_models$lasso_name)) {
 					rv_training_models$lasso_param = TRUE
-					rv_training_models$lasso_model = Rautoml::setup_caret( 
+					rv_training_models$lasso_model = setup_caret_safe(
 						rv_training_models$lasso_name
-						, param=TRUE#rv_training_models$lasso_param
+						, param=TRUE
 						, param_set=list(
-							alpha=as.numeric(input$model_training_caret_models_lasso_advance_alpha)
-							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
+							alpha=input$model_training_caret_models_lasso_advance_alpha
+							, lambda=glmnet_lambda_grid()
 						)
+						, defaults=list(alpha=1, lambda=glmnet_lambda_grid())
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$lasso_model = NULL
 				}
 
-				
 				## ridge
-				if (isTRUE(input$model_training_caret_models_ridge_check)) {
+				if (!is.null(rv_training_models$ridge_name)) {
 					rv_training_models$ridge_param = TRUE
-					rv_training_models$ridge_model = Rautoml::setup_caret( 
+					rv_training_models$ridge_model = setup_caret_safe(
 						rv_training_models$ridge_name
-						, param=TRUE#rv_training_models$ridge_param
+						, param=TRUE
 						, param_set=list(
-							alpha=as.numeric(input$model_training_caret_models_ridge_advance_alpha)
-							, lambda = c(seq(0.001, 0.1, length.out=10), seq(0.1, 2, by =0.1) ,  seq(2, 5, 0.5) , seq(5, 25, 1))
+							alpha=input$model_training_caret_models_ridge_advance_alpha
+							, lambda=glmnet_lambda_grid()
 						)
+						, defaults=list(alpha=0, lambda=glmnet_lambda_grid())
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$ridge_model = NULL
 				}
 
-				
 				## knn
-				if (isTRUE(input$model_training_caret_models_knn_check)) {
-					rv_training_models$knn_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$knn_name)) {
+					rv_training_models$knn_model = setup_caret_safe(
 						rv_training_models$knn_name
 						, param=rv_training_models$knn_param
-						, param_set=list(
-							k=as.numeric(input$model_training_caret_models_knn_advance_k)
-						)
+						, param_set=list(k=as.numeric(input$model_training_caret_models_knn_advance_k))
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$knn_model = NULL
 				}
 
-				
 				## nnet
-				if (isTRUE(input$model_training_caret_models_nnet_check)) {
-					rv_training_models$nnet_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$nnet_name)) {
+					rv_training_models$nnet_model = setup_caret_safe(
 						rv_training_models$nnet_name
 						, param=rv_training_models$nnet_param
 						, param_set=list(
@@ -460,123 +489,73 @@ model_training_caret_train_all_server = function() {
 							, decay=as.numeric(input$model_training_caret_models_nnet_advance_decay)
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$nnet_model = NULL
 				}
 
-				
 				## treebag
-				if (isTRUE(input$model_training_caret_models_treebag_check)) {
+				if (!is.null(rv_training_models$treebag_name)) {
 					rv_training_models$treebag_trained_model = rv_training_models$treebag_name
-					rv_training_models$treebag_model = Rautoml::setup_caret( 
-						rv_training_models$treebag_name
-						, param=FALSE
-						, param_set=NULL
-					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$treebag_model = NULL
+					rv_training_models$treebag_model = setup_caret_safe(rv_training_models$treebag_name, param=FALSE, param_set=NULL)
 				}
 
 				## avNNet
-				if (isTRUE(input$model_training_caret_models_avNNet_check)) {
-					rv_training_models$avNNet_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$avNNet_name)) {
+					rv_training_models$avNNet_model = setup_caret_safe(
 						rv_training_models$avNNet_name
 						, param=rv_training_models$avNNet_param
 						, param_set=list(
-							bag = input$model_training_caret_models_avNNet_advance_bag
+							bag=input$model_training_caret_models_avNNet_advance_bag
 							, size=as.numeric(input$model_training_caret_models_avNNet_advance_size)
 							, decay=as.numeric(input$model_training_caret_models_avNNet_advance_decay)
 						)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$avNNet_model = NULL
 				}
 
 				## pls
-				if (isTRUE(input$model_training_caret_models_pls_check)) {
-					rv_training_models$pls_model = Rautoml::setup_caret( 
+				if (!is.null(rv_training_models$pls_name)) {
+					rv_training_models$pls_model = setup_caret_safe(
 						rv_training_models$pls_name
 						, param=rv_training_models$pls_param
-						, param_set=list(
-							ncomp=as.numeric(input$model_training_caret_models_pls_advance_ncomp)
-						)
+						, param_set=list(ncomp=as.numeric(input$model_training_caret_models_pls_advance_ncomp))
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$pls_model = NULL
 				}
 
-				
 				## gam
-				if (isTRUE(input$model_training_caret_models_gam_check)) {
+				if (!is.null(rv_training_models$gam_name)) {
 					rv_training_models$gam_trained_model = rv_training_models$gam_name
-					rv_training_models$gam_model = Rautoml::setup_caret( 
-						rv_training_models$gam_name
-						, param=FALSE
-						, param_set=NULL
-					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$gam_model = NULL
+					rv_training_models$gam_model = setup_caret_safe(rv_training_models$gam_name, param=FALSE, param_set=NULL)
 				}
 
 				## rpart
-				if (isTRUE(input$model_training_caret_models_rpart_check)) {
+				if (!is.null(rv_training_models$rpart_name)) {
 					cp_ = input$model_training_caret_models_rpart_advance_cp
-					if (!is.null(cp_)) {
-						cp_ = runif(cp_, n=20)
-					}
-					rv_training_models$rpart_model = Rautoml::setup_caret( 
+					if (!is.null(cp_)) cp_ = runif(cp_, n=20)
+					rv_training_models$rpart_model = setup_caret_safe(
 						rv_training_models$rpart_name
 						, param=rv_training_models$rpart_param
-						, param_set=list(
-							cp=cp_
-						)
+						, param_set=list(cp=cp_)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$rpart_model = NULL
 				}
-				
+
 				## mlpWeightDecayML
-				if (isTRUE(input$model_training_caret_models_mlpWeightDecayML_check)) {
+				if (!is.null(rv_training_models$mlpWeightDecayML_name)) {
 					layer1_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer1
-					if (!is.null(layer1_)) {
-						layer1_ = floor(runif(layer1_, n=20))
-					}
+					if (!is.null(layer1_)) layer1_ = floor(runif(layer1_, n=20))
 					layer2_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer2
-					if (!is.null(layer2_)) {
-						layer2_ = floor(runif(layer2_, n=20))
-					}
+					if (!is.null(layer2_)) layer2_ = floor(runif(layer2_, n=20))
 					layer3_ = input$model_training_caret_models_mlpWeightDecayML_advance_layer3
-					if (!is.null(layer3_)) {
-						layer3_ = floor(runif(layer3_, n=20))
-					}
+					if (!is.null(layer3_)) layer3_ = floor(runif(layer3_, n=20))
 					decay_ = input$model_training_caret_models_mlpWeightDecayML_advance_decay
-					if (!is.null(decay_)) {
-						decay_ = runif(decay_, n=20)
-					}
-					rv_training_models$mlpWeightDecayML_model = Rautoml::setup_caret( 
+					if (!is.null(decay_)) decay_ = runif(decay_, n=20)
+					rv_training_models$mlpWeightDecayML_model = setup_caret_safe(
 						rv_training_models$mlpWeightDecayML_name
 						, param=rv_training_models$mlpWeightDecayML_param
-						, param_set=list(
-							layer1=layer1_
-							, layer2=layer2_
-							, layer3=layer3_
-							, decay = decay_
-						)
+						, param_set=list(layer1=layer1_, layer2=layer2_, layer3=layer3_, decay=decay_)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$mlpWeightDecayML_model = NULL
 				}
-				
-				
+
+
 				## naive_bayes
-				if (isTRUE(input$model_training_caret_models_naive_bayes_check)) {
+				if (!is.null(rv_training_models$naive_bayes_name)) {
 					laplace_ = input$model_training_caret_models_naive_bayes_advance_laplace
 					if (!is.null(laplace_)) {
 						laplace_ = runif(laplace_, n=20)
@@ -586,58 +565,118 @@ model_training_caret_train_all_server = function() {
 						adjust_ = runif(adjust_, n=20)
 					}
 					usekernel_ = input$model_training_caret_models_naive_bayes_advance_usekernel
-					rv_training_models$naive_bayes_model = Rautoml::setup_caret( 
+					rv_training_models$naive_bayes_model = setup_caret_safe(
 						rv_training_models$naive_bayes_name
 						, param=rv_training_models$naive_bayes_param
-						, param_set=list(
-							laplace=laplace_
-							, adjust=adjust_
-							, usekernel=usekernel_
-						)
+						, param_set=list(laplace=laplace_, adjust=adjust_, usekernel=usekernel_)
 					)
-					rv_ml_ai$at_least_one_model = TRUE
-				} else {
-					rv_training_models$naive_bayes_model = NULL
 				}
 
-				
 				## Track models for PB
 				rv_training_models$CARET_MODEL_IDS = gsub("_model$", "", grep("(?<!trained)_model$", names(rv_training_models), value = TRUE, perl = TRUE))
-				
-				any_selected <- any(sapply(rv_training_models$CARET_MODEL_IDS, function(id) {
-					isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])
-				}))
-				
-				if (!any_selected) {
-					rv_ml_ai$at_least_one_model = FALSE
-				}
+		}
+	},
+	ignoreInit = TRUE,
+	ignoreNULL = FALSE
+	)
+
+	## Register placeholders so outputOptions can be called before the real renderUI
+	output$model_training_caret_models_ui <- renderUI({ NULL })
+	output$model_training_apply           <- renderUI({ NULL })
+	outputOptions(output, "model_training_caret_models_ui", suspendWhenHidden = FALSE)
+	outputOptions(output, "model_training_apply",           suspendWhenHidden = FALSE)
+
+	## Instant client-side toggle for the Train button. The button is always
+	## rendered (hidden) and shown the moment a model checkbox is ticked, with no
+	## server round-trip -- so it feels instant on both RStudio and Docker. The
+	## server flag rv_ml_ai$at_least_one_model is unchanged and still guards the
+	## actual train action (Shiny processes the checkbox input before the click).
+	shinyjs::runjs("
+		(function() {
+			var SEL = \"input[id^='model_training_caret_models_'][id$='_check']\";
+			function refreshTrainBtn() {
+				var anyChecked = $(SEL).filter(':checked').length > 0;
+				$('#train_apply_wrap').css('display', anyChecked ? 'block' : 'none');
 			}
-		}	
+			$(document).on('change', SEL, refreshTrainBtn);
+			$(document).on('shiny:value', function(e) {
+				if (e.name === 'model_training_apply') { setTimeout(refreshTrainBtn, 0); }
+			});
+		})();
+	")
+
+	## After feature engineering fires, pre-warm all model checkbox/advance outputs
+	## so navigating to Train model does not trigger 40+ sequential round-trips.
+	observeEvent(input$feature_engineering_apply, {
+		req(!is.null(rv_ml_ai$preprocessed))
+		later::later(function() {
+			# Model IDs — match the keys used in model_training_caret_models.R
+			all_ids     <- c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
+			                 "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
+			                 "nnet","treebag","avNNet","pls","gam","rpart",
+			                 "mlpWeightDecayML","naive_bayes")
+			no_advance  <- c("treebag", "gam")  # these have no advance options panel
+			ols_special <- "ols"                 # ols uses a different suffix
+
+			check_ids   <- paste0("model_training_caret_models_", all_ids, "_check")
+			adv_std     <- paste0("model_training_caret_models_",
+			                      setdiff(all_ids, c(no_advance, ols_special)),
+			                      "_advance_params")
+			adv_ols     <- "model_training_caret_models_ols_advance_intercept"
+
+			for (id in c(check_ids, adv_std, adv_ols)) {
+				tryCatch(
+					outputOptions(output, id, suspendWhenHidden = FALSE),
+					error = function(e) NULL
+				)
+			}
+		}, delay = 0.25)
+	}, ignoreInit = TRUE)
+
+	observe({
+		req(!is.null(rv_ml_ai$preprocessed))
+		all_ids <- c("ols","rf","gbm","xgbTree","xgbLinear","svmRadial",
+		             "svmLinear","svmPoly","glmnet","lasso","ridge","knn",
+		             "nnet","treebag","avNNet","pls","gam","rpart",
+		             "mlpWeightDecayML","naive_bayes")
+		any_checked <- any(vapply(all_ids, function(id) {
+			isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])
+		}, logical(1)))
+		rv_ml_ai$at_least_one_model <- any_checked
 	})
 
    ##	Train model action
-	observe({
-		output$model_training_apply = renderUI({
-			if (isTRUE(!is.null(rv_current$working_df))) {
-				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-					if (isTRUE(rv_ml_ai$at_least_one_model)) {
-						p(br()
-							, actionBttn("model_training_apply"
-								, inline=TRUE
-								, block = FALSE
-								, color = "success"
-								, label = get_rv_labels("model_training_apply")
-							)
-						)
+	output$model_training_apply = renderUI({
+		if (isTRUE(!is.null(rv_current$working_df))) {
+			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
+				button_label <- if (isTRUE(rv_training_results$training_busy) || isTRUE(rv_training_results$training_completed)) {
+					add_label <- tryCatch(as.character(get_rv_labels("caret_jobs_add_selected")), error = function(e) NULL)
+					if (is.null(add_label) || !length(add_label) || is.na(add_label[[1]]) || !nzchar(add_label[[1]])) {
+						"Add selected models to queue"
+					} else {
+						add_label[[1]]
 					}
+				} else {
+					get_rv_labels("model_training_apply")
 				}
+				## Always rendered but hidden; the client-side handler above shows it
+				## instantly when a model checkbox is ticked (no server round-trip).
+				div(id = "train_apply_wrap", style = "display:none;"
+					, p(br()
+						, actionBttn("model_training_apply"
+							, inline=TRUE
+							, block = FALSE
+							, color = "success"
+							, label = button_label
+						)
+					)
+				)
 			}
-		})
+		}
 	})
 
 	## Model list
-	observe({
-		output$model_training_caret_models_ui = renderUI({
+	output$model_training_caret_models_ui = renderUI({
 			if (isTRUE(!is.null(rv_current$working_df))) {
 				if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 					p(br()
@@ -738,354 +777,24 @@ model_training_caret_train_all_server = function() {
 					)
 				}
 			}
-		})
 	})
+	outputOptions(output, "model_training_caret_models_ui", suspendWhenHidden = FALSE)
+	outputOptions(output, "model_training_apply",           suspendWhenHidden = FALSE)
 
-	## Train models
-	observeEvent(input$model_training_apply, {
-		start_progress_bar <- function(id, att_new_obj, text) {
-			rv_training_results$training_busy <- TRUE
-			rv_training_results$training_completed <- FALSE
-		}
-		close_progress_bar <- function(att_new_obj) {
-			if (!isTRUE(rv_training_results$training_busy)) return(invisible(NULL))
-			rv_training_results$training_busy <- FALSE
-			session$sendCustomMessage("caretModelProgressComplete", list(
-				success = isTRUE(rv_training_results$training_completed)
-			))
-		}
-
-		if (isTRUE(!is.null(rv_current$working_df))) {
-			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
-				if (isTRUE(rv_ml_ai$at_least_one_model)) {
-
-					start_progress_bar(id="model_training_caret_pb", att_new_obj=model_training_caret_pb, text=get_rv_labels("model_training_apply_progress_bar"))
- 
-					models_state    <- reactiveValuesToList(rv_training_models)
-					all_model_params <- do.call(c, Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
-						models_state[[paste0(id, "_model")]]
-					})))
-					set.seed(rv_ml_ai$seed_value)
-
-					rv_training_results$training_completed = FALSE
-
-					if (isTRUE(input$model_training_setup_start_clusters_check)) {
-						Rautoml::start_cluster()
-					}
-					
-					if (isTRUE(input$feature_engineering_perform_partition_group!="") & isTRUE(!is.null(input$feature_engineering_perform_partition_group))) {
-						if (isTRUE(!is.null(rv_ml_ai$fold_index))) {
-							k = rv_train_control_caret$number
-							print(k)
-							rv_train_control_caret$index = Rautoml::create_grouped_index(rv_ml_ai$fold_index, k = rv_train_control_caret$number)
-						} else {
-							rv_train_control_caret$index = NULL
-						}
-					}
-					print(rv_train_control_caret$index)
-					
-					rv_training_results$models = tryCatch({
-						Rautoml::train_caret_models(
-							df=rv_ml_ai$preprocessed$train_df
-							, model_form=rv_ml_ai$model_formula
-							, ctrl=reactiveValuesToList(rv_train_control_caret)
-							, model_list=all_model_params
-							, metric=input$model_training_setup_eval_metric
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-						if (isTRUE(input$model_training_setup_start_clusters_check)) Rautoml::stop_cluster()
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-						
-					
-					if (isTRUE(input$model_training_setup_start_clusters_check)) {
-						Rautoml::stop_cluster()
-					}
-					
-					
-					if (isTRUE(is.null(rv_training_results$models))) return()
-					
-					if (isTRUE(input$model_training_setup_include_ensemble_check)) {
-						rv_training_results$models = tryCatch({
-							Rautoml::create_ensemble(
-								all.models = rv_training_results$models
-								, ctrl=reactiveValuesToList(rv_train_control_caret)
-								, metric=input$model_training_setup_eval_metric
-							)
-						}, error = function(e) {
-							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_training_error"), "\n", e$message), type = "error")
-							close_progress_bar(att_new_obj=model_training_caret_pb)
-							return(NULL)
-						})
-					}
-
-					rv_training_results$training_completed = TRUE
-					rv_ml_ai$at_least_one_model = FALSE
-					for (cb in rv_training_models$CARET_MODEL_IDS) {
-						updatePrettyCheckbox(session,
-							inputId = paste0("model_training_caret_models_", cb, "_check"),
-							value   = FALSE)
-					}
-				
-## 					rv_training_models$ols_model = NULL
-## 					rv_training_models$rf_model = NULL
-## 					rv_training_models$gbm_model = NULL
-## 					rv_training_models$xgbTree_model = NULL
-## 					rv_training_models$xgbLinear_model = NULL
-## 					rv_training_models$svmRadial_model = NULL
-## 					rv_training_models$svmLinear_model = NULL
-## 					rv_training_models$svmPoly_model = NULL
-## 					rv_training_models$glmnet_model = NULL
-## 					rv_training_models$lasso_model = NULL
-## 					rv_training_models$ridge_model = NULL
-## 					rv_training_models$knn_model = NULL
-## 					rv_training_models$nnet_model = NULL
-## 
-## 					rv_train_control_caret$method = "cv"
-## 					rv_train_control_caret$number = 5
-## 					rv_train_control_caret$repeats = NA
-## 					rv_train_control_caret$search = "grid"
-## 					rv_train_control_caret$verboseIter = FALSE
-## 					rv_train_control_caret$savePredictions = FALSE
-## 					rv_train_control_caret$classProbs = TRUE
-## 				
-					
-					if (isTRUE(is.null(rv_training_results$models))) return()
-					
-					rv_training_results$tuned_parameters = tryCatch({
-						Rautoml::get_tuned_params(rv_training_results$models)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-					if (is.null(rv_training_results$tuned_parameters)) return()
-
-					rv_training_results$control_parameters = tryCatch({
-						Rautoml::get_ctl_params(models=rv_training_results$models
-							, items=names(reactiveValuesToList(rv_train_control_caret))
-						)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-					if (is.null(rv_training_results$control_parameters)) return()
-				
-					rv_training_results$train_metrics_df=tryCatch({
-						Rautoml::extract_summary(rv_training_results$models, summary_fun=Rautoml::student_t_summary)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_train_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-					
-
-					if (is.null(rv_training_results$train_metrics_df)) return()
-
-					## Save training performance metrics locally
-					
-					save_training = tryCatch({
-						Rautoml::save_rautoml_csv(object=rv_training_results$train_metrics_df
-							, name="training_performance_metrics"
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_training)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)	
-						return()
-					}
-					
-					## Test metrics
-					rv_training_results$test_metrics_objs=tryCatch({
-						Rautoml::boot_estimates_multiple(
-							models=rv_training_results$models
-							, df=rv_ml_ai$preprocessed$test_df
-							, outcome_var=rv_ml_ai$outcome
-							, problem_type=rv_ml_ai$task
-							, nreps=100
-							, model_name=NULL
-							, type="prob"
-							, report= input$model_training_setup_eval_metric
-							, summary_fun=Rautoml::student_t_summary
-							, save_model = TRUE
-							, model_folder = paste0(app_username, "/models")
-							, recipe_folder = paste0(app_username, "/recipes")
-							, preprocesses = rv_ml_ai$preprocessed
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_test_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-
-					if (is.null(rv_training_results$test_metrics_objs)) return()
-					
-					## Save test performance metrics
-					
-					save_test = tryCatch({
-						Rautoml::save_boot_estimates(boot_list=rv_training_results$test_metrics_objs
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-							, sub_dir="test_metrics"
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_test)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-					
-					## Generate logs
-					save_logs = tryCatch({
-						Rautoml::create_model_logs(
-							df_name=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, outcome=rv_ml_ai$outcome
-							, framework=input$modelling_framework_choices
-							, train_result=rv_training_results$test_metrics_objs$all
-							, timestamp=Sys.time()
-							, path=paste0(app_username, "/.log_files")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_logs)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-
-
-					## More metrics 
-					### Post metrics
-					rv_training_results$post_model_metrics_objs=tryCatch({
-						Rautoml::post_model_metrics(
-							models=rv_training_results$models
-							, outcome=rv_ml_ai$outcome
-							, df=rv_ml_ai$preprocessed$test_df
-							, task=rv_ml_ai$task
-						)
-					}, error = function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("model_post_metrics_error"), "\n", e$message), type = "error")
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return(NULL)
-					})
-
-					if (is.null(rv_training_results$post_model_metrics_objs)) return()
-					
-					## Save post model objects
-					save_post = tryCatch({
-						Rautoml::save_post_metrics_plots(metric_list=rv_training_results$post_model_metrics_objs
-							, dataset_id=rv_ml_ai$dataset_id
-							, session_name=rv_ml_ai$session_id
-							, timestamp=Sys.time()
-							, output_dir=paste0(app_username, "/outputs")
-						)
-						invisible(TRUE)
-					}, error=function(e) {
-						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
-						return(NULL)
-					})
-
-					if (is.null(save_post)) {
-						close_progress_bar(att_new_obj=model_training_caret_pb)
-						return()
-					}
-
-					close_progress_bar(att_new_obj=model_training_caret_pb)
-				} else {
-					rv_training_results$models = NULL
-					rv_training_results$train_metrics_df = NULL
-					rv_training_results$test_metrics_objs = NULL
-					rv_training_results$post_model_metrics_objs = NULL
-					rv_training_results$tuned_parameters = NULL
-					rv_training_results$control_parameters = NULL
-
-					close_progress_bar(att_new_obj=model_training_caret_pb)
-				}
-			} else {
-				rv_training_results$models = NULL
-				rv_training_results$train_metrics_df = NULL
-				rv_training_results$test_metrics_objs = NULL
-				rv_training_results$post_model_metrics_objs = NULL
-				rv_training_results$tuned_parameters = NULL
-				rv_training_results$control_parameters = NULL
-				close_progress_bar(att_new_obj=model_training_caret_pb)
-			}
-		} else {
-			rv_training_results$models = NULL
-			rv_training_results$train_metrics_df = NULL
-			rv_training_results$test_metrics_objs = NULL
-			rv_training_results$post_model_metrics_objs = NULL
-			rv_training_results$tuned_parameters = NULL
-			rv_training_results$control_parameters = NULL
-			close_progress_bar(att_new_obj=model_training_caret_pb)
-		}
-	})	
-
-	## Reactive label outputs for the progress panel (reads from labelling file, updates on language change)
-	output$cmp_panel_title_ui <- renderUI({ get_rv_labels("cmp_panel_title") })
-	output$cmp_footer_ui <- renderUI({
-		tagList(tags$i(class = "fa fa-info-circle"), paste0(" ", get_rv_labels("cmp_footer_note")))
-	})
-	output$cmp_labels_json <- renderUI({
-		tags$div(
-			id    = "cmp-labels-data",
-			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
-			`data-word-training`    = get_rv_labels("cmp_word_training"),
-			`data-word-completed`   = get_rv_labels("cmp_word_completed"),
-			`data-status-training`  = get_rv_labels("cmp_status_training"),
-			`data-status-completed` = get_rv_labels("cmp_status_completed"),
-			`data-status-stopped`   = get_rv_labels("cmp_status_stopped"),
-			`data-badge-done`       = get_rv_labels("cmp_badge_done"),
-			`data-badge-failed`     = get_rv_labels("cmp_badge_failed")
+		caret_job_manager_server(
+			input = input,
+			output = output,
+			session = session,
+			rv_current = rv_current,
+			rv_ml_ai = rv_ml_ai,
+			rv_training_models = rv_training_models,
+			rv_train_control_caret = rv_train_control_caret,
+			rv_training_results = rv_training_results,
+			app_username = app_username,
+			get_rv_labels = get_rv_labels
 		)
-	})
-	outputOptions(output, "cmp_panel_title_ui", suspendWhenHidden = FALSE)
-	outputOptions(output, "cmp_footer_ui",      suspendWhenHidden = FALSE)
-	outputOptions(output, "cmp_labels_json",    suspendWhenHidden = FALSE)
 
-	## Provide selected model names as JSON for the JS click handler on the progress panel
-	output$caret_selected_models_json <- renderUI({
-		models_state <- reactiveValuesToList(rv_training_models)
-		models <- Filter(Negate(is.null), lapply(rv_training_models$CARET_MODEL_IDS, function(id) {
-			if (!isTRUE(input[[paste0("model_training_caret_models_", id, "_check")]])) return(NULL)
-			nm <- models_state[[paste0(id, "_name")]]
-			if (is.null(nm)) return(NULL)
-			disp <- if (!is.null(names(nm)) && nzchar(names(nm)[1])) names(nm)[1] else as.character(nm[1])
-			list(name = disp)
-		}))
-		models_json <- if (length(models) > 0) as.character(jsonlite::toJSON(models, auto_unbox = TRUE)) else "[]"
-		tags$div(
-			id = "caret-selected-models-data",
-			style = "display:none!important;position:absolute;height:0;overflow:hidden;",
-			`data-models` = models_json
-		)
-	})
-	outputOptions(output, "caret_selected_models_json", suspendWhenHidden = FALSE)
-
-## 	observe({
+	## 	observe({
 ## 		req(!isTRUE(rv_training_results$training_completed), isTRUE(!is.null(rv_training_results$training_completed)))
 ## 		req(isTRUE(!is.null(rv_current$working_df)))
 ## 		req(isTRUE(!is.null(rv_ml_ai$preprocessed)))
@@ -1117,6 +826,6 @@ model_training_caret_train_all_server = function() {
 ## 		rv_training_models$ridge_model = NULL
 ## 		rv_training_models$knn_model = NULL
 ## 		rv_training_models$nnet_model = NULL
-## 					
+##
 ## 	})
 }

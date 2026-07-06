@@ -1,28 +1,31 @@
 #### ---- Compare model metrics ----------------------------------- ####
 model_training_caret_train_metrics_server = function() {
-	
-	
-	# Fire on button click AND when train_metrics_df is set after training completes
-	# (so inner outputs get registered even on first run in a fresh session)
-	observeEvent(list(input$model_training_apply, rv_training_results$train_metrics_df), {
+
+	## Hoisted out of observeEvent — nested observers accumulate on every fire
+	observe({
+		req(!is.null(rv_training_results$tuned_parameters))
+		req(!is.null(rv_training_results$control_parameters))
+		output$model_training_caret_train_tuned_parameters = renderUI({
+			txt = capture.output(str(rv_training_results$tuned_parameters))
+			pre(paste(txt, collapse = "\n"))
+		})
+		output$model_training_caret_train_training_control = renderUI({
+			txt = capture.output(str(rv_training_results$control_parameters))
+			pre(paste(txt, collapse = "\n"))
+		})
+	})
+
+	## Flag to ensure the SHAP Apply observer is only registered once.
+	## Without this, observeEvent(train_metrics_df) re-registers it on every
+	## model completion → progress bar fires N times for N completed models.
+	shap_apply_registered <- reactiveVal(FALSE)
+
+	# Fire only when results are available after training completes
+	observeEvent(rv_training_results$train_metrics_df, {
 
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(!is.null(rv_ml_ai$preprocessed))) {
 				if (isTRUE(!is.null(rv_training_results$train_metrics_df))) {
-					
-					observe({
-						req(!is.null(rv_training_results$tuned_parameters))
-						req(!is.null(rv_training_results$control_parameters))
-						output$model_training_caret_train_tuned_parameters = renderUI({
-							txt = capture.output(str(rv_training_results$tuned_parameters))
-							pre(paste(txt, collapse = "\n"))
-						})
-
-						output$model_training_caret_train_training_control = renderUI({
-							txt = capture.output(str(rv_training_results$control_parameters))
-							pre(paste(txt, collapse = "\n"))
-						})
-					})
 
 					## Training data
 					output$model_training_caret_train_metrics_plot = renderPlot({
@@ -524,18 +527,28 @@ model_training_caret_train_metrics_server = function() {
 						}
 					})
 
-					observeEvent(input$model_training_caret_test_metrics_trained_shap_apply, {
-						req(!is.null(rv_training_results$post_model_metrics_objs))
-						req(!is.null(rv_training_models$all_trained_models))
-						req(!is.null(rv_training_results$test_metrics_objs))
-						req(!is.null(rv_training_models$all_trained_models))
-						req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
-						req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
-						req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
+						if (!isolate(shap_apply_registered())) {
+							shap_apply_registered(TRUE)
+							observeEvent(input$model_training_caret_test_metrics_trained_shap_apply, {
+								req(!is.null(rv_training_results$post_model_metrics_objs))
+								req(!is.null(rv_training_models$all_trained_models))
+								req(!is.null(rv_training_results$test_metrics_objs))
+								req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
+								req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
+								req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
+								progress_started <- FALSE
+								close_metrics_progress <- function() {
+									if (isTRUE(progress_started)) {
+										progress_started <<- FALSE
+										close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									}
+								}
+								on.exit(close_metrics_progress(), add = TRUE)
 						if (((isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) & isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_options))) | isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
 							if (isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) {
-								
+
 								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
+								progress_started <- TRUE
 								
 								rv_training_results$test_metrics_objs_filtered = tryCatch({
 									Rautoml::extract_more_metrics(
@@ -720,11 +733,18 @@ model_training_caret_train_metrics_server = function() {
 							}
 						
 							if (isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
+								shap_test_df <- rv_ml_ai$preprocessed$test_df
+								name_map <- rv_training_results$model_safe_name_map
+								if (!is.null(name_map) && is.data.frame(shap_test_df)) {
+									idx <- match(names(shap_test_df), name_map$original)
+									valid <- !is.na(idx)
+									names(shap_test_df)[valid] <- name_map$safe[idx[valid]]
+								}
 								rv_training_results$test_metrics_objs_shap = tryCatch({
 									Rautoml::compute_shap(
 										models=rv_training_results$models
 										, model_names=gsub("\\ ", ".", input$model_training_caret_test_metrics_trained_models_shap)
-										, newdata=rv_ml_ai$preprocessed$test_df
+										, newdata=shap_test_df
 										, response=rv_ml_ai$outcome
 										, task=rv_ml_ai$task
 										, nsim=50
@@ -734,22 +754,27 @@ model_training_caret_train_metrics_server = function() {
 									)
 								}, error = function(e) {
 									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return(NULL)
 								})
 
-								if (is.null(rv_training_results$test_metrics_objs_shap)) return()
-								
-								
+								if (is.null(rv_training_results$test_metrics_objs_shap)) {
+									close_metrics_progress()
+									return()
+								}
+
 								rv_training_results$shap_plots = tryCatch({
 									plot(rv_training_results$test_metrics_objs_shap)
 								}, error=function(e){
 									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return(NULL)
 								})
-							
-								if (is.null(rv_training_results$shap_plots)) return()
+
+								if (is.null(rv_training_results$shap_plots)) {
+									close_metrics_progress()
+									return()
+								}
 								
 								## Save SHAP objects and plots
 								save_shap = tryCatch({
@@ -947,7 +972,7 @@ model_training_caret_train_metrics_server = function() {
 								  
 								)
 
-								close_progress_bar(att_new_obj=model_metrics_caret_pb)
+								close_metrics_progress()
 								
 							} else {
 								rv_training_results$test_metrics_objs_shap = NULL		
@@ -961,7 +986,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-								close_progress_bar(att_new_obj=model_metrics_caret_pb)
+								close_metrics_progress()
 							}
 						} else {
 							rv_training_results$test_metrics_objs_filtered = NULL
@@ -980,12 +1005,13 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-							close_progress_bar(att_new_obj=model_metrics_caret_pb)
+							close_metrics_progress()
 						}
 						
 						## FIXME: Best way to reset SHAP values
-						rv_training_results$test_metrics_objs_shap = NULL		
-					})
+						rv_training_results$test_metrics_objs_shap = NULL
+					}, ignoreInit = TRUE)
+					}
 
 				} else {
 					output$model_training_caret_train_metrics_plot = NULL

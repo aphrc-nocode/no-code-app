@@ -2,6 +2,15 @@ train_all_model_ui = function() {
 	tabItem(tabName = "trainModel",
 		tags$head(
 			tags$style(HTML("
+				/* ---- Prevent Shiny recalculating opacity on training outputs ---- */
+				#caret_job_queue_panel.recalculating,
+				#caret_job_queue_panel .recalculating,
+				#model_training_caret_models_ui.recalculating,
+				#model_training_apply.recalculating,
+				#model_training_caret_train_metrics.recalculating {
+					opacity: 1 !important;
+				}
+
 				/* ---- Model Training Progress Panel ---- */
 				#caret-model-progress {
 					display: none;
@@ -19,6 +28,7 @@ train_all_model_ui = function() {
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
+					min-height: 44px;
 					background: #bde0a3;
 					border-bottom: 1px solid #7bc148;
 				}
@@ -33,6 +43,8 @@ train_all_model_ui = function() {
 					display: flex;
 					align-items: center;
 					gap: 10px;
+					min-height: 24px;
+					white-space: nowrap;
 				}
 				.cmp-count-dot {
 					display: inline-block;
@@ -47,10 +59,11 @@ train_all_model_ui = function() {
 				}
 				.cmp-row {
 					display: grid;
-					grid-template-columns: 26px minmax(160px, 220px) 130px 1fr 55px 80px;
+					grid-template-columns: 28px minmax(180px, 260px) 170px minmax(560px, 1fr) 170px;
 					align-items: center;
 					gap: 12px;
 					padding: 7px 0;
+					min-height: 43px;
 					border-bottom: 1px solid #f2f7ec;
 				}
 				.cmp-row:last-child {
@@ -66,6 +79,9 @@ train_all_model_ui = function() {
 					font-size: 14px;
 					font-weight: 500;
 					color: #1a1a1a;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
 				.cmp-status {
 					font-size: 13px;
@@ -73,6 +89,7 @@ train_all_model_ui = function() {
 					align-items: center;
 					gap: 6px;
 					color: #444;
+					min-width: 0;
 				}
 				.cmp-sdot {
 					display: inline-block;
@@ -82,83 +99,89 @@ train_all_model_ui = function() {
 					background: #2196f3;
 					flex-shrink: 0;
 				}
-				.cmp-bar-wrap {
-					height: 8px;
-					background: #e5eedd;
-					border-radius: 4px;
+				.cmp-steps {
+					display: grid;
+					grid-template-columns: repeat(5, minmax(90px, 1fr));
+					gap: 6px;
+					align-items: center;
+					min-width: 560px;
+				}
+				.cmp-step {
+					display: flex;
+					align-items: center;
+					gap: 5px;
+					min-width: 0;
+					color: #9aa3a8;
+					font-size: 12px;
+					white-space: nowrap;
+				}
+				.cmp-step-icon {
+					width: 18px;
+					height: 18px;
+					border-radius: 50%;
+					border: 1px solid #c7d1d5;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					flex-shrink: 0;
+					background: #fff;
+					font-size: 10px;
+				}
+				.cmp-step-label {
 					overflow: hidden;
+					text-overflow: ellipsis;
 				}
-				.cmp-bar {
-					height: 100%;
-					border-radius: 4px;
-					background: #7bc148;
-					width: 0;
-					background-size: 28px 28px;
-					transition: width 0.4s ease;
+				.cmp-step.is-done {
+					color: #3f8f3f;
 				}
-				.cmp-bar.cmp-running {
-					width: 70%;
-					background-image: repeating-linear-gradient(
-						-45deg,
-						#7bc148 0, #7bc148 10px,
-						#a3d46e 10px, #a3d46e 20px
-					);
-					animation: cmpSlide 0.9s linear infinite;
-				}
-				.cmp-bar.cmp-done {
-					width: 100% !important;
-					background-image: none;
+				.cmp-step.is-done .cmp-step-icon {
 					background: #4cae4c;
-					animation: none;
-				}
-				.cmp-bar.cmp-error {
-					width: 100% !important;
-					background-image: none;
-					background: #d9534f;
-					animation: none;
-				}
-				@keyframes cmpSlide {
-					from { background-position: 0 0; }
-					to   { background-position: 28px 0; }
-				}
-				.cmp-pct {
-					font-size: 13px;
-					color: #666;
-					text-align: right;
-				}
-				.cmp-badge-done {
-					padding: 3px 8px;
-					border: 1px solid #6eb15c;
-					border-radius: 4px;
-					font-size: 11px;
-					font-weight: 700;
-					color: #245a24;
-					background: #f1f8ee;
-					letter-spacing: 0.04em;
-					display: inline-block;
-					cursor: pointer;
-					transition: background 0.15s, color 0.15s;
-				}
-				.cmp-badge-done:hover {
-					background: #6eb15c;
+					border-color: #4cae4c;
 					color: #fff;
 				}
-				.cmp-badge-error {
-					padding: 3px 8px;
-					border: 1px solid #d9534f;
-					border-radius: 4px;
-					font-size: 11px;
+				.cmp-step.is-current {
+					color: #1f5f8f;
 					font-weight: 700;
-					color: #8b2f2b;
-					background: #fff3f2;
-					letter-spacing: 0.04em;
-					display: inline-block;
-					cursor: pointer;
-					transition: background 0.15s, color 0.15s;
 				}
-				.cmp-badge-error:hover {
-					background: #d9534f;
+				.cmp-step.is-current .cmp-step-icon {
+					background: #2196f3;
+					border-color: #2196f3;
 					color: #fff;
+				}
+				.cmp-step.is-paused {
+					color: #a66b00;
+				}
+				.cmp-step.is-paused .cmp-step-icon {
+					background: #f6a100;
+					border-color: #f6a100;
+					color: #fff;
+				}
+				.cmp-step.is-stopped {
+					color: #555;
+				}
+				.cmp-step.is-stopped .cmp-step-icon {
+					background: #777;
+					border-color: #777;
+					color: #fff;
+				}
+				.cmp-step.is-failed {
+					color: #a94442;
+				}
+				.cmp-step.is-failed .cmp-step-icon {
+					background: #d9534f;
+					border-color: #d9534f;
+					color: #fff;
+				}
+				.cmp-action {
+					display: flex;
+					gap: 5px;
+					justify-content: flex-start;
+					flex-wrap: wrap;
+					min-width: 150px;
+					min-height: 28px;
+				}
+				.cmp-action .btn {
+					min-width: 46px;
 				}
 				.cmp-footer {
 					padding: 6px 15px;
@@ -167,142 +190,14 @@ train_all_model_ui = function() {
 					border-top: 1px solid #e6f0d8;
 					background: #fff;
 				}
-			")),
-			tags$script(HTML("
-				(function () {
-					// Read a label from the hidden labels div (falls back to key if not found)
-					function lbl(key) {
-						var el = document.getElementById('cmp-labels-data');
-						return el ? (el.getAttribute('data-' + key) || key) : key;
-					}
-
-					function cmpInit(models) {
-						var panel = document.getElementById('caret-model-progress');
-						if (!panel || !models || !models.length) return;
-
-						var list = panel.querySelector('.cmp-list');
-						list.innerHTML = '';
-
-						models.forEach(function (m, i) {
-							var row = document.createElement('div');
-							row.className = 'cmp-row';
-							row.innerHTML =
-								'<div class=\"cmp-num\">' + (i + 1) + '.</div>' +
-								'<div class=\"cmp-name\">' + (m.name || '') + '</div>' +
-								'<div class=\"cmp-status\"><span class=\"cmp-sdot\"></span><span class=\"cmp-slabel\">' + lbl('status-training') + '</span></div>' +
-								'<div class=\"cmp-bar-wrap\"><div class=\"cmp-bar cmp-running\"></div></div>' +
-								'<div class=\"cmp-pct cmp-pct-val\">&mdash;</div>' +
-								'<div class=\"cmp-action\"></div>';
-							list.appendChild(row);
-						});
-
-						panel.querySelector('#cmp-count-training').textContent = models.length + ' ' + lbl('word-training');
-						panel.querySelector('#cmp-count-done').textContent = '0 ' + lbl('word-completed');
-						panel.classList.add('cmp-visible');
-					}
-
-					function cmpComplete(success) {
-						var panel = document.getElementById('caret-model-progress');
-						if (!panel) return;
-
-						var rows = panel.querySelectorAll('.cmp-row');
-						var n = rows.length;
-
-						rows.forEach(function (row) {
-							var bar    = row.querySelector('.cmp-bar');
-							var sdot   = row.querySelector('.cmp-sdot');
-							var slabel = row.querySelector('.cmp-slabel');
-							var pct    = row.querySelector('.cmp-pct-val');
-							var action = row.querySelector('.cmp-action');
-
-							bar.classList.remove('cmp-running');
-
-							if (success) {
-								bar.classList.add('cmp-done');
-								sdot.style.background = '#4cae4c';
-								slabel.textContent    = lbl('status-completed');
-								pct.textContent       = '100%';
-								action.innerHTML      = '<div class=\"cmp-badge-done\">' + lbl('badge-done') + '</div>';
-							} else {
-								bar.classList.add('cmp-error');
-								sdot.style.background = '#d9534f';
-								slabel.textContent    = lbl('status-stopped');
-								pct.textContent       = '';
-								action.innerHTML      = '<div class=\"cmp-badge-error\">' + lbl('badge-failed') + '</div>';
-							}
-						});
-
-						if (success) {
-							panel.querySelector('#cmp-count-training').textContent = '0 ' + lbl('word-training');
-							panel.querySelector('#cmp-count-done').textContent     = n + ' ' + lbl('word-completed');
-						}
-					}
-
-					// On button click: read pre-computed model list from hidden div and show panel
-					document.addEventListener('click', function (e) {
-						var btn = e.target.closest && e.target.closest('#model_training_apply');
-						if (!btn) return;
-						var dataEl = document.getElementById('caret-selected-models-data');
-						if (!dataEl) return;
-						var models = [];
-						try { models = JSON.parse(dataEl.getAttribute('data-models') || '[]'); } catch (ex) {}
-						cmpInit(models);
-					});
-
-					Shiny.addCustomMessageHandler('caretModelProgressComplete', function (msg) {
-						cmpComplete(msg && msg.success === true);
-					});
-
-					// Click DONE or FAILED badge → dismiss that row, hide panel if empty
-					function dismissBadgeRow(selector) {
-						document.addEventListener('click', function (e) {
-							var badge = e.target.closest && e.target.closest(selector);
-							if (!badge) return;
-							var panel = document.getElementById('caret-model-progress');
-							if (!panel) return;
-							var row = badge.closest('.cmp-row');
-							if (row) row.remove();
-							var remaining = panel.querySelectorAll('.cmp-row').length;
-							if (remaining === 0) {
-								panel.classList.remove('cmp-visible');
-							} else {
-								panel.querySelector('#cmp-count-done').textContent = remaining + ' ' + lbl('word-completed');
-							}
-						});
-					}
-					dismissBadgeRow('.cmp-badge-done');
-					dismissBadgeRow('.cmp-badge-error');
-				})();
-			"))
-		),
-		fluidRow(
-			conditionalPanel(
-				condition = "input.modelling_framework_choices == 'Caret'",
-				column(width = 12,
-					uiOutput("caret_selected_models_json"),
-					uiOutput("cmp_labels_json")
-				),
-				column(width = 12,
-					div(
-						id = "caret-model-progress",
-						div(class = "cmp-header",
-							div(class = "cmp-title", uiOutput("cmp_panel_title_ui")),
-							div(class = "cmp-counts",
-								tags$span(
-									tags$span(class = "cmp-count-dot", style = "background:#2196f3;"),
-									tags$span(id = "cmp-count-training", "0 training")
-								),
-								tags$span("•"),
-								tags$span(
-									tags$span(class = "cmp-count-dot", style = "background:#4cae4c;"),
-									tags$span(id = "cmp-count-done", "0 completed")
-								)
-							)
-						),
-						div(class = "cmp-list"),
-						div(class = "cmp-footer", uiOutput("cmp_footer_ui"))
-					)
-				),
+				"))
+			),
+			fluidRow(
+				conditionalPanel(
+					condition = "input.modelling_framework_choices == 'Caret'",
+					column(width = 12,
+						uiOutput("caret_job_queue_panel")
+					),
 				column(width = 12,
 					uiOutput("model_training_setup_presetup")
 				),

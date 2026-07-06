@@ -1,7 +1,7 @@
 ##### ---- Generate research question ------------------ ####
 
 generate_research_questions_choices = function() {
-	
+
 	observeEvent(input$manage_data_apply, {
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			output$generate_research_questions_outcome = renderUI({
@@ -14,7 +14,7 @@ generate_research_questions_choices = function() {
 			})
 		}
 	})
-	
+
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$generate_research_questions_outcome)>0)) {
@@ -87,13 +87,13 @@ generate_research_questions_api_token = function() {
 						, HTML(paste0("<b>", get_rv_labels("generate_research_questions_api_token"), "</b>"))
 						, helpText(paste0(get_rv_labels("generate_research_questions_api_token_ht")), " ", a(get_rv_labels("generate_research_questions_api_token_ht_h"), href="https://aistudio.google.com/app/apikey", target="_blank"))
 						, maskedPasswordInput("generate_research_questions_api_token"
-							, label = NULL 
+							, label = NULL
 							, value = ""
 							, width = "100%"
 							, placeholder = get_rv_labels("generate_research_questions_api_token_ph")
 						)
 					)
-				})	
+				})
 				output$generate_research_questions_api_token_apply = renderUI({
 					actionBttn("generate_research_questions_api_token_apply"
 						, inline=TRUE
@@ -113,7 +113,7 @@ generate_research_questions_api_token = function() {
 ##### ---- Store API Token ------------------ ####
 
 generate_research_questions_api_store = function() {
-	
+
 	## Store
 	observeEvent(input$generate_research_questions_api_token_apply, {
 		if (!isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
@@ -127,18 +127,18 @@ generate_research_questions_api_store = function() {
 			}
 		}
 	})
-	
+
 	## Reset
 	observeEvent(input$generate_research_questions_reset_api, {
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY")) | isTRUE(rv_current$api_stored_success)) {
-				Rautoml::unset_api("GEMINE_API_KEY")		
+				Rautoml::unset_api("GEMINE_API_KEY")
 			 	shinyalert::shinyalert("", get_rv_labels("api_reset_success"), type = "success", inputId="api_reset_success")
 				rv_current$api_stored_success = FALSE
 				output$generate_research_questions_apply = NULL
 				output$generate_research_questions_models = NULL
 				updateRadioButtons(session, "generate_research_questions_choices", selected=character(0))
-				
+
 				output$generate_research_questions_additional = NULL
 				output$generate_research_questions_additional_analysis_ui = NULL
 			#	updateMaterialSwitch(session, inputId="generate_research_questions_additional_analysis", value = FALSE)
@@ -153,25 +153,25 @@ generate_research_questions_additional = function() {
 	observe({
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY")) | isTRUE(rv_current$api_stored_success)) {
-				
+
 				output$generate_research_questions_models = renderUI({
 					p(
 						hr()
 						, HTML(paste0("<b>", get_rv_labels("generate_research_questions_models"), "</b>"))
 						, helpText(get_rv_labels("generate_research_questions_models_ht1"), " ", a(get_rv_labels("generate_research_questions_models_ht2"), href="https://ai.google.dev/gemini-api/docs/models/gemini", target="_blank"))
 						, textInput("generate_research_questions_models"
-							, label = NULL 
+							, label = NULL
 							, value = ""
 							, width = "100%"
 							, placeholder = "e.g., 3.5-flash"
 						)
 					)
-				})	
+				})
 
 				output$generate_research_questions_apply = renderUI({
 
 					div(
-						style = "display: flex; gap: 10px; align-items: center;"	
+						style = "display: flex; gap: 10px; align-items: center;"
 						, actionBttn("generate_research_questions_apply"
 							, inline=TRUE
 							, block = FALSE
@@ -189,14 +189,14 @@ generate_research_questions_additional = function() {
 			} else {
 				output$generate_research_questions_apply = NULL
 				output$generate_research_questions_models = NULL
-				
+
 			}
 		} else {
 			output$generate_research_questions_apply = NULL
 			output$generate_research_questions_models = NULL
 		}
 	})
-	
+
 	observeEvent(input$generate_research_questions_apply, {
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
@@ -207,11 +207,11 @@ generate_research_questions_additional = function() {
 						, HTML("<b>", get_rv_labels("generate_research_questions_additional"), ": </b>")
 					)
 				})
-			  
+
 			  output$generate_research_questions_additional_analysis_ui = renderUI({
 				 materialSwitch(
 					inputId = "generate_research_questions_additional_analysis",
-					label = get_rv_labels("generate_research_questions_additional_analysis"), 
+					label = get_rv_labels("generate_research_questions_additional_analysis"),
 					status = "success",
 					right = TRUE
 				 )
@@ -229,8 +229,8 @@ generate_research_questions_additional = function() {
 		}
 	})
 
-	
-				
+
+
 }
 
 
@@ -276,7 +276,7 @@ generate_research_questions_gemini = function() {
 						)
 					)
 				})
-				
+
 				close_progress_bar(att_new_obj=generate_research_questions_outcome_pb)
 				rv_generative_ai$history = research_question_chat$history
 				output$generate_research_questions_gemini = renderUI({
@@ -296,7 +296,7 @@ generate_research_questions_gemini = function() {
 		if (isTRUE(isTRUE(input$generate_research_questions_choices=="yes"))) {
 			if (isTRUE(Rautoml::check_api("GEMINE_API_KEY"))) {
 				if (isTRUE(input$generate_research_questions_additional_analysis)) {
-						
+
 						start_progress_bar(id="generate_research_questions_additional_analysis_pb", att_new_obj=generate_research_questions_additional_analysis_pb, text=get_rv_labels("generate_research_questions_additional_analysis_pb"))
 #						showPageSpinner()
 						analysis_prompt = get_prompts("generate_research_questions_additional_analysis")
@@ -315,7 +315,7 @@ generate_research_questions_gemini = function() {
 								)
 							)
 						})
-					
+
 					close_progress_bar(att_new_obj=generate_research_questions_additional_analysis_pb)
 					output$generate_research_question_gemini_suggest_analysis = renderUI({
 						p(br()
@@ -327,7 +327,7 @@ generate_research_questions_gemini = function() {
 #					hidePageSpinner()
 
 				}
-				
+
 			}
 		}
 	})

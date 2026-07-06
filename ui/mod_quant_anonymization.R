@@ -2,14 +2,14 @@
 
 mod_quant_anon_ui <- function(id) {
   ns <- shiny::NS(id)
-  
+
   # Precompute namespaced IDs used in JS strings
   ns_right_panel   <- ns("right-panel")
   ns_main_tabs     <- ns("main_tabs")
   ns_remove_ids    <- ns("remove_ids")        # must exist in identifier_selector output
   ns_remove_inline <- ns("remove_ids_inline")
   ns_method        <- ns("method")
-  
+
   # ACE IDs
   ns_r_ace     <- ns("r_code_ace")
   ns_stata_ace <- ns("stata_code_ace")
@@ -17,28 +17,28 @@ mod_quant_anon_ui <- function(id) {
   ns_copy_r    <- ns("copy_r")
   ns_copy_st   <- ns("copy_stata")
   ns_copy_py   <- ns("copy_py")
-  
+
   ns_dashboard <- ns("dashboard")
-  
+
   # Hidden translation “tokens” for JS
   js_i18n_tokens <- shiny::tags$div(
     style = "display:none;",
     shiny::tags$span(id = ns("js_copy_txt"),   shiny::textOutput(ns("quant_anon_js_copy_txt"),   container = shiny::span)),
     shiny::tags$span(id = ns("js_copied_txt"), shiny::textOutput(ns("quant_anon_js_copied_txt"), container = shiny::span))
   )
-  
+
   shiny::div(
     id    = ns("anon_root"),
     class = "anon-root",
     shiny::tagList(
       shinyjs::useShinyjs(),
-      
+
       shiny::tags$head(
         shiny::tags$link(
           rel  = "stylesheet",
           href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         ),
-        
+
         shiny::tags$script(shiny::HTML(sprintf("
           function copyAce(editorId, btnId, nsPrefix) {
             var ed = ace.edit(editorId);
@@ -66,52 +66,52 @@ mod_quant_anon_ui <- function(id) {
           }
         ")))
       ),
-      
+
       js_i18n_tokens,
-      
+
       shiny::div(
         id    = ns_dashboard,
         class = "anon-dashboard",
         style = "display:block; padding:20px;",
-        
+
         shiny::tabsetPanel(
           id = ns_main_tabs,
-          
+
           # -------------------------- DASHBOARD TAB -------------------------------
           shiny::tabPanel(
             shiny::uiOutput(ns("quant_anon_tab_dashboard")),
-            
+
             shiny::fluidRow(
               # ---------- LEFT PANEL ----------
               shiny::column(
                 width = 4, id = ns("left-panel"),
-                
+
                 # Step 0
                 shiny::wellPanel(
                   shiny::uiOutput(ns("quant_anon_step0_title_ui")),
-                  
+
                   shiny::div(
                     style = "padding:8px; border:1px solid #eee; border-radius:6px;",
                     shiny::uiOutput(ns("quant_anon_step0_use_platform_title_ui")),
                     shiny::br(),
                     shiny::uiOutput(ns("platform_dataset_picker")),
-                    
+
                     shiny::actionButton(
                       ns("use_platform_data"),
                       label = NULL, # Server controls label with updateActionButton()
                       class = "btn btn-success btn-block"
                     ),
-                    
+
                     shiny::tags$small(
                       style = "display:block; margin-top:6px; color:#666;",
                       shiny::uiOutput(ns("quant_anon_step0_hint_ui"))
                     )
                   ),
-                  
+
                   shiny::tags$hr(),
                   shiny::textOutput(ns("n_obs_text"))
                 ),
-                
+
                 # Step 1
                 shiny::wellPanel(
                   shiny::div(
@@ -128,32 +128,32 @@ mod_quant_anon_ui <- function(id) {
                   ),
                   shiny::uiOutput(ns("identifier_selector"))
                 ),
-                
+
                 # Step 2
                 shiny::wellPanel(
                   shiny::uiOutput(ns("quant_anon_step2_title_ui")),
                   shiny::uiOutput(ns("bucket_ui"))
                 ),
-                
+
                 # Step 3
                 shiny::wellPanel(
                   shiny::uiOutput(ns("quant_anon_step3_title_ui")),
-                  
+
                   shiny::selectInput(
                     ns_method,
                     label    = NULL,        #  server sets label via updateSelectInput()
                     choices  = character(0),
                     selected = NULL
                   ),
-                  
+
                   shiny::uiOutput(ns("extra_input")),
-                  
+
                   #  IMPORTANT: compare against stable code
                   shiny::conditionalPanel(
                     condition = sprintf("input['%s'] == 'generalization'", ns_method),
                     shiny::uiOutput(ns("quant_anon_generalization_tips_ui"))
                   ),
-                  
+
                   shiny::fluidRow(
                     shiny::column(
                       4,
@@ -167,7 +167,7 @@ mod_quant_anon_ui <- function(id) {
                       4,
                       shiny::actionButton(
                         ns("undo"),
-                        label = NULL, 
+                        label = NULL,
                         class = "btn btn-warning btn-block"
                       )
                     ),
@@ -180,24 +180,24 @@ mod_quant_anon_ui <- function(id) {
                       )
                     )
                   ),
-                  
+
                   # Advisor
                   shiny::wellPanel(
                     shiny::uiOutput(ns("quant_anon_advisor_title_ui")),
-                    
+
                     shiny::selectInput(
                       ns("advisor_var"),
-                      label     = NULL, # 
+                      label     = NULL, #
                       choices   = NULL,
                       selectize = TRUE
                     ),
-                    
+
                     shiny::actionButton(
                       ns("advisor_run"),
                       label = NULL, # server controls
                       class = "btn btn-info btn-block"
                     ),
-                    
+
                     shiny::tags$hr(),
                     shiny::uiOutput(ns("quant_anon_overall_hist_ui")),
                     shiny::plotOutput(ns("advisor_dist"), height = "220px"),
@@ -207,43 +207,43 @@ mod_quant_anon_ui <- function(id) {
                     shiny::tableOutput(ns("advisor_table")),
                     shiny::plotOutput(ns("advisor_plot"), height = "220px")
                   ),
-                  
+
                   # Downloads / Report
                   shiny::wellPanel(
                     shiny::uiOutput(ns("quant_anon_downloads_title_ui")),
-                    
+
                     shiny::uiOutput(ns("download_btn_csv_ui")),
                     shiny::uiOutput(ns("download_btn_excel_ui")),
                     shiny::uiOutput(ns("download_btn_dta_ui")),
                     shiny::uiOutput(ns("download_btn_report_ui")),
-                    
+
                     shiny::actionButton(
                       ns("view_report"),
                       label = NULL,
                       class = "btn btn-default btn-block"
                     ),
-                    
+
                     shiny::conditionalPanel(
                       condition = sprintf("input['%s'] == 'anonymizecoordinates'", ns_method),
                       shiny::uiOutput(ns("quant_anon_coords_download_note_ui"))
                     ),
-                    
+
                     shiny::tags$hr(),
                     shiny::uiOutput(ns("k_report")),
                     shiny::tags$hr(),
-                    
+
                     shiny::uiOutput(ns("quant_anon_steps_log_title_ui")),
                     shiny::verbatimTextOutput(ns("step_log"), placeholder = TRUE)
                   )
                 )
               ),
-              
+
               # ---------- RIGHT PANEL ----------
               shiny::column(
                 width = 8, id = ns_right_panel,
                 shiny::div(
                   class = "right-containers",
-                  
+
                   # === Container 1: Data Preview / Map ===
                   shiny::div(
                     class = "right-box",
@@ -253,13 +253,13 @@ mod_quant_anon_ui <- function(id) {
                     ),
                     shiny::div(
                       class = "right-body",
-                      
+
                       #  IMPORTANT: compare against stable code
                       shiny::conditionalPanel(
                         condition = sprintf("input['%s'] == 'anonymizecoordinates'", ns_method),
                         leaflet::leafletOutput(ns("geo_map"), height = "420px")
                       ),
-                      
+
                       shiny::conditionalPanel(
                         condition = sprintf("input['%s'] != 'anonymizecoordinates'", ns_method),
                         shiny::div(
@@ -270,7 +270,7 @@ mod_quant_anon_ui <- function(id) {
                       )
                     )
                   ),
-                  
+
                   # === Container 2: Risk Assessment ===
                   shiny::div(
                     class = "right-box",
@@ -313,16 +313,16 @@ mod_quant_anon_ui <- function(id) {
               )
             )
           ),
-          
+
           # ----------------------------- CODES TAB ---------------------------------
           shiny::tabPanel(
             shiny::uiOutput(ns("quant_anon_tab_codes")),
-            
+
             shiny::fluidRow(
               shiny::column(
                 width = 4,
                 shiny::uiOutput(ns("quant_anon_r_code_hdr_ui")),
-                
+
                 shinyAce::aceEditor(
                   outputId = ns_r_ace,
                   mode     = "r",
@@ -330,7 +330,7 @@ mod_quant_anon_ui <- function(id) {
                   readOnly = TRUE,
                   height   = "400px"
                 ),
-                
+
                 shiny::actionButton(
                   ns_copy_r,
                   label   = NULL, #  server controls if desired; or keep static
@@ -338,11 +338,11 @@ mod_quant_anon_ui <- function(id) {
                   onclick = sprintf("copyAce('%s','%s','%s')", ns_r_ace, ns_copy_r, ns("x"))
                 )
               ),
-              
+
               shiny::column(
                 width = 4,
                 shiny::uiOutput(ns("quant_anon_stata_code_hdr_ui")),
-                
+
                 shinyAce::aceEditor(
                   outputId = ns_stata_ace,
                   mode     = "plain_text",
@@ -350,7 +350,7 @@ mod_quant_anon_ui <- function(id) {
                   readOnly = TRUE,
                   height   = "400px"
                 ),
-                
+
                 shiny::actionButton(
                   ns_copy_st,
                   label   = NULL,
@@ -358,11 +358,11 @@ mod_quant_anon_ui <- function(id) {
                   onclick = sprintf("copyAce('%s','%s','%s')", ns_stata_ace, ns_copy_st, ns("x"))
                 )
               ),
-              
+
               shiny::column(
                 width = 4,
                 shiny::uiOutput(ns("quant_anon_python_code_hdr_ui")),
-                
+
                 shinyAce::aceEditor(
                   outputId = ns_py_ace,
                   mode     = "python",
@@ -370,7 +370,7 @@ mod_quant_anon_ui <- function(id) {
                   readOnly = TRUE,
                   height   = "400px"
                 ),
-                
+
                 shiny::actionButton(
                   ns_copy_py,
                   label   = NULL,
@@ -380,7 +380,7 @@ mod_quant_anon_ui <- function(id) {
               )
             )
           ),
-          
+
           # -------------------------- DESCRIPTIONS TAB ----------------------------
           shiny::tabPanel(
             shiny::uiOutput(ns("quant_anon_tab_descriptions")),

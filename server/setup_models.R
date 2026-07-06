@@ -1,20 +1,27 @@
 #### ---- AI/ML UIs ---------------------------- ####
 setup_models_ui = function() {
-	
-	## Session name
-	observeEvent(input$manage_data_apply, {
+
+	## Session name — watch working_df directly so there is no timing race
+	## between manage_data_apply firing and working_df being set by select_data.
+	## Only re-render when the input is empty — preserves value if already filled,
+	## preventing setup_models_analysis_apply's drop_variables() from wiping it.
+	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
-			output$setup_models_analysis_session_name = renderUI({
-				textInput("setup_models_analysis_session_name"
-					, label = get_rv_labels("setup_models_analysis_session_name")
-					, value = ""
-					, width = NULL
-					, placeholder = get_rv_labels("setup_models_analysis_session_name_ph")
-				)	
-			})	
+			existing <- isolate(input$setup_models_analysis_session_name)
+			if (is.null(existing) || !nzchar(existing)) {
+				output$setup_models_analysis_session_name = renderUI({
+					textInput("setup_models_analysis_session_name"
+						, label = get_rv_labels("setup_models_analysis_session_name")
+						, value = ""
+						, width = NULL
+						, placeholder = get_rv_labels("setup_models_analysis_session_name_ph")
+					)
+				})
+				outputOptions(output, "setup_models_analysis_session_name", suspendWhenHidden = FALSE)
+			}
 		} else {
 			output$setup_models_analysis_session_name = NULL
-			updateTextInput(session , "setup_models_analysis_session_name", value="")
+			updateTextInput(session, "setup_models_analysis_session_name", value="")
 		}
 	})
 

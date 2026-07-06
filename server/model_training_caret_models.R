@@ -720,7 +720,7 @@ model_training_caret_models_ridge_server = function() {
 						, selectInput("model_training_caret_models_ridge_advance_alpha"
 							, get_rv_labels("model_training_caret_models_ridge_advance_alpha")
 							, choices = 0 # seq(0.1, 1, length.out=10) 
-							, selected = 1
+							, selected = 0
 							, multiple = FALSE
 						)
 						, actionButton("ridge_advance_control_apply_save"
@@ -1213,5 +1213,4 @@ model_training_caret_models_naive_bayes_server = function() {
 	})
 	
 }
-
 
