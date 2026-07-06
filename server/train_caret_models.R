@@ -11,6 +11,10 @@ model_training_caret_train_all_server = function() {
 		if (is.atomic(value)) {
 			value <- value[!is.na(value)]
 			if (is.character(value)) value <- value[nzchar(value)]
+			if (is.character(value) && length(value)) {
+				numeric_value <- suppressWarnings(as.numeric(value))
+				if (!anyNA(numeric_value)) value <- numeric_value
+			}
 		}
 		value
 	}
