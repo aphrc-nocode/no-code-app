@@ -4,6 +4,7 @@ train_all_model_ui = function() {
 			tags$style(HTML("
 				/* ---- Prevent Shiny recalculating opacity on training outputs ---- */
 				#caret_job_queue_panel.recalculating,
+				#caret_job_queue_panel .recalculating,
 				#model_training_caret_models_ui.recalculating,
 				#model_training_apply.recalculating,
 				#model_training_caret_train_metrics.recalculating {
@@ -27,6 +28,7 @@ train_all_model_ui = function() {
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
+					min-height: 44px;
 					background: #bde0a3;
 					border-bottom: 1px solid #7bc148;
 				}
@@ -41,6 +43,8 @@ train_all_model_ui = function() {
 					display: flex;
 					align-items: center;
 					gap: 10px;
+					min-height: 24px;
+					white-space: nowrap;
 				}
 				.cmp-count-dot {
 					display: inline-block;
@@ -55,10 +59,11 @@ train_all_model_ui = function() {
 				}
 				.cmp-row {
 					display: grid;
-					grid-template-columns: 26px minmax(160px, 260px) 150px 1fr minmax(120px, 190px);
+					grid-template-columns: 28px minmax(180px, 260px) 170px minmax(560px, 1fr) 170px;
 					align-items: center;
 					gap: 12px;
 					padding: 7px 0;
+					min-height: 43px;
 					border-bottom: 1px solid #f2f7ec;
 				}
 				.cmp-row:last-child {
@@ -74,6 +79,9 @@ train_all_model_ui = function() {
 					font-size: 14px;
 					font-weight: 500;
 					color: #1a1a1a;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
 				.cmp-status {
 					font-size: 13px;
@@ -81,6 +89,7 @@ train_all_model_ui = function() {
 					align-items: center;
 					gap: 6px;
 					color: #444;
+					min-width: 0;
 				}
 				.cmp-sdot {
 					display: inline-block;
@@ -95,6 +104,7 @@ train_all_model_ui = function() {
 					grid-template-columns: repeat(5, minmax(90px, 1fr));
 					gap: 6px;
 					align-items: center;
+					min-width: 560px;
 				}
 				.cmp-step {
 					display: flex;
@@ -167,6 +177,11 @@ train_all_model_ui = function() {
 					gap: 5px;
 					justify-content: flex-start;
 					flex-wrap: wrap;
+					min-width: 150px;
+					min-height: 28px;
+				}
+				.cmp-action .btn {
+					min-width: 46px;
 				}
 				.cmp-footer {
 					padding: 6px 15px;

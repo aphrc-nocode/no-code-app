@@ -365,6 +365,16 @@ caret_job_manager_server <- function(
 		context_path
 	}
 
+	write_training_context_path <- function(signature, training_context) {
+		cache_dir <- file.path(app_username, ".caret_jobs", "_context_cache")
+		dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+		context_path <- file.path(cache_dir, paste0(signature, ".rds"))
+		if (!file.exists(context_path)) {
+			saveRDS(training_context, context_path)
+		}
+		context_path
+	}
+
 	selected_model_jobs <- function(run_dir, skip_model_ids = character()) {
 		models_state <- reactiveValuesToList(rv_training_models)
 		model_ids <- rv_training_models$CARET_MODEL_IDS
@@ -559,6 +569,19 @@ caret_job_manager_server <- function(
 		dir.create(file.path(app_username, "outputs"), recursive = TRUE, showWarnings = FALSE)
 		dir.create(file.path(app_username, ".log_files"), recursive = TRUE, showWarnings = FALSE)
 
+		selected_groups <- input$feature_engineering_perform_partition_group
+		has_groups <- !is.null(selected_groups) && length(selected_groups) > 0 && !any(selected_groups %in% "")
+		if (isTRUE(has_groups)) {
+			if (isTRUE(!is.null(rv_ml_ai$fold_index))) {
+				rv_train_control_caret$index <- Rautoml::create_grouped_index(
+					rv_ml_ai$fold_index,
+					k = rv_train_control_caret$number
+				)
+			} else {
+				rv_train_control_caret$index <- NULL
+			}
+		}
+
 		train_control <- reactiveValuesToList(rv_train_control_caret)
 
 		current_jobs <- get_jobs()
@@ -598,10 +621,7 @@ caret_job_manager_server <- function(
 			), , drop = FALSE]
 		}
 
-		context_path <- get_training_context_path(run_dir, train_control)
-
 		job_rows <- lapply(jobs, function(job) {
-			config <- write_job_config(job, context_path)
 			data.frame(
 				job_id = job$job_id,
 				model_id = job$model_id,
@@ -611,15 +631,36 @@ caret_job_manager_server <- function(
 				started_at = as.POSIXct(NA),
 				finished_at = as.POSIXct(NA),
 				error = "",
-				result_path = config$result_path,
-				config_path = config$config_path,
+				result_path = file.path(job$job_dir, "result.rds"),
+				config_path = file.path(job$job_dir, "config.rds"),
 				stringsAsFactors = FALSE
 			)
 		})
 		set_jobs(rbind(current_jobs, do.call(rbind, job_rows)))
 		sync_training_state()
 		clear_model_selection(selected_input_ids)
-		start_queued_jobs()
+
+		target_job_ids <- vapply(jobs, `[[`, character(1), "job_id")
+		session$onFlushed(function() {
+			later::later(function() {
+				isolate({
+					current <- get_jobs()
+					if (!NROW(current)) return(invisible(NULL))
+					queued_ids <- current$job_id[
+						current$job_id %in% target_job_ids &
+						current$status %in% c("queued", "paused")
+					]
+					if (!length(queued_ids)) return(invisible(NULL))
+					context_signature <- training_context_signature(train_control)
+					training_context <- build_training_context(train_control)
+					context_path <- write_training_context_path(context_signature, training_context)
+					for (job in jobs) {
+						if (job$job_id %in% queued_ids) write_job_config(job, context_path)
+					}
+					start_queued_jobs()
+				})
+			}, delay = 0)
+		}, once = TRUE)
 	}, ignoreInit = TRUE)
 
 	observeEvent(input$caret_job_action, {

@@ -25,25 +25,48 @@ feature_engineering_perform_preprocess_server = function() {
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
-				
+
 				## Data partitioning
 				output$feature_engineering_perform_partition = renderUI({
-					
+
 					selectInput("feature_engineering_perform_partition"
-						, label = get_rv_labels("feature_engineering_perform_partition") 
+						, label = get_rv_labels("feature_engineering_perform_partition")
 						, choices = get_named_choices(input_choices_file, input$change_language,"feature_engineering_perform_partition_choices")
 						, selected = "single"
 						, multiple=FALSE
 					)
 				})
-				
+
+				## Longitudinal data partitioning
+				output$feature_engineering_perform_partition_group = renderUI({
+					req(input$feature_engineering_perform_partition=="group")
+					selectInput("feature_engineering_perform_partition_group"
+						, label = get_rv_labels("feature_engineering_perform_partition_group")
+						, choices = rv_ml_ai$predictors
+						, selected = NULL
+						, multiple=TRUE
+					)
+				})
+
+				## Stratify by outcome
+				output$feature_engineering_perform_partition_group_strata = renderUI({
+					req(input$feature_engineering_perform_partition_group!="")
+					 materialSwitch(
+						inputId = "feature_engineering_perform_partition_group_strata_check",
+						label = get_rv_labels("feature_engineering_perform_partition_group_strata_check"),
+						status = "success",
+						right = TRUE,
+						value = FALSE
+					 )
+				})
+
 				## Preprocess
 				output$feature_engineering_perform_preprocess = renderUI({
 					p(
 						HTML("<b>", get_rv_labels("feature_engineering_perform_preprocess"), ": </b>")
 						, materialSwitch(
 							inputId = "feature_engineering_perform_preprocess_check",
-							label = get_rv_labels("feature_engineering_perform_preprocess_check"), 
+							label = get_rv_labels("feature_engineering_perform_preprocess_check"),
 							status = "success",
 							right = TRUE,
 							value = TRUE
@@ -53,36 +76,41 @@ feature_engineering_perform_preprocess_server = function() {
 			} else {
 				output$feature_engineering_perform_preprocess = NULL
 				updateMaterialSwitch(session , inputId="feature_engineering_perform_preprocess_check" , value=FALSE)
-				
+
 				output$feature_engineering_perform_partition = NULL
 				updateSelectInput(session, "feature_engineering_perform_partition", selected="")
 			}
 		} else {
 			output$feature_engineering_perform_preprocess = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_preprocess_check" , value=FALSE)
-				
+
 			output$feature_engineering_perform_partition = NULL
 			updateSelectInput(session, "feature_engineering_perform_partition", selected="")
+
+			output$feature_engineering_perform_partition_group = NULL
+			updateSelectInput(session, "feature_engineering_perform_partition_group", selected="")
 		}
 	})
+
 }
+
 
 
 ##### ---- Impute missing values ------------------------ ####
 feature_engineering_impute_missing_server = function() {
-	
+
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
-					
+
 					## Missing values input
 					rv_current$missing_prop_impute = missing_prop(rv_current$working_df)#, return_exact=TRUE)
 					if (isTRUE(NROW(rv_current$missing_prop_impute)>0)) {
 						output$feature_engineering_perform_missing_impute = renderUI({
 							materialSwitch(
 								inputId = "feature_engineering_perform_missing_impute_check",
-								label = get_rv_labels("feature_engineering_perform_missing_impute_check"), 
+								label = get_rv_labels("feature_engineering_perform_missing_impute_check"),
 								status = "success",
 								right = TRUE,
 								value = TRUE
@@ -93,23 +121,23 @@ feature_engineering_impute_missing_server = function() {
 						updateMaterialSwitch(session , inputId="feature_engineering_perform_missing_impute_check" , value=FALSE)
 					}
 
-					
+
 					## Feature engineering steps
 					output$feature_engineering_perform_fe_steps = renderUI({
 						materialSwitch(
 							inputId = "feature_engineering_perform_fe_steps_check",
-							label = get_rv_labels("feature_engineering_perform_fe_steps_check"), 
+							label = get_rv_labels("feature_engineering_perform_fe_steps_check"),
 							status = "success",
 							right = TRUE,
 							value = TRUE
 						 )
 					})
-					
+
 					## Correlated predictors
 					output$feature_engineering_perform_corr_steps = renderUI({
 						materialSwitch(
 							inputId = "feature_engineering_perform_corr_steps_check",
-							label = get_rv_labels("feature_engineering_perform_corr_steps_check"), 
+							label = get_rv_labels("feature_engineering_perform_corr_steps_check"),
 							status = "success",
 							right = TRUE,
 							value = TRUE
@@ -120,7 +148,7 @@ feature_engineering_impute_missing_server = function() {
 					output$feature_engineering_perform_pca_steps = renderUI({
 						materialSwitch(
 							inputId = "feature_engineering_perform_pca_steps_check",
-							label = get_rv_labels("feature_engineering_perform_pca_steps_check"), 
+							label = get_rv_labels("feature_engineering_perform_pca_steps_check"),
 							status = "success",
 							right = TRUE,
 							value = FALSE
@@ -132,7 +160,7 @@ feature_engineering_impute_missing_server = function() {
 						output$feature_engineering_perform_upsample_steps = renderUI({
 							materialSwitch(
 								inputId = "feature_engineering_perform_upsample_steps_check",
-								label = get_rv_labels("feature_engineering_perform_upsample_steps_check"), 
+								label = get_rv_labels("feature_engineering_perform_upsample_steps_check"),
 								status = "success",
 								right = TRUE,
 								value = TRUE
@@ -142,20 +170,20 @@ feature_engineering_impute_missing_server = function() {
 						output$feature_engineering_perform_upsample_steps = NULL
 						updateMaterialSwitch(session , inputId="feature_engineering_perform_upsample_steps_check" , value=FALSE)
 					}
-				
+
 				} else {
 					output$feature_engineering_perform_missing_impute = NULL
 					updateMaterialSwitch(session , inputId="feature_engineering_perform_missing_impute_check" , value=FALSE)
-					
+
 					output$feature_engineering_perform_fe_steps = NULL
 					updateMaterialSwitch(session , inputId="feature_engineering_perform_fe_steps_check" , value=FALSE)
-					
+
 					output$feature_engineering_perform_corr_steps = NULL
 					updateMaterialSwitch(session , inputId="feature_engineering_perform_corr_steps_check" , value=FALSE)
-					
+
 					output$feature_engineering_perform_pca_steps = NULL
 					updateMaterialSwitch(session , inputId="feature_engineering_perform_pca_steps_check" , value=FALSE)
-					
+
 					output$feature_engineering_perform_upsample_steps = NULL
 					updateMaterialSwitch(session , inputId="feature_engineering_perform_upsample_steps_check" , value=FALSE)
 				}
@@ -166,31 +194,31 @@ feature_engineering_impute_missing_server = function() {
 				updateMaterialSwitch(session , inputId="feature_engineering_perform_fe_steps_check" , value=FALSE)
 				output$feature_engineering_perform_corr_steps = NULL
 				updateMaterialSwitch(session , inputId="feature_engineering_perform_corr_steps_check" , value=FALSE)
-				
+
 				output$feature_engineering_perform_pca_steps = NULL
 				updateMaterialSwitch(session , inputId="feature_engineering_perform_pca_steps_check" , value=FALSE)
-				
+
 				output$feature_engineering_perform_upsample_steps = NULL
 				updateMaterialSwitch(session , inputId="feature_engineering_perform_upsample_steps_check" , value=FALSE)
 			}
 		} else {
 			output$feature_engineering_perform_missing_impute = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_missing_impute_check" , value=FALSE)
-				
+
 			output$feature_engineering_perform_fe_steps = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_fe_steps_check" , value=FALSE)
-				
+
 			output$feature_engineering_perform_corr_steps = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_corr_steps_check" , value=FALSE)
-				
+
 			output$feature_engineering_perform_pca_steps = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_pca_steps_check" , value=FALSE)
-			
+
 			output$feature_engineering_perform_upsample_steps = NULL
 			updateMaterialSwitch(session , inputId="feature_engineering_perform_upsample_steps_check" , value=FALSE)
 		}
 	})
-	
+
 	observe({
 		if (isTRUE(!is.null(rv_current$working_df))) {
 			if (isTRUE(length(input$modelling_framework_choices)>0)) {
@@ -199,7 +227,7 @@ feature_engineering_impute_missing_server = function() {
 						empty_lab = ""
 						names(empty_lab) = get_rv_labels("impute_missing_options_ph")
 						selectInput("feature_engineering_impute_missing_impute"
-							, label = NULL#get_rv_labels("impute_missing_options") 
+							, label = NULL#get_rv_labels("impute_missing_options")
 							, choices = c(empty_lab, get_named_choices(input_choices_file, input$change_language,"impute_missing_options_choices"))
 							, selected = "omit"
 							, multiple=FALSE
@@ -208,7 +236,7 @@ feature_engineering_impute_missing_server = function() {
 				} else {
 					output$feature_engineering_impute_missing_impute = NULL
 					updateSelectInput(session, "feature_engineering_impute_missing_impute", selected="")
-					
+
 				}
 
 				if (isTRUE(input$feature_engineering_perform_upsample_steps_check) & isTRUE(input$feature_engineering_perform_preprocess_check)) {
@@ -244,20 +272,20 @@ feature_engineering_impute_missing_server = function() {
 			} else {
 				output$feature_engineering_impute_missing_impute = NULL
 				updateSelectInput(session, "feature_engineering_impute_missing_impute", selected="")
-				
+
 				output$feature_engineering_perform_upsample_steps_choices = NULL
 				updateSelectInput(session, "feature_engineering_perform_upsample_steps_choices", selected="")
-					
+
 				output$feature_engineering_perform_corr_steps_value = NULL
 				updateSliderInput(session, "feature_engineering_perform_corr_steps_value", value = NULL)
 			}
 		} else {
 			output$feature_engineering_impute_missing_imputes = NULL
 			updateSelectInput(session, "feature_engineering_impute_missing_impute", selected="")
-				
+
 			output$feature_engineering_perform_upsample_steps_choices = NULL
 			updateSelectInput(session, "feature_engineering_perform_upsample_steps_choices", selected="")
-				
+
 			output$feature_engineering_perform_corr_steps_value = NULL
 			updateSliderInput(session, "feature_engineering_perform_corr_steps_value", value = NULL)
 		}
@@ -276,10 +304,10 @@ feature_engineering_impute_missing_server = function() {
 						, label = get_rv_labels("feature_engineering_apply"))
 				})
 			} else {
-				output$feature_engineering_apply = NULL	
+				output$feature_engineering_apply = NULL
 			}
 		} else {
-			output$feature_engineering_apply = NULL	
+			output$feature_engineering_apply = NULL
 		}
 	})
 
@@ -293,27 +321,42 @@ feature_engineering_impute_missing_server = function() {
 				} else {
 					strata = NULL
 				}
+
+
+				if (isTRUE(!any(input$feature_engineering_perform_partition_group %in% "")) & isTRUE(!is.null(input$feature_engineering_perform_partition_group))) {
+					group = input$feature_engineering_perform_partition_group
+					if (isTRUE(input$feature_engineering_perform_partition_group_strata_check==FALSE)) {
+						strata = NULL
+					}
+				} else {
+					group = NULL
+				}
+
 				partition_objs = tryCatch({
 					Rautoml::train_test_split(
 						data=rv_current$working_df
 						, type = input$feature_engineering_perform_partition
 						, prop=rv_ml_ai$partition_ratio
 						, strata = strata
+						, group = group#c("household_id", "individual_id", "community_id")#group
 					)
 				}, error = function(e) {
 					shinyalert::shinyalert("Error: ", paste0(get_rv_labels("feature_engineering_perform_partition_error"), "\n", e$message), type = "error")
 					return(NULL)
 				})
 
+
+#				rv_ml_ai$predictors = setdiff(colnames(rv_current$working_df), input$feature_engineering_perform_partition_group)
 				if (is.null(partition_objs)) return()
-				
-				
+
+
 				rv_ml_ai$split = partition_objs$split
 				rv_ml_ai$train_df = partition_objs$train_df
 				rv_ml_ai$test_df = partition_objs$test_df
-				
+				rv_ml_ai$fold_index = partition_objs$index
+
 				start_progress_bar(id="feature_engineering_perform_preprocess_pb", att_new_obj=feature_engineering_perform_preprocess_pb, text=get_rv_labels("feature_engineering_perform_preprocess_pb"))
-				
+
 				if (isTRUE(input$feature_engineering_perform_preprocess_check)) {
 					rv_ml_ai$preprocessed = tryCatch({
 						Rautoml::preprocess(
@@ -335,7 +378,7 @@ feature_engineering_impute_missing_server = function() {
 						close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
 						return(NULL)
 					})
-				
+
 					if (is.null(rv_ml_ai$preprocessed)) return()
 
 				} else {
@@ -344,10 +387,10 @@ feature_engineering_impute_missing_server = function() {
 							df = rv_ml_ai$train_df
 							, model_form = rv_ml_ai$model_formula
 							, outcome_var = rv_ml_ai$outcome
-							, corr = 0 
-							, impute = FALSE 
-							, perform_fe = FALSE 
-							, perform_pca = FALSE 
+							, corr = 0
+							, impute = FALSE
+							, perform_fe = FALSE
+							, perform_pca = FALSE
 							, up_sample = FALSE
 							, task = rv_ml_ai$task
 							, df_test = rv_ml_ai$test_df
@@ -357,19 +400,19 @@ feature_engineering_impute_missing_server = function() {
 						close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
 						return(NULL)
 					})
-				
+
 					if (is.null(rv_ml_ai$preprocessed)) return()
 
-				} 
-			
+				}
+
 				shinyalert::shinyalert("Done!", get_rv_labels("feature_engineering_apply_success"), type = "success")
-			
+
 				close_progress_bar(att_new_obj=feature_engineering_perform_preprocess_pb)
-				
+
 				rv_ml_ai$feature_engineering_preprocessed_log = rv_ml_ai$preprocessed$preprocess_steps
 				output$feature_engineering_preprocessed_log_ui = renderUI({
 					p(
-						
+
 						HTML(paste0("<b>", get_rv_labels("feature_engineering_preprocessed_log"), "</b>"))
 					)
 				})

@@ -7,6 +7,8 @@ feature_engineering_ui = function() {
 				conditionalPanel(
 					condition = "input.modelling_framework_choices == 'Caret'",
 					uiOutput("feature_engineering_perform_partition"),
+					uiOutput("feature_engineering_perform_partition_group"),
+					uiOutput("feature_engineering_perform_partition_group_strata"),
 					uiOutput("feature_engineering_perform_preprocess"),
 					uiOutput("feature_engineering_perform_missing_impute"),
 					uiOutput("feature_engineering_impute_missing_impute"),

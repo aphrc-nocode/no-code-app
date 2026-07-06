@@ -536,10 +536,19 @@ model_training_caret_train_metrics_server = function() {
 								req(!is.null(input$model_training_caret_test_metrics_trained_models_shap))
 								req(!is.null(input$model_training_caret_test_metrics_trained_models_options))
 								req(isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0))
+								progress_started <- FALSE
+								close_metrics_progress <- function() {
+									if (isTRUE(progress_started)) {
+										progress_started <<- FALSE
+										close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									}
+								}
+								on.exit(close_metrics_progress(), add = TRUE)
 						if (((isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) & isTRUE(!is.null(input$model_training_caret_test_metrics_trained_models_options))) | isTRUE(input$model_training_caret_test_metrics_trained_shap_switch_check)) {
 							if (isTRUE(input$model_training_caret_test_metrics_trained_models_options!="") | isTRUE(length(input$model_training_caret_test_metrics_trained_models_options)>0)) {
 
 								start_progress_bar(id="model_metrics_caret_pb", att_new_obj=model_metrics_caret_pb, text=get_rv_labels("model_metrics_apply_progress_bar"))
+								progress_started <- TRUE
 								
 								rv_training_results$test_metrics_objs_filtered = tryCatch({
 									Rautoml::extract_more_metrics(
@@ -745,12 +754,12 @@ model_training_caret_train_metrics_server = function() {
 									)
 								}, error = function(e) {
 									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return(NULL)
 								})
 
 								if (is.null(rv_training_results$test_metrics_objs_shap)) {
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return()
 								}
 
@@ -758,12 +767,12 @@ model_training_caret_train_metrics_server = function() {
 									plot(rv_training_results$test_metrics_objs_shap)
 								}, error=function(e){
 									shinyalert::shinyalert("Error: ", paste0(get_rv_labels("test_metrics_objs_shap_error"), "\n", e$message), type = "error")
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return(NULL)
 								})
 
 								if (is.null(rv_training_results$shap_plots)) {
-									close_progress_bar(att_new_obj=model_metrics_caret_pb)
+									close_metrics_progress()
 									return()
 								}
 								
@@ -963,7 +972,7 @@ model_training_caret_train_metrics_server = function() {
 								  
 								)
 
-								close_progress_bar(att_new_obj=model_metrics_caret_pb)
+								close_metrics_progress()
 								
 							} else {
 								rv_training_results$test_metrics_objs_shap = NULL		
@@ -977,7 +986,7 @@ model_training_caret_train_metrics_server = function() {
 								output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 								output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-								close_progress_bar(att_new_obj=model_metrics_caret_pb)
+								close_metrics_progress()
 							}
 						} else {
 							rv_training_results$test_metrics_objs_filtered = NULL
@@ -996,7 +1005,7 @@ model_training_caret_train_metrics_server = function() {
 							output$model_training_caret_test_metrics_shap_values_varimp_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_varfreq_ui = NULL
 							output$model_training_caret_test_metrics_shap_values_vardep_ui = NULL
-							close_progress_bar(att_new_obj=model_metrics_caret_pb)
+							close_metrics_progress()
 						}
 						
 						## FIXME: Best way to reset SHAP values
