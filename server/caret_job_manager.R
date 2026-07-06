@@ -282,7 +282,22 @@ caret_job_manager_server <- function(
 	# Uses observeEvent so reactive reads inside the handler are automatically
 	# isolated — avoids "no active reactive context" errors from nested reads.
 	observeEvent(
-		list(rv_ml_ai$preprocessed, input$model_training_setup_eval_metric),
+		## Prewarm on anything that changes the context signature, so the matching
+		## context file is already on disk before the user clicks Train (turns the
+		## ~5s on-click rebuild into an instant disk-cache hit). Same build logic
+		## as before — only the set of things that (re)trigger it is wider.
+		list(
+			rv_ml_ai$preprocessed,
+			input$model_training_setup_eval_metric,
+			rv_ml_ai$seed_value,
+			rv_train_control_caret$method,
+			rv_train_control_caret$number,
+			rv_train_control_caret$repeats,
+			rv_train_control_caret$search,
+			rv_train_control_caret$classProbs,
+			rv_train_control_caret$savePredictions,
+			rv_train_control_caret$verboseIter
+		),
 		{
 			req(!is.null(rv_ml_ai$preprocessed))
 			req(!is.null(input$model_training_setup_eval_metric))
