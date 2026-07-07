@@ -64,7 +64,6 @@ libraries <- c(
    "RColorBrewer",
    "caret",
    "cli",
-   "fastshap",
    "gemini.R",
    "naniar",
    "recipes",
@@ -134,6 +133,10 @@ install_github_if_missing("DataQualityDashboard", "OHDSI/DataQualityDashboard")
 install_github_if_missing("login", "jbryer/login")
 install_github_if_missing("Andromeda", "OHDSI/Andromeda")
 install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
+
+if (!requireNamespace("fastshap", quietly = TRUE)) {
+   install.packages("fastshap", repos = c("https://bgreenwell.r-universe.dev", "https://cloud.r-project.org"))
+}
 
 
 
