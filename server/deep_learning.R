@@ -44,7 +44,6 @@ deep_learning = function() {
 
     # --- For Inference Tab ---
     obj_inference_result <- reactiveVal(list(status = "Ready", image_url = NULL, error = NULL))
-    asr_inference_result <- reactiveVal(list(status = "Ready", transcription = NULL, error = NULL))
     img_class_inference_result <- reactiveVal(list(status = "Ready", prediction = NULL, error = NULL))
     seg_inference_result <- reactiveVal(list(status = "Ready", image_url = NULL, error = NULL))
 
@@ -76,13 +75,11 @@ deep_learning = function() {
     observe({
         task <- input$task_selector
         if (task == "object_detection") {
-            shinyjs::show("obj_panel"); shinyjs::hide("asr_panel"); shinyjs::hide("img_class_panel"); shinyjs::hide("seg_panel")
-        } else if (task == "asr") {
-            shinyjs::hide("obj_panel"); shinyjs::show("asr_panel"); shinyjs::hide("img_class_panel"); shinyjs::hide("seg_panel")
+            shinyjs::show("obj_panel"); shinyjs::hide("img_class_panel"); shinyjs::hide("seg_panel")
         } else if (task == "image_classification") {
-            shinyjs::hide("obj_panel"); shinyjs::hide("asr_panel"); shinyjs::show("img_class_panel"); shinyjs::hide("seg_panel")
+            shinyjs::hide("obj_panel"); shinyjs::show("img_class_panel"); shinyjs::hide("seg_panel")
         } else if (task == "image_segmentation") {
-            shinyjs::hide("obj_panel"); shinyjs::hide("asr_panel"); shinyjs::hide("img_class_panel"); shinyjs::show("seg_panel")
+            shinyjs::hide("obj_panel"); shinyjs::hide("img_class_panel"); shinyjs::show("seg_panel")
         }
     })
     
@@ -96,9 +93,6 @@ deep_learning = function() {
         if (task_slug == "object_detection") {
             arch_choices <- names(model_registry()$object_detection)
             updateSelectInput(session, "obj_model_arch", choices = arch_choices)
-        } else if (task_slug == "asr") {
-            arch_choices <- names(model_registry()$asr)
-            updateSelectInput(session, "asr_model_arch", choices = arch_choices)
         } else if (task_slug == "image_classification") {
             arch_choices <- names(model_registry()$image_classification)
             updateSelectInput(session, "img_class_model_arch", choices = arch_choices)
@@ -113,11 +107,6 @@ deep_learning = function() {
         req(model_registry(), input$obj_model_arch, input$obj_model_arch != "Loading...")
         checkpoints <- model_registry()$object_detection[[input$obj_model_arch]]
         updateSelectInput(session, "obj_model_checkpoint", choices = checkpoints)
-    })
-    observeEvent(input$asr_model_arch, {
-        req(model_registry(), input$asr_model_arch, input$asr_model_arch != "Loading...")
-        checkpoints <- model_registry()$asr[[input$asr_model_arch]]
-        updateSelectInput(session, "asr_model_checkpoint", choices = checkpoints)
     })
     observeEvent(input$img_class_model_arch, {
         req(model_registry(), input$img_class_model_arch, input$img_class_model_arch != "Loading...")
@@ -156,8 +145,6 @@ deep_learning = function() {
         task_slug <- input$task_selector
         if (task_slug == "object_detection") {
             updateSelectInput(session, "obj_dataset_id", choices = load_datasets_for_task("object_detection"))
-        } else if (task_slug == "asr") {
-            updateSelectInput(session, "asr_dataset_id", choices = load_datasets_for_task("asr"))
         } else if (task_slug == "image_classification") {
             updateSelectInput(session, "img_class_dataset_id", choices = load_datasets_for_task("image_classification"))
         } else if (task_slug == "image_segmentation") {
@@ -235,7 +222,7 @@ deep_learning = function() {
         refresh_data_trigger() # React to the trigger
         
         tryCatch({
-            tasks <- c("object_detection", "asr", "image_classification", "image_segmentation")
+            tasks <- c("object_detection", "image_classification", "image_segmentation")
             all_datasets <- lapply(tasks, function(task) {
                 req <- request(paste0(api_url, "/data/list/", task))
                 resp_data <- resp_body_json(req_perform(req), simplifyVector = TRUE)
@@ -321,80 +308,7 @@ deep_learning = function() {
         })
     })
     
-    # --- 4.2: ASR Job ---
-    observeEvent(input$start_asr_job, {
-        req(input$asr_dataset_id, input$asr_model_checkpoint)
-        reset_live_training_ui("ASR")
-        
-        outlier_val <- input$outlier_std_devs
-        if (is.null(outlier_val) || is.na(outlier_val) || !is.numeric(outlier_val) || !input$asr_apply_outlier_filtering) {
-            outlier_val <- 2.0 
-        }
-
-        max_hours <- if (is.na(input$asr_max_train_hours) || is.null(input$asr_max_train_hours)) NULL else as.character(input$asr_max_train_hours)
-
-        tryCatch({
-            req_list <- list(
-                dataset_id = as.character(input$asr_dataset_id),
-                model_checkpoint = as.character(input$asr_model_checkpoint),
-                run_name = as.character(input$asr_run_name),
-                version = as.character(input$asr_version),
-                language = as.character(input$asr_language),
-                language_code = as.character(input$asr_language_code),
-                speaker_id_column = as.character(input$asr_speaker_id_column),
-                text_column = as.character(input$asr_text_column),
-                target_sampling_rate = as.character(input$asr_target_sampling_rate),
-                min_duration_s = as.character(input$asr_min_duration_s),
-                max_duration_s = as.character(input$asr_max_duration_s),
-                min_transcript_len = as.character(input$asr_min_transcript_len),
-                max_transcript_len = as.character(input$asr_max_transcript_len),
-                apply_outlier_filtering = as.character(input$asr_apply_outlier_filtering),
-                outlier_std_devs = as.character(outlier_val),
-                is_presplit = as.character(input$asr_is_presplit),
-                speaker_disjointness = as.character(input$asr_speaker_disjointness),
-                train_ratio = as.character(input$asr_train_ratio),
-                dev_ratio = as.character(input$asr_dev_ratio),
-                test_ratio = as.character(input$asr_test_ratio),
-                epochs = as.character(input$asr_epochs),
-                learning_rate = as.character(input$asr_learning_rate),
-                lr_scheduler_type = as.character(input$asr_lr_scheduler_type),
-                warmup_ratio = as.character(input$asr_warmup_ratio),
-                train_batch_size = as.character(input$asr_train_batch_size),
-                eval_batch_size = as.character(input$asr_eval_batch_size),
-                gradient_accumulation_steps = as.character(input$asr_gradient_accumulation_steps),
-                gradient_checkpointing = as.character(input$asr_gradient_checkpointing),
-                optimizer = as.character(input$asr_optimizer),
-                early_stopping_patience = as.character(input$asr_early_stopping_patience),
-                early_stopping_threshold = as.character(input$asr_early_stopping_threshold),
-                push_to_hub = as.character(input$asr_push_to_hub),
-                hub_user_id = as.character(input$asr_hub_user_id),
-                hub_private_repo = as.character(input$asr_hub_private_repo),
-                log_to_wandb = as.character(input$asr_log_to_wandb),
-                wandb_project = as.character(input$asr_wandb_project),
-                wandb_entity = as.character(input$asr_wandb_entity),
-                seed = as.character(input$asr_seed),
-                num_proc = as.character(input$asr_num_proc),
-                max_train_hours = max_hours
-            )
-            
-            req_list <- req_list[!sapply(req_list, is.null)]
-
-            req <- request(paste0(api_url, "/train/asr")) %>%
-                req_body_multipart(!!!req_list)
-            
-            resp <- req_perform(req)
-            resp_data <- resp_body_json(resp)
-            active_job_id(resp_data$job_id)
-            polled_data(list(status = "Queued", task = "ASR", log = "Job is queued."))
-
-        }, error = function(e) {
-            error_message <- as.character(e$message)
-            if(!is.null(e$body)) { error_message <- paste("API Error:", e$body) }
-            polled_data(list(status = "Error", task = "ASR", log = error_message))
-        })
-    })
-
-    # --- 4.3: Image Classification Job ---
+    # --- 4.2: Image Classification Job ---
     observeEvent(input$start_img_class_job, {
         req(input$img_class_dataset_id, input$img_class_model_checkpoint)
         reset_live_training_ui("Image Classification")
@@ -435,7 +349,7 @@ deep_learning = function() {
         })
     })
     
-    # --- 4.4: Image Segmentation Job ---
+    # --- 4.3: Image Segmentation Job ---
     observeEvent(input$start_seg_job, {
         req(input$seg_dataset_id, input$seg_model_checkpoint)
         reset_live_training_ui("Image Segmentation")
@@ -906,23 +820,6 @@ deep_learning = function() {
         }
     })
     
-    observeEvent(input$infer_asr_run_name, {
-        run_name <- input$infer_asr_run_name
-        if (nchar(run_name) > 2) {
-            tryCatch({
-                req <- request(paste0(api_url, "/checkpoints")) %>%
-                    req_url_query(run_name = run_name, task_type = "asr")
-                resp <- req_perform(req)
-                if (resp_status(resp) == 200) {
-                    checkpoints <- resp_body_json(resp, simplifyVector = TRUE)
-                    updateSelectInput(session, "infer_asr_checkpoint_dropdown", choices = checkpoints)
-                }
-            }, error = function(e) {
-                updateSelectInput(session, "infer_asr_checkpoint_dropdown", choices = c("Error finding checkpoints"))
-            })
-        }
-    })
-
     observeEvent(input$infer_img_class_run_name, {
         run_name <- input$infer_img_class_run_name
         if (nchar(run_name) > 2) { 
@@ -971,26 +868,6 @@ deep_learning = function() {
         })
     })
 
-    observeEvent(input$start_asr_inference, {
-        req(input$infer_asr_audio_upload)
-        req(input$infer_asr_checkpoint_dropdown)
-        asr_inference_result(list(status = "Running...", transcription = "Processing...", error = NULL))
-        tryCatch({
-            req <- request(paste0(api_url, "/inference/asr")) %>%
-                req_body_multipart(
-                    audio = curl::form_file(input$infer_asr_audio_upload$datapath),
-                    model_checkpoint = input$infer_asr_checkpoint_dropdown
-                )
-            resp <- req_perform(req)
-            resp_data <- resp_body_json(resp)
-            asr_inference_result(list(status = "Success", transcription = resp_data$transcription, error = NULL))
-        }, error = function(e) {
-            error_message <- as.character(e$message)
-            if(!is.null(e$body)) { error_message <- paste("API Error:", e$body) }
-            asr_inference_result(list(status = "Error", transcription = NULL, error = error_message))
-        })
-    })
-    
     observeEvent(input$start_img_class_inference, {
         req(input$infer_img_class_upload, input$infer_img_class_checkpoint_dropdown)
         img_class_inference_result(list(status = "Running...", prediction = "Processing...", error = NULL))
@@ -1044,23 +921,6 @@ deep_learning = function() {
         download.file(image_url, temp_file, mode = "wb")
         list(src = temp_file, contentType = 'image/jpeg', alt = "Inference Result")
     }, deleteFile = TRUE)
-
-    output$asr_inference_status_ui <- renderUI({
-        res <- asr_inference_result()
-        if (res$status == "Running...") {
-            tags$div(class = "alert alert-info", "Running inference...")
-        } else if (res$status == "Error") {
-            tags$div(class = "alert alert-danger", HTML(paste("<strong>Error:</strong>", res$error)))
-        }
-    })
-    output$asr_transcription_output <- renderText({
-        res <- asr_inference_result()
-        if (is.null(res$transcription)) {
-            "Upload an audio file and click 'Run Inference' to see the transcription here."
-        } else {
-            res$transcription
-        }
-    })
 
     output$img_class_inference_status_ui <- renderUI({
         res <- img_class_inference_result()
