@@ -4,8 +4,19 @@
 options(shiny.maxRequestSize = 3000000*1024^2)
 
 deep_learning = function() {
-    
-    api_url <- "http://23.135.236.5:3186"
+
+    # Deep-learning API endpoint and key are configurable via environment.
+    # Defaults preserve current behaviour; set DL_API_URL / DL_API_KEY in .env
+    # for other deployments. The key must match the API's API_KEY env var and is
+    # required by the training/upload/inference endpoints.
+    api_url <- Sys.getenv("DL_API_URL", "http://23.135.236.5:3186")
+    api_key <- Sys.getenv("DL_API_KEY", "aphrc-secret-key-123")
+
+    # Helper: build a request to the DL API with the auth header attached.
+    dl_request <- function(path) {
+        request(paste0(api_url, path)) %>%
+            req_headers("X-API-Key" = api_key)
+    }
     
     # ==============================================================================
     # == 1. CORE REACTIVE VALUES
@@ -166,10 +177,10 @@ deep_learning = function() {
         req(input$new_data_zip, input$new_data_name, input$new_data_task_type)
         data_upload_status("Uploading...")
         tryCatch({
-            req <- request(paste0(api_url, "/data/upload/", input$new_data_task_type)) %>%
+            req <- dl_request(paste0("/data/upload/", input$new_data_task_type)) %>%
                 req_body_multipart(
                     data_name = input$new_data_name,
-                    data_zip = curl::form_file(input$new_data_zip$datapath, type = "application/zip")
+                    data_file = curl::form_file(input$new_data_zip$datapath, type = "application/zip")
                 )
             resp <- req_perform(req)
             resp_data <- resp_body_json(resp)
@@ -260,7 +271,7 @@ deep_learning = function() {
         reset_live_training_ui("Object Detection")
 
         tryCatch({
-            req <- request(paste0(api_url, "/train/object-detection")) %>%
+            req <- dl_request("/train/object-detection") %>%
                 req_body_multipart(
                     # Common Params
                     dataset_id = as.character(input$obj_dataset_id),
@@ -282,7 +293,7 @@ deep_learning = function() {
                     
                     # HF-Specific Params
                     learning_rate = as.character(input$obj_learning_rate),
-                    weight_decay = as.character(input$obj_weight_decay),
+                    weight_decay_hf = as.character(input$obj_weight_decay),
                     gradient_accumulation_steps = as.character(input$obj_gradient_accumulation_steps),
                     gradient_checkpointing = as.character(input$obj_gradient_checkpointing),
                     max_grad_norm = as.character(input$obj_max_grad_norm),
@@ -389,7 +400,7 @@ deep_learning = function() {
         reset_live_training_ui("Image Classification")
 
         tryCatch({
-            req <- request(paste0(api_url, "/train/image-classification")) %>%
+            req <- dl_request("/train/image-classification") %>%
                 req_body_multipart(
                     dataset_id = as.character(input$img_class_dataset_id),
                     model_checkpoint = as.character(input$img_class_model_checkpoint),
@@ -430,7 +441,7 @@ deep_learning = function() {
         reset_live_training_ui("Image Segmentation")
 
         tryCatch({
-            req <- request(paste0(api_url, "/train/image-segmentation")) %>%
+            req <- dl_request("/train/image-segmentation") %>%
                 req_body_multipart(
                     dataset_id = as.character(input$seg_dataset_id),
                     model_checkpoint = as.character(input$seg_model_checkpoint),
@@ -859,11 +870,10 @@ deep_learning = function() {
                 if (status_data$status != "running") {
                     print(paste("History Poller: Job", job_id, "is no longer running. Deactivating poller."))
                     history_poller_active(FALSE)
-                    # Refresh the job list dropdown to show "completed"
-                    observeEvent(model_registry(), {
-                         req(model_registry()) 
-                         refresh_data_trigger(refresh_data_trigger() + 1)
-                    }, once = TRUE)
+                    # Refresh the job list dropdown to show "completed".
+                    # (Bump the trigger directly; registering an observer here would
+                    # leak a new observer on every poll tick.)
+                    refresh_data_trigger(refresh_data_trigger() + 1)
                 }
             }
             
@@ -943,7 +953,7 @@ deep_learning = function() {
         req(input$infer_obj_image_upload); req(input$infer_checkpoint_dropdown)
         obj_inference_result(list(status = "Running...", image_url = NULL, error = NULL))
         tryCatch({
-            req <- request(paste0(api_url, "/inference/object-detection")) %>%
+            req <- dl_request("/inference/object-detection") %>%
                 req_body_multipart(
                     image = curl::form_file(input$infer_obj_image_upload$datapath), 
                     model_checkpoint = input$infer_checkpoint_dropdown,
@@ -985,7 +995,7 @@ deep_learning = function() {
         req(input$infer_img_class_upload, input$infer_img_class_checkpoint_dropdown)
         img_class_inference_result(list(status = "Running...", prediction = "Processing...", error = NULL))
         tryCatch({
-            req <- request(paste0(api_url, "/inference/image-classification")) %>%
+            req <- dl_request("/inference/image-classification") %>%
                 req_body_multipart(
                     image = curl::form_file(input$infer_img_class_upload$datapath),
                     model_checkpoint = input$infer_img_class_checkpoint_dropdown
@@ -1001,7 +1011,7 @@ deep_learning = function() {
         req(input$infer_seg_image_upload); req(input$infer_seg_checkpoint_dropdown)
         seg_inference_result(list(status = "Running...", image_url = NULL, error = NULL))
         tryCatch({
-            req <- request(paste0(api_url, "/inference/image-segmentation")) %>%
+            req <- dl_request("/inference/image-segmentation") %>%
                 req_body_multipart(
                     image = curl::form_file(input$infer_seg_image_upload$datapath), 
                     model_checkpoint = input$infer_seg_checkpoint_dropdown
