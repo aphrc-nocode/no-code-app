@@ -19,6 +19,8 @@ caret_job_manager_server <- function(
 	context_cache <- reactiveVal(NULL)
 	context_version <- reactiveVal(0L)
 	context_cache_token <- digest::digest(paste(Sys.time(), runif(1)), algo = "xxhash64")
+	ensemble_request <- reactiveVal(NULL)
+	ensemble_build_scheduled <- reactiveVal(FALSE)
 
 	label <- function(key, fallback) {
 		value <- tryCatch(as.character(get_rv_labels(key)), error = function(e) NULL)
@@ -26,6 +28,11 @@ caret_job_manager_server <- function(
 			return(fallback)
 		}
 		value[[1]]
+	}
+
+	notify <- function(...) {
+		tryCatch(showNotification(..., session = session), error = function(e) NULL)
+		invisible(NULL)
 	}
 
 	empty_jobs <- function() {
@@ -503,6 +510,214 @@ caret_job_manager_server <- function(
 		invisible(NULL)
 	}
 
+	maybe_build_ensemble <- function() {
+		request <- ensemble_request()
+		if (is.null(request)) return(invisible(NULL))
+
+		jobs <- get_jobs()
+		target_jobs <- jobs[jobs$job_id %in% request$job_ids, , drop = FALSE]
+		if (!NROW(target_jobs)) {
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+		if (any(target_jobs$status %in% c("queued", "running", "paused"), na.rm = TRUE)) {
+			return(invisible(NULL))
+		}
+
+		if (is.null(rv_training_results$models) || length(rv_training_results$models) < 2L) {
+			notify(
+				label("caret_jobs_ensemble_need_two", "At least two completed models are required to build an ensemble."),
+				type = "warning",
+				duration = 8
+			)
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+
+		if (inherits(rv_training_results$models, "caretEnsemble")) {
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+
+		completed_job_ids <- target_jobs$job_id[target_jobs$status == "completed"]
+		completed_job_ids <- completed_job_ids[vapply(
+			completed_job_ids,
+			exists,
+			logical(1),
+			envir = job_results,
+			inherits = FALSE
+		)]
+		target_results <- if (length(completed_job_ids)) {
+			mget(completed_job_ids, envir = job_results, inherits = FALSE)
+		} else {
+			list()
+		}
+		target_models <- do.call(c, lapply(target_results, `[[`, "models"))
+		if (is.null(target_models) || length(target_models) < 2L) {
+			notify(
+				label("caret_jobs_ensemble_need_two", "At least two completed models are required to build an ensemble."),
+				type = "warning",
+				duration = 8
+			)
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+		class(target_models) <- unique(c("caretList", class(target_models)))
+
+		notify(
+			label("caret_jobs_ensemble_building", "Building ensemble from completed models..."),
+			type = "message",
+			duration = 5
+		)
+
+		ensemble_models <- tryCatch({
+			Rautoml::create_ensemble(
+				all.models = target_models,
+				ctrl = request$train_control,
+				metric = request$metric
+			)
+		}, error = function(e) {
+			notify(
+				paste(label("caret_jobs_ensemble_failed", "Ensemble training failed:"), e$message),
+				type = "error",
+				duration = 10
+			)
+			return(NULL)
+		})
+
+		if (is.null(ensemble_models)) {
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+
+		rv_training_results$models <- ensemble_models
+		rv_training_models$ensemble_trained_model <- c(ensemble = "ensemble")
+		rv_training_models$all_trained_models <- c(
+			stats::setNames(names(target_models), gsub("\\.", " ", names(target_models))),
+			c(ensemble = "ensemble")
+		)
+
+		ensemble_test_df <- rv_ml_ai$preprocessed$test_df
+		name_map <- rv_training_results$model_safe_name_map
+		if (is.null(name_map) && length(target_results)) {
+			name_map <- target_results[[1]]$model_safe_name_map
+		}
+		if (!is.null(name_map) && is.data.frame(ensemble_test_df)) {
+			idx <- match(names(ensemble_test_df), name_map$original)
+			valid <- !is.na(idx)
+			names(ensemble_test_df)[valid] <- name_map$safe[idx[valid]]
+		}
+
+		ensemble_train_metrics <- tryCatch({
+			Rautoml::extract_summary(
+				ensemble_models,
+				summary_fun = Rautoml::student_t_summary
+			)
+		}, error = function(e) NULL)
+		if (!is.null(ensemble_train_metrics) && NROW(ensemble_train_metrics)) {
+			ensemble_rows <- ensemble_train_metrics
+			if ("model" %in% names(ensemble_rows)) {
+				ensemble_rows <- ensemble_rows[tolower(as.character(ensemble_rows$model)) == "ensemble", , drop = FALSE]
+			} else if (!is.null(rownames(ensemble_rows))) {
+				ensemble_rows <- ensemble_rows[tolower(rownames(ensemble_rows)) == "ensemble", , drop = FALSE]
+			}
+			if (!NROW(ensemble_rows)) {
+				ensemble_rows <- ensemble_train_metrics
+			}
+			if (!is.null(rv_training_results$train_metrics_df) && NROW(rv_training_results$train_metrics_df)) {
+				ensemble_train_metrics <- rbind(rv_training_results$train_metrics_df, ensemble_rows)
+			}
+			class(ensemble_train_metrics) <- unique(c("Rautomlmetric", class(ensemble_train_metrics)))
+			rv_training_results$train_metrics_df <- ensemble_train_metrics
+		}
+
+		ensemble_test_metrics <- tryCatch({
+			Rautoml::boot_estimates_multiple(
+				models = ensemble_models,
+				df = ensemble_test_df,
+				outcome_var = rv_ml_ai$outcome,
+				problem_type = rv_ml_ai$task,
+				nreps = 100,
+				model_name = "ensemble",
+				type = "prob",
+				report = request$metric,
+				summary_fun = Rautoml::student_t_summary,
+				save_model = TRUE,
+				model_folder = file.path(app_username, "models"),
+				recipe_folder = file.path(app_username, "recipes"),
+				preprocesses = rv_ml_ai$preprocessed
+			)
+		}, error = function(e) {
+			notify(
+				paste(label("caret_jobs_ensemble_metrics_failed", "Ensemble metrics failed:"), e$message),
+				type = "warning",
+				duration = 10
+			)
+			return(NULL)
+		})
+		if (!is.null(ensemble_test_metrics) && NROW(ensemble_test_metrics$all)) {
+			current_test_metrics <- rv_training_results$test_metrics_objs
+			test_metrics <- list(
+				specifics = rbind(current_test_metrics$specifics, ensemble_test_metrics$specifics),
+				all = rbind(current_test_metrics$all, ensemble_test_metrics$all),
+				roc_df = rbind(current_test_metrics$roc_df, ensemble_test_metrics$roc_df),
+				positive_cat = current_test_metrics$positive_cat
+			)
+			if (is.null(test_metrics$positive_cat)) {
+				test_metrics$positive_cat <- ensemble_test_metrics$positive_cat
+			}
+			class(test_metrics) <- c("Rautomlmetric2", "list")
+			rv_training_results$test_metrics_objs <- test_metrics
+		}
+
+		ensemble_post_metrics <- tryCatch({
+			Rautoml::post_model_metrics(
+				models = ensemble_models,
+				outcome = rv_ml_ai$outcome,
+				df = ensemble_test_df,
+				task = rv_ml_ai$task
+			)
+		}, error = function(e) NULL)
+		if (!is.null(ensemble_post_metrics)) {
+			rv_training_results$post_model_metrics_objs <- ensemble_post_metrics
+		}
+
+		notify(
+			label("caret_jobs_ensemble_ready", "Ensemble model is ready."),
+			type = "message",
+			duration = 5
+		)
+		ensemble_request(NULL)
+		ensemble_build_scheduled(FALSE)
+		invisible(TRUE)
+	}
+
+	schedule_ensemble_build <- function() {
+		request <- ensemble_request()
+		if (is.null(request) || isTRUE(ensemble_build_scheduled())) return(invisible(NULL))
+
+		jobs <- get_jobs()
+		target_jobs <- jobs[jobs$job_id %in% request$job_ids, , drop = FALSE]
+		if (!NROW(target_jobs)) {
+			ensemble_request(NULL)
+			return(invisible(NULL))
+		}
+		if (any(target_jobs$status %in% c("queued", "running", "paused"), na.rm = TRUE)) {
+			return(invisible(NULL))
+		}
+
+		ensemble_build_scheduled(TRUE)
+		session$onFlushed(function() {
+			later::later(function() {
+				isolate({
+					ensemble_build_scheduled(FALSE)
+					maybe_build_ensemble()
+				})
+			}, delay = 0.5)
+		}, once = TRUE)
+		invisible(TRUE)
+	}
+
 	poll_jobs <- function() {
 		jobs <- get_jobs()
 		if (!NROW(jobs)) return(invisible(NULL))
@@ -558,8 +773,11 @@ caret_job_manager_server <- function(
 			}
 		}
 
-		if (new_completion) merge_job_results()
+		if (new_completion) {
+			merge_job_results()
+		}
 		start_queued_jobs()
+		schedule_ensemble_build()
 		invisible(NULL)
 	}
 
@@ -569,9 +787,9 @@ caret_job_manager_server <- function(
 		req(isTRUE(rv_ml_ai$at_least_one_model))
 
 		if (isTRUE(input$model_training_setup_include_ensemble_check)) {
-			showNotification(
-				label("caret_jobs_ensemble_deferred", "The async queue will train the selected base models now. Ensemble training needs a dependent background job and is not included in this run."),
-				type = "warning",
+			notify(
+				label("caret_jobs_ensemble_pending", "The async queue will train the selected base models first, then build the ensemble."),
+				type = "message",
 				duration = 8
 			)
 		}
@@ -611,7 +829,7 @@ caret_job_manager_server <- function(
 		jobs <- selected_model_jobs(run_dir, skip_model_ids = active_model_ids)
 
 		if (!length(jobs)) {
-			showNotification(
+			notify(
 				label("caret_jobs_no_new_models", "The selected models are already in the training queue or results panel."),
 				type = "message"
 			)
@@ -621,7 +839,7 @@ caret_job_manager_server <- function(
 
 		skipped_count <- sum(selected_input_ids %in% active_model_ids)
 		if (skipped_count > 0) {
-			showNotification(
+			notify(
 				label("caret_jobs_duplicate_skipped", "Some selected models were already in the queue and were not added again."),
 				type = "message"
 			)
@@ -656,6 +874,17 @@ caret_job_manager_server <- function(
 		clear_model_selection(selected_input_ids)
 
 		target_job_ids <- vapply(jobs, `[[`, character(1), "job_id")
+		if (isTRUE(input$model_training_setup_include_ensemble_check)) {
+			ensemble_request(list(
+				job_ids = target_job_ids,
+				train_control = train_control,
+				metric = input$model_training_setup_eval_metric
+			))
+		} else {
+			ensemble_request(NULL)
+			ensemble_build_scheduled(FALSE)
+		}
+
 		session$onFlushed(function() {
 			later::later(function() {
 				isolate({
