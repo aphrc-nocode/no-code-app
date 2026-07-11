@@ -20,6 +20,21 @@ model_training_caret_train_metrics_server = function() {
 	## model completion → progress bar fires N times for N completed models.
 	shap_apply_registered <- reactiveVal(FALSE)
 
+	clean_model_label <- function(model_names) {
+		vapply(model_names, function(model_name) {
+			display_name <- gsub("\\.", " ", model_name)
+			parts <- strsplit(display_name, "\\s+")[[1]]
+			if (
+				length(parts) >= 3 &&
+				parts[[1]] %in% rv_training_models$CARET_MODEL_IDS &&
+				grepl("^[[:xdigit:]]{8}$", parts[[2]])
+			) {
+				return(paste(parts[-c(1, 2)], collapse = " "))
+			}
+			display_name
+		}, character(1), USE.NAMES = FALSE)
+	}
+
 	# Fire only when results are available after training completes
 	observeEvent(rv_training_results$train_metrics_df, {
 
@@ -317,7 +332,7 @@ model_training_caret_train_metrics_server = function() {
 					      
 					      # Section header + ALL DOWNLOAD BUTTON
 					      model_section = list(
-					        h3(model_name, style = "margin-top:30px; color:#2c3e50;"),
+					        h3(clean_model_label(model_name), style = "margin-top:30px; color:#2c3e50;"),
 					        downloadBttn(
 					          paste0("download_all_", model_name),
 					          label = get_rv_labels("download_plots"),
@@ -386,7 +401,7 @@ model_training_caret_train_metrics_server = function() {
 					      
 					      output[[down_id]] <- downloadHandler(
 					        filename = function() {
-					          paste0(my_model, "_ALL_PLOTS_", Sys.Date(), ".zip")
+					          paste0(clean_model_label(my_model), "_ALL_PLOTS_", Sys.Date(), ".zip")
 					        },
 					        content = function(file) {
 					          
@@ -401,7 +416,7 @@ model_training_caret_train_metrics_server = function() {
 					            p <- post_model_metrics_objs[[my_model]][[plot_name]]
 					            
 					            if (!is.null(p)) {
-					              f <- paste0(my_model, "_", plot_name, ".png")
+					              f <- paste0(clean_model_label(my_model), "_", plot_name, ".png")
 					              png(f, width = 1200, height = 900)
 					              print(p)
 					              dev.off()
@@ -449,14 +464,14 @@ model_training_caret_train_metrics_server = function() {
 							temp_models = names(rv_training_models$all_trained_models)
 							## FIXME: The names should align
 							if (inherits(rv_training_results$models, "caretEnsemble")) {
-								temp_models = c(temp_models, "ensemble")
-								fixed_names = gsub("\\.", " ", temp_models)
+								model_values = c(gsub("\\.", " ", names(rv_training_results$models$models)), "ensemble")
+								temp_models = stats::setNames(model_values, clean_model_label(model_values))
 
 							} else {
 								fixed_names = gsub("\\.", " ", names(rv_training_results$models))
+								temp_models = temp_models[temp_models %in% fixed_names]
 							}
-							temp_models = temp_models[temp_models %in% fixed_names]
-							temp_selected = temp_models
+							temp_selected = unname(temp_models)
 							temp_labs = get_rv_labels("model_training_caret_test_metrics_trained_models_shap_ph")
 							if (isTRUE(input$model_training_caret_more_options_shap_check=="Select models")) {
 								empty_lab = ""
