@@ -17,6 +17,9 @@ function(input, output, session){
   
   source("server/auth.R")
   source("server/homepage_translation_labels.R", local = TRUE)
+  source("server/google_sheets_feedback.R", local = TRUE)
+  source("server/feedback_form_server.R", local = TRUE)
+  
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
@@ -68,8 +71,8 @@ function(input, output, session){
 	  source("server/history_visualize_auto_actions.R", local = TRUE)
 	  source("server/history_visualize_custom_actions.R", local = TRUE)
 	  
-	  add_resources_translation(output)
-	  
+	  add_resources_translation(output, session)
+	  feedback_form_server(input, output, session, USER)
 	  api_base <- reactive({
 		 val <- input$fastapi_base
 			 if (is.null(val) || !nzchar(trimws(val))) {

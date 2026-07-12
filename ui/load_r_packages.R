@@ -96,7 +96,8 @@ libraries <- c(
 	"fs",
 	"rpart",
 	"RSNNS",
-	"naivebayes"
+	"naivebayes",
+	"googlesheets4"
 )
 
 

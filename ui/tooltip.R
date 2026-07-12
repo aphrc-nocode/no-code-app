@@ -21,6 +21,7 @@ nocode_tooltip_keys <- function() {
     omop_visualizations = "tooltip_omop_visualizations",
     CohortConstructor = "tooltip_CohortConstructor",
     FeatureExtraction = "tooltip_FeatureExtraction",
+    anonymization = "tooltip_anonymization",
     anonymization_quant = "tooltip_anonymization_quant",
     anonymization_qual = "tooltip_anonymization_qual",
     researchQuestions = "tooltip_researchQuestions",

@@ -58,10 +58,13 @@ py/__pycache__
 static_files/
 ../env1
 logs.log
-
+# Google OAuth tokens
+.secrets/
+google-service-account*.json
 <<<<<<< HEAD
 venv/
 =======
 static_files/*
 !static_files/labelling_file.xlsx
 >>>>>>> f7f1675 (Add labelling file)
+.secrets
