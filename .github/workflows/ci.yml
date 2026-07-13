@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  r-parse:
+    name: R parse check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.4"
+      - name: Parse all R source files
+        run: Rscript scripts/check_parse.R
+
+  secrets:
+    name: Secret scan (advisory)
+    runs-on: ubuntu-latest
+    # Advisory for now: known secret-hygiene items (dev cookie password, the
+    # committed dev users.sqlite) are being addressed separately. Once those are
+    # cleared, remove continue-on-error to make this a blocking gate.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          VERSION=8.21.2
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+      - name: Scan for secrets
+        run: gitleaks detect --source . --redact --no-banner
