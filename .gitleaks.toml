@@ -1,0 +1,23 @@
+# gitleaks configuration for no-code-app.
+#
+# Extends the default rule set and allowlists known dev-only, non-production
+# values so the secret scan can be made a blocking CI gate. Anything a real
+# secret matches will still fail.
+
+title = "no-code-app gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dev-only, non-production values and paths"
+paths = [
+  # The dev users database (untracked going forward; remains in history).
+  # Holds only throwaway local-test accounts, never real users.
+  '''users_db/.*\.sqlite''',
+]
+regexes = [
+  # Insecure dev fallback for the cookie-signing secret. Real deployments set
+  # COOKIE_PASSWORD via the environment; this literal is not a live secret.
+  '''aphrcpass1''',
+]
