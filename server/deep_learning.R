@@ -870,17 +870,34 @@ deep_learning = function() {
 
     observeEvent(input$start_img_class_inference, {
         req(input$infer_img_class_upload, input$infer_img_class_checkpoint_dropdown)
-        img_class_inference_result(list(status = "Running...", prediction = "Processing...", error = NULL))
+        img_class_inference_result(list(status = "Running...", prediction = "Processing...", error = NULL, image_url = NULL))
         tryCatch({
-            req <- dl_request("/inference/image-classification") %>%
-                req_body_multipart(
-                    image = curl::form_file(input$infer_img_class_upload$datapath),
-                    model_checkpoint = input$infer_img_class_checkpoint_dropdown
-                )
-            resp_data <- resp_body_json(req_perform(req))
-            img_class_inference_result(list(status = "Success", prediction = resp_data$prediction, error = NULL))
+            if (isTRUE(input$infer_img_class_explain)) {
+                # Grad-CAM: returns prediction, confidence, and a heatmap URL.
+                req <- dl_request("/explain/image-classification") %>%
+                    req_body_multipart(
+                        image = curl::form_file(input$infer_img_class_upload$datapath),
+                        model_checkpoint = input$infer_img_class_checkpoint_dropdown
+                    )
+                resp_data <- resp_body_json(req_perform(req))
+                pred_text <- resp_data$prediction
+                if (!is.null(resp_data$confidence)) {
+                    pred_text <- sprintf("%s (confidence: %.1f%%)", pred_text, 100 * as.numeric(resp_data$confidence))
+                }
+                img_class_inference_result(list(status = "Success", prediction = pred_text,
+                                                error = NULL, image_url = resp_data$output_url))
+            } else {
+                req <- dl_request("/inference/image-classification") %>%
+                    req_body_multipart(
+                        image = curl::form_file(input$infer_img_class_upload$datapath),
+                        model_checkpoint = input$infer_img_class_checkpoint_dropdown
+                    )
+                resp_data <- resp_body_json(req_perform(req))
+                img_class_inference_result(list(status = "Success", prediction = resp_data$prediction,
+                                                error = NULL, image_url = NULL))
+            }
         }, error = function(e) {
-            img_class_inference_result(list(status = "Error", prediction = NULL, error = as.character(e)))
+            img_class_inference_result(list(status = "Error", prediction = NULL, error = as.character(e), image_url = NULL))
         })
     })
     
@@ -930,7 +947,16 @@ deep_learning = function() {
     output$img_class_prediction_output <- renderText({
         img_class_inference_result()$prediction
     })
-    
+    # Grad-CAM heatmap overlay (only populated when "Explain" was requested).
+    output$img_class_explain_output <- renderImage({
+        res <- img_class_inference_result()
+        req(res$status == "Success", res$image_url)
+        image_url <- paste0(api_url, res$image_url)
+        temp_file <- tempfile(fileext = ".png")
+        download.file(image_url, temp_file, mode = "wb")
+        list(src = temp_file, contentType = 'image/png', alt = "Grad-CAM heatmap")
+    }, deleteFile = TRUE)
+
     output$seg_inference_status_ui <- renderUI({
         res <- seg_inference_result()
         if (res$status == "Running...") {

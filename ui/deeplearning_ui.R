@@ -359,6 +359,7 @@ deeplearning_ui = function() {
 									textInput("infer_img_class_run_name", "Enter Run Name to Find Checkpoints", ""),
 									selectInput("infer_img_class_checkpoint_dropdown", "Select Checkpoint", choices = NULL),
 									fileInput("infer_img_class_upload", "Upload Image for Classification"),
+									checkboxInput("infer_img_class_explain", "Explain prediction (Grad-CAM heatmap)", value = FALSE),
 									actionButton("start_img_class_inference", "Run Inference", class = "btn-info", style="margin-top: 10px;")
 								),
 								hr(),
@@ -367,6 +368,12 @@ deeplearning_ui = function() {
 								div(
 								style = "background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-top: 5px; min-height: 50px; font-size: 1.1em;",
 								textOutput("img_class_prediction_output")
+								),
+								conditionalPanel(
+									condition = "input.infer_img_class_explain == true",
+									h5("Why? Grad-CAM heatmap", style = "margin-top: 15px;"),
+									helpText("Warmer regions contributed more to the predicted class."),
+									imageOutput("img_class_explain_output", height = "auto")
 								)
 							),
 							
