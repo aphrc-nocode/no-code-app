@@ -45,8 +45,7 @@ deeplearning_ui = function() {
 								collapsible_panel("Training Parameters (Transformers)", open = FALSE,
 									numericInput("obj_learning_rate", "Learning Rate", 5e-5, step = 1e-6),
 									numericInput("obj_weight_decay", "Weight Decay", 1e-4, step = 1e-5),
-									numericInput("obj_gradient_accumulation_steps", "Gradient Accumulation", 1, min = 1),
-									numericInput("obj_max_grad_norm", "Max Gradient Norm", 1.0, min = 0.1, step = 0.1)
+									numericInput("obj_gradient_accumulation_steps", "Gradient Accumulation", 1, min = 1)
 								)
 							),
 							# --- Ultralytics-specific Parameters (YOLO and RT-DETR) ---
@@ -70,12 +69,9 @@ deeplearning_ui = function() {
 							),
 							collapsible_panel("Execution & Reproducibility", open = FALSE,
 								numericInput("obj_seed", "Seed", 42),
-								numericInput("obj_num_proc", "Number of Processes", 4, min = 0),
-								checkboxInput("obj_force_preprocess", "Force Data Pre-processing", value = FALSE),
 								conditionalPanel(
 									condition = "input.obj_model_arch != 'YOLO' && input.obj_model_arch != 'RT-DETR'",
-									checkboxInput("obj_gradient_checkpointing", "Enable Gradient Checkpointing (Saves Memory)", value = FALSE),
-									checkboxInput("obj_fp16", "Use FP16 Precision (Unstable)", value = TRUE)
+									checkboxInput("obj_gradient_checkpointing", "Enable Gradient Checkpointing (Saves Memory)", value = FALSE)
 								)
 							),
 							collapsible_panel("Saving & Early Stopping", open = FALSE,
@@ -85,19 +81,7 @@ deeplearning_ui = function() {
 									numericInput("obj_early_stopping_threshold", "Early Stopping Threshold", 0.0, step = 1e-4)
 								)
 							),
-							collapsible_panel("Hub & Logging", open = FALSE,
-								checkboxInput("obj_push_to_hub", "Push to Hub", FALSE),
-								conditionalPanel(
-									condition = "input.obj_push_to_hub == true",
-									textInput("obj_hub_user_id", "Hub User/Org Name", "")
-								),
-								checkboxInput("obj_log_to_wandb", "Log to W&B", FALSE),
-								conditionalPanel(
-									condition = "input.obj_log_to_wandb == true",
-									textInput("obj_wandb_project", "W&B Project", ""),
-									textInput("obj_wandb_entity", "W&B Entity", "")
-								)
-							),
+							
 							actionButton("start_obj_job", "Start Object Detection Job", class = "btn-primary", style="margin-top: 15px; width: 100%;")
 						)
 					),
@@ -133,26 +117,12 @@ deeplearning_ui = function() {
 							),
 							collapsible_panel("Execution & Reproducibility", open = FALSE,
 								numericInput("img_class_seed", "Seed", 42),
-								numericInput("img_class_num_proc", "Number of Processes", 4, min = 0),
-								checkboxInput("img_class_grad_check", "Enable Gradient Checkpointing", value = FALSE),
-								checkboxInput("img_class_fp16", "Use FP16 Precision", value = TRUE)
+								checkboxInput("img_class_grad_check", "Enable Gradient Checkpointing", value = FALSE)
 							),
 							collapsible_panel("Saving & Early Stopping", open = FALSE,
 								numericInput("img_class_early_stop", "Early Stopping Patience", 3)
 							),
-							collapsible_panel("Hub & Logging", open = FALSE,
-								checkboxInput("img_class_push_to_hub", "Push to Hub", FALSE),
-								conditionalPanel(
-									condition = "input.img_class_push_to_hub == true",
-									textInput("img_class_hub_user_id", "Hub User/Org Name", "")
-								),
-								checkboxInput("img_class_log_to_wandb", "Log to W&B", FALSE),
-								conditionalPanel(
-									condition = "input.img_class_log_to_wandb == true",
-									textInput("img_class_wandb_project", "W&B Project", ""),
-									textInput("img_class_wandb_entity", "W&B Entity", "")
-								)
-							),
+							
 							actionButton("start_img_class_job", "Start Image Classification Job", class = "btn-warning", style="margin-top: 15px; width: 100%;")
 						)
 					),
@@ -188,26 +158,12 @@ deeplearning_ui = function() {
 							),
 							collapsible_panel("Execution & Reproducibility", open = FALSE,
 								numericInput("seg_seed", "Seed", 42),
-								numericInput("seg_num_proc", "Number of Processes", 4, min = 0),
-								checkboxInput("seg_grad_check", "Enable Gradient Checkpointing", value = FALSE),
-								checkboxInput("seg_fp16", "Use FP16 Precision", value = TRUE)
+								checkboxInput("seg_grad_check", "Enable Gradient Checkpointing", value = FALSE)
 							),
 							collapsible_panel("Saving & Early Stopping", open = FALSE,
 								numericInput("seg_early_stop", "Early Stopping Patience", 5)
 							),
-							collapsible_panel("Hub & Logging", open = FALSE,
-								checkboxInput("seg_push_to_hub", "Push to Hub", FALSE),
-								conditionalPanel(
-									condition = "input.seg_push_to_hub == true",
-									textInput("seg_hub_user_id", "Hub User/Org Name", "")
-								),
-								checkboxInput("seg_log_to_wandb", "Log to W&B", FALSE),
-								conditionalPanel(
-									condition = "input.seg_log_to_wandb == true",
-									textInput("seg_wandb_project", "W&B Project", ""),
-									textInput("seg_wandb_entity", "W&B Entity", "")
-								)
-							),
+							
 							actionButton("start_seg_job", "Start Image Segmentation Job", class = "btn-info", style="margin-top: 15px; width: 100%;")
 						)
 					)
