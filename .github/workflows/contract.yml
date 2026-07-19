@@ -1,0 +1,23 @@
+name: API contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contract:
+    name: R client matches DL API contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Stdlib-only checker: parses server/deep_learning.R and verifies every
+      # field it sends exists in the vendored API contract
+      # (scripts/dl_api_contract.json). This is the gate for the drift class of
+      # bug that broke the platform: the client sending fields the API renamed
+      # or dropped (weight_decay vs weight_decay_hf, data_zip vs data_file).
+      - name: Check client requests against the API contract
+        run: python3 scripts/check_api_contract.py
