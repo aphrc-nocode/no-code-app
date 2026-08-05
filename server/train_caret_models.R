@@ -782,7 +782,6 @@ model_training_caret_train_all_server = function() {
 							rv_train_control_caret$index = NULL
 						}
 					}
-					print(rv_train_control_caret$index)
 					
 					rv_training_results$models = tryCatch({
 						Rautoml::train_caret_models(
@@ -1013,6 +1012,89 @@ model_training_caret_train_all_server = function() {
 						return()
 					}
 
+					## Calibration plots
+					rv_training_results$calibration_metrics_objs = tryCatch({
+						Rautoml::compute_calibration(models=rv_training_results$models
+							, df=rv_ml_ai$preprocessed$test_df
+							, outcome_var=rv_ml_ai$outcome
+							, n_bins = 10
+							, strategy = "quantile"
+							, type = "prob"
+							# , problem_type=rv_ml_ai$task
+						)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+					
+					if (is.null(rv_training_results$calibration_metrics_objs)) return()
+					
+				 	save_cal = tryCatch({
+						Rautoml::save_rautoml_csv(
+							object = rv_training_results$calibration_metrics_objs,
+							name = "calibration_metrics",
+							dataset_id = rv_ml_ai$dataset_id,
+							session_name = rv_ml_ai$session_id,
+							timestamp = Sys.time(),
+							output_dir = paste0(app_username, "/outputs"),
+							metric_type="test_metrics"
+						)
+
+						rv_training_results$calibration_metrics_plot = plot(rv_training_results$calibration_metrics_objs)
+						Rautoml::save_rautoml_plot(objects=rv_training_results$calibration_metrics_plot
+							, name="calibration_metrics"
+							, dataset_id = rv_ml_ai$dataset_id
+							, session_name = rv_ml_ai$session_id
+							, timestamp=Sys.time()
+							, output_dir = paste0(app_username, "/outputs")
+							, metric_type="test_metrics"
+						)
+						invisible(TRUE)
+					}, error=function(e) {
+						shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+						return(NULL)
+					})
+
+					if (is.null(save_cal)) return()
+
+					## Brier scores
+					print(rv_ml_ai$task)
+					if (isTRUE(rv_ml_ai$task=="Classification")) {
+						rv_training_results$brier_metrics_objs = tryCatch({
+							Rautoml::compute_brier(rv_training_results$calibration_metrics_objs)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+						save_brier = tryCatch({
+							Rautoml::save_rautoml_csv(
+								object = rv_training_results$brier_metrics_objs[["scores"]],
+								name = "brier_score_metrics",
+								dataset_id = rv_ml_ai$dataset_id,
+								session_name = rv_ml_ai$session_id,
+								timestamp = Sys.time(),
+								output_dir = paste0(app_username, "/outputs"),
+								metric_type="test_metrics"
+							)
+
+							rv_training_results$brier_metrics_plot = plot(rv_training_results$brier_metrics_objs)
+							Rautoml::save_rautoml_plot(objects=rv_training_results$brier_metrics_plot
+								, name="brier_score_metrics"
+								, dataset_id = rv_ml_ai$dataset_id
+								, session_name = rv_ml_ai$session_id
+								, timestamp=Sys.time()
+								, output_dir = paste0(app_username, "/outputs")
+								, metric_type="test_metrics"
+							)
+							invisible(TRUE)
+						}, error=function(e) {
+							shinyalert::shinyalert("Error: ", paste0(get_rv_labels("general_error_alert"), "\n", e$message), type = "error")
+							return(NULL)
+						})
+						
+						if (is.null(save_brier)) return()
+					}
+					
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				} else {
 					rv_training_results$models = NULL
@@ -1021,6 +1103,8 @@ model_training_caret_train_all_server = function() {
 					rv_training_results$post_model_metrics_objs = NULL
 					rv_training_results$tuned_parameters = NULL
 					rv_training_results$control_parameters = NULL
+					rv_training_results$calibration_metrics_objs = NULL
+					rv_training_results$brier_metrics_objs = NULL
 
 					close_progress_bar(att_new_obj=model_training_caret_pb)
 				}
@@ -1031,6 +1115,9 @@ model_training_caret_train_all_server = function() {
 				rv_training_results$post_model_metrics_objs = NULL
 				rv_training_results$tuned_parameters = NULL
 				rv_training_results$control_parameters = NULL
+				rv_training_results$calibration_metrics_objs = NULL
+				rv_training_results$brier_metrics_objs = NULL
+				
 				close_progress_bar(att_new_obj=model_training_caret_pb)
 			}
 		} else {
@@ -1040,6 +1127,9 @@ model_training_caret_train_all_server = function() {
 			rv_training_results$post_model_metrics_objs = NULL
 			rv_training_results$tuned_parameters = NULL
 			rv_training_results$control_parameters = NULL
+			rv_training_results$calibration_metrics_objs = NULL
+			rv_training_results$brier_metrics_objs = NULL
+			
 			close_progress_bar(att_new_obj=model_training_caret_pb)
 		}
 	})	
