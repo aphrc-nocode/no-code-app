@@ -1058,7 +1058,6 @@ model_training_caret_train_all_server = function() {
 					if (is.null(save_cal)) return()
 
 					## Brier scores
-					print(rv_ml_ai$task)
 					if (isTRUE(rv_ml_ai$task=="Classification")) {
 						rv_training_results$brier_metrics_objs = tryCatch({
 							Rautoml::compute_brier(rv_training_results$calibration_metrics_objs)
