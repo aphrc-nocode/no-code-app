@@ -135,7 +135,33 @@ install_github_if_missing("login", "jbryer/login")
 install_github_if_missing("Andromeda", "OHDSI/Andromeda")
 install_github_if_missing("FeatureExtraction", "OHDSI/FeatureExtraction")
 
-
-
+## Install specific version
+install_package_version <- function(package, version) {
+  install_pkg <- TRUE
+  if (requireNamespace(package, quietly = TRUE)) {
+    installed_version <- as.character(packageVersion(package))
+    if (installed_version == version) {
+      install_pkg <- FALSE
+      message(package, " ", version, " is already installed.")
+    } else {
+      message(
+        "Found ", package, " ", installed_version,
+        ", but version ", version, " is required."
+      )
+      remove.packages(package)
+    }
+  }
+  if (install_pkg) {
+    if (!requireNamespace("remotes", quietly = TRUE)) {
+      install.packages("remotes")
+    }
+    remotes::install_version(
+      package = package,
+      version = version,
+      repos = "https://cloud.r-project.org"
+    )
+  }
+}
+install_package_version("xgboost", version="1.7.11.1")
 
 
