@@ -13,6 +13,45 @@ function(input, output, session){
       color = "#FFF"
     )
   }
+  # Reveal the app after Shiny has flushed and the browser has painted it.
+  # The timeout prevents a loader from remaining permanently during a slow
+  # container cold start.
+  hide_waiter_after_paint <- function(extra_js = "", fallback_ms = 6000) {
+    shinyjs::runjs(sprintf("
+      (function() {
+        var revealed = false, idleTimer = null;
+        var STABLE_MS = 200;
+        function reveal() {
+          if (revealed) return;
+          revealed = true;
+          if (idleTimer) clearTimeout(idleTimer);
+          $(document).off('shiny:idle', onIdle);
+          $(document).off('shiny:busy', onBusy);
+          if (window.waiter && typeof window.waiter.hide === 'function') {
+            window.waiter.hide(null);
+          }
+          $('.waiter-overlay').remove();
+          %s
+        }
+        function onBusy() {
+          if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        }
+        function onIdle() {
+          if (idleTimer) clearTimeout(idleTimer);
+          idleTimer = setTimeout(function() { requestAnimationFrame(reveal); }, STABLE_MS);
+        }
+        $(document).on('shiny:busy', onBusy);
+        $(document).on('shiny:idle', onIdle);
+        onIdle();
+        setTimeout(reveal, %d);
+      })();
+    ", extra_js, fallback_ms))
+  }
+  hide_waiter_after_flush <- function(extra_js = "") {
+    session$onFlushed(function() {
+      hide_waiter_after_paint(extra_js)
+    }, once = TRUE)
+  }
   update_progress("Loading packages...")
   
   source("server/auth.R")
@@ -20,6 +59,8 @@ function(input, output, session){
   register_homepage_labels(output, session, get_rv_labels)
   
   USER = user_auth(input, output, session)
+  login_logged_in_output_id <- paste0(app_login_config$APP_ID, "-logged_in")
+  outputOptions(output, login_logged_in_output_id, suspendWhenHidden = FALSE)
   
   authed_started = reactiveVal(FALSE)
 
@@ -30,7 +71,10 @@ function(input, output, session){
 		color = "#FFF"
 	 )
 
-	 if (authed_started()) return()
+	 if (authed_started()) {
+		 hide_waiter_after_flush()
+		 return()
+	 }
 	 authed_started(TRUE)
 
 	 app_username = USER$username
@@ -924,9 +968,16 @@ function(input, output, session){
 	  admin_server(USER)
 
 	  update_progress("Ready!")
-	  waiter::waiter_hide()
+	  hide_waiter_after_flush("
+		  var active = $('ul.sidebar-menu li.active > a').first();
+		  if (active.length) { active.trigger('click'); }
+	  ")
   }, ignoreInit = FALSE)
 
-  waiter::waiter_hide()
+  session$onFlushed(function() {
+    if (!isTRUE(isolate(USER$logged_in))) {
+      hide_waiter_after_paint()
+    }
+  }, once = TRUE)
 
 }
