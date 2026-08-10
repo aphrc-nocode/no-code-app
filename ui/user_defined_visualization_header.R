@@ -586,10 +586,17 @@ user_custom_visualization_layout = renderUI({
         pointer-events: none;
       }
       #graphmoreoption.open-panel, #tabmoreoption.open-panel {
-        max-height: 74vh;
+        height: calc(100vh - 185px);
+        max-height: calc(100vh - 185px);
         opacity: 1;
         transform: translateY(0);
         pointer-events: auto;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        box-sizing: border-box;
+        padding: 0 12px 110px 0;
       }
     ")),
     tags$div(
@@ -609,6 +616,8 @@ user_custom_visualization_layout = renderUI({
         uiOutput("user_plot_title"),
         uiOutput("user_x_axis_label"),
         uiOutput("user_y_axis_label"),
+        uiOutput("user_create"),
+        uiOutput("custom_plot_status"),
         uiOutput("user_download"),
         conditionalPanel(
           condition = "input.cboOutput == 'Chart'",
@@ -656,10 +665,14 @@ user_custom_visualization_layout = renderUI({
       tags$div(
         id = "tabOutputs",
         style = "width:100%; display:none;",
-        
+
         uiOutput("user_tab_options"),
+        uiOutput("user_table_mode"),
         uiOutput("user_calc_var"),
         uiOutput("user_row_var"),
+        uiOutput("user_table_strata"),
+        uiOutput("usr_create_cross_tab"),
+        uiOutput("custom_table_status"),
         uiOutput("user_download_table"),
         conditionalPanel(
           condition = "input.cboOutput == 'Table'",
@@ -667,6 +680,8 @@ user_custom_visualization_layout = renderUI({
           tags$div(
             id = "tabmoreoption",
             uiOutput("user_table_options"),
+            uiOutput("user_table_percentage"),
+            uiOutput("user_show_binary_levels"),
             uiOutput("user_report_numeric"),
             uiOutput("user_numeric_summary"),
             uiOutput("user_add_p_value"),
@@ -675,7 +690,7 @@ user_custom_visualization_layout = renderUI({
             uiOutput("user_table_caption")
           )
         ),
-        
+
         htmlOutput("tabSummaries")
       )
     )
