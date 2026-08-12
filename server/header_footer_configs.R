@@ -105,7 +105,19 @@ menu_translation = function(){
                   menuSubItem(text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_feature_engineering"), "</span>")), tabName = "featureEngineering", icon = icon("sitemap", lib = "font-awesome")),
                   menuSubItem(text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_train_model"), "</span>")), tabName = "trainModel", icon = icon("gear", lib = "font-awesome")),
                   menuSubItem(text =HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_validate_model"), "</span>")), tabName = "validateDeployModel", icon = icon("server", lib = "font-awesome")),
-                  menuSubItem(text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome"))
+                  menuSubItem(text = HTML(paste0("<span class=\'menu-label\'>", get_rv_labels("menu_predict"), "</span>")), tabName = "predictClassify", icon = icon("layer-group", lib = "font-awesome")),
+                  menuSubItem(
+                    text = HTML(paste0(
+                      "<span class='menu-label'>",
+                      {
+                        x <- get_rv_labels("menu_transfer_learning")
+                        if (is.null(x) || length(x) == 0 || !nzchar(x)) "Transfer Learning" else x
+                      },
+                      "</span>"
+                    )),
+                    tabName = "transfer_learning",
+                    icon = icon("exchange-alt", lib = "font-awesome")
+                  )
                 ),
                 
                 menuItem(

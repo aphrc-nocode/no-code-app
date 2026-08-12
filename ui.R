@@ -43,8 +43,11 @@ fluidPage(
   
   waiterShowOnLoad(
     color = "#FFF",
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-    logo=  "WWW/aphrc.png"),
+    html = tagList(
+      spin_loaders(id = 2, style = "width:56px;height:56px;color:#7BC148;"),
+      img(src = "WWW/aphrc.png", alt = "APHRC Logo")
+    )
+  ),
 
   shiny::tags$head(
     tags$link(

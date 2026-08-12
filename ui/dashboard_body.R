@@ -14,6 +14,7 @@ source("ui/train_all_model_ui.R", local=TRUE)
 source("ui/validate_deploy_model_ui.R", local=TRUE)
 source("ui/predict_classify_ui.R", local=TRUE)
 source("ui/deeplearning_ui.R", local=TRUE)
+source("ui/transfer_learning_ui.R", local = TRUE)
 source("ui/cohort_constructor_ui.R", local=TRUE)
 source("ui/achilles_ui.R", local=TRUE)
 source("ui/feature_extraction_ui.R", local=TRUE)
@@ -144,9 +145,11 @@ aphrcBody <- dashboardBody(
 				  
 		## Deep learning UI
 		, deeplearning_ui()
+		## Transfer learning
+		, transfer_learning_ui()
 		
 		## OMOP resources
 		, add_resources_ui()
-
+		
 	)
 )
