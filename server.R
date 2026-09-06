@@ -561,6 +561,10 @@ function(input, output, session){
 	  stderr_content<-create_log_reader(stderr_file_path)
 	  
 
+	  #### ---- Shared dataset deletion helpers ----------------------------
+	  ## Sourced before the log writers below: they all share its lock
+	  source("server/delete_data_helpers.R", local = TRUE)
+
 	  #### ---- Collect logs ----------------------------------------
 	  source("server/collect_logs.R", local = TRUE)
 	  collect_logs_server()

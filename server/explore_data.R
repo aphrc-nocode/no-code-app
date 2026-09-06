@@ -397,21 +397,59 @@ explore_data_update_data_server = function() {
 	})
 
 	observeEvent(input$explore_data_update_data_apply, {
-		write_data(get_data_class(paste0(app_username, "/datasets/", rv_current$dataset_id)), rv_current$working_df)
+		## Everything is done inside the lock, writing the dataset included.
+		## Writing first and locking afterwards would let this recreate a
+		## dataset the cleanup worker had just deleted, so the row is checked
+		## against the summary before anything is written back.
+		saved = with_upload_lock(app_username, {
+			summary = read_upload_summary(app_username)
+			if (!identical(summary$status, "ok") ||
+				is.na(find_dataset_row(summary$logs, rv_current$dataset_id))) {
+				NULL
+			} else {
+				write_data(get_data_class(paste0(app_username, "/datasets/", rv_current$dataset_id)), rv_current$working_df)
+				## Update logs
+				log_file_main = paste0(app_username, "/.log_files/", rv_current$dataset_id, "-upload.main.log")
+				meta_data = read.csv(log_file_main)
+				meta_data$last_modified = format_date_time(Sys.time())
+				meta_data$observations = NROW(rv_current$working_df)
+				meta_data$features = NCOL(rv_current$working_df)
+				meta_data$size = object.size(rv_current$working_df)
+				write.csv(meta_data, log_file_main, row.names = FALSE)
+				upload_logs_current = collect_logs(paste0(app_username, "/.log_files"), "*.upload.main.log")
+				if (!NROW(upload_logs_current)) {
+					NULL
+				} else {
+					upload_logs_current$delete = create_btns(upload_logs_current$file_name)
+					## The data is already on disk at this point, so a summary
+					## that will not save is reported separately rather than
+					## being treated as the whole save having failed
+					list(logs = upload_logs_current
+						, summary_failed = !write_upload_summary(app_username, upload_logs_current))
+				}
+			}
+		})
+		if (is.null(saved)) {
+			## The dataset is gone, or somebody else holds the lock: nothing is
+			## written back rather than resurrecting a deleted dataset
+			shinyalert::shinyalert("", get_rv_labels("general_error_alert"), type = "error")
+			return()
+		}
+		if (isTRUE(saved$summary_failed)) {
+			## The dataset and its own log were saved, only the combined listing
+			## was not. Saying "failed" here would be wrong - the change is on
+			## disk - so the save is reported and the listing left alone.
+			message("Dataset saved but the upload summary could not be rewritten")
+			rv_current$data = rv_current$working_df
+			rv_current$selected_vars = colnames(rv_current$data)
+			updateSelectInput(session=session, "manage_data_select_vars", choices=colnames(rv_current$data))
+			rv_current$current_filter_reset = TRUE
+			shinyalert::shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")
+			return()
+		}
+		rv_metadata$upload_logs = saved$logs
 		rv_current$data = rv_current$working_df
 		rv_current$selected_vars = colnames(rv_current$data)
-		## Update logs
-		log_file_main = paste0(app_username, "/.log_files/", rv_current$dataset_id, "-upload.main.log")
-		meta_data = read.csv(log_file_main)
-		meta_data$last_modified = format_date_time(Sys.time())
-		meta_data$observations = NROW(rv_current$data)
-		meta_data$features = NCOL(rv_current$data)
-		meta_data$size = object.size(rv_current$data)
-		write.csv(meta_data, log_file_main, row.names = FALSE)
-		upload_logs_current = collect_logs(paste0(app_username, "/.log_files"), "*.upload.main.log")
-		rv_metadata$upload_logs = upload_logs_current
-		rv_metadata$upload_logs$delete = create_btns(rv_metadata$upload_logs$file_name)
-		write.table(rv_metadata$upload_logs, file=paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"), row.names = FALSE)
 		updateSelectInput(session=session, "manage_data_select_vars", choices=colnames(rv_current$data))
 		rv_current$current_filter_reset = TRUE
 		shinyalert::shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")

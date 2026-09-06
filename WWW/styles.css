@@ -800,3 +800,24 @@ body.sidebar-collapse #logoutID:hover::after {
   z-index: 10000;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
+
+/* dataset deletion confirmation */
+.delete-confirm-body {
+  padding: 4px 2px 2px;
+}
+
+.delete-confirm-file {
+  padding: 10px 12px;
+  color: #333;
+  background: #f7f7f7;
+  border-left: 3px solid #d9534f;
+  border-radius: 3px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.delete-confirm-message {
+  margin: 12px 0 0;
+  color: #555;
+  line-height: 1.5;
+}

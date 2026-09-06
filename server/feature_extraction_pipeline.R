@@ -184,10 +184,12 @@ feature_extraction_pipeline <- function() {
       # --- Save dataset ---
       file_name <- paste0("feature_extracted_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv")
       file_path <- file.path(paste0(app_username, "/datasets"), file_name)
-      readr::write_csv(cov_wide %>% dplyr::filter(!is.na(person_id)), file_path)
-      
+
       # --- Register as upload ---
-      upload_time <- Sys.time()
+      # upload_time is formatted the same way uploads are written, so retention
+      # can read it back. Left as a raw timestamp it lands in a different
+      # format and the dataset would never be judged expired.
+      upload_time <- format_date_time(Sys.time())
       meta_data <- Rautoml::create_df_metadata(
         data = cov_wide,
         filename = file_name,
@@ -197,15 +199,45 @@ feature_extraction_pipeline <- function() {
         upload_time = upload_time,
         last_modified = upload_time
       )
-      
+
       log_file_main <- paste0(app_username, "/.log_files/", file_name, "-upload.main.log")
-      write.csv(meta_data, log_file_main, row.names = FALSE)
-      
-      # Refresh uploads list
-      if (exists("refresh_uploaded_data")) {
-        refresh_uploaded_data()
+      # Dataset and log written together under the shared lock, so this cannot
+      # land in the middle of a deletion
+      written <- with_upload_lock(app_username, {
+        tryCatch({
+          readr::write_csv(cov_wide %>% dplyr::filter(!is.na(person_id)), file_path)
+          write.csv(meta_data, log_file_main, row.names = FALSE)
+          # The summary is what the app lists and what retention reads. Without
+          # this the dataset is invisible to both: it never appears in the
+          # uploads table and is never considered for deletion.
+          upload_logs_current <- collect_logs(paste0(app_username, "/.log_files"), "*.upload.main.log")
+          # Raised rather than returned, so the handler below rolls the whole
+          # thing back while the lock is still held
+          if (!NROW(upload_logs_current)) stop("the upload log could not be read back")
+          upload_logs_current$delete <- create_btns(upload_logs_current$file_name)
+          if (!write_upload_summary(app_username, upload_logs_current)) {
+            stop("the upload summary could not be written")
+          }
+          upload_logs_current
+        }, error = function(e) {
+          message(sprintf("Feature extraction save failed: %s", conditionMessage(e)))
+          # Undone while the lock is still held: rolling back afterwards leaves
+          # a window in which another session or the cleanup worker sees a
+          # half-written dataset and rebuilds the summary around it
+          if (file.exists(log_file_main)) file.remove(log_file_main)
+          if (file.exists(file_path)) file.remove(file_path)
+          NULL
+        })
+      })
+      if (is.null(written)) {
+        # Either the lock was never taken, in which case nothing was written,
+        # or the error handler above has already cleaned up
+        shinyalert::shinyalert("", get_rv_labels("general_error_alert"), type = "error")
+        return()
       }
-      
+
+      rv_metadata$upload_logs <- written
+
       shinyalert::shinyalert("", "✅ Feature-extracted dataset saved and added to uploads!", type = "success")
       
     }, error = function(e) {
