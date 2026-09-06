@@ -1,28 +1,8 @@
 #### ---- Data privacy consent modal ---- ####
 
-## Temporary English defaults, used only while a key is still missing from
-## static_files/labelling_file.xlsx. Remove once the sheet carries all keys.
-data_privacy_fallbacks <- list(
-  data_privacy_modal_title       = "Data privacy notice",
-  data_privacy_modal_intro       = "Before you continue, please read how your data is handled on the online version of this platform.",
-  data_privacy_modal_point_storage = "Any dataset you upload is stored on APHRC servers.",
-  data_privacy_modal_point_access  = "Your data is not accessed, viewed or shared by APHRC staff or third parties.",
-  data_privacy_modal_point_retention = "Your data is deleted automatically after {months} months.",
-  data_privacy_modal_point_control   = "You may delete your uploaded data yourself at any time from within the platform.",
-  data_privacy_modal_agree_label = "I have read and accept how my data is stored and deleted.",
-  data_privacy_modal_accept_btn  = "Accept and continue",
-  data_privacy_modal_decline_btn = "Decline and sign out",
-  data_privacy_modal_decline_msg = "You need to accept the data privacy notice to use the platform. Signing you out."
-)
-
+## Retention period comes from .env, never from the translated text
 get_privacy_label <- function(key) {
-  value <- tryCatch(get_rv_labels(key), error = function(e) NULL)
-  if (is.null(value) || length(value) == 0 || is.na(value[1]) || !nzchar(trimws(value[1]))) {
-    value <- data_privacy_fallbacks[[key]]
-  }
-  txt <- as.character(value[1])
-  # Retention period comes from .env, never from the translated text
-  gsub("{months}", app_privacy_config$retention_months, txt, fixed = TRUE)
+  gsub("{months}", app_privacy_config$retention_months, get_rv_labels(key), fixed = TRUE)
 }
 
 data_privacy_modal_ui <- function() {
