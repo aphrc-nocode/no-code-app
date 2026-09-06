@@ -94,6 +94,7 @@ libraries <- c(
 	"gbm",
 	"MLmetrics",
 	"fs",
+	"filelock",
 	"rpart",
 	"RSNNS",
 	"naivebayes"
