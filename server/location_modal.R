@@ -21,11 +21,13 @@ country_modal_ui <- function() {
   )
 }
 
-location_modal_server <- function(USER) {
+location_modal_server <- function(USER, consent_ok = reactive(TRUE)) {
 
-  # Show modal after login if country not yet set
-  observeEvent(USER$logged_in, {
+  # Show modal after login if country not yet set. Waits for the data privacy
+  # notice so the two onboarding dialogs never compete for the screen.
+  observeEvent(consent_ok(), {
     req(isTRUE(USER$logged_in))
+    req(isTRUE(consent_ok()))
     con <- DBI::dbConnect(RSQLite::SQLite(), 'users_db/users.sqlite')
     row <- DBI::dbGetQuery(con,
       "SELECT country FROM users WHERE username = ?",

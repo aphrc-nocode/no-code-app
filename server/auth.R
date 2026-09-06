@@ -1,13 +1,19 @@
 # server/auth.R
 
 user_auth <- function(input, output, session) {
-  # Add country column if it doesn't exist yet
+  # Add country and data privacy columns if they don't exist yet
   local({
     con <- DBI::dbConnect(RSQLite::SQLite(), 'users_db/users.sqlite')
     on.exit(DBI::dbDisconnect(con), add = TRUE)
     cols <- DBI::dbGetQuery(con, "PRAGMA table_info(users)")$name
     if (!'country' %in% cols) {
       DBI::dbExecute(con, "ALTER TABLE users ADD COLUMN country TEXT DEFAULT ''")
+    }
+    if (!'privacy_version' %in% cols) {
+      DBI::dbExecute(con, "ALTER TABLE users ADD COLUMN privacy_version TEXT DEFAULT ''")
+    }
+    if (!'privacy_accepted_at' %in% cols) {
+      DBI::dbExecute(con, "ALTER TABLE users ADD COLUMN privacy_accepted_at TEXT DEFAULT ''")
     }
   })
   # Guard: only initialize once per session
