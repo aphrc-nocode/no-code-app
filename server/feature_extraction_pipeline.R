@@ -2,28 +2,37 @@ feature_extraction_pipeline <- function() {
   
   cohort_conn <- reactiveValues(
     schema_names = NULL,
-    tables       = NULL,
+    tables = NULL,
     domain_summary_data = NULL
   )
   
-  # --- 1. Schema fetch ---
+  # --- 1. Fetch schemas ---
   observe({
     req(rv_database$conn)
+    
     tryCatch({
       cohort_conn$schema_names <- DBI::dbGetQuery(
         rv_database$conn,
-        "SELECT schema_name 
-         FROM information_schema.schemata 
-         WHERE schema_name NOT LIKE 'pg_%' 
+        "SELECT schema_name
+         FROM information_schema.schemata
+         WHERE schema_name NOT LIKE 'pg_%'
            AND schema_name <> 'information_schema'"
       )$schema_name
       
       output$cdm_schema_ui <- renderUI({
-        selectInput("cdm_schema", "CDM Schema:", choices = cohort_conn$schema_names)
+        selectInput(
+          "cdm_schema",
+          "CDM Schema:",
+          choices = cohort_conn$schema_names
+        )
       })
       
       output$results_schema_ui <- renderUI({
-        selectInput("results_schema", "Results Schema:", choices = cohort_conn$schema_names)
+        selectInput(
+          "results_schema",
+          "Results Schema:",
+          choices = cohort_conn$schema_names
+        )
       })
       
       output$domain_choices_ui <- renderUI({
@@ -43,17 +52,22 @@ feature_extraction_pipeline <- function() {
       })
       
     }, error = function(e) {
-      showNotification(paste("Schema Fetch Error:", e$message), type = "error")
+      showNotification(
+        paste("Schema Fetch Error:", e$message),
+        type = "error"
+      )
     })
   })
   
-  # --- 2. Schema connection prompt ---
+  # --- 2. Connection prompt ---
   output$schema_feature <- renderUI({
     if (is.null(rv_database$conn)) {
-      actionButton("go_to_source_global",
-                   "Click to connect to a database in the Source page first",
-                   style = "background-color: #7bc148; font-weight: bold;",
-                   icon = icon("arrow-right"))
+      actionButton(
+        "go_to_source_global",
+        "Click to connect to a database in the Source page first",
+        style = "background-color: #7bc148; font-weight: bold;",
+        icon = icon("arrow-right")
+      )
     }
   })
   
@@ -61,79 +75,146 @@ feature_extraction_pipeline <- function() {
     updateTabItems(session, "tabs", "sourcedata")
   })
   
-  # --- 3. Populate cohort tables when schema selected ---
+  # --- 3. Populate cohort tables ---
   observeEvent(input$results_schema, {
     req(rv_database$conn, input$results_schema)
+    
     tryCatch({
       cohort_conn$tables <- DBI::dbGetQuery(
         rv_database$conn,
-        glue::glue("SELECT table_name 
-                    FROM information_schema.tables 
-                    WHERE table_schema = '{input$results_schema}'")
+        glue::glue("
+          SELECT table_name
+          FROM information_schema.tables
+          WHERE table_schema = '{input$results_schema}'
+        ")
       )$table_name
       
       output$cohort_table_ui <- renderUI({
-        selectInput("cohort_table", "Cohort Table:", choices = cohort_conn$tables)
+        selectInput(
+          "cohort_table",
+          "Cohort Table:",
+          choices = cohort_conn$tables
+        )
       })
+      
     }, error = function(e) {
-      showNotification(paste("Table Fetch Error:", e$message), type = "error")
+      showNotification(
+        paste("Table Fetch Error:", e$message),
+        type = "error"
+      )
     })
   })
   
-  # --- 4. Generate record summary per domain ---
+  # --- 4. Domain summary using SQL counts only ---
   observeEvent(input$cohort_table, {
     req(rv_database$conn, input$cdm_schema, input$results_schema, input$cohort_table)
+    
     tryCatch({
       conn <- rv_database$conn
       cdmSchema <- input$cdm_schema
       resultsSchema <- input$results_schema
       cohortTableName <- input$cohort_table
       
-      cohort_table <- DBI::dbGetQuery(conn, glue::glue(
-        "SELECT * FROM {resultsSchema}.{cohortTableName}"
-      )) %>% dplyr::rename(person_id = subject_id)
+      cohort_n <- DBI::dbGetQuery(
+        conn,
+        glue::glue("
+          SELECT COUNT(DISTINCT subject_id) AS n
+          FROM {resultsSchema}.{cohortTableName}
+        ")
+      )$n
       
-      cohort_persons <- cohort_table %>% dplyr::select(person_id) %>% distinct()
-      if (nrow(cohort_persons) == 0) {
-        output$domain_summary <- DT::renderDataTable({ data.frame(Domain = character(), Records = numeric()) })
-        showNotification("No subjects found in the selected cohort.", type = "warning")
+      if (length(cohort_n) == 0 || is.na(cohort_n) || cohort_n == 0) {
+        cohort_conn$domain_summary_data <- data.frame(
+          Domain = character(),
+          Records = numeric()
+        )
+        
+        output$domain_summary <- DT::renderDataTable({
+          DT::datatable(
+            cohort_conn$domain_summary_data,
+            rownames = FALSE,
+            options = list(pageLength = 10, scrollX = TRUE)
+          )
+        })
+        
+        showNotification(
+          "No subjects found in the selected cohort.",
+          type = "warning"
+        )
         return(NULL)
       }
       
-      domain_tables <- c("condition_occurrence", "drug_exposure", "measurement", "procedure_occurrence", "observation")
+      domain_tables <- c(
+        "condition_occurrence",
+        "drug_exposure",
+        "measurement",
+        "procedure_occurrence",
+        "observation"
+      )
+      
       counts <- purrr::map_df(domain_tables, function(tbl) {
-        domain_data <- DBI::dbGetQuery(conn, glue::glue("SELECT * FROM {cdmSchema}.{tbl}"))
-        joined <- dplyr::inner_join(domain_data, cohort_persons, by = "person_id")
-        tibble::tibble(Domain = tbl, Records = nrow(joined))
+        q <- glue::glue("
+          SELECT COUNT(*) AS records
+          FROM {cdmSchema}.{tbl} d
+          INNER JOIN (
+            SELECT DISTINCT subject_id AS person_id
+            FROM {resultsSchema}.{cohortTableName}
+          ) c
+          ON d.person_id = c.person_id
+        ")
+        
+        n <- DBI::dbGetQuery(conn, q)$records
+        
+        tibble::tibble(
+          Domain = tbl,
+          Records = as.numeric(n)
+        )
       })
       
       counts$Records <- formatC(counts$Records, format = "d", big.mark = ",")
-      cohort_conn$domain_summary_data <- counts  # store table for conditional display
+      
+      cohort_conn$domain_summary_data <- counts
       
       output$domain_summary <- DT::renderDataTable({
-        DT::datatable(counts, rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE))
+        DT::datatable(
+          counts,
+          rownames = FALSE,
+          options = list(
+            pageLength = 10,
+            scrollX = TRUE,
+            autoWidth = TRUE
+          )
+        )
       })
-      showNotification("✅ Domain record summary generated successfully!", type = "message")
+      
+      showNotification(
+        "Domain record summary generated successfully!",
+        type = "message"
+      )
+      
     }, error = function(e) {
-      showNotification(paste("Error generating domain summary:", e$message), type = "error")
+      showNotification(
+        paste("Error generating domain summary:", e$message),
+        type = "error"
+      )
     })
   })
   
-  # --- 5. Feature extraction process with upload registration ---
+  # --- 5. Feature extraction ---
   observeEvent(input$extract_features, {
-    req(input$domain_choices, input$cdm_schema, input$results_schema, input$cohort_table)
+    req(
+      rv_database$conn,
+      input$domain_choices,
+      input$cdm_schema,
+      input$results_schema,
+      input$cohort_table,
+      input$output_csv
+    )
+    
+    output$feature_extract_log <- renderText("Running feature extraction...")
     
     tryCatch({
-      connDetails <- DatabaseConnector::createConnectionDetails(
-        dbms = "postgresql",
-        server = paste0(input$db_host, "/", input$db_name),
-        user = input$db_user,
-        password = input$db_pwd,
-        port = as.integer(input$db_port),
-        pathToDriver = "static_files"
-      )
-      
-      conn_dc <- DatabaseConnector::connect(connDetails)
+      conn <- rv_database$conn
       
       covariateSettings <- FeatureExtraction::createCovariateSettings(
         useDemographicsGender = "demographics" %in% input$domain_choices,
@@ -148,23 +229,25 @@ feature_extraction_pipeline <- function() {
       )
       
       covariateData <- FeatureExtraction::getDbCovariateData(
-        connection = conn_dc,
+        connection = conn,
         cdmDatabaseSchema = input$cdm_schema,
         cohortDatabaseSchema = input$results_schema,
         cohortTable = input$cohort_table,
         covariateSettings = covariateSettings
       )
       
-      DatabaseConnector::disconnect(conn_dc)
+      cov_df <- covariateData$covariates %>% dplyr::collect()
+      cov_ref <- covariateData$covariateRef %>% dplyr::collect()
       
-      cov_df <- covariateData$covariates %>% collect()
-      cov_ref <- covariateData$covariateRef %>% collect()
-      
-      person_map <- DBI::dbGetQuery(rv_database$conn, glue::glue(
-        "SELECT subject_id AS person_id,
-              ROW_NUMBER() OVER (ORDER BY subject_id) - 1 AS rowid
-         FROM {input$results_schema}.{input$cohort_table}"
-      )) %>% dplyr::mutate(rowid = as.integer(rowid))
+      person_map <- DBI::dbGetQuery(
+        conn,
+        glue::glue("
+          SELECT subject_id AS person_id,
+                 ROW_NUMBER() OVER (ORDER BY subject_id) - 1 AS rowid
+          FROM {input$results_schema}.{input$cohort_table}
+        ")
+      ) %>%
+        dplyr::mutate(rowid = as.integer(rowid))
       
       cov_named <- cov_df %>%
         dplyr::rename(rowid = rowId) %>%
@@ -174,20 +257,29 @@ feature_extraction_pipeline <- function() {
         dplyr::select(person_id, covariateName, covariateValue)
       
       dt <- data.table::as.data.table(cov_named)
+      
       cov_wide <- data.table::dcast(
-        dt, person_id ~ covariateName,
+        dt,
+        person_id ~ covariateName,
         value.var = "covariateValue",
         fun.aggregate = sum,
         fill = 0
       )
       
-      # --- Save dataset ---
-      file_name <- paste0("feature_extracted_", format(Sys.time(), "%Y%m%d%H%M%S"), ".csv")
-      file_path <- file.path(paste0(app_username, "/datasets"), file_name)
-      readr::write_csv(cov_wide %>% dplyr::filter(!is.na(person_id)), file_path)
+      file_name <- input$output_csv
+      if (!grepl("\\.csv$", file_name, ignore.case = TRUE)) {
+        file_name <- paste0(file_name, ".csv")
+      }
       
-      # --- Register as upload ---
+      file_path <- file.path(paste0(app_username, "/datasets"), file_name)
+      
+      readr::write_csv(
+        cov_wide %>% dplyr::filter(!is.na(person_id)),
+        file_path
+      )
+      
       upload_time <- Sys.time()
+      
       meta_data <- Rautoml::create_df_metadata(
         data = cov_wide,
         filename = file_name,
@@ -198,39 +290,60 @@ feature_extraction_pipeline <- function() {
         last_modified = upload_time
       )
       
-      log_file_main <- paste0(app_username, "/.log_files/", file_name, "-upload.main.log")
+      log_file_main <- paste0(
+        app_username,
+        "/.log_files/",
+        file_name,
+        "-upload.main.log"
+      )
+      
       write.csv(meta_data, log_file_main, row.names = FALSE)
       
-      # Refresh uploads list
       if (exists("refresh_uploaded_data")) {
         refresh_uploaded_data()
       }
       
-      shinyalert::shinyalert("", "✅ Feature-extracted dataset saved and added to uploads!", type = "success")
+      output$feature_extract_log <- renderText(
+        paste("Feature extraction completed successfully.\nSaved to:", file_path)
+      )
+      
+      shinyalert::shinyalert(
+        "",
+        "Feature-extracted dataset saved and added to uploads!",
+        type = "success"
+      )
       
     }, error = function(e) {
-      showNotification(paste("\u274c Error during extraction:", e$message), type = "error")
+      output$feature_extract_log <- renderText(
+        paste("Error during extraction:", e$message)
+      )
+      
+      showNotification(
+        paste("Error during extraction:", e$message),
+        type = "error"
+      )
     })
   })
   
-  # --- 6. Download handler for domain summary ---
+  # --- 6. Download domain summary ---
   output$download_cdm_summary <- downloadHandler(
     filename = function() {
       paste0("domain_summary_", Sys.Date(), ".csv")
     },
     content = function(file) {
+      req(cohort_conn$domain_summary_data)
       write.csv(cohort_conn$domain_summary_data, file, row.names = FALSE)
     }
   )
   
-  # --- 7. REACTIVE FLAGS for conditionalPanels ---
+  # --- 7. Reactive flags ---
   output$dbConnected <- reactive({
     !is.null(rv_database$conn)
   })
   outputOptions(output, "dbConnected", suspendWhenHidden = FALSE)
   
-  output$summaryAvailable <- reactive({
+  output$featureSummaryAvailable <- reactive({
     !is.null(cohort_conn$domain_summary_data)
   })
-  outputOptions(output, "summaryAvailable", suspendWhenHidden = FALSE)
+  outputOptions(output, "featureSummaryAvailable", suspendWhenHidden = FALSE)
 }

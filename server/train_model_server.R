@@ -460,7 +460,57 @@ train_model_server <- function(id, rv_ml_ai, rv_current, api_base, app_username)
       }
     )
 
-
+    observeEvent(input$save_transfer_learning_access, {
+      
+      req(rv_ml_ai$prefetch)
+      req(rv_ml_ai$outcome)
+      req(rv_current$working_df)
+      
+      users_raw <- input$transfer_learning_access_users
+      
+      shiny::validate(
+        shiny::need(
+          !is.null(users_raw) && nzchar(trimws(users_raw)),
+          "Please enter at least one username."
+        )
+      )
+      
+      allowed_users <- unlist(strsplit(users_raw, "[,;\\n]+"))
+      allowed_users <- trimws(allowed_users)
+      allowed_users <- allowed_users[nzchar(allowed_users)]
+      
+      current_user <- app_username
+      all_users <- unique(c(current_user, allowed_users))
+      
+      for (u in all_users) {
+        
+        create_dir(paste0(u, "/transfer_learning_board"))
+        
+        access_file <- file.path(getwd(), u, "transfer_learning_access.csv")
+        
+        access_df <- data.frame(
+          username = current_user,
+          shared_by = current_user,
+          shared_at = as.character(Sys.time()),
+          stringsAsFactors = FALSE
+        )
+        
+        if (file.exists(access_file)) {
+          old <- tryCatch(read.csv(access_file, stringsAsFactors = FALSE), error = function(e) NULL)
+          if (!is.null(old)) {
+            access_df <- unique(rbind(old, access_df))
+          }
+        }
+        
+        write.csv(access_df, access_file, row.names = FALSE)
+      }
+      
+      shinyalert::shinyalert(
+        title = "Transfer Learning",
+        text = "Access has been saved. The selected users can now search shared transfer learning boards.",
+        type = "success"
+      )
+    })
 
 
   })

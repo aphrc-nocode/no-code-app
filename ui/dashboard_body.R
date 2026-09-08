@@ -143,6 +143,9 @@ aphrcBody <- dashboardBody(
 		
 		## Prediction UI
 		, predict_classify_ui()
+
+		## Transfer learning
+		, transfer_learning_ui()
 				  
 		## Deep learning UI
 		, deeplearning_ui()
