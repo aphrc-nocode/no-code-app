@@ -1,4 +1,4 @@
-	library(Rautoml)
+library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
@@ -910,6 +910,17 @@ function(input, output, session){
 	  #### ---- Predict using no-code models ------------------------ ####
 	  source("server/predict_trained_caret_models.R", local=TRUE)
 	  predict_trained_caret_models()
+
+	  #### ---- tranfer learning ------------------------ ####
+	  source("server/transfer_learning_server.R", local = TRUE)
+
+	  transfer_learning_server(
+	    id = "transfer_learning",
+	    rv_current = rv_current,
+	    rv_ml_ai = rv_ml_ai,
+	    app_username = app_username,
+	    api_base = api_base
+	  )
 
 
 	  #### ---- PyCaret Integration (API) ----------------------------------------------------

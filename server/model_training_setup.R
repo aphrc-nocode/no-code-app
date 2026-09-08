@@ -160,9 +160,29 @@ model_training_setup_server = function() {
 									, get_rv_labels("train_control_save_predictions_caret")
 									, value = FALSE
 								)
-								, prettySwitch("train_control_class_probabilities_caret"
-									, get_rv_labels("train_control_class_probabilities_caret")
-									, value = FALSE
+								, prettySwitch("train_control_class_probabilities_caret",
+								               get_rv_labels("train_control_class_probabilities_caret"),
+								               value = FALSE
+								)
+								
+								, hr()
+								
+								, prettySwitch(
+								  "enable_transfer_learning_access",
+								  "Enable Transfer Learning Access",
+								  value = FALSE,
+								  status = "success"
+								)
+								
+								, conditionalPanel(
+								  condition = "input.enable_transfer_learning_access == true",
+								  
+								  textAreaInput(
+								    "transfer_learning_access_users",
+								    "Enter usernames/emails to give access",
+								    placeholder = "Example: scygu@aphrc.org, letisha@codata.org",
+								    width = "100%"
+								  )
 								)
 							)
 						 )
@@ -196,6 +216,44 @@ model_training_setup_server = function() {
 				}
 			}
 		}
+	  if (isTRUE(input$enable_transfer_learning_access)) {
+	    
+	    users_raw <- input$transfer_learning_access_users
+	    
+	    if (!is.null(users_raw) && nzchar(trimws(users_raw))) {
+	      
+	      allowed_users <- unlist(strsplit(users_raw, "[,;\\n]+"))
+	      allowed_users <- trimws(allowed_users)
+	      allowed_users <- allowed_users[nzchar(allowed_users)]
+	      
+	      for (u in allowed_users) {
+	        
+	        create_dir(paste0(u, "/transfer_learning_board"))
+	        
+	        access_file <- file.path(getwd(), u, "transfer_learning_access.csv")
+	        
+	        access_df <- data.frame(
+	          username = app_username,
+	          shared_by = app_username,
+	          shared_at = as.character(Sys.time()),
+	          stringsAsFactors = FALSE
+	        )
+	        
+	        if (file.exists(access_file)) {
+	          old <- tryCatch(
+	            read.csv(access_file, stringsAsFactors = FALSE),
+	            error = function(e) NULL
+	          )
+	          
+	          if (!is.null(old)) {
+	            access_df <- unique(rbind(old, access_df))
+	          }
+	        }
+	        
+	        write.csv(access_df, access_file, row.names = FALSE)
+	      }
+	    }
+	  }
 		removeModal()
 	})
 }
