@@ -67,6 +67,18 @@ admin_ui <- function() {
       )
     ),
 
+    # ── Users by country ─────────────────────────────────────────────────────
+    fluidRow(
+      column(width = 12,
+        box(
+          title = uiOutput("admin_lbl_country_map"), width = 12,
+          status = "success", solidHeader = TRUE, collapsible = TRUE,
+          plotOutput("admin_country_map", height = "420px"),
+          uiOutput("admin_map_note")
+        )
+      )
+    ),
+
     # ── Charts ───────────────────────────────────────────────────────────────
     fluidRow(
       column(width = 6,

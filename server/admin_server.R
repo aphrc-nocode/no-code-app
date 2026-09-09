@@ -14,6 +14,7 @@ admin_server <- function(USER) {
   }
   output$admin_lbl_funnel_title   <- renderUI({ .box_title("admin_funnel_title") })
   output$admin_lbl_users_box      <- renderUI({ .box_title("admin_users_box_title") })
+  output$admin_lbl_country_map    <- renderUI({ .box_title("admin_map_title") })
   output$admin_lbl_visited_pages  <- renderUI({ .box_title("admin_visited_pages_title") })
   output$admin_lbl_daily_trend    <- renderUI({ .box_title("admin_daily_trend_title") })
   output$admin_lbl_activity_log   <- renderUI({ .box_title("admin_activity_log_title") })
@@ -50,6 +51,7 @@ admin_server <- function(USER) {
   outputOptions(output, "admin_lbl_title",          suspendWhenHidden = FALSE)
   outputOptions(output, "admin_lbl_funnel_title",   suspendWhenHidden = FALSE)
   outputOptions(output, "admin_lbl_users_box",      suspendWhenHidden = FALSE)
+  outputOptions(output, "admin_lbl_country_map",    suspendWhenHidden = FALSE)
   outputOptions(output, "admin_lbl_visited_pages",  suspendWhenHidden = FALSE)
   outputOptions(output, "admin_lbl_daily_trend",    suspendWhenHidden = FALSE)
   outputOptions(output, "admin_lbl_activity_log",   suspendWhenHidden = FALSE)
@@ -169,6 +171,94 @@ admin_server <- function(USER) {
       par(mar = c(7, 4, 1, 1))
       barplot(page_counts, col = "#7bc148", border = NA, las = 2,
               cex.names = 0.75, ylab = "Visits")
+    })
+
+    # ── Users by country, on a map of Africa ─────────────────────────────────
+    # Country is stored as the name the sign-up modal offered, which is not
+    # always the name a map uses ("Cote d'Ivoire", "Eswatini", "Tanzania,
+    # United Republic of"). quick_map() happens to match those spellings on its
+    # own, so the map would not strictly need converting - but the caption below
+    # has to tell African countries from the rest, and an ISO3 code is a stable
+    # key for that. Converting once here serves both.
+    # country_info() is deliberately not used: it is the one function in this
+    # package that calls an external API, and a blocking request inside
+    # renderPlot would hang this page on a host with no internet.
+    country_iso <- reactive({
+      raw <- users_raw$country
+      has_name <- !is.na(raw) & nzchar(trimws(raw))
+      iso <- if (!any(has_name)) {
+        character(0)
+      } else {
+        suppressWarnings(countries::country_name(raw[has_name], to = "ISO3"))
+      }
+      # no_country counts users registered before the sign-up modal started
+      # asking for one. They are on the platform but cannot be placed anywhere,
+      # so the caption says so rather than letting the map look like the whole
+      # picture.
+      list(iso = iso, no_country = sum(!has_name))
+    })
+
+    output$admin_country_map <- renderPlot({
+      iso <- country_iso()$iso
+      iso <- iso[!is.na(iso)]
+      if (!length(iso)) {
+        plot.new(); text(0.5, 0.5, "No countries yet", cex = 1.2, col = "#888"); return()
+      }
+      counts <- as.data.frame(table(iso), stringsAsFactors = FALSE)
+      names(counts) <- c("iso", "users")
+      ## One solid fill for any country that has users. A count of 1 must not
+      ## land on the palest bin of the Greens theme, or Senegal disappears.
+      ## Empty countries stay a mid grey, not #f0f0f0, or Africa vanishes into
+      ## the white page and only the green country is left.
+      counts$present <- "Present"
+      countries::quick_map(counts, "present"
+        , zoom = "Africa"
+        , theme = "Greens"
+        , col_na = "#d0d0d0"
+        , col_border = "white"
+        , width_border = 0.3
+        , name_legend = get_rv_labels("admin_map_legend")
+      ) +
+        ggplot2::scale_fill_manual(
+          values = c(Present = "#7bc148")
+          , na.value = "#d0d0d0"
+          , breaks = "Present"
+        ) +
+        ggplot2::theme(
+          panel.background = ggplot2::element_rect(fill = "#ffffff", colour = NA)
+          , plot.background = ggplot2::element_rect(fill = "#ffffff", colour = NA)
+          , legend.background = ggplot2::element_rect(fill = "#ffffff", colour = NA)
+          , axis.title = ggplot2::element_blank()
+          , axis.text = ggplot2::element_blank()
+          , axis.ticks = ggplot2::element_blank()
+          , panel.grid = ggplot2::element_blank()
+        )
+    })
+
+    # Users whose country is real but off this map, so the count under the map
+    # never silently disagrees with the "countries represented" tile above it.
+    africa_iso3 <- c(
+      "DZA","AGO","BEN","BWA","BFA","BDI","CPV","CMR","CAF","TCD","COM","COG"
+      , "COD","DJI","EGY","GNQ","ERI","SWZ","ETH","GAB","GMB","GHA","GIN","GNB"
+      , "CIV","KEN","LSO","LBR","LBY","MDG","MWI","MLI","MRT","MUS","MAR","MOZ"
+      , "NAM","NER","NGA","RWA","STP","SEN","SYC","SLE","SOM","ZAF","SSD","SDN"
+      , "TZA","TGO","TUN","UGA","ZMB","ZWE","ESH"
+    )
+
+    output$admin_map_note <- renderUI({
+      breakdown <- country_iso()
+      iso <- breakdown$iso
+      off_map    <- sum(!is.na(iso) & !iso %in% africa_iso3)
+      unresolved <- sum(is.na(iso))
+      no_country <- breakdown$no_country
+      parts <- c(
+        if (no_country) sprintf("%d with no country recorded", no_country)
+        , if (off_map) sprintf("%d outside Africa", off_map)
+        , if (unresolved) sprintf("%d with an unrecognised country", unresolved)
+      )
+      if (!length(parts)) return(NULL)
+      div(style = "color:#888; font-size:12px; padding-top:6px;"
+        , paste("Users not shown on the map:", paste(parts, collapse = ", ")))
     })
 
     # ── Daily visits trend line chart (last 30 days only) ────────────────────
