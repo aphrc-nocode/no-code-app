@@ -970,9 +970,13 @@ function(input, output, session){
 	  iv_url$enable()
 	  iv_ml$enable()
 
+	  #### ---- Data privacy consent ------------------------------------------####
+	  source("server/data_privacy_modal.R", local = TRUE)
+	  privacy_ok <- data_privacy_server(USER)
+
 	  #### ---- Location modal + page tracking --------------------------------####
 	  source("server/location_modal.R", local = TRUE)
-	  location_modal_server(USER)
+	  location_modal_server(USER, privacy_ok)
 
 	  #### ---- Admin dashboard -----------------------------------------------####
 	  source("server/admin_server.R", local = TRUE)
