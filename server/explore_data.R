@@ -334,86 +334,411 @@ explore_missing_data_server = function() {
 
 ##### ---- Select variables ------------------------------------------####
 explore_data_select_variables_server = function() {
-	observe({
-		if (isTRUE(input$explore_data_select_variables_check)) {
-			output$manage_data_select_vars = renderUI({
-			  p(
-			  	hr()
-				 , HTML(paste0("<b>", get_rv_labels("manage_data_select_vars"), "</b>"))
-				 , helpText(get_rv_labels("manage_data_select_vars_ht"))
-				 , selectInput('manage_data_select_vars'
-					, label = NULL
-					, rv_current$selected_vars
-					, selectize=FALSE
-					, multiple=TRUE
-					, size = min(10, length(rv_current$selected_vars))
-					, width = "100%"
-				 )
-			  )
-			})
-		} else {
-			output$manage_data_select_vars = NULL
-			rv_current$selected_vars = colnames(rv_current$data)
-		}
-	})
+  
+  # Variables in explore_selected_vars represent variables that the user
+  # has dragged to the RIGHT bucket and therefore wants to REMOVE.
+  observeEvent(
+    list(input$explore_data_select_variables_check, input$dataset_id),
+    {
+      
+      if (isTRUE(input$explore_data_select_variables_check)) {
+        
+        all_vars <- rv_current$selected_vars
+        
+        if (is.null(all_vars)) {
+          all_vars <- character(0)
+        }
+        
+        removed_vars <- isolate(rv_current$explore_selected_vars)
+        
+        if (is.null(removed_vars)) {
+          removed_vars <- character(0)
+        }
+        
+        removed_vars <- removed_vars[
+          removed_vars %in% all_vars
+        ]
+        
+        rv_current$explore_selected_vars <- removed_vars
+        
+        # Used only when we deliberately need to refresh the buckets,
+        # for example after overwriting the dataset.
+        if (is.null(rv_current$explore_bucket_refresh)) {
+          rv_current$explore_bucket_refresh <- 0
+        }
+        
+        output$manage_data_select_vars = renderUI({
+          
+          # Controlled refresh dependency.
+          rv_current$explore_bucket_refresh
+          
+          all_vars_ui <- isolate(rv_current$selected_vars)
+          
+          if (is.null(all_vars_ui)) {
+            all_vars_ui <- character(0)
+          }
+          
+          removed_ui <- isolate(rv_current$explore_selected_vars)
+          
+          if (is.null(removed_ui)) {
+            removed_ui <- character(0)
+          }
+          
+          removed_ui <- removed_ui[
+            removed_ui %in% all_vars_ui
+          ]
+          
+          keep_ui <- setdiff(
+            all_vars_ui,
+            removed_ui
+          )
+          
+          tagList(
+            
+            hr(),
+            
+            HTML(
+              paste0(
+                "<b>",
+                get_rv_labels("manage_data_select_vars"),
+                "</b>"
+              )
+            ),
+            
+            helpText(
+              get_rv_labels("manage_data_select_vars_drag_ht")
+            ),
+            
+            tags$style(
+              HTML("
+    .overview-variable-buckets {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .overview-variable-buckets .bucket-list-container {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+
+    .overview-variable-buckets .rank-list-container {
+      flex: 1 1 0 !important;
+      width: 50% !important;
+      min-width: 0 !important;
+      max-width: 50% !important;
+      box-sizing: border-box !important;
+    }
+
+    .overview-variable-buckets
+    .rank-list-container ul {
+      min-height: 120px !important;
+      max-height: 300px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .overview-variable-buckets
+    .rank-list-container li {
+      cursor: grab !important;
+      word-break: break-word !important;
+    }
+
+    .overview-variable-buckets
+    .rank-list-container li:active {
+      cursor: grabbing !important;
+    }
+  ")
+            ),
+            
+            tags$div(
+              class = "overview-variable-buckets",
+              
+              sortable::bucket_list(
+                header = NULL,
+                group_name = "manage_data_variable_group",
+                orientation = "horizontal",
+                
+                sortable::add_rank_list(
+                  get_rv_labels("manage_data_variables_keep"),
+                  "manage_data_available_vars",
+                  labels = keep_ui
+                ),
+                
+                sortable::add_rank_list(
+                  get_rv_labels("manage_data_variables_remove"),
+                  "manage_data_selected_vars",
+                  labels = removed_ui
+                )
+              )
+            )
+          )
+        })
+        
+      } else {
+        
+        output$manage_data_select_vars <- NULL
+        
+        rv_current$explore_selected_vars <- character(0)
+        
+        rv_current$selected_vars <- colnames(
+          rv_current$data
+        )
+      }
+    },
+    ignoreInit = FALSE
+  )
+  
+  
+  # The RIGHT bucket contains variables to remove.
+  observeEvent(
+    input$manage_data_selected_vars,
+    {
+      
+      removed_vars <- input$manage_data_selected_vars
+      
+      if (is.null(removed_vars)) {
+        removed_vars <- character(0)
+      }
+      
+      all_vars <- rv_current$selected_vars
+      
+      if (is.null(all_vars)) {
+        all_vars <- character(0)
+      }
+      
+      removed_vars <- removed_vars[
+        removed_vars %in% all_vars
+      ]
+      
+      rv_current$explore_selected_vars <- removed_vars
+    },
+    ignoreNULL = FALSE
+  )
 }
 
-### FIXME: Is there an efficient way for this?
+
+### Rebuild working dataset -------------------------------------------
 explore_data_selected_variables_server = function() {
-	observeEvent(c(input$manage_data_select_vars, input$explore_data_select_variables_check), {
-		df = rv_current$data
-		if (isTRUE(!is.null(rv_current$current_filter)) & !isTRUE(rv_current$current_filter_reset)) {
-			for (f in 1:length(rv_current$current_filter)) {
-				df = filter_data(df, rv_current$current_filter[f])
-			}
-		}
-		if (isTRUE(!is.null(input$manage_data_select_vars)) & isTRUE(any(input$manage_data_select_vars %in% rv_current$selected_vars)) & isTRUE(input$explore_data_select_variables_check)) {
-  			df = dplyr::select(df, input$manage_data_select_vars)
- 			rv_current$working_df = df
-  		}
-		rv_current$working_df = df
-	})
+  
+  rebuild_explore_working_df <- function() {
+    
+    df <- rv_current$data
+    
+    if (is.null(df)) {
+      return(invisible(NULL))
+    }
+    
+    # Reapply active filters first.
+    if (
+      !is.null(rv_current$current_filter) &&
+      !isTRUE(rv_current$current_filter_reset)
+    ) {
+      
+      for (f in seq_along(rv_current$current_filter)) {
+        
+        df <- filter_data(
+          df,
+          rv_current$current_filter[f]
+        )
+      }
+    }
+    
+    # Variables in the RIGHT bucket are removed.
+    if (isTRUE(input$explore_data_select_variables_check)) {
+      
+      removed_vars <- isolate(
+        rv_current$explore_selected_vars
+      )
+      
+      if (is.null(removed_vars)) {
+        removed_vars <- character(0)
+      }
+      
+      removed_vars <- removed_vars[
+        removed_vars %in% names(df)
+      ]
+      
+      vars_to_keep <- setdiff(
+        names(df),
+        removed_vars
+      )
+      
+      if (length(vars_to_keep) > 0) {
+        
+        df <- dplyr::select(
+          df,
+          dplyr::all_of(vars_to_keep)
+        )
+      }
+    }
+    
+    rv_current$working_df <- df
+    
+    invisible(NULL)
+  }
+  
+  
+  observeEvent(
+    rv_current$explore_selected_vars,
+    {
+      rebuild_explore_working_df()
+    },
+    ignoreNULL = FALSE
+  )
+  
+  
+  observeEvent(
+    input$explore_data_select_variables_check,
+    {
+      rebuild_explore_working_df()
+    },
+    ignoreNULL = FALSE
+  )
 }
+
 
 explore_data_update_data_server = function() {
-	observe({
-		if ((isTRUE(!is.null(input$manage_data_select_vars)) & isTRUE(input$explore_data_select_variables_check)) | (isTRUE(!is.null(rv_current$current_filter))) & isTRUE(input$explore_data_filter_check)) {
-			output$explore_data_update_data = renderUI({
-				p(
-					hr()
-				 , helpText(get_rv_labels("update_overwrite_ht"))
-				 , actionBttn(
-				 	inputId = "explore_data_update_data_apply"
-						, label = get_rv_labels("update_overwrite")
-						, style = "jelly"
-						, color = "warning"
-						, inline=TRUE
-					)
-				)
-			})
-		} else {
-			output$explore_data_update_data = NULL
-		}
-	})
-
-	observeEvent(input$explore_data_update_data_apply, {
-		write_data(get_data_class(paste0(app_username, "/datasets/", rv_current$dataset_id)), rv_current$working_df)
-		rv_current$data = rv_current$working_df
-		rv_current$selected_vars = colnames(rv_current$data)
-		## Update logs
-		log_file_main = paste0(app_username, "/.log_files/", rv_current$dataset_id, "-upload.main.log")
-		meta_data = read.csv(log_file_main)
-		meta_data$last_modified = format_date_time(Sys.time())
-		meta_data$observations = NROW(rv_current$data)
-		meta_data$features = NCOL(rv_current$data)
-		meta_data$size = object.size(rv_current$data)
-		write.csv(meta_data, log_file_main, row.names = FALSE)
-		upload_logs_current = collect_logs(paste0(app_username, "/.log_files"), "*.upload.main.log")
-		rv_metadata$upload_logs = upload_logs_current
-		rv_metadata$upload_logs$delete = create_btns(rv_metadata$upload_logs$file_name)
-		write.table(rv_metadata$upload_logs, file=paste0(app_username, "/.log_files/.automl-shiny-upload.main.log"), row.names = FALSE)
-		updateSelectInput(session=session, "manage_data_select_vars", choices=colnames(rv_current$data))
-		rv_current$current_filter_reset = TRUE
-		shinyalert::shinyalert("", get_rv_labels("updated_overwriten"), type = "success", inputId="manage_data_explore_update_data_alert")
-	})
+  
+  observe({
+    
+    removed_vars <- rv_current$explore_selected_vars
+    
+    if (is.null(removed_vars)) {
+      removed_vars <- character(0)
+    }
+    
+    has_variable_selection <-
+      isTRUE(input$explore_data_select_variables_check) &&
+      length(removed_vars) > 0
+    
+    has_filter <-
+      isTRUE(input$explore_data_filter_check) &&
+      !is.null(rv_current$current_filter)
+    
+    if (has_variable_selection || has_filter) {
+      
+      output$explore_data_update_data = renderUI({
+        
+        tagList(
+          
+          hr(),
+          
+          helpText(
+            get_rv_labels("manage_data_variables_remove_ht")
+          ),
+          
+          helpText(
+            get_rv_labels("manage_data_overwrite_keep_ht")
+          ),
+          
+          actionBttn(
+            inputId = "explore_data_update_data_apply",
+            label = get_rv_labels("update_overwrite"),
+            style = "jelly",
+            color = "warning",
+            inline = TRUE
+          )
+        )
+      })
+      
+    } else {
+      
+      output$explore_data_update_data <- NULL
+    }
+  })
+  
+  
+  observeEvent(
+    input$explore_data_update_data_apply,
+    {
+      
+      req(rv_current$working_df)
+      
+      write_data(
+        get_data_class(
+          paste0(
+            app_username,
+            "/datasets/",
+            rv_current$dataset_id
+          )
+        ),
+        rv_current$working_df
+      )
+      
+      rv_current$data <- rv_current$working_df
+      rv_current$selected_vars <- colnames(rv_current$data)
+      
+      # Clear the removal bucket after overwrite.
+      rv_current$explore_selected_vars <- character(0)
+      
+      # Refresh the buckets only after overwrite.
+      if (is.null(rv_current$explore_bucket_refresh)) {
+        rv_current$explore_bucket_refresh <- 0
+      }
+      
+      rv_current$explore_bucket_refresh <-
+        rv_current$explore_bucket_refresh + 1
+      
+      
+      ## Update logs
+      log_file_main <- paste0(
+        app_username,
+        "/.log_files/",
+        rv_current$dataset_id,
+        "-upload.main.log"
+      )
+      
+      meta_data <- read.csv(log_file_main)
+      
+      meta_data$last_modified <- format_date_time(Sys.time())
+      meta_data$observations <- NROW(rv_current$data)
+      meta_data$features <- NCOL(rv_current$data)
+      meta_data$size <- object.size(rv_current$data)
+      
+      write.csv(
+        meta_data,
+        log_file_main,
+        row.names = FALSE
+      )
+      
+      upload_logs_current <- collect_logs(
+        paste0(
+          app_username,
+          "/.log_files"
+        ),
+        "*.upload.main.log"
+      )
+      
+      rv_metadata$upload_logs <- upload_logs_current
+      
+      rv_metadata$upload_logs$delete <-
+        create_btns(
+          rv_metadata$upload_logs$file_name
+        )
+      
+      write.table(
+        rv_metadata$upload_logs,
+        file = paste0(
+          app_username,
+          "/.log_files/.automl-shiny-upload.main.log"
+        ),
+        row.names = FALSE
+      )
+      
+      rv_current$current_filter_reset <- TRUE
+      
+      shinyalert::shinyalert(
+        "",
+        get_rv_labels("updated_overwriten"),
+        type = "success",
+        inputId = "manage_data_explore_update_data_alert"
+      )
+    }
+  )
 }
