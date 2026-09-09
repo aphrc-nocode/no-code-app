@@ -12,10 +12,29 @@ summarize_custom_ui = function() {
           pointer-events: none;
         }
         #graphmoreoption.open-panel, #tabmoreoption.open-panel {
-          max-height: 74vh;
+          height: calc(100vh - 185px);
+          max-height: calc(100vh - 185px);
           opacity: 1;
           transform: translateY(0);
           pointer-events: auto;
+          overflow-y: scroll !important;
+          overflow-x: hidden !important;
+          overscroll-behavior: contain;
+          scrollbar-gutter: stable;
+          box-sizing: border-box;
+          padding: 0 12px 110px 0;
+        }
+        #graphmoreoption::-webkit-scrollbar,
+        #tabmoreoption::-webkit-scrollbar {
+          width: 10px;
+        }
+        #graphmoreoption::-webkit-scrollbar-thumb,
+        #tabmoreoption::-webkit-scrollbar-thumb {
+          background: #9ca3af;
+          border-radius: 8px;
+        }
+        #chartTypePanel {
+          width: 100%;
         }
       ")),
 
@@ -31,11 +50,14 @@ summarize_custom_ui = function() {
         div(
           id = "tabOutputs",
           uiOutput("user_tab_options"),
+          uiOutput("user_table_mode"),
           br(),
           uiOutput("user_calc_var"),
           uiOutput("user_row_var"),
+          uiOutput("user_table_strata"),
           br(),
           uiOutput("usr_create_cross_tab"),
+          uiOutput("custom_table_status"),
           br(),
           uiOutput("user_download_table")
         ),
@@ -50,6 +72,7 @@ summarize_custom_ui = function() {
           uiOutput("user_y_axis_label"),
           br(),
           uiOutput("user_create"),
+          uiOutput("custom_plot_status"),
           br(),
           br(),
           uiOutput("user_download")
@@ -60,9 +83,9 @@ summarize_custom_ui = function() {
 
       column(
         width = 8,
-        uiOutput("user_chart_type"),
+        div(id = "chartTypePanel", uiOutput("user_chart_type")),
         uiOutput("tabSummaries"),
-        plotOutput("GeneratedPlot", height = "65vh"),
+        div(id = "chartPlotPanel", plotOutput("GeneratedPlot", height = "65vh")),
         align = "center"
       ),
 
@@ -75,6 +98,8 @@ summarize_custom_ui = function() {
           div(
             id = "tabmoreoption",
             uiOutput("user_table_options"),
+            uiOutput("user_table_percentage"),
+            uiOutput("user_show_binary_levels"),
             br(),
             uiOutput("user_report_numeric"),
             uiOutput("user_add_p_value"),
