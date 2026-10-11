@@ -54,32 +54,9 @@ user_auth <- function(input, output, session) {
     session$reload()
   }, ignoreInit = TRUE)
   
-  # Toggle between login / signup / reset forms
-  observeEvent(input$show_login, {
-    shinyjs::show("login_form",  anim = TRUE, animType = "fade", time = 0.4)
-    shinyjs::hide("signup_form")
-    shinyjs::hide("reset_form")
-  }, ignoreInit = TRUE)
-  
-  observeEvent(input$show_signup, {
-    shinyjs::show("signup_form", anim = TRUE, animType = "fade", time = 0.4)
-    shinyjs::hide("login_form")
-    shinyjs::hide("reset_form")
-  }, ignoreInit = TRUE)
-  
-  observeEvent(input$show_reset, {
-    shinyjs::show("reset_form",  anim = TRUE, animType = "fade", time = 0.4)
-    shinyjs::hide("login_form")
-    shinyjs::hide("signup_form")
-  }, ignoreInit = TRUE)
-  
-  # Show login form on first load
-  observe({
-    shinyjs::show("login_form",  anim = TRUE, animType = "fade", time = 0.4)
-    shinyjs::hide("signup_form")
-    shinyjs::hide("reset_form")
-  })
-  
+  # Switching between the login / signup / reset forms is handled in the
+  # browser by WWW/landing.js.
+
   #return USER so server() can see USER$logged_in
   USER
 }

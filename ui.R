@@ -27,6 +27,8 @@ source(paste0(getwd(), "/ui/header.R"))
 #Load Footer
 source(paste0(getwd(), "/ui/footer.R"))
 source(paste0(getwd(), "/ui/homepage.R"))
+source(paste0(getwd(), "/ui/landing_page.R"))
+source(paste0(getwd(), "/ui/dashboard_skeleton.R"))
 
 source("ui/dashboard_body.R")
 #Sidebar
@@ -42,13 +44,9 @@ sidebarMenuOutput("dynamic_meinu_aphrc")
 fluidPage(
   useShinyjs(),
   useWaiter(),
-  
-  waiterShowOnLoad(
-    color = "#FFF",
-    html = spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-    logo=  "WWW/aphrc.png"),
 
   shiny::tags$head(
+    landing_head(),
     tags$link(
       rel = "stylesheet",
       type = "text/css",
@@ -60,49 +58,26 @@ fluidPage(
     )
   ),
   
+    landing_session_loader(),
+
     div(
-      id = "auth_wrapper1",   # <– will be shown after spinner
+      id = "auth_wrapper1",
+      # Hidden from first paint; the login condition reveals them once signed in
       login::is_logged_in(
-        id = app_login_config$APP_ID, header
+        id = app_login_config$APP_ID, style = "display:none;", header
       ),
       
       aphrcHeader <- dashboardHeader(disable = TRUE),
       
-      login::is_not_logged_in(
-        id = app_login_config$APP_ID,
-        div(
-          class = "auth-container",
-          br(),
-          div(
-            class = "auth-title text-center",
-            tags$img(src = "aphrc.png", height = "80px", style = "margin-bottom: 15px;"),
-            h3("Welcome to Nocode Platform")
-          ),
-          div(
-            class = "toggle-buttons",
-            actionButton("show_login",  "Login", class = "btn btn-outline-success"),
-            actionButton("show_signup", "Sign Up", class = "btn btn-outline-success"),
-            actionButton("show_reset",  "Reset Password", class = "btn btn-outline-success")
-          ),
-          div(id = "login_form",
-              login::login_ui(id = app_login_config$APP_ID)
-          ),
-          div(id = "signup_form", style = "display:none;",
-              login::new_user_ui(id = app_login_config$APP_ID)
-          ),
-          div(id = "reset_form", style = "display:none;",
-              login::reset_password_ui(id = app_login_config$APP_ID)
-          )
-        )
-      ),
+      landing_page_ui(),
       
       login::is_logged_in(
-        id = app_login_config$APP_ID,
+        id = app_login_config$APP_ID, style = "display:none;",
         div(dashboardPage(aphrcHeader, aphrcSiderbar, aphrcBody, skin = "green"))
       ),
       
       login::is_logged_in(
-        id = app_login_config$APP_ID,
+        id = app_login_config$APP_ID, style = "display:none;",
         div(footer)
       )
     ))

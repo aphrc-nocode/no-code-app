@@ -2,16 +2,9 @@ library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
 
 function(input, output, session){
-  # ---- Progress overlay for cold-start feedback ----
+  # ---- Progress line on the post-login loading skeleton ----
   update_progress <- function(msg) {
-    waiter::waiter_show(
-      html = tagList(
-        spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-        tags$br(),
-        tags$span(msg, style="color:#555;font-size:14px;margin-top:12px;display:block;")
-      ),
-      color = "#FFF"
-    )
+    shinyjs::html("dsk-status", msg)
   }
   # Reveal the app after Shiny has flushed and the browser has painted it.
   # The timeout prevents a loader from remaining permanently during a slow
@@ -52,8 +45,6 @@ function(input, output, session){
       hide_waiter_after_paint(extra_js)
     }, once = TRUE)
   }
-  update_progress("Loading packages...")
-  
   source("server/auth.R")
   source("server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
@@ -67,7 +58,7 @@ function(input, output, session){
   observeEvent(USER$logged_in, {
 	 req(isTRUE(USER$logged_in))
 	 waiter_show(
-		html = spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+		html = dashboard_skeleton(status_id = "dsk-status"),
 		color = "#FFF"
 	 )
 
