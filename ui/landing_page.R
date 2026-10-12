@@ -4,54 +4,25 @@
 ## page paints before any server session exists. Switching language swaps the
 ## text in the browser from the dictionary embedded in the page.
 
-## Temporary English until these keys exist in the labelling sheet
-landing_fallbacks <- c(
-  landing_nav_features   = "Features"
-  , landing_nav_about    = "About"
-  , landing_nav_faq      = "FAQ"
-  , landing_nav_signin   = "Sign in"
-  , landing_hero_kicker  = "APHRC AutoML No-Code Platform"
-  , landing_hero_title   = "Build predictive models from your health data, no coding needed"
-  , landing_hero_subtitle = "Point-and-click machine learning for public health researchers. Upload your data, explore it, train models and deploy them in one guided workflow."
-  , landing_hero_point_code    = "No coding required"
-  , landing_hero_point_privacy = "Private: data deleted after {months} months"
-  , landing_hero_point_lang    = "Available in {languages}"
-  , landing_auth_title   = "Sign in to your workspace"
-  , landing_auth_signin  = "Sign in"
-  , landing_auth_signup  = "Create account"
-  , landing_auth_reset   = "Forgot password?"
-  , landing_features_kicker = "What you can do"
-  , landing_features_title  = "One workflow, from raw data to a deployed model"
-  , landing_about_kicker = "About the project"
-  , landing_faq_title    = "Frequently asked questions"
-  , landing_faq_q1 = "Who is this platform for?"
-  , landing_faq_a1 = "Public health researchers and analysts who want to build predictive models without writing code."
-  , landing_faq_q2 = "Do I need programming skills?"
-  , landing_faq_a2 = "No. Every step, from uploading data to deploying a model, is point-and-click with guidance along the way."
-  , landing_faq_q3 = "What happens to my data?"
-  , landing_faq_q4 = "Which file formats can I upload?"
-  , landing_faq_a4 = "You can upload {formats}."
-  , landing_faq_q5 = "Which languages are available?"
-  , landing_faq_a5 = "The platform is available in {languages}. Use the language menu at the top of the page."
-  , landing_footer_tagline = "Specifically tailored for public health researchers."
-  , landing_footer_platform = "Platform"
-  , landing_footer_explore  = "Explore"
-  , landing_footer_platform_hint = "Sign in to open a module directly."
-  , landing_loading_workspace = "Loading your workspace..."
-  , menu_transfer_learning  = "Transfer Learning"
-  , landing_footer_rights  = "All rights reserved."
-)
-
-## Keys already translated in the sheet, reused as they are
+## Keys the language menu can retranslate in the browser
 landing_sheet_keys <- c(
-  "homepage_more_details_link_text"
+  paste0("landing_nav_", c("features", "about", "faq", "signin"))
+  , "landing_hero_kicker", "landing_hero_title"
+  , paste0("landing_auth_", c("title", "signin", "signup", "reset"))
+  , "landing_features_kicker", "landing_features_title"
+  , "landing_about_kicker", "landing_faq_title"
+  , paste0("landing_faq_q", 1:5)
+  , paste0("landing_faq_a", c(1, 2, 4, 5))
+  , paste0("landing_footer_", c("tagline", "platform", "explore", "platform_hint", "rights"))
+  , "landing_loading_workspace"
+  , "homepage_more_details_link_text"
   , "homepage_objectives_title"
   , paste0("homepage_obj", 1:3, "_title")
   , paste0("homepage_obj", rep(1:3, each = 2), "_bullet", 1:2)
   , paste0("homepage_comp", 1:3, "_title")
   , paste0("homepage_comp", 1:3, "_desc")
   , paste0("data_privacy_modal_point_", c("storage", "access", "retention", "control"))
-  , "menu_visualize_data", "menu_machine_learning"
+  , "menu_visualize_data", "menu_machine_learning", "menu_transfer_learning"
   , "deeplearning", "menu_omop_data", "menu_data_anonymization"
 )
 
@@ -80,7 +51,6 @@ landing_label <- function(key, lang = language_choices[1]) {
   }
   value <- sheet_value(lang)
   if (is.na(value) || !nzchar(trimws(value))) value <- sheet_value(language_choices[1])
-  if (is.na(value) || !nzchar(trimws(value))) value <- unname(landing_fallbacks[key])
   if (is.na(value)) value <- ""
   for (token in names(landing_tokens)) {
     value <- gsub(token, landing_tokens[[token]], value, fixed = TRUE)
@@ -89,7 +59,7 @@ landing_label <- function(key, lang = language_choices[1]) {
 }
 
 landing_dictionary <- function() {
-  keys <- c(names(landing_fallbacks), landing_sheet_keys)
+  keys <- landing_sheet_keys
   dict <- lapply(language_choices, function(lang) {
     as.list(setNames(vapply(keys, landing_label, character(1), lang = lang), keys))
   })
@@ -137,18 +107,7 @@ landing_page_ui <- function() {
       )
       , tags$div(
         class = "lp-hero-inner"
-        , tags$div(
-          class = "lp-hero-copy"
-          , lt("landing_hero_kicker", tags$p, class = "lp-kicker")
-          , lt("landing_hero_title", tags$h1, class = "lp-hero-title")
-          , lt("landing_hero_subtitle", tags$p, class = "lp-hero-subtitle")
-          , tags$ul(
-            class = "lp-hero-points"
-            , tags$li(icon("wand-magic-sparkles"), lt("landing_hero_point_code"))
-            , tags$li(icon("shield-halved"), lt("landing_hero_point_privacy"))
-            , tags$li(icon("globe"), lt("landing_hero_point_lang"))
-          )
-        )
+        , lt("landing_hero_title", tags$h1, class = "sr-only")
         , tags$div(
           id = "lp-auth", class = "lp-auth-card"
           , lt("landing_auth_title", tags$h2, class = "lp-auth-title")
@@ -198,19 +157,12 @@ landing_page_ui <- function() {
       , lt("homepage_objectives_title", tags$h2, class = "lp-section-title")
       , tags$div(class = "lp-tricolor")
       , tags$div(
-        class = "lp-tabs"
-        , tags$div(
-          class = "lp-tab-list", role = "tablist"
-          , lapply(1:3, function(n) {
-            lt(paste0("homepage_obj", n, "_title"), tags$button
-              , type = "button", role = "tab"
-              , class = paste("lp-tab", if (n == 1) "active")
-              , `data-tab` = paste0("lp-obj-", n))
-          })
-        )
+        class = "lp-grid-3 lp-objectives"
         , lapply(1:3, function(n) {
           tags$div(
-            id = paste0("lp-obj-", n), class = paste("lp-tab-panel", if (n == 1) "active"), role = "tabpanel"
+            class = paste0("lp-obj lp-obj-", n, if (n == 3) " lp-obj-highlight")
+            , lt(paste0("homepage_obj", n, "_title"), tags$h3)
+            , tags$div(class = "lp-obj-bar")
             , tags$ul(
               lt(paste0("homepage_obj", n, "_bullet1"), tags$li)
               , lt(paste0("homepage_obj", n, "_bullet2"), tags$li)
@@ -251,6 +203,22 @@ landing_page_ui <- function() {
           class = "lp-footer-brand"
           , tags$img(src = "aphrc.png", alt = "APHRC")
           , lt("landing_footer_tagline", tags$p)
+          , tags$div(
+            class = "lp-footer-col lp-footer-explore"
+            , lt("landing_footer_explore", tags$h4)
+            , lapply(list(
+              list(key = "landing_nav_features", href = "#lp-features")
+              , list(key = "landing_nav_about", href = "#lp-about")
+              , list(key = "landing_nav_faq", href = "#lp-faq")
+              , list(key = "landing_nav_signin", href = "#lp-auth")
+            ), function(link) {
+              tags$a(href = link$href, class = "lp-footer-link", icon("angle-right"), lt(link$key))
+            })
+            , tags$a(
+              href = more_url, target = "_blank", rel = "noopener", class = "lp-footer-link"
+              , icon("arrow-up-right-from-square"), "Data Science Without Borders"
+            )
+          )
         )
         , tags$div(
           class = "lp-footer-col"
@@ -264,18 +232,11 @@ landing_page_ui <- function() {
             )
           })
         )
-        , tags$div(
-          class = "lp-footer-col"
-          , lt("landing_footer_explore", tags$h4)
-          , lt("landing_nav_features", tags$a, href = "#lp-features")
-          , lt("landing_nav_about", tags$a, href = "#lp-about")
-          , lt("landing_nav_faq", tags$a, href = "#lp-faq")
-          , lt("landing_nav_signin", tags$a, href = "#lp-auth")
-          , tags$a(href = more_url, target = "_blank", rel = "noopener", "Data Science Without Borders")
-        )
       )
-      , tags$p(class = "lp-footer-rights"
-        , sprintf("\u00a9 %s APHRC. ", format(Sys.Date(), "%Y")), lt("landing_footer_rights"))
+      , tags$div(
+        class = "lp-footer-bar"
+        , tags$p(sprintf("\u00a9 %s APHRC. ", format(Sys.Date(), "%Y")), lt("landing_footer_rights"))
+      )
     )
   )
 }
@@ -285,11 +246,11 @@ landing_page_ui <- function() {
 landing_head <- function() {
   tagList(
     tags$title(landing_label("landing_hero_kicker"))
-    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261011i")
+    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261012b")
     , tags$script(HTML(
       "(function(){if(/(?:^|;\\s*)aphrc=[^;]+/.test(document.cookie)){document.documentElement.classList.add('lp-has-session');}})();"
     ))
-    , tags$script(src = "landing.js?v=20261011c")
+    , tags$script(src = "landing.js?v=20261011d")
   )
 }
 

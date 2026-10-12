@@ -90,16 +90,6 @@
       var authTrigger = event.target.closest('[data-form]');
       if (authTrigger) {
         showAuthForm(authTrigger.getAttribute('data-form'));
-        return;
-      }
-      var tab = event.target.closest('.lp-tab');
-      if (tab) {
-        page.querySelectorAll('.lp-tab').forEach(function (t) {
-          t.classList.toggle('active', t === tab);
-        });
-        page.querySelectorAll('.lp-tab-panel').forEach(function (panel) {
-          panel.classList.toggle('active', panel.id === tab.getAttribute('data-tab'));
-        });
       }
     });
 
