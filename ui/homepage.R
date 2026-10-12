@@ -1,11 +1,7 @@
-homepage <- function(){
-  tabItem(
-    tabName = "homepage",
-    fluidRow(
-      class  = "aphrc-row2",
-      
-      tags$head(
-        tags$style(HTML("
+## Shared styles for the original homepage content (also used by the
+## dashboard Home in ui/home_dashboard_ui.R)
+homepage_styles <- function() {
+  tags$head(tags$style(HTML("
 :root{
   --aphrc-green:#7BC148;
   --aphrc-teal:#00BFC4;
@@ -285,8 +281,109 @@ html, body{
   .aphrc-section-title{ font-size: 26px; }
   .aphrc-intro{ font-size: 16px; }
 }
-  "))
-      ),
+  ")))
+}
+
+homepage_objectives <- function() {
+  # ======= Panel 1: OBJECTIVES =======
+  tags$div(
+    class="aphrc-panel",
+    tags$div(
+      class="aphrc-panel-body",
+      
+      tags$div(class="aphrc-section-kicker", textOutput("homepage_objectives_kicker", container = span)),
+      tags$div(class="aphrc-section-title", textOutput("homepage_objectives_title", container = span)),
+      tags$div(class="aphrc-tricolor"),
+      
+      tags$div(
+        class="aphrc-grid-3",
+        
+        tags$div(
+          class="aphrc-card aphrc-obj-1",
+          tags$h4(textOutput("homepage_obj1_title", container = span)),
+          tags$div(class="aphrc-underline"),
+          tags$ul(
+            class="aphrc-bullets",
+            tags$li(textOutput("homepage_obj1_bullet1", container = span)),
+            tags$li(textOutput("homepage_obj1_bullet2", container = span))
+          )
+        ),
+        
+        tags$div(
+          class="aphrc-card aphrc-obj-2",
+          tags$h4(textOutput("homepage_obj2_title", container = span)),
+          tags$div(class="aphrc-underline"),
+          tags$ul(
+            class="aphrc-bullets",
+            tags$li(textOutput("homepage_obj2_bullet1", container = span)),
+            tags$li(textOutput("homepage_obj2_bullet2", container = span))
+          )
+        ),
+        
+        tags$div(
+          class="aphrc-card aphrc-obj-3 aphrc-highlight",
+          tags$h4(textOutput("homepage_obj3_title", container = span)),
+          tags$div(class="aphrc-underline"),
+          tags$ul(
+            class="aphrc-bullets",
+            tags$li(textOutput("homepage_obj3_bullet1", container = span)),
+            tags$li(textOutput("homepage_obj3_bullet2", container = span))
+          )
+        )
+      )
+    ),
+    tags$div(class="aphrc-panel-caption", textOutput("homepage_platform_overview_caption", container = span))
+  )
+}
+
+homepage_components <- function() {
+  # ======= Panel 2: COMPONENTS =======
+  tags$div(
+    class="aphrc-panel",
+    tags$div(
+      class="aphrc-panel-body",
+      
+      tags$div(class="aphrc-section-title", textOutput("homepage_components_title", container = span)),
+      tags$div(class="aphrc-tricolor"),
+      
+      tags$div(
+        class="aphrc-grid-3",
+        
+        tags$div(
+          class="aphrc-card",
+          tags$div(class="aphrc-icon red", "⦿"),
+          tags$div(class="aphrc-comp-title", textOutput("homepage_comp1_title", container = span)),
+          tags$div(class="aphrc-comp-underline red"),
+          tags$p(class="aphrc-comp-desc", textOutput("homepage_comp1_desc", container = span))
+        ),
+        
+        tags$div(
+          class="aphrc-card",
+          tags$div(class="aphrc-icon amber", "⚙"),
+          tags$div(class="aphrc-comp-title", textOutput("homepage_comp2_title", container = span)),
+          tags$div(class="aphrc-comp-underline amber"),
+          tags$p(class="aphrc-comp-desc", textOutput("homepage_comp2_desc", container = span))
+        ),
+        
+        tags$div(
+          class="aphrc-card",
+          tags$div(class="aphrc-icon green", "⇪"),
+          tags$div(class="aphrc-comp-title", textOutput("homepage_comp3_title", container = span)),
+          tags$div(class="aphrc-comp-underline green"),
+          tags$p(class="aphrc-comp-desc", textOutput("homepage_comp3_desc", container = span))
+        )
+      )
+    ),
+    tags$div(class="aphrc-panel-caption", textOutput("homepage_end_to_end_workflow_caption", container = span))
+  )
+}
+
+homepage <- function(){
+  tabItem(
+    tabName = "homepage",
+    fluidRow(
+      class  = "aphrc-row2",
+      homepage_styles(),
       
       # Content (container preserved to keep layout stable)
       tags$div(
@@ -299,98 +396,9 @@ html, body{
         uiOutput("homepage_more_details_link"),
         
         tags$hr(class = "aphrc-hr"),
-        
-        # ======= Panel 1: OBJECTIVES =======
-        tags$div(
-          class="aphrc-panel",
-          tags$div(
-            class="aphrc-panel-body",
-            
-            tags$div(class="aphrc-section-kicker", textOutput("homepage_objectives_kicker", container = span)),
-            tags$div(class="aphrc-section-title", textOutput("homepage_objectives_title", container = span)),
-            tags$div(class="aphrc-tricolor"),
-            
-            tags$div(
-              class="aphrc-grid-3",
-              
-              tags$div(
-                class="aphrc-card aphrc-obj-1",
-                tags$h4(textOutput("homepage_obj1_title", container = span)),
-                tags$div(class="aphrc-underline"),
-                tags$ul(
-                  class="aphrc-bullets",
-                  tags$li(textOutput("homepage_obj1_bullet1", container = span)),
-                  tags$li(textOutput("homepage_obj1_bullet2", container = span))
-                )
-              ),
-              
-              tags$div(
-                class="aphrc-card aphrc-obj-2",
-                tags$h4(textOutput("homepage_obj2_title", container = span)),
-                tags$div(class="aphrc-underline"),
-                tags$ul(
-                  class="aphrc-bullets",
-                  tags$li(textOutput("homepage_obj2_bullet1", container = span)),
-                  tags$li(textOutput("homepage_obj2_bullet2", container = span))
-                )
-              ),
-              
-              tags$div(
-                class="aphrc-card aphrc-obj-3 aphrc-highlight",
-                tags$h4(textOutput("homepage_obj3_title", container = span)),
-                tags$div(class="aphrc-underline"),
-                tags$ul(
-                  class="aphrc-bullets",
-                  tags$li(textOutput("homepage_obj3_bullet1", container = span)),
-                  tags$li(textOutput("homepage_obj3_bullet2", container = span))
-                )
-              )
-            )
-          ),
-          tags$div(class="aphrc-panel-caption", textOutput("homepage_platform_overview_caption", container = span))
-        ),
-        
+        homepage_objectives(),
         tags$hr(class="aphrc-hr"),
-        
-        # ======= Panel 2: COMPONENTS =======
-        tags$div(
-          class="aphrc-panel",
-          tags$div(
-            class="aphrc-panel-body",
-            
-            tags$div(class="aphrc-section-title", textOutput("homepage_components_title", container = span)),
-            tags$div(class="aphrc-tricolor"),
-            
-            tags$div(
-              class="aphrc-grid-3",
-              
-              tags$div(
-                class="aphrc-card",
-                tags$div(class="aphrc-icon red", "⦿"),
-                tags$div(class="aphrc-comp-title", textOutput("homepage_comp1_title", container = span)),
-                tags$div(class="aphrc-comp-underline red"),
-                tags$p(class="aphrc-comp-desc", textOutput("homepage_comp1_desc", container = span))
-              ),
-              
-              tags$div(
-                class="aphrc-card",
-                tags$div(class="aphrc-icon amber", "⚙"),
-                tags$div(class="aphrc-comp-title", textOutput("homepage_comp2_title", container = span)),
-                tags$div(class="aphrc-comp-underline amber"),
-                tags$p(class="aphrc-comp-desc", textOutput("homepage_comp2_desc", container = span))
-              ),
-              
-              tags$div(
-                class="aphrc-card",
-                tags$div(class="aphrc-icon green", "⇪"),
-                tags$div(class="aphrc-comp-title", textOutput("homepage_comp3_title", container = span)),
-                tags$div(class="aphrc-comp-underline green"),
-                tags$p(class="aphrc-comp-desc", textOutput("homepage_comp3_desc", container = span))
-              )
-            )
-          ),
-          tags$div(class="aphrc-panel-caption", textOutput("homepage_end_to_end_workflow_caption", container = span))
-        )
+        homepage_components()
       )
     )
   )
