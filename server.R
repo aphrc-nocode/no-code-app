@@ -973,6 +973,10 @@ function(input, output, session){
 	  source("server/admin_server.R", local = TRUE)
 	  admin_server(USER)
 
+	  #### ---- Dashboard home ------------------------------------------------####
+	  source("server/home_dashboard.R", local = TRUE)
+	  home_dashboard_server(USER)
+
 	  update_progress("Ready!")
 	  hide_waiter_after_flush("
 		  var active = $('ul.sidebar-menu li.active > a').first();
