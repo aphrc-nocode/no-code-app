@@ -65,7 +65,26 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
+.lp-nav-logo,
+.lp-nav-logo:hover,
+.lp-nav-logo:focus {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+
 .lp-nav-logo img { height: 36px; display: block; }
+
+.lp-nav-brand {
+  padding-left: 14px;
+  border-left: 1px solid var(--lp-line);
+  color: var(--lp-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 
 .lp-nav-links {
   display: flex;
@@ -725,6 +744,7 @@ html.lp-has-session #lp-session-loader { display: block; }
   .lp-hero { padding: 0 14px; }
   .lp-nav { margin: 0 -14px; padding: 0 14px; gap: 12px; }
   .lp-nav-signin { white-space: nowrap; padding: 8px 16px; }
+  .lp-nav-brand { display: none; }
   .lp-hero-inner .lp-auth-card {
     width: calc(100% + 28px);
     max-width: none;

@@ -4,9 +4,14 @@
 ## page paints before any server session exists. Switching language swaps the
 ## text in the browser from the dictionary embedded in the page.
 
+## Temporary English until these keys exist in the labelling sheet
+landing_fallbacks <- c(
+  landing_nav_brand = "AutoML No-Code Platform"
+)
+
 ## Keys the language menu can retranslate in the browser
 landing_sheet_keys <- c(
-  paste0("landing_nav_", c("features", "about", "faq", "signin"))
+  paste0("landing_nav_", c("brand", "features", "about", "faq", "signin"))
   , "landing_hero_kicker", "landing_hero_title"
   , paste0("landing_auth_", c("title", "signin", "signup", "reset"))
   , "landing_features_kicker", "landing_features_title"
@@ -51,6 +56,7 @@ landing_label <- function(key, lang = language_choices[1]) {
   }
   value <- sheet_value(lang)
   if (is.na(value) || !nzchar(trimws(value))) value <- sheet_value(language_choices[1])
+  if (is.na(value) || !nzchar(trimws(value))) value <- unname(landing_fallbacks[key])
   if (is.na(value)) value <- ""
   for (token in names(landing_tokens)) {
     value <- gsub(token, landing_tokens[[token]], value, fixed = TRUE)
@@ -89,7 +95,11 @@ landing_page_ui <- function() {
       class = "lp-hero"
       , tags$nav(
         class = "lp-nav"
-        , tags$a(class = "lp-nav-logo", href = "#landing_page", tags$img(src = "aphrc.png", alt = "APHRC"))
+        , tags$a(
+          class = "lp-nav-logo", href = "#landing_page"
+          , tags$img(src = "aphrc.png", alt = "APHRC")
+          , lt("landing_nav_brand", tags$span, class = "lp-nav-brand")
+        )
         , tags$div(
           class = "lp-nav-links"
           , lt("landing_nav_features", tags$a, href = "#lp-features")
@@ -246,7 +256,7 @@ landing_page_ui <- function() {
 landing_head <- function() {
   tagList(
     tags$title(landing_label("landing_hero_kicker"))
-    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261012b")
+    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261012c")
     , tags$script(HTML(
       "(function(){if(/(?:^|;\\s*)aphrc=[^;]+/.test(document.cookie)){document.documentElement.classList.add('lp-has-session');}})();"
     ))
