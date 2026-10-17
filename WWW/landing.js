@@ -7,7 +7,47 @@
   // dashboard, which can take a while on a cold start.
   var SESSION_WAIT_MS = 20000;
 
+  // Workspace loading screen. Must match loader_steps in ui/dashboard_skeleton.R.
+  var LOADER_STEPS = ['signin', 'workspace', 'tools', 'ready'];
+  var LOADER_PROGRESS = { signin: 10, workspace: 30, tools: 65, ready: 100 };
+
   function root() { return document.documentElement; }
+
+  function setLoaderStep(step) {
+    var target = LOADER_STEPS.indexOf(step);
+    if (target < 0) return;
+    document.querySelectorAll('.ldr').forEach(function (ldr) {
+      if (target < LOADER_STEPS.indexOf(ldr.getAttribute('data-step'))) return;
+      ldr.setAttribute('data-step', step);
+      ldr.querySelectorAll('.ldr-steps li').forEach(function (li) {
+        var i = LOADER_STEPS.indexOf(li.getAttribute('data-step'));
+        li.className = i < target ? 'is-done' : (i === target ? 'is-active' : '');
+      });
+    });
+    advanceLoaderBars();
+  }
+
+  // Between server updates the bar keeps easing toward the next step, so a
+  // slow start never looks frozen; it only reaches the end on 'ready'.
+  function advanceLoaderBars() {
+    document.querySelectorAll('.ldr').forEach(function (ldr) {
+      var step = ldr.getAttribute('data-step');
+      var i = LOADER_STEPS.indexOf(step);
+      var floor = LOADER_PROGRESS[step] || 0;
+      var next = LOADER_STEPS[i + 1];
+      var ceiling = next ? LOADER_PROGRESS[next] - 4 : 100;
+      var now = Math.max(parseFloat(ldr.getAttribute('data-progress')) || 0, floor);
+      now += (ceiling - now) * 0.03;
+      ldr.setAttribute('data-progress', now.toFixed(2));
+      var fill = ldr.querySelector('.ldr-progress-fill');
+      if (fill) fill.style.width = now + '%';
+    });
+  }
+
+  setInterval(advanceLoaderBars, 250);
+  if (window.Shiny && Shiny.addCustomMessageHandler) {
+    Shiny.addCustomMessageHandler('aphrc-loader-step', setLoaderStep);
+  }
 
   function endSessionWait() {
     root().classList.remove('lp-has-session');

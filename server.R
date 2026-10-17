@@ -3,9 +3,9 @@ options(shiny.maxRequestSize=3000000*1024^2)
 source("server/login_warmup.R")
 
 function(input, output, session){
-  # ---- Progress line on the post-login loading skeleton ----
-  update_progress <- function(msg) {
-    shinyjs::html("dsk-status", msg)
+  # ---- Progress steps on the post-login loading screen ----
+  update_progress <- function(step) {
+    session$sendCustomMessage("aphrc-loader-step", step)
   }
   # Reveal the app after Shiny has flushed and the browser has painted it.
   # The timeout prevents a loader from remaining permanently during a slow
@@ -59,7 +59,7 @@ function(input, output, session){
   observeEvent(USER$logged_in, {
 	 req(isTRUE(USER$logged_in))
 	 waiter_show(
-		html = dashboard_skeleton(status_id = "dsk-status"),
+		html = dashboard_skeleton(name = USER$first_name),
 		color = "#FFF"
 	 )
 
@@ -803,7 +803,7 @@ function(input, output, session){
 	  #### ---- Machine learning and AI --------------- ####
 	  
 	  ##### ----- Set ML/AI UI ------------------- ####
-	  update_progress("Loading ML modules...")
+	  update_progress("tools")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
 	  
@@ -979,7 +979,7 @@ function(input, output, session){
 	  source("server/home_dashboard.R", local = TRUE)
 	  home_dashboard_server(USER)
 
-	  update_progress("Ready!")
+	  update_progress("ready")
 	  hide_waiter_after_flush("
 		  var active = $('ul.sidebar-menu li.active > a').first();
 		  if (active.length) { active.trigger('click'); }
