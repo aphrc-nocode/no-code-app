@@ -518,6 +518,13 @@ function(input, output, session){
 	  output$study_country = study_country
 	  output$additional_info = additional_info
 	  output$submit_upload = submit_upload
+
+	  ## Built while the tab is hidden, so Source data opens complete instead
+	  ## of assembling field by field on the first visit
+	  for (id in c("upload_type", "show_uploaded", "study_name", "study_country"
+	    , "additional_info", "input_files", "submit_upload")) {
+	    outputOptions(output, id, suspendWhenHidden = FALSE)
+	  }
 	 
 	  #### ---- Databse and API connection warning ---------------------
 	  db_api_con_future

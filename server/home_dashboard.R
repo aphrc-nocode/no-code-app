@@ -67,8 +67,9 @@ home_dashboard_server <- function(USER) {
 
   output$home_dashboard <- renderUI({
     # Model files and visualization outputs are not reactive; returning to
-    # the Home tab re-reads them.
-    input$tabs
+    # the Home tab re-reads them. Leaving Home keeps the current view.
+    tab <- input$tabs
+    if (!is.null(tab) && tab != "homePage") req(FALSE, cancelOutput = TRUE)
     datasets <- home_datasets()
     n_models <- count_models()
     is_new <- NROW(datasets) == 0
