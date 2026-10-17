@@ -223,7 +223,7 @@
 }
 
 /* Getting started: borderless section, one white card per step joined by
-   arrows, in the yellow (#F2C744) and green of the AutoML logo */
+   yellow (#F2C744, from the AutoML logo) arrows */
 
 .home-steps.home-card {
   background: #f4f7f4;
@@ -284,11 +284,6 @@
   box-shadow: 0 14px 28px rgba(22, 48, 28, 0.12);
 }
 
-.home-step.is-current > a,
-.home-step.is-current > a:focus {
-  box-shadow: 0 0 0 2px rgba(123, 193, 72, 0.75), 0 14px 28px rgba(22, 48, 28, 0.10);
-}
-
 .home-step-icon {
   position: relative;
   width: 44px;
@@ -297,12 +292,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #F2C744;
-  color: #123E3B;
-  box-shadow: 0 6px 14px rgba(242, 199, 68, 0.35);
+  background: var(--step, #F2C744);
+  color: #fff;
+  box-shadow: 0 6px 14px var(--step-glow, rgba(242, 199, 68, 0.35));
 }
 
 .home-step-icon svg { display: block; }
+
+/* Step colours follow the Components icons (red, amber, green) plus the teal of the banner rule */
+.home-step-list > .home-step:nth-child(1) { --step: #E53935; --step-glow: rgba(229, 57, 53, 0.25); }
+.home-step-list > .home-step:nth-child(2) { --step: #F6A100; --step-glow: rgba(246, 161, 0, 0.25); }
+.home-step-list > .home-step:nth-child(3) { --step: #2E7D32; --step-glow: rgba(46, 125, 50, 0.25); }
+.home-step-list > .home-step:nth-child(4) { --step: #00A3B4; --step-glow: rgba(0, 163, 180, 0.25); }
 
 .home-step-badge {
   position: absolute;
@@ -372,7 +373,7 @@
   outline: none;
 }
 
-.home-step-locked .home-step-icon {
+.home-step.is-locked .home-step-icon {
   background: #e3e8e4;
   color: #a7b1aa;
   box-shadow: none;

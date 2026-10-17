@@ -7,7 +7,7 @@ home_dashboard_ui <- function() {
   tagList(
     homepage_styles()
     , tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "home_dashboard.css?v=20261017o")
+      tags$link(rel = "stylesheet", type = "text/css", href = "home_dashboard.css?v=20261017q")
       , tags$script(HTML(
         "$(document).on('click', '[data-home-tab]', function (e) {
           e.preventDefault();
