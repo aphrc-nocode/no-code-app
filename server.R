@@ -1,5 +1,6 @@
 library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
+source("server/login_warmup.R")
 
 function(input, output, session){
   # ---- Progress line on the post-login loading skeleton ----
@@ -67,6 +68,7 @@ function(input, output, session){
 		 return()
 	 }
 	 authed_started(TRUE)
+	 pause_jit_until_return()
 
 	 app_username = USER$username
   
