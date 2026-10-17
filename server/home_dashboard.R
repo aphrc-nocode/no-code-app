@@ -19,10 +19,20 @@ home_deletion_date <- function(uploaded, months = app_privacy_config$retention_m
   out
 }
 
+## English text for Home labels that are not in labelling_file.xlsx yet
+home_label_fallbacks <- c(
+  home_steps_subtitle = "Four steps take you from raw data to a deployed model."
+  , home_step_source_desc = "Load a file from your computer or connect to a database."
+  , home_step_explore_desc = "Check data quality, summaries and charts before modelling."
+  , home_step_train_desc = "Pick algorithms, tune them and compare the results."
+  , home_step_deploy_desc = "Publish your best model so it can serve predictions."
+)
+
 home_dashboard_server <- function(USER) {
   home_label <- function(key, ...) {
     value <- get_rv_labels(key)
     if (length(value) != 1 || is.na(value)) value <- ""
+    if (!nzchar(value) && key %in% names(home_label_fallbacks)) value <- home_label_fallbacks[[key]]
     tokens <- c(list(months = app_privacy_config$retention_months), list(...))
     for (token in names(tokens)) {
       value <- gsub(paste0("{", token, "}"), tokens[[token]], value, fixed = TRUE)
@@ -64,12 +74,12 @@ home_dashboard_server <- function(USER) {
     is_new <- NROW(datasets) == 0
     ## needs: index of the step whose result this step depends on
     steps <- list(
-      list(label = home_label("home_step_source"), tab = "sourcedata", done = NROW(datasets) > 0)
-      , list(label = home_label("home_step_explore"), tab = "summarizeAutomatic", done = has_outputs()
+      list(label = home_label("home_step_source"), desc = home_label("home_step_source_desc"), tab = "sourcedata", done = NROW(datasets) > 0)
+      , list(label = home_label("home_step_explore"), desc = home_label("home_step_explore_desc"), tab = "summarizeAutomatic", done = has_outputs()
         , needs = 1, locked_hint = home_label("home_step_locked_source"))
-      , list(label = home_label("home_step_train"), tab = "setupModels", done = n_models > 0
+      , list(label = home_label("home_step_train"), desc = home_label("home_step_train_desc"), tab = "setupModels", done = n_models > 0
         , needs = 1, locked_hint = home_label("home_step_locked_source"))
-      , list(label = home_label("home_step_deploy"), tab = "validateDeployModel"
+      , list(label = home_label("home_step_deploy"), desc = home_label("home_step_deploy_desc"), tab = "validateDeployModel"
         , done = NROW(rv_deploy_models$deployed_models_table) > 0
         , needs = 3, locked_hint = home_label("home_step_locked_train"))
     )
