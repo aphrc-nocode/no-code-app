@@ -6,12 +6,17 @@
 
 ## Temporary English until these keys exist in the labelling sheet
 landing_fallbacks <- c(
-  landing_nav_brand = "AutoML No-Code Platform"
+  loader_title = "Getting your workspace ready"
+  , loader_title_name = "Hi {name}, getting your workspace ready"
+  , loader_step_signin = "Signing you in"
+  , loader_step_workspace = "Preparing your workspace"
+  , loader_step_tools = "Loading data and machine learning tools"
+  , loader_step_ready = "Almost ready"
 )
 
 ## Keys the language menu can retranslate in the browser
 landing_sheet_keys <- c(
-  paste0("landing_nav_", c("brand", "features", "about", "faq", "signin"))
+  paste0("landing_nav_", c("features", "about", "faq", "signin"))
   , "landing_hero_kicker", "landing_hero_title"
   , paste0("landing_auth_", c("title", "signin", "signup", "reset"))
   , "landing_features_kicker", "landing_features_title"
@@ -97,8 +102,7 @@ landing_page_ui <- function() {
         class = "lp-nav"
         , tags$a(
           class = "lp-nav-logo", href = "#landing_page"
-          , tags$img(src = "aphrc.png", alt = "APHRC")
-          , lt("landing_nav_brand", tags$span, class = "lp-nav-brand")
+          , tags$img(src = "brand/automl-header-logo-light-transparent.svg", alt = "AutoML No-Code Platform")
         )
         , tags$div(
           class = "lp-nav-links"
@@ -211,7 +215,7 @@ landing_page_ui <- function() {
         class = "lp-footer-inner"
         , tags$div(
           class = "lp-footer-brand"
-          , tags$img(src = "aphrc.png", alt = "APHRC")
+          , tags$img(src = "brand/automl-full-logo-dark.svg", alt = "AutoML No-Code Platform")
           , lt("landing_footer_tagline", tags$p)
           , tags$div(
             class = "lp-footer-col lp-footer-explore"
@@ -245,7 +249,7 @@ landing_page_ui <- function() {
       )
       , tags$div(
         class = "lp-footer-bar"
-        , tags$p(sprintf("\u00a9 %s APHRC. ", format(Sys.Date(), "%Y")), lt("landing_footer_rights"))
+        , tags$p(sprintf("\u00a9 %s AutoML No-Code Platform. ", format(Sys.Date(), "%Y")), lt("landing_footer_rights"))
       )
     )
   )
@@ -256,11 +260,14 @@ landing_page_ui <- function() {
 landing_head <- function() {
   tagList(
     tags$title(landing_label("landing_hero_kicker"))
-    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261012c")
+    , tags$link(rel = "icon", href = "brand/favicon.ico", sizes = "any")
+    , tags$link(rel = "icon", href = "brand/favicon.svg", type = "image/svg+xml")
+    , tags$link(rel = "apple-touch-icon", href = "brand/apple-touch-icon.png")
+    , tags$link(rel = "stylesheet", type = "text/css", href = "landing.css?v=20261017j")
     , tags$script(HTML(
       "(function(){if(/(?:^|;\\s*)aphrc=[^;]+/.test(document.cookie)){document.documentElement.classList.add('lp-has-session');}})();"
     ))
-    , tags$script(src = "landing.js?v=20261011d")
+    , tags$script(src = "landing.js?v=20261017c")
   )
 }
 
