@@ -57,7 +57,8 @@ document.querySelectorAll('input[name="theme"]').forEach((radio) => {
   }
 
   function doAdminToggle() {
-  var btn = getAdminToggleBtn();
+  // On phones AdminLTE's button toggles "sidebar-open" instead, which the icon rail ignores
+  var btn = isPhone() ? null : getAdminToggleBtn();
   if (btn) {
     btn.click(); // AdminLTE toggle
   } else {
@@ -78,9 +79,13 @@ document.addEventListener("mouseenter", function (e) {
   updateToggleUI();
 }, true);
 
-  // Expanded by default + wait until renderMenu creates the element
+  function isPhone() {
+    return window.matchMedia("(max-width: 767px)").matches;
+  }
+
+  // Expanded by default (icon rail on phones) + wait until renderMenu creates the element
   function bootstrapWhenReady() {
-    document.body.classList.remove("sidebar-collapse");
+    document.body.classList.toggle("sidebar-collapse", isPhone());
 
     var tries = 0;
     var timer = setInterval(function () {
@@ -99,6 +104,24 @@ document.addEventListener("mouseenter", function (e) {
     e.stopPropagation();
 
     doAdminToggle();
+  });
+
+  // Phones: tapping a section with sub-pages opens the drawer; picking a page closes it
+  document.addEventListener("click", function (e) {
+    if (!isPhone()) return;
+    var a = e.target.closest && e.target.closest(".main-sidebar .sidebar-menu a");
+    if (!a || a.id === "sidebar_toggle_menu") return;
+
+    var hasSubmenu = a.parentElement && a.parentElement.classList.contains("treeview");
+    if (hasSubmenu) {
+      if (isCollapsed()) {
+        document.body.classList.remove("sidebar-collapse");
+        setTimeout(updateToggleUI, 0);
+      }
+    } else if (a.getAttribute("data-value") && !isCollapsed()) {
+      document.body.classList.add("sidebar-collapse");
+      setTimeout(updateToggleUI, 0);
+    }
   });
 
   document.addEventListener("DOMContentLoaded", bootstrapWhenReady);

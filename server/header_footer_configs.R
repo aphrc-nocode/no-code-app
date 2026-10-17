@@ -5,6 +5,9 @@ app_title = function() {
 }
 
 
+## The platform's own contact address; the footer hides "Contact Us" while it is empty
+app_contact_email <- ""
+
 #Footer Language convertion
 footer_language_translation = function() {
   output$app_footer_title = renderUI({
@@ -13,7 +16,8 @@ footer_language_translation = function() {
   })
   
   output$app_footer_contact = renderUI({
-    h4(HTML(paste0('<a href="mailto:"', get_rv_labels("platform_contact_email"),  'style="color: white;">', get_rv_labels("footer_contact"), ": ", get_rv_labels("platform_contact_email"), '</a>')))    
+    if (!nzchar(app_contact_email)) return(NULL)
+    h4(tags$a(href = paste0("mailto:", app_contact_email), paste0(get_rv_labels("footer_contact"), ": ", app_contact_email)), style = "text-align: center;")
   })
   
   output$app_footer_all_rights = renderUI({
@@ -22,6 +26,36 @@ footer_language_translation = function() {
   
   output$app_footer_all_rights = renderUI({
     h4(paste0(get_rv_labels("footer_copyright"), " © ", format(Sys.Date(), "%Y"), ", ", get_rv_labels("footer_all_rights")), style = "text-align: right;")
+  })
+
+  ## Tab links reuse the Home tab's [data-home-tab] click handler
+  footer_tab_link <- function(tab, key) {
+    tags$a(href = "#", `data-home-tab` = tab, icon("angle-right"), get_rv_labels(key))
+  }
+
+  output$app_footer_extended = renderUI({
+    tags$div(
+      class = "footer-extended-inner"
+      , tags$div(
+        tags$img(src = "brand/automl-full-logo-light-transparent.svg", alt = "AutoML No-Code Platform")
+        , tags$p(get_rv_labels("landing_footer_tagline"))
+      )
+      , tags$div(
+        tags$h4(get_rv_labels("landing_footer_platform"))
+        , footer_tab_link("sourcedata", "menu_source_data")
+        , footer_tab_link("summarizeAutomatic", "menu_visualize_data")
+        , footer_tab_link("setupModels", "menu_machine_learning")
+        , footer_tab_link("transfer_learning", "menu_transfer_learning")
+      )
+      , tags$div(
+        tags$h4(get_rv_labels("landing_footer_explore"))
+        , footer_tab_link("cnndeep", "deeplearning")
+        , footer_tab_link("evidenceQuality", "menu_omop_data")
+        , footer_tab_link("anonymization_quant", "menu_data_anonymization")
+        , footer_tab_link("addResources", "menu_additional_resources")
+        , if (nzchar(app_contact_email)) tags$a(href = paste0("mailto:", app_contact_email), icon("envelope"), get_rv_labels("footer_contact"))
+      )
+    )
   })
 }
 

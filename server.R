@@ -1,17 +1,11 @@
 library(Rautoml)
 options(shiny.maxRequestSize=3000000*1024^2)
+source("server/login_warmup.R")
 
 function(input, output, session){
-  # ---- Progress overlay for cold-start feedback ----
-  update_progress <- function(msg) {
-    waiter::waiter_show(
-      html = tagList(
-        spin_loaders(id = 2, style="width:56px;height:56px;color:#7BC148;"),
-        tags$br(),
-        tags$span(msg, style="color:#555;font-size:14px;margin-top:12px;display:block;")
-      ),
-      color = "#FFF"
-    )
+  # ---- Progress steps on the post-login loading screen ----
+  update_progress <- function(step) {
+    session$sendCustomMessage("aphrc-loader-step", step)
   }
   # Reveal the app after Shiny has flushed and the browser has painted it.
   # The timeout prevents a loader from remaining permanently during a slow
@@ -52,8 +46,6 @@ function(input, output, session){
       hide_waiter_after_paint(extra_js)
     }, once = TRUE)
   }
-  update_progress("Loading packages...")
-  
   source("server/auth.R")
   source("server/homepage_translation_labels.R", local = TRUE)
   register_homepage_labels(output, session, get_rv_labels)
@@ -67,7 +59,7 @@ function(input, output, session){
   observeEvent(USER$logged_in, {
 	 req(isTRUE(USER$logged_in))
 	 waiter_show(
-		html = spin_loaders(id = 3, style="width:56px;height:56px;color:#7BC148;"),
+		html = dashboard_skeleton(name = USER$first_name),
 		color = "#FFF"
 	 )
 
@@ -76,6 +68,7 @@ function(input, output, session){
 		 return()
 	 }
 	 authed_started(TRUE)
+	 pause_jit_until_return()
 
 	 app_username = USER$username
   
@@ -525,6 +518,13 @@ function(input, output, session){
 	  output$study_country = study_country
 	  output$additional_info = additional_info
 	  output$submit_upload = submit_upload
+
+	  ## Built while the tab is hidden, so Source data opens complete instead
+	  ## of assembling field by field on the first visit
+	  for (id in c("upload_type", "show_uploaded", "study_name", "study_country"
+	    , "additional_info", "input_files", "submit_upload")) {
+	    outputOptions(output, id, suspendWhenHidden = FALSE)
+	  }
 	 
 	  #### ---- Databse and API connection warning ---------------------
 	  db_api_con_future
@@ -810,7 +810,7 @@ function(input, output, session){
 	  #### ---- Machine learning and AI --------------- ####
 	  
 	  ##### ----- Set ML/AI UI ------------------- ####
-	  update_progress("Loading ML modules...")
+	  update_progress("tools")
 	  source("server/setup_models.R", local=TRUE)
 	  setup_models_ui()
 	  
@@ -982,7 +982,11 @@ function(input, output, session){
 	  source("server/admin_server.R", local = TRUE)
 	  admin_server(USER)
 
-	  update_progress("Ready!")
+	  #### ---- Dashboard home ------------------------------------------------####
+	  source("server/home_dashboard.R", local = TRUE)
+	  home_dashboard_server(USER)
+
+	  update_progress("ready")
 	  hide_waiter_after_flush("
 		  var active = $('ul.sidebar-menu li.active > a').first();
 		  if (active.length) { active.trigger('click'); }

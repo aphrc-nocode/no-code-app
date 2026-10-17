@@ -1,8 +1,28 @@
+## "white" or "green"; keep .ldr-header in landing.css in step with it
+header_theme <- "green"
+header_themes <- list(
+  white = list(
+    style = "background-color: #fff; color: #123E3B; padding: 6px 10px; border-top: 3px solid #7BC148; border-bottom: 3px solid #7BC148; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);"
+    , logo = "brand/automl-header-logo-light-transparent.svg"
+    , ink = "#123E3B"
+    , hover = "rgba(18, 62, 59, 0.06)"
+  )
+  , green = list(
+    style = "background-color: #7BC148; color: #123E3B; padding: 6px 14px;"
+    , logo = "brand/automl-header-logo.svg"
+    , ink = "#123E3B"
+    , hover = "rgba(255, 255, 255, 0.18)"
+  )
+)
+header_style <- header_themes[[header_theme]]
+
 header = tags$div(
   class = "custom-header",
-  style = "background-color: #7BC148; color: white; padding: 10px;",
+  style = header_style$style,
   # Dropdown CSS — Vercel/Stripe-inspired, sharp and minimal
-  tags$style(HTML("
+  tags$style(HTML(paste0("
+    .custom-header > .row { display: flex; align-items: center; }
+    .custom-header .control-label { color: ", header_style$ink, "; }
     .user-dropdown-wrap { position: relative; cursor: pointer; user-select: none; }
     .user-dropdown-btn  {
       display: flex; align-items: center; gap: 6px;
@@ -10,7 +30,7 @@ header = tags$div(
       transition: background .15s ease;
       font-size: 13px; font-weight: 500; letter-spacing: .01em;
     }
-    .user-dropdown-btn:hover { background: rgba(255,255,255,0.12); }
+    .user-dropdown-btn:hover { background: ", header_style$hover, "; }
     .user-dropdown-btn .fa-chevron-down {
       font-size: 9px; opacity: .6; margin-left: 2px;
       transition: transform .2s ease;
@@ -43,7 +63,7 @@ header = tags$div(
     .user-dropdown-menu .dd-item:hover i { color: #555; }
     .user-dropdown-menu .dd-item.logout:hover { background: #fef2f2; color: #dc2626; }
     .user-dropdown-menu .dd-item.logout:hover i { color: #dc2626; }
-  ")),
+  "))),
   # Close dropdown when clicking elsewhere
   tags$script(HTML("
     $(document).on('click', '.user-dropdown-wrap', function(e) {
@@ -55,8 +75,7 @@ header = tags$div(
     });
   ")),
   fluidRow(
-    column(2, tags$img(src = "aphrc.png", height = "50px")),
-    column(6, uiOutput("app_title", align="right")),
+    column(8, tags$img(src = header_style$logo, alt = "AutoML No-Code Platform", height = "60px")),
     column(2, uiOutput("change_language")),
     column(2, align="right",
            login::is_logged_in(
@@ -68,9 +87,9 @@ header = tags$div(
                # Clickable trigger
                tags$div(
                  class = "user-dropdown-btn",
-                 icon("user", style = "font-size: 14px; color: white;"),
+                 icon("user", style = paste0("font-size: 14px; color: ", header_style$ink, ";")),
                  uiOutput("userName", inline = TRUE),
-                 icon("chevron-down", style = "color: white;")
+                 icon("chevron-down", style = paste0("color: ", header_style$ink, ";"))
                ),
                # Dropdown
                tags$div(

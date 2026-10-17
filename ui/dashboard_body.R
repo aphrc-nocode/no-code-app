@@ -1,4 +1,5 @@
 ## Load UI files
+source("ui/home_dashboard_ui.R", local=TRUE)
 source("ui/sourcedata_ui.R", local=TRUE)
 source("ui/overview_ui.R", local=TRUE)
 source("ui/explore_ui.R", local=TRUE)
@@ -84,7 +85,7 @@ aphrcBody <- dashboardBody(
 	tabItems(
 		tabItem(tabName = "homePage"
 			, class = "active"
-			, homepage()
+			, home_dashboard_ui()
 		)
 
 		## Source data

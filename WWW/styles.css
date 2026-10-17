@@ -842,3 +842,57 @@ body.sidebar-collapse #logoutID:hover::after {
   margin-top: 3px;
   accent-color: #7BC148;
 }
+/* ===== Phones: sidebar as an icon rail that slides open over the content =====
+   shinydashboard hides a percentage-width sidebar with translate(-20%), which
+   only moves it by a fifth of its own width, so it ends up under the content. */
+@media (max-width: 767px) {
+  .main-sidebar,
+  .left-side {
+    width: 240px !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+    z-index: 1000 !important;
+    transition: width 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .content-wrapper,
+  .right-side,
+  .main-footer {
+    margin-left: 52px !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+  }
+
+  .content-wrapper,
+  .right-side {
+    padding-left: 0 !important;
+  }
+
+  .content-wrapper > .content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  body:not(.sidebar-collapse) .main-sidebar {
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.35);
+  }
+
+  body.sidebar-collapse .main-sidebar,
+  body.sidebar-collapse .left-side {
+    width: 52px !important;
+    overflow: hidden;
+  }
+
+  body.sidebar-collapse .main-sidebar .sidebar-menu > li > a > span,
+  body.sidebar-collapse .main-sidebar .sidebar-menu > li > a > .pull-right-container,
+  body.sidebar-collapse .main-sidebar .sidebar-menu > li > a > .fa-angle-left,
+  body.sidebar-collapse .main-sidebar .sidebar-menu > li > a > .pull-right,
+  body.sidebar-collapse .main-sidebar .sidebar-menu .treeview-menu {
+    display: none !important;
+  }
+
+  body.sidebar-collapse .main-sidebar .sidebar-menu > li > a {
+    padding-left: 17px !important;
+    white-space: nowrap;
+  }
+}
